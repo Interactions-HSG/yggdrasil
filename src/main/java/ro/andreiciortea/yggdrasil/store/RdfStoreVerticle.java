@@ -41,32 +41,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
     try {
       EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
       
-      String requestIRIString = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
+      String requestIRIString = request.getHeader(EventBusMessage.Headers.REQUEST_IRI).get();
       IRI requestIRI = store.createIRI(requestIRIString);
       
       if (request.getMessageType() == EventBusMessage.MessageType.GET_ENTITY) {
-        Optional<Graph> result = store.getEntityGraph(requestIRI);
-        
-        if (result.isPresent() && result.get().size() > 0) {
-          replyWithPayload(message, store.graphToString(result.get(), RDFSyntax.TURTLE));
-        } else {
-          replyEntityNotFound(message);
-        }
-      } else if (request.getMessageType() == EventBusMessage.MessageType.CREATE_ENTITY) {
-        Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
-        String entityIRIString = generateEntityIRI(requestIRIString, slug);
-        IRI entityIRI = store.createIRI(entityIRIString);
-        
-        Graph entityGraph = store.stringToGraph(request.getPayload(), entityIRI, RDFSyntax.TURTLE);
-        store.createEntityGraph(entityIRI, entityGraph);
-        
-        replyWithPayload(message, store.graphToString(entityGraph, RDFSyntax.TURTLE));
-      } else if (request.getMessageType() == EventBusMessage.MessageType.PATCH_ENTITY) {
-        // TODO
-      } else if (request.getMessageType() == EventBusMessage.MessageType.UPDATE_ENTITY) {
-        // TODO
-      } else if (request.getMessageType() == EventBusMessage.MessageType.DELETE_ENTITY) {
-        // TODO
+        handleGetEntity(requestIRI, message);
+      }
+      else if (request.getMessageType() == EventBusMessage.MessageType.CREATE_ENTITY) {
+        handleCreateEntity(requestIRI, request, message);
+      }
+      else if (request.getMessageType() == EventBusMessage.MessageType.PATCH_ENTITY) {
+        handlePatchEntity(requestIRI, request, message);
+      }
+      else if (request.getMessageType() == EventBusMessage.MessageType.UPDATE_ENTITY) {
+        handleUpdateEntity(requestIRI, request, message);
+      }
+      else if (request.getMessageType() == EventBusMessage.MessageType.DELETE_ENTITY) {
+        handleDeleteEntity(requestIRI, message);
       }
     }
     catch (IOException e) {
@@ -76,6 +67,60 @@ public class RdfStoreVerticle extends AbstractVerticle {
     catch (IllegalArgumentException e) {
       LOGGER.error(e.getMessage());
       replyFailed(message);
+    }
+  }
+  
+  private void handleGetEntity(IRI requestIRI, Message<String> message) throws IllegalArgumentException, IOException {
+    Optional<Graph> result = store.getEntityGraph(requestIRI);
+    
+    if (result.isPresent() && result.get().size() > 0) {
+      replyWithPayload(message, store.graphToString(result.get(), RDFSyntax.TURTLE));
+    } else {
+      replyEntityNotFound(message);
+    }
+  }
+  
+  private void handleCreateEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+    Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
+    String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
+    IRI entityIRI = store.createIRI(entityIRIString);
+    
+    Graph entityGraph = store.stringToGraph(request.getPayload(), entityIRI, RDFSyntax.TURTLE);
+    store.createEntityGraph(entityIRI, entityGraph);
+    
+    replyWithPayload(message, store.graphToString(entityGraph, RDFSyntax.TURTLE));
+  }
+  
+  private void handlePatchEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+    // TODO
+  }
+  
+  private void handleUpdateEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+    if (store.containsEntityGraph(requestIRI)) {
+      Graph entityGraph = store.stringToGraph(request.getPayload(), requestIRI, RDFSyntax.TURTLE);
+      store.updateEntityGraph(requestIRI, entityGraph);
+      
+      Optional<Graph> result = store.getEntityGraph(requestIRI);
+      
+      if (result.isPresent() && result.get().size() > 0) {
+        replyWithPayload(message, store.graphToString(result.get(), RDFSyntax.TURTLE));
+      } else {
+        replyFailed(message);
+      }
+    } else {
+      replyEntityNotFound(message);
+    }
+  }
+  
+  private void handleDeleteEntity(IRI requestIRI, Message<String> message) throws IllegalArgumentException, IOException {
+    Optional<Graph> result = store.getEntityGraph(requestIRI);
+    
+    if (result.isPresent() && result.get().size() > 0) {
+      String entityGraphStr = store.graphToString(result.get(), RDFSyntax.TURTLE);
+      store.deleteEntityGraph(requestIRI);
+      replyWithPayload(message, entityGraphStr);
+    } else {
+      replyEntityNotFound(message);
     }
   }
   

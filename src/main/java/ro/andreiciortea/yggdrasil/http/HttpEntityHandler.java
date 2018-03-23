@@ -30,7 +30,7 @@ public class HttpEntityHandler {
     String entityIri = routingContext.request().absoluteURI();
     
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI, entityIri);
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
     
     vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
@@ -42,11 +42,11 @@ public class HttpEntityHandler {
     String slug = routingContext.request().getHeader("Slug");
     
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI, entityIri)
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
         .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
         .setPayload(entityRepresentation);
     
-    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
   }
   
   public void handlePatchEntity(RoutingContext routingContext) {
@@ -54,19 +54,30 @@ public class HttpEntityHandler {
   }
   
   public void handleUpdateEntity(RoutingContext routingContext) {
-    // TODO
+    String entityIri = routingContext.request().absoluteURI();
+    String entityRepresentation = routingContext.getBodyAsString();
+    
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.UPDATE_ENTITY)
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
+        .setPayload(entityRepresentation);
+    
+    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
   
   public void handleDeleteEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DELETE_ENTITY)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI, entityIri);
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
     
     vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
   
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
+    return handleStoreReply(routingContext, HttpStatus.SC_OK);
+  }
+  
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext, int succeededStatusCode) {
     return reply -> {
       if (reply.succeeded()) {
         EventBusMessage response = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
@@ -74,7 +85,7 @@ public class HttpEntityHandler {
         if (response.succeded()) {
           LOGGER.info("Response succeeeded!");
           routingContext.response()
-            .setStatusCode(HttpStatus.SC_OK)
+            .setStatusCode(succeededStatusCode)
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
             .end(response.getPayload());
         } else if (response.entityNotFound()) {

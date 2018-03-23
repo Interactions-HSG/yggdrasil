@@ -55,45 +55,26 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void createEntityGraph(IRI entityIri, Graph entityGraph) {
-//    LOGGER.info("Dataset size before addition: " + dataset.size());
-    
     if (entityGraph instanceof RDF4JGraph) {
-      try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
-        stream.forEach(triple -> {
-//          LOGGER.info("Adding quad: " + entityIri.ntriplesString() 
-//              + " " + triple.getSubject().ntriplesString() 
-//              + " " + triple.getPredicate().ntriplesString()
-//              + " " + triple.getObject().ntriplesString());
-          
-          dataset.add(entityIri, triple.getSubject(), triple.getPredicate(), triple.getObject());
-        });
-      }
-      
-//      LOGGER.info("Dataset size after addition: " + dataset.size());
+      addEntityGraph(entityIri, entityGraph);
     } else {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
     }
   }
   
   @Override
-  public Optional<Graph> patchEntityGraph(IRI entityIri, Graph addedTriples, Graph removedTriples) {
-    // TODO Auto-generated method stub
-    return Optional.empty();
+  public void updateEntityGraph(IRI entityIri, Graph entityGraph) {
+    if (entityGraph instanceof RDF4JGraph) {
+      deleteEntityGraph(entityIri);
+      addEntityGraph(entityIri, entityGraph);
+    } else {
+      throw new IllegalArgumentException("Unsupported RDF graph implementation");
+    }
   }
   
   @Override
-  public Optional<Graph> updateEntityGraph(IRI entityIri, Graph entityGraph) {
-    // TODO Auto-generated method stub
-    return Optional.empty();
-  }
-  
-  @Override
-  public Optional<Graph> deleteEntityGraph(IRI entityIri) {
-    Optional<Graph> entityGraph = getEntityGraph(entityIri);
-    
+  public void deleteEntityGraph(IRI entityIri) {
     dataset.remove(Optional.of(entityIri), null, null, null);
-    
-    return entityGraph;
   }
   
   @Override
@@ -158,4 +139,11 @@ public class Rdf4jStore implements RdfStore {
     return rdfImpl.asGraph(model);
   }
   
+  private void addEntityGraph(IRI entityIri, Graph entityGraph) {
+    try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
+      stream.forEach(triple -> {
+        dataset.add(entityIri, triple.getSubject(), triple.getPredicate(), triple.getObject());
+      });
+    }
+  }
 }

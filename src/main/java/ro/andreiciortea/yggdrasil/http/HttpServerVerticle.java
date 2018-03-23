@@ -5,8 +5,6 @@ import org.apache.http.HttpStatus;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
@@ -14,8 +12,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   public static final String DEFAULT_HOST = "localhost";
   public static final int DEFAULT_PORT = 8080;
-  
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class.getCanonicalName());
   
   @Override
   public void start() {
@@ -48,9 +44,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     
     HttpEntityHandler handler = new HttpEntityHandler();
     
-    router.post("/environments/").handler(handler::handleCreateEntity);
     router.get("/environments/:envid").handler(handler::handleGetEntity);
-//    router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
+    router.post("/environments/").handler(handler::handleCreateEntity);
+    router.put("/environments/:envid").handler(handler::handleUpdateEntity);
+    router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
 
     router.post("/environments/:envid/workspaces/").handler(handler::handleCreateEntity);
     router.get("/environments/:envid/workspaces/:wkspid").handler(handler::handleGetEntity);

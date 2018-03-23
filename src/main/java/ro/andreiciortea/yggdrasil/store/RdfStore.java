@@ -13,13 +13,11 @@ public interface RdfStore {
   
   Optional<Graph> getEntityGraph(IRI entityIRI);
   
-  void createEntityGraph(IRI entityIRI, Graph entityGraph) throws IllegalArgumentException, IOException;;
+  void createEntityGraph(IRI entityIRI, Graph entityGraph) throws IllegalArgumentException;
   
-  Optional<Graph> patchEntityGraph(IRI entityIRI, Graph addedTriples, Graph removedTriples);
+  void updateEntityGraph(IRI entityIRI, Graph entityGraph) throws IllegalArgumentException;
   
-  Optional<Graph> updateEntityGraph(IRI entityIRI, Graph entityGraph);
-  
-  Optional<Graph> deleteEntityGraph(IRI entityIRI);
+  void deleteEntityGraph(IRI entityIRI);
   
   IRI createIRI(String iriString) throws IllegalArgumentException;
   
