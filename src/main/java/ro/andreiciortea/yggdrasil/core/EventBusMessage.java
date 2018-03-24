@@ -10,7 +10,8 @@ public class EventBusMessage {
   
   public static enum MessageType {
     GET_ENTITY, CREATE_ENTITY, PATCH_ENTITY, UPDATE_ENTITY, DELETE_ENTITY,
-    STORE_REPLY
+    STORE_REPLY,
+    ENTITY_CREATED_NOTIFICATION, ENTITY_CHANGED_NOTIFICATION, ENTITY_DELETED_NOTIFICATION
   }
   
   public static enum Headers {
@@ -48,8 +49,12 @@ public class EventBusMessage {
     return this;
   }
   
-  public String getPayload() {
-    return this.payload;
+  public Optional<String> getPayload() {
+    if (payload == null) {
+      return Optional.empty();
+    }
+    
+    return Optional.of(payload);
   }
   
   public EventBusMessage setPayload(String payload) {

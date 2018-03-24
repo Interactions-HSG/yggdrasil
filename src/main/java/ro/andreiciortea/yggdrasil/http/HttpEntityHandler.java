@@ -2,10 +2,8 @@ package ro.andreiciortea.yggdrasil.http;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -22,7 +20,8 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
-import ro.andreiciortea.yggdrasil.store.RdfStoreVerticle;
+import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
+import ro.andreiciortea.yggdrasil.core.SubscriberRegistry;
 
 public class HttpEntityHandler {
   
@@ -30,7 +29,6 @@ public class HttpEntityHandler {
   private Vertx vertx;
   
   private String webSubHubIRI = null;
-  private Map<String,Set<String>> subscriptions;
   
   public HttpEntityHandler() {
     vertx = Vertx.currentContext().owner();
@@ -39,7 +37,6 @@ public class HttpEntityHandler {
     
     if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
       webSubHubIRI = httpConfig.getString("websub-hub");
-      subscriptions = new HashMap<String,Set<String>>();
     }
   }
   
@@ -59,7 +56,7 @@ public class HttpEntityHandler {
           );
     }
     
-    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, 
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, 
         message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
   }
   
@@ -74,7 +71,7 @@ public class HttpEntityHandler {
         .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
         .setPayload(entityRepresentation);
     
-    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
   }
   
   public void handlePatchEntity(RoutingContext routingContext) {
@@ -89,7 +86,7 @@ public class HttpEntityHandler {
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
         .setPayload(entityRepresentation);
     
-    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
   
   public void handleDeleteEntity(RoutingContext routingContext) {
@@ -98,7 +95,7 @@ public class HttpEntityHandler {
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DELETE_ENTITY)
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
     
-    vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
   
   public void handleEntitySubscription(RoutingContext routingContext) {
@@ -108,27 +105,17 @@ public class HttpEntityHandler {
     String entityIRI = subscribeRequest.getString("hub.topic");
     String callbackIRI = subscribeRequest.getString("hub.callback");
     
-    Set<String> callbacks = subscriptions.get(entityIRI);
-    
-    if (callbacks == null) {
-      callbacks = new HashSet<String>();
-      subscriptions.put(entityIRI, callbacks);
-    }
-    
     if (mode.equalsIgnoreCase("subscribe")) {
       EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
           .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI);
       
-      vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(),
+      vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(),
           reply -> {
             if (reply.succeeded()) {
               EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
               
               if (storeReply.succeded()) {
-                Set<String> callbackIRIs = subscriptions.get(entityIRI);
-                callbackIRIs.add(callbackIRI);
-                subscriptions.put(entityIRI, callbackIRIs);
-                
+                SubscriberRegistry.getInstance().addCallbackIRI(entityIRI, callbackIRI);
                 routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
               }
               else if (storeReply.entityNotFound()) {
@@ -144,9 +131,7 @@ public class HttpEntityHandler {
           });
     }
     else if (mode.equalsIgnoreCase("unsubscribe")) {
-      callbacks.remove(callbackIRI);
-      subscriptions.put(entityIRI, callbacks);
-      
+      SubscriberRegistry.getInstance().removeCallbackIRI(entityIRI, callbackIRI);
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     }
     else {
@@ -181,7 +166,11 @@ public class HttpEntityHandler {
             httpResponse.putHeader(k, v);
           });
           
-          httpResponse.end(storeReply.getPayload());
+          if (storeReply.getPayload().isPresent()) {
+            httpResponse.end(storeReply.getPayload().get());
+          } else {
+            httpResponse.end();
+          }
         }
         else if (storeReply.entityNotFound()) {
           routingContext.fail(HttpStatus.SC_NOT_FOUND);
