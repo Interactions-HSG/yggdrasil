@@ -2,8 +2,10 @@ package ro.andreiciortea.yggdrasil.http;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -28,14 +30,16 @@ public class HttpEntityHandler {
   private Vertx vertx;
   
   private String webSubHubIRI = null;
+  private Map<String,Set<String>> subscriptions;
   
   public HttpEntityHandler() {
     vertx = Vertx.currentContext().owner();
     
     JsonObject httpConfig = Vertx.currentContext().config().getJsonObject("http-config");
     
-    if (httpConfig != null) {
+    if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
       webSubHubIRI = httpConfig.getString("websub-hub");
+      subscriptions = new HashMap<String,Set<String>>();
     }
   }
   
@@ -97,6 +101,60 @@ public class HttpEntityHandler {
     vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
   
+  public void handleEntitySubscription(RoutingContext routingContext) {
+    JsonObject subscribeRequest = routingContext.getBodyAsJson();
+    
+    String mode = subscribeRequest.getString("hub.mode");
+    String entityIRI = subscribeRequest.getString("hub.topic");
+    String callbackIRI = subscribeRequest.getString("hub.callback");
+    
+    Set<String> callbacks = subscriptions.get(entityIRI);
+    
+    if (callbacks == null) {
+      callbacks = new HashSet<String>();
+      subscriptions.put(entityIRI, callbacks);
+    }
+    
+    if (mode.equalsIgnoreCase("subscribe")) {
+      EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
+          .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI);
+      
+      vertx.eventBus().send(RdfStoreVerticle.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(),
+          reply -> {
+            if (reply.succeeded()) {
+              EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
+              
+              if (storeReply.succeded()) {
+                Set<String> callbackIRIs = subscriptions.get(entityIRI);
+                callbackIRIs.add(callbackIRI);
+                subscriptions.put(entityIRI, callbackIRIs);
+                
+                routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+              }
+              else if (storeReply.entityNotFound()) {
+                routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+              }
+              else {
+                routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+              }
+            }
+            else {
+              routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+            }
+          });
+    }
+    else if (mode.equalsIgnoreCase("unsubscribe")) {
+      callbacks.remove(callbackIRI);
+      subscriptions.put(entityIRI, callbacks);
+      
+      routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+    }
+    else {
+      routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+    }
+    
+  }
+  
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
     return handleStoreReply(routingContext, HttpStatus.SC_OK);
   }
@@ -124,17 +182,19 @@ public class HttpEntityHandler {
           });
           
           httpResponse.end(storeReply.getPayload());
-        } else if (storeReply.entityNotFound()) {
+        }
+        else if (storeReply.entityNotFound()) {
           routingContext.fail(HttpStatus.SC_NOT_FOUND);
-        } else {
+        }
+        else {
           LOGGER.error(storeReply.getHeader(EventBusMessage.Headers.REPLY_STATUS));
           routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         }
-      } else {
+      }
+      else {
         LOGGER.error("Reply failed! " + reply.cause().getMessage());
         routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
       }
     };
   }
-  
 }

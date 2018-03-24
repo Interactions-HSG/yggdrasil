@@ -52,6 +52,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/environments/:envid/workspaces/").handler(handler::handleCreateEntity);
     router.get("/environments/:envid/workspaces/:wkspid").handler(handler::handleGetEntity);
     
+    router.post("/hub/").handler(handler::handleEntitySubscription);
+    
 //    router.get("/environments/:envid/workspaces/:wkspid").handler((routingContext) -> {
 //      String requestUri = routingContext.request().absoluteURI();
 //      routingContext.response().setStatusCode(HttpStatus.SC_OK).end("Workspace URI: " + requestUri);
