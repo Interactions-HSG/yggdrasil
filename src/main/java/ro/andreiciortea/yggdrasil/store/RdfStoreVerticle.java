@@ -86,13 +86,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
     if (!request.getPayload().isPresent()) {
       replyFailed(message);
     } else {
+      // Replace all null relative IRIs with the IRI generated for this entity
+      String entityGraphStr = request.getPayload().get();
+      entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
+      
       Graph entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);
       store.createEntityGraph(entityIRI, entityGraph);
-      
-      String entityGraphStr = store.graphToString(entityGraph, RDFSyntax.TURTLE);
       replyWithPayload(message, entityGraphStr);
-      
-      LOGGER.info("Sending create notification for " + entityIRIString);
       
       vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
           new EventBusMessage(EventBusMessage.MessageType.ENTITY_CREATED_NOTIFICATION)
