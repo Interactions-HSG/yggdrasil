@@ -38,9 +38,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.get("/").handler((routingContext) -> {
       routingContext.response()
         .setStatusCode(HttpStatus.SC_OK)
-        .end("Hello Vert.x!");
+        .end("Yggdrasil v0.0");
     });
-    
     
     HttpEntityHandler handler = new HttpEntityHandler();
     
@@ -49,15 +48,17 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/environments/:envid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
 
-    router.post("/environments/:envid/workspaces/").handler(handler::handleCreateEntity);
-    router.get("/environments/:envid/workspaces/:wkspid").handler(handler::handleGetEntity);
+    router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
+    router.post("/workspaces/").handler(handler::handleCreateEntity);
+    router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
+    router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
+    
+    router.get("/artifacts/:artid").handler(handler::handleGetEntity);
+    router.post("/artifacts/").handler(handler::handleCreateEntity);
+    router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
+    router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
     
     router.post("/hub/").handler(handler::handleEntitySubscription);
-    
-//    router.get("/environments/:envid/workspaces/:wkspid").handler((routingContext) -> {
-//      String requestUri = routingContext.request().absoluteURI();
-//      routingContext.response().setStatusCode(HttpStatus.SC_OK).end("Workspace URI: " + requestUri);
-//    });
     
     return router;
   }
