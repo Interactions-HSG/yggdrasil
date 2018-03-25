@@ -2,11 +2,19 @@ package ro.andreiciortea.yggdrasil.http;
 
 import org.apache.http.HttpStatus;
 
+import com.google.common.net.HttpHeaders;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import ro.andreiciortea.yggdrasil.core.EventBusMessage;
+import ro.andreiciortea.yggdrasil.core.EventBusMessage.Headers;
+import ro.andreiciortea.yggdrasil.core.EventBusMessage.MessageType;
+import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -59,6 +67,24 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
     
     router.post("/hub/").handler(handler::handleEntitySubscription);
+    
+    
+    // TODO: the following feature is added just for demo purposes
+    router.post("/events/").handler(routingContext -> {
+      String artifactIRI = routingContext.request().getHeader(HttpHeaders.LINK);
+      
+      Logger logger = LoggerFactory.getLogger(this.getClass().getName());
+      logger.info("Got event for " + artifactIRI);
+      
+      EventBusMessage notification = new EventBusMessage(MessageType.ENTITY_CHANGED_NOTIFICATION)
+                                            .setHeader(Headers.REQUEST_IRI, artifactIRI)
+                                            .setPayload(routingContext.getBodyAsString());
+      
+      vertx.eventBus()
+        .publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, notification.toJson());
+      
+      routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+    });
     
     return router;
   }
