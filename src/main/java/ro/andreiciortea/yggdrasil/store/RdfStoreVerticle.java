@@ -94,7 +94,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
       
-      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
+      vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
           new EventBusMessage(EventBusMessage.MessageType.ENTITY_CREATED_NOTIFICATION)
             .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRIString)
             .setPayload(entityGraphStr)
@@ -123,7 +123,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
           
-          vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
+          vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
               new EventBusMessage(EventBusMessage.MessageType.ENTITY_CHANGED_NOTIFICATION)
                 .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestIRI.getIRIString())
                 .setPayload(entityGraphStr)
@@ -146,7 +146,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       store.deleteEntityGraph(requestIRI);
       replyWithPayload(message, entityGraphStr);
       
-      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
+      vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
           new EventBusMessage(EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION)
             .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestIRI.getIRIString())
             .setPayload(entityGraphStr)
