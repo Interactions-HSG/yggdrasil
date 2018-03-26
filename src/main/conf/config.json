@@ -1,0 +1,5 @@
+{
+	"http-config" : {
+		"websub-hub" : "http://localhost:8080/hub"
+	}
+}
