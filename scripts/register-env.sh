@@ -16,7 +16,7 @@ curl -i -X POST \
   -H 'content-type: text/turtle' \
   -H 'slug: wksp1' \
   -d '<> a <http://w3id.org/eve#Workspace> ;
-<http://w3id.org/eve#hasName> "testWorkspace" ;
+<http://w3id.org/eve#hasName> "wksp1" ;
 <http://w3id.org/eve#contains> <http://localhost:8080/artifacts/hue1> ;
 <http://w3id.org/eve#contains> <http://localhost:8080/artifacts/event-gen> .'
 
