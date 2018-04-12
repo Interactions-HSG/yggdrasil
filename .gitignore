@@ -2,6 +2,8 @@
 build/
 bin/
 .settings
+.classpath
+.project
 
 # Ignore VertX file cache
 .vertx/
