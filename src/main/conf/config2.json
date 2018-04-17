@@ -1,0 +1,6 @@
+{
+	"http-config" : {
+		"port" : 8085,
+		"websub-hub" : "http://localhost:8085/hub"
+	}
+}

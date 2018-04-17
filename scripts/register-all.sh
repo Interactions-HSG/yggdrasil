@@ -27,10 +27,7 @@ curl -i -X POST \
   http://localhost:8080/artifacts/ \
   -H 'content-type: text/turtle' \
   -H 'slug: hue1' \
-  -d '<> a <http://w3id.org/eve#Artifact> ;
-<http://w3id.org/eve#hasName> "hue1" ;
-<http://w3id.org/eve#hasCartagoArtifact> "emas.HueArtifact" ;
-<http://w3id.org/eve#hasInitParam> <http://192.168.0.101/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/lights/2/state> .'
+  --data-binary '@light.ttl'
 
 sleep 1
 
