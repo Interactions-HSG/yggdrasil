@@ -50,8 +50,11 @@
       td:rel "invokeAction"^^xsd:string
     ] ;
     td:inputSchema [
-      a iot:CIExyData ;
       td:schemaType td:Object ;
+      td:field [
+        td:name "on"^^xsd:string ;
+        td:schema [ td:schemaType td:Boolean; td:const true ]
+      ] ;
       td:field [
         td:name "xy"^^xsd:string ;
         td:schema [
