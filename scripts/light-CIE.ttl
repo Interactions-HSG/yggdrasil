@@ -7,13 +7,13 @@
 <>
   a td:Thing, eve:Artifact, iot:Light, iot:BinarySwitch ;
   td:name "Lamp"^^xsd:string ;
-  td:base "http://192.168.0.101/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/lights/3/"^^xsd:anyURI ;
+  td:base "http://192.168.0.101/"^^xsd:anyURI ;
   td:interaction [
     a td:Action, iot:SwitchOn ;
     td:name "Switch On"^^xsd:string ;
     td:form [
       http:methodName "PUT"^^xsd:string ;
-      td:href "/state"^^xsd:anyURI ;
+      td:href "/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/lights/3/state"^^xsd:anyURI ;
       td:mediaType "application/json"^^xsd:string ;
       td:rel "invokeAction"^^xsd:string
     ] ;
@@ -29,7 +29,7 @@
     td:name "Switch Off"^^xsd:string ;
     td:form [
       http:methodName "PUT"^^xsd:string ;
-      td:href "/state"^^xsd:anyURI ;
+      td:href "/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/lights/3/state"^^xsd:anyURI ;
       td:mediaType "application/json"^^xsd:string ;
       td:rel "invokeAction"^^xsd:string
     ] ;
@@ -45,7 +45,7 @@
     td:name "Set Color"^^xsd:string ;
     td:form [
       http:methodName "PUT"^^xsd:string ;
-      td:href "/state"^^xsd:anyURI ;
+      td:href "/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/lights/3/state"^^xsd:anyURI ;
       td:mediaType "application/json"^^xsd:string ;
       td:rel "invokeAction"^^xsd:string
     ] ;
@@ -56,7 +56,7 @@
         td:name "xy"^^xsd:string ;
         td:schema [
           td:schemaType td:Array ;
-          td:items [ td:schemaType td:Number ], [ td:schemaType td:Number ]
+          td:items [ a iot:CIExData; td:schemaType td:Number ], [ a iot:CIEyData; td:schemaType td:Number ]
         ]
       ]
     ]
