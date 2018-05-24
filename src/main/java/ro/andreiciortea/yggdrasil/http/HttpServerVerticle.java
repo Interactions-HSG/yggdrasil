@@ -18,7 +18,7 @@ import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
-  public static final String DEFAULT_HOST = "localhost";
+  public static final String DEFAULT_HOST = "0.0.0.0";
   public static final int DEFAULT_PORT = 8080;
   
   @Override
