@@ -35,7 +35,7 @@ To start an Yggdrasil node:
 java -jar build/libs/yggdrasill-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config1.json
 ----
 
-The configuration file is optional. Default port: `8080`.
+The configuration file is optional. Open your browser to http://localhost:8080. You should see an `Yggdrasil v0.0` message.
 
 
 == HTTP API Overview
