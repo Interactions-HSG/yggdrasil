@@ -1,11 +1,8 @@
 = Yggdrasil
 
-A platform for _hypermedia multi-agent systems (MAS)_ (see [1]) built with https://vertx.io/[Vert.x].
-
-The current prototype implementation provides two core functionalities:
+A platform for _hypermedia multi-agent systems (MAS)_ (see [1]) built with https://vertx.io/[Vert.x]. The current prototype implementation provides two core functionalities:
 
 * it servers as a repository for hypermedia environments that conform to the _Agents & Artifacts_ meta-model [2]
-
 * it acts as a hub that partially implements the https://www.w3.org/TR/2018/REC-websub-20180123/[W3C WebSub recommendation].
 
 [1] Andrei Ciortea, Olivier Boissier, and Alessandro Ricci. Engineering World-Wide Multi-Agent Systems with Hypermedia. In Engineering Multi-Agent Systems (V. Mascardi, A. Ricci, and D. Weyns,eds.), Springer International Publishing, 2018. To appear.
@@ -23,10 +20,10 @@ The current prototype implementation provides two core functionalities:
 To build the project, just use:
 
 ----
-./gradlew shadowJar
+./gradlew
 ----
 
-It generates a _fat-jar_ in the `build/libs` directory.
+The default Gradle task `shadowJar` generates a _fat-jar_ in the `build/libs` directory.
 
 
 == Running Yggdrasil
@@ -39,3 +36,56 @@ java -jar build/libs/yggdrasill-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config1
 ----
 
 The configuration file is optional. Default port: `8080`.
+
+
+== HTTP API Overview
+
+The HTTP API implements CRUD operations for 3 types of resources:
+
+* environments (URI template: `/environments/<end_id>`)
+* workspaces (URI template: `/workspaces/<end_id>`)
+* artifacts (URI template: `/artifacts/<end_id>`)
+
+`POST` and `PUT` requests use http://www.w3.org/TR/2014/REC-turtle-20140225/[Turtle] payloads (current implementation only validates payload syntax).
+
+`POST` requests can use the `Slug` header (see https://tools.ietf.org/html/rfc5023#section-9.7[RFC5023]) to hint a preferred IRI for a resource to be created. If the IRI is not already used, it will be minted to the created resource.
+
+When creating a resource via `POST`, the resource to be created is identified in the Turtle payload via a null relative IRI:
+
+[source]
+----
+curl -i -X POST \
+  http://localhost:8080/environments/ \
+  -H 'content-type: text/turtle' \
+  -H 'slug: env1' \
+  -d '<> a <http://w3id.org/eve#Environment> ;
+<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .'
+----
+
+When retrieving the representation of a resource from Yggdrasil, the HTTP response contains 2 `Link` headers that clients can use to subscribe for receiving notifications whenever the resource is updated (see the https://www.w3.org/TR/2018/REC-websub-20180123/[W3C WebSub recommendation]). Sample request:
+
+[source]
+----
+GET /workspaces/wksp1 HTTP/1.1
+Host: yggdrasill.andreiciortea.ro
+
+HTTP/1.1 200 OK
+Content-Type: text/turtle
+Link: <http://yggdrasill.andreiciortea.ro/hub>; rel="hub"
+Link: <http://yggdrasill.andreiciortea.ro/workspaces/wksp1>; rel="self"
+
+<http://yggdrasill.andreiciortea.ro/workspaces/wksp1> 
+  a <http://w3id.org/eve#Workspace> ;
+  <http://w3id.org/eve#hasName> "wksp1" ;
+  <http://w3id.org/eve#contains>
+    <http://85.204.10.233:8080/artifacts/hue1> ,
+    <http://yggdrasill.andreiciortea.ro/artifacts/event-gen> .
+----
+
+Using the discovered hub and topic IRIs, a client can subscribe for notification via a `POST` request that contains a JSON payload with the following fields (see the https://www.w3.org/TR/2018/REC-websub-20180123/[W3C WebSub recommendation]):
+ 
+ * `hub.mode`
+ * `hub.topic`
+ * `hub.callback`
+
+When a resource is updated, Yggdrasil issues `POST` requests with its updated representation to all registered callbacks.  
