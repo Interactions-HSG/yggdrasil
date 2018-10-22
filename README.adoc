@@ -42,13 +42,13 @@ The configuration file is optional. Open your browser to http://localhost:8080. 
 
 The HTTP API implements CRUD operations for 3 types of resources:
 
-* environments (URI template: `/environments/<end_id>`)
-* workspaces (URI template: `/workspaces/<end_id>`)
-* artifacts (URI template: `/artifacts/<end_id>`)
+* environments (URI template: `/environments/<env_id>`)
+* workspaces (URI template: `/workspaces/<wksp_id>`)
+* artifacts (URI template: `/artifacts/<art_id>`)
 
 `POST` and `PUT` requests use http://www.w3.org/TR/2014/REC-turtle-20140225/[Turtle] payloads (current implementation only validates payload syntax).
 
-`POST` requests can use the `Slug` header (see https://tools.ietf.org/html/rfc5023#section-9.7[RFC5023]) to hint a preferred IRI for a resource to be created. If the IRI is not already used, it will be minted to the created resource.
+`POST` requests can use the `Slug` header (see https://tools.ietf.org/html/rfc5023#section-9.7[RFC5023]) to hint at a preferred IRI for a resource to be created. If the IRI is not already in use, it will be minted to the created resource.
 
 When creating a resource via `POST`, the resource to be created is identified in the Turtle payload via a null relative IRI:
 
@@ -88,4 +88,4 @@ Using the discovered hub and topic IRIs, a client can subscribe for notification
  * `hub.topic`
  * `hub.callback`
 
-When a resource is updated, Yggdrasil issues `POST` requests with its updated representation to all registered callbacks.  
+When a resource is updated, Yggdrasil issues `POST` requests with the (updated) resource representation to all registered callbacks.
