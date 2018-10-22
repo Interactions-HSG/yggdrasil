@@ -1,0 +1,41 @@
+= Yggdrasil
+
+A platform for _hypermedia multi-agent systems (MAS)_ (see [1]) built with https://vertx.io/[Vert.x].
+
+The current prototype implementation provides two core functionalities:
+
+* it servers as a repository for hypermedia environments that conform to the _Agents & Artifacts_ meta-model [2]
+
+* it acts as a hub that partially implements the https://www.w3.org/TR/2018/REC-websub-20180123/[W3C WebSub recommendation].
+
+[1] Andrei Ciortea, Olivier Boissier, and Alessandro Ricci. Engineering World-Wide Multi-Agent Systems with Hypermedia. In Engineering Multi-Agent Systems (V. Mascardi, A. Ricci, and D. Weyns,eds.), Springer International Publishing, 2018. To appear.
+
+[2] Alessandro Ricci, Michele Piunti, and Mirko Viroli. Environment Programming in multi-agent systems: an artifact-based perspective. Autonomous Agents and Multi-Agent Systems, 23(2):158{192, Sep 2011.
+
+
+== Prerequisites
+
+* JDK 8+
+
+
+== Building the project
+
+To build the project, just use:
+
+----
+./gradlew shadowJar
+----
+
+It generates a _fat-jar_ in the `build/libs` directory.
+
+
+== Running Yggdrasil
+
+To start an Yggdrasil node:
+
+[source]
+----
+java -jar build/libs/yggdrasill-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config1.json
+----
+
+The configuration file is optional. Default port: `8080`.
