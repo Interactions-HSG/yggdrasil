@@ -9,11 +9,14 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
-import ro.andreiciortea.yggdrasil.mas.Artifact;
-import ro.andreiciortea.yggdrasil.mas.ArtifactDeserializer;
+import ro.andreiciortea.yggdrasil.environment.Action;
+import ro.andreiciortea.yggdrasil.environment.Artifact;
+import ro.andreiciortea.yggdrasil.environment.ArtifactDeserializer;
 import ro.andreiciortea.yggdrasil.store.RdfStoreVerticle;
 
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.UUID;
 
 
 public class TdStoreVerticle extends AbstractVerticle {
@@ -43,6 +46,10 @@ public class TdStoreVerticle extends AbstractVerticle {
       switch (request.getMessageType()) {
         case CREATE_ARTIFACT_ENTITY:
           handleCreateEntity(requestIRIString, request, message);
+          break;
+        case ACTIONS_ENTITY:
+          handleArtifactActions(requestIRIString, message);
+          break;
       }
     }
     catch (IllegalArgumentException e) {
@@ -57,7 +64,14 @@ public class TdStoreVerticle extends AbstractVerticle {
    * @param message
    */
   private void handleCreateEntity(String requestIRI, EventBusMessage request, Message<String> message) {
-    System.out.println("create artifact from json");
+    String id;
+
+    Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
+    if (slug.isPresent()) {
+      id = requestIRI.concat("/").concat(slug.get());
+    } else {
+      id = UUID.randomUUID().toString();
+    }
 
     if (request.getPayload().isPresent()) {
       Gson gson =
@@ -65,10 +79,32 @@ public class TdStoreVerticle extends AbstractVerticle {
           .registerTypeAdapter(Artifact.class, new ArtifactDeserializer())
           .create();
       Artifact artifact = gson.fromJson(request.getPayload().get(), Artifact.class);
-      store.put(requestIRI, artifact);
+      store.put(id, artifact);
+
+      Gson responseBuidler = new Gson();
+      EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY_JSON)
+        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
+        .setPayload(responseBuidler.toJson(artifact));
+
+      message.reply(response.toJson());
     } else {
       replyFailed(message);
     }
+  }
+
+  private void handleArtifactActions(String artifactIRI, Message<String> message) {
+    System.out.println("Get artifact actions");
+    Artifact target = store.get(artifactIRI);
+    if (target == null) {
+      replyFailed(message);
+    }
+    Action[] actions = target.getActions();
+    Gson gson = new Gson();
+    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY_JSON)
+      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
+      .setPayload(gson.toJson(actions));
+
+    message.reply(response.toJson());
   }
 
   private void replyFailed(Message<String> message) {

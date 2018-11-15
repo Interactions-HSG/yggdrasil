@@ -1,6 +1,6 @@
-package ro.andreiciortea.yggdrasil.mas;
+package ro.andreiciortea.yggdrasil.environment;
 
-import com.google.gson.Gson;
+import org.mapdb.Atomic;
 
 /**
  * class representing an artifact, can be created from w3c thing description
@@ -21,6 +21,15 @@ public class Artifact {
     this.properties = properties;
     this.actions = actions;
     this.events = events;
+  }
+
+  public String[] getActionsAPI() {
+    String[] result = new String[actions.length];
+    for (int i = 0; i < result.length ; i++) {
+      Action a = actions[i];
+      result[i] = a.getApi();
+    }
+    return result;
   }
 
   public String getId() {

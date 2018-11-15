@@ -1,20 +1,22 @@
-package ro.andreiciortea.yggdrasil.mas;
+package ro.andreiciortea.yggdrasil.environment;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-public class Action {
+public class Property {
 
   private String name;
   private String type;
   private String description;
+  private boolean writable;
   private JsonElement forms;
   private JsonObject original;
 
-  public Action(String name, String type, String description, JsonElement forms, JsonObject original) {
+  public Property(String name, String type, String description, boolean writable, JsonElement forms, JsonObject original) {
     this.name = name;
     this.type = type;
     this.description = description;
+    this.writable = writable;
     this.forms = forms;
     this.original = original;
   }
@@ -41,6 +43,14 @@ public class Action {
 
   public void setDescription(String description) {
     this.description = description;
+  }
+
+  public boolean isWritable() {
+    return writable;
+  }
+
+  public void setWritable(boolean writable) {
+    this.writable = writable;
   }
 
   public JsonElement getForms() {

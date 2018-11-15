@@ -167,11 +167,10 @@ public class HttpEntityHandler {
   public void handleArtifactGetAction(RoutingContext routingContext) {
 	  String reqeuestIri = routingContext.request().absoluteURI();
 	  String entityIri = reqeuestIri.replace("/actions/", "/");
-	  LOGGER.info("Get artifact actions for " + entityIri);
 	  EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.ACTIONS_ENTITY)
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
 
-	  vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+	  vertx.eventBus().send(EventBusRegistry.TD_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {

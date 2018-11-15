@@ -1,4 +1,4 @@
-package ro.andreiciortea.yggdrasil.mas;
+package ro.andreiciortea.yggdrasil.environment;
 
 import com.google.gson.*;
 

@@ -1,4 +1,4 @@
-package ro.andreiciortea.yggdrasil.mas;
+package ro.andreiciortea.yggdrasil.environment;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
@@ -74,11 +74,12 @@ public class ArtifactDeserializer implements JsonDeserializer<Artifact>
       eventList = eventBuilder.fromJson(eventsJson, eventListType);
     } else {
       eventList = new ArrayList<>();
-      Event event = actionBuilder.fromJson(eventsJson, Event.class);
+      Event event = eventBuilder.fromJson(eventsJson, Event.class);
+      eventList.add(event);
     }
 
     Event[] eventArray = new Event[eventList.size()];
-    eventArray = actionList.toArray(eventArray);
+    eventArray = eventList.toArray(eventArray);
 
     return new Artifact(idString, nameString, propertyArray, actionArray, eventArray);
   }
