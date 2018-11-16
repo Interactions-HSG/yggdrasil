@@ -1,7 +1,11 @@
 openapi: 3.0.0
 info:
-  description: A platform for hypermedia multi-agent systems (MAS).
-  version: '0.0'
+  description: A platform for hypermedia multi-agent systems (MAS).\
+
+                The endpoints after `artifacts/{id}/...` are under control of the developer programming the artifacts (using annotations).
+                We provide a fallback in case the code is not annotated or the artifact is external.
+                The endpoints `artifacts/templates/...`, `workspaces` and `workspaces/id` are *fixed* by Yggdrasil.
+  version: '0.0' 
   title: Yggdrasil
 
 servers:
@@ -588,6 +592,7 @@ components:
 
     ArtifactPayloadTurtle:
       type: string
+      example: Artifact representation in Turtle
 
     WorkspacePayloadJson:
       type: object
@@ -629,6 +634,7 @@ components:
 
     WorkspacePayloadTurtle:
       type: string
+      example: Workspace representation in Turtle
 
   responses:
     InternalServer:
