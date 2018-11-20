@@ -7,15 +7,13 @@ public class Action {
 
   private String name;
   private String type;
-  private String api;
   private String description;
   private JsonElement forms;
   private JsonObject original;
 
-  public Action(String artifactId, String name, String type, String description, JsonElement forms, JsonObject original) {
+  public Action(String name, String type, String description, JsonElement forms, JsonObject original) {
     this.name = name;
     this.type = type;
-    this.api = artifactId.concat("/").concat(name);
     this.description = description;
     this.forms = forms;
     this.original = original;
@@ -61,11 +59,4 @@ public class Action {
     this.original = original;
   }
 
-  public String getApi() {
-    return api;
-  }
-
-  public void setApi(String api) {
-    this.api = api;
-  }
 }

@@ -23,15 +23,6 @@ public class Artifact {
     this.events = events;
   }
 
-  public String[] getActionsAPI() {
-    String[] result = new String[actions.length];
-    for (int i = 0; i < result.length ; i++) {
-      Action a = actions[i];
-      result[i] = a.getApi();
-    }
-    return result;
-  }
-
   public String getId() {
     return id;
   }

@@ -65,12 +65,14 @@ public class HttpEntityHandler {
   public void handleCreateEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     String entityRepresentation = routingContext.getBodyAsString();
+    String contentType = routingContext.request().getHeader("Content-Type");
 
     String slug = routingContext.request().getHeader("Slug");
 
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
         .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
+        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType)
         .setPayload(entityRepresentation);
 
     vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));

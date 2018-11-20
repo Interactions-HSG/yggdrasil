@@ -16,7 +16,7 @@ public class EventBusMessage {
   }
 
   public static enum Headers {
-    REQUEST_IRI, ENTITY_IRI_HINT,
+    REQUEST_IRI, ENTITY_IRI_HINT, REQUEST_CONTENT_TYPE,
     REPLY_STATUS
   }
 

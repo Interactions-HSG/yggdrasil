@@ -6,10 +6,7 @@ import java.io.StringReader;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.rdf.api.Dataset;
-import org.apache.commons.rdf.api.Graph;
-import org.apache.commons.rdf.api.IRI;
-import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.*;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JGraph;
 import org.apache.commons.rdf.rdf4j.RDF4JTriple;
@@ -32,22 +29,22 @@ import ro.andreiciortea.yggdrasil.store.RdfStore;
 public class Rdf4jStore implements RdfStore {
 
 //  private final static Logger LOGGER = LoggerFactory.getLogger(Rdf4jStore.class.getName());
-  
+
   private RDF4J rdfImpl;
   private Dataset dataset;
-  
+
   public Rdf4jStore() {
     Repository repository = new SailRepository(new MemoryStore());
-    
+
     rdfImpl = new RDF4J();
     dataset = rdfImpl.asDataset(repository, RDF4J.Option.handleInitAndShutdown);
   }
-  
+
   @Override
   public boolean containsEntityGraph(IRI entityIri) {
     return dataset.contains(Optional.of(entityIri), null, null, null);
   }
-  
+
   @Override
   public Optional<Graph> getEntityGraph(IRI entityIri) {
     return dataset.getGraph(entityIri);
@@ -61,7 +58,7 @@ public class Rdf4jStore implements RdfStore {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
     }
   }
-  
+
   @Override
   public void updateEntityGraph(IRI entityIri, Graph entityGraph) {
     if (entityGraph instanceof RDF4JGraph) {
@@ -71,23 +68,23 @@ public class Rdf4jStore implements RdfStore {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
     }
   }
-  
+
   @Override
   public void deleteEntityGraph(IRI entityIri) {
     dataset.remove(Optional.of(entityIri), null, null, null);
   }
-  
+
   @Override
   public IRI createIRI(String iriString) throws IllegalArgumentException {
     return rdfImpl.createIRI(iriString);
   }
-  
+
   @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     // TODO: don't hardcode the RDF format
     RDFWriter writer = Rio.createWriter(RDFFormat.TURTLE, out);
-    
+
     if (graph instanceof RDF4JGraph) {
       try {
         writer.startRDF();
@@ -102,7 +99,7 @@ public class Rdf4jStore implements RdfStore {
         throw new IOException("RDF handler exception: " + e.getMessage());
       }
       catch (UnsupportedRDFormatException e) {
-        throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage()); 
+        throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
       }
       finally {
         out.close();
@@ -110,19 +107,24 @@ public class Rdf4jStore implements RdfStore {
     } else {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
     }
-    
+
     return out.toString();
   }
-  
+
   @Override
   public Graph stringToGraph(String graphString, IRI baseIRI, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     StringReader stringReader = new StringReader(graphString);
-    
+    RDFFormat format = RDFFormat.JSONLD;
+
+    if (syntax.equals(RDFSyntax.TURTLE)) {
+      format = RDFFormat.TURTLE;
+    }
+
     // TODO: don't hardcode the RDF format
-    RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
+    RDFParser rdfParser = Rio.createParser(format);
     Model model = new LinkedHashModel();
     rdfParser.setRDFHandler(new StatementCollector(model));
-    
+
     try {
       rdfParser.parse(stringReader, baseIRI.getIRIString());
     }
@@ -135,10 +137,10 @@ public class Rdf4jStore implements RdfStore {
     finally {
       stringReader.close();
     }
-    
+
     return rdfImpl.asGraph(model);
   }
-  
+
   private void addEntityGraph(IRI entityIri, Graph entityGraph) {
     try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
       stream.forEach(triple -> {

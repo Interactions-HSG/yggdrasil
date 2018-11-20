@@ -19,6 +19,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
+import ro.andreiciortea.yggdrasil.environment.Event;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 
 public class RdfStoreVerticle extends AbstractVerticle {
@@ -44,7 +45,34 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       String requestIRIString = request.getHeader(EventBusMessage.Headers.REQUEST_IRI).get();
       IRI requestIRI = store.createIRI(requestIRIString);
-      // TODO: change to switch statement
+
+      switch (request.getMessageType()) {
+        case GET_ENTITY:
+          handleGetEntity(requestIRI, message);
+          break;
+
+        case CREATE_ENTITY:
+          handleCreateEntity(requestIRI, request, message);
+          break;
+
+        case PATCH_ENTITY:
+          handlePatchEntity(requestIRI, request, message);
+          break;
+
+        case UPDATE_ENTITY:
+          handleUpdateEntity(requestIRI, request, message);
+          break;
+
+        case DELETE_ENTITY:
+          handleDeleteEntity(requestIRI, message);
+          break;
+
+          // TODO Remove!
+        case ACTIONS_ENTITY:
+          handleArtifactActions(requestIRI, message);
+          break;
+      }
+
       if (request.getMessageType() == EventBusMessage.MessageType.GET_ENTITY) {
         handleGetEntity(requestIRI, message);
       }
@@ -93,7 +121,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
    */
   private void handleCreateEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
 	// Create IRI for new entity
+    Graph entityGraph;
     Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
+    Optional<String> contentType = request.getHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE);
     String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
     IRI entityIRI = store.createIRI(entityIRIString);
 
@@ -102,9 +132,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       // Replace all null relative IRIs with the IRI generated for this entity
       String entityGraphStr = request.getPayload().get();
-      entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
+      if (contentType.isPresent() && contentType.get().equals("application/ld+json")) {
+        entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.JSONLD);
 
-      Graph entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);
+      } else {
+        entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
+        entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);
+      }
+
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
 
