@@ -33,10 +33,13 @@ tags:
   - name: artifacts/templates/id
     description: Operations on specific artifact template.
 
+  - name: fallbacks
+    description: Fallbacks for external artifacts
+
 paths:
   # General artifact endpoint
   /artifacts:
-    put:
+    post:
       tags:
         - artifacts
       summary: Create artifact
@@ -186,6 +189,128 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServer'
 
+  # Fallbacks for external artifacts
+  /artifacts/{id}/action/{actionName}:
+    put:
+      tags: 
+        - fallbacks
+      summary: Fallback to invoke action on external artifact
+      parameters: 
+        - name: id
+          in: path
+          description: Artifact ID
+          required: true 
+          schema:
+            type: string
+        - name: actionName
+          in: path
+          description: name of the action to be performed
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Parameters to the action
+        required: false 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionPayloadJson'
+      responses:
+        '200':
+          description: Successfuly performed
+        '404':
+          description: Artifact with Id `id` not found, or action `actionName` on artifact found
+        '500':
+          $ref: '#/components/responses/InternalServer'
+
+  /artifacts/{id}/properties/{propertyName}:
+    get:
+      tags:
+        - fallbacks
+      summary: Fallback to get the value of an observable property on an external artifact
+      parameters: 
+        - name: id
+          in: path
+          description: Artifact ID
+          required: true 
+          schema:
+            type: string
+        - name: propertyName
+          in: path
+          description: name of the observable property
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Value of the observable property
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyResponseJson'
+        '404':
+          description: Artifact with Id `id` not found, or property `propertyName` on artifact found
+        '500':
+          $ref: '#/components/responses/InternalServer'
+
+  /artifacts/{id}/events:
+    post:
+      tags:
+        - fallbacks
+      summary: Fallback to subscribe from artifact events of an external artifact
+      parameters: 
+        - name: id
+          in: path
+          description: Artifact ID
+          required: true 
+          schema:
+            type: string
+      requestBody:
+        description: Callback where to send the event to (depends on the pub/sub framework actually used)
+        required: false 
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCallbackPayloadJson'
+      responses:
+        '201':
+          description: Subscription successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscriptionPayloadJson'
+        '404':
+          description: Artifact with Id `id` not found
+        '500':
+          $ref: '#/components/responses/InternalServer'
+
+  /artifacts/{id}/events/{subscriptionId}:
+    delete:
+      tags:
+        - fallbacks
+      summary: Fallback to unsubscribe from artifact events of an external artifact
+      parameters: 
+        - name: id
+          in: path
+          description: Artifact ID
+          required: true 
+          schema:
+            type: string
+        - name: subscriptionId
+          in: path
+          description: Subscription ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Subscription successfully deleted
+        '404':
+          description: Artifact with Id `id` not found or subscription with `subscriptionId` not found
+        '500':
+          $ref: '#/components/responses/InternalServer'
+
+
   # Artifact templates endpoint
   /artifacts/templates:
     get: 
@@ -216,7 +341,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServer'
 
-    put:
+    post:
       tags: 
         - artifacts/templates
       summary: DEFERRED Create artifact template
@@ -335,7 +460,7 @@ paths:
 
   # Workspaces endpoint
   /workspaces:
-    put:
+    post:
       tags:
         - workspaces
       summary: Create workspace
@@ -635,6 +760,39 @@ components:
     WorkspacePayloadTurtle:
       type: string
       example: Workspace representation in Turtle
+
+    ActionPayloadJson:
+      type: object
+      properties:
+        param1:
+          type: string
+          format: anyJsonDataType
+          example: value1
+        param2:
+          type: string
+          format: anyJsonDataType
+          example: value2
+
+    PropertyPayloadJson:
+      type: object
+      properties:
+        propertyName:
+          type: string
+          format: anyJsonDataType
+          example: value1
+
+    EventCallbackPayloadJson:
+      type: object
+      properties:
+        callbackAddress:
+          type: string
+          example: Depends on pub/sub framework
+    
+    EventSubscriptionPayloadJson:
+      type: object
+      properties:
+        subscriptionId:
+          type: subId
 
   responses:
     InternalServer:
