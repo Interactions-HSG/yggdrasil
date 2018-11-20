@@ -72,24 +72,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
           handleArtifactActions(requestIRI, message);
           break;
       }
-
-      if (request.getMessageType() == EventBusMessage.MessageType.GET_ENTITY) {
-        handleGetEntity(requestIRI, message);
-      }
-      else if (request.getMessageType() == EventBusMessage.MessageType.CREATE_ENTITY) {
-        handleCreateEntity(requestIRI, request, message);
-      }
-      else if (request.getMessageType() == EventBusMessage.MessageType.PATCH_ENTITY) {
-        handlePatchEntity(requestIRI, request, message);
-      }
-      else if (request.getMessageType() == EventBusMessage.MessageType.UPDATE_ENTITY) {
-        handleUpdateEntity(requestIRI, request, message);
-      }
-      else if (request.getMessageType() == EventBusMessage.MessageType.DELETE_ENTITY) {
-        handleDeleteEntity(requestIRI, message);
-      } else if (request.getMessageType() == EventBusMessage.MessageType.ACTIONS_ENTITY) {
-    	  	handleArtifactActions(requestIRI, message);
-      }
     }
     catch (IOException e) {
       LOGGER.error(e.getMessage());
@@ -114,7 +96,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   /**
    * Creates an entity and adds it to the store
    * @param requestIRI	IRI where the request originated from
-   * @param request
+   * @param request Eventbus message describing the request
    * @param message
    * @throws IllegalArgumentException
    * @throws IOException
@@ -141,6 +123,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       }
 
       store.createEntityGraph(entityIRI, entityGraph);
+      // TODO: reply with original payload? or representation of created entity graph??
       replyWithPayload(message, entityGraphStr);
 
       vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
