@@ -62,10 +62,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
 
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
-    router.get("/artifacts/actions/:artid").handler(handler::handleArtifactGetAction);
     router.post("/artifacts/").handler(handler::handleCreateEntity);
     router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
+
 
     router.post("/hub/").handler(handler::handleEntitySubscription);
 

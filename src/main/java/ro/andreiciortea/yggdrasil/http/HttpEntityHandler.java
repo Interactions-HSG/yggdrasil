@@ -146,16 +146,6 @@ public class HttpEntityHandler {
 
   }
 
-  // handler to get actions of specific argument
-  public void handleArtifactGetAction(RoutingContext routingContext) {
-	  String reqeuestIri = routingContext.request().absoluteURI();
-	  String entityIri = reqeuestIri.replace("/actions/", "/");
-	  EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.ACTIONS_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
-
-	  vertx.eventBus().send(EventBusRegistry.TD_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
-  }
-
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
     return handleStoreReply(routingContext, HttpStatus.SC_OK);
   }
