@@ -46,9 +46,11 @@ public class HttpEntityHandler {
 
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
+    String contentType = routingContext.request().getHeader("Content-Type");
 
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
+        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType);
 
     Map<String,List<String>> headers = new HashMap<String,List<String>>();
 
@@ -76,27 +78,6 @@ public class HttpEntityHandler {
         .setPayload(entityRepresentation);
 
     vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
-  }
-
-  public void handleCreateArtifactEntity(RoutingContext routingContext) {
-    String contentType = routingContext.request().getHeader("Content-Type");
-
-    if (contentType.equals("application/json")) {
-      String entityIri = routingContext.request().absoluteURI();
-      String entityRepresentation = routingContext.getBodyAsString();
-
-      String slug = routingContext.request().getHeader("Slug");
-
-      EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.CREATE_ARTIFACT_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
-        .setPayload(entityRepresentation);
-
-      vertx.eventBus().send(EventBusRegistry.TD_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
-    } else {
-      // do old rdf implementation
-      handleCreateEntity(routingContext);
-    }
   }
 
   public void handlePatchEntity(RoutingContext routingContext) {

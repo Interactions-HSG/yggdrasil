@@ -48,7 +48,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       switch (request.getMessageType()) {
         case GET_ENTITY:
-          handleGetEntity(requestIRI, message);
+          handleGetEntity(requestIRI, request, message);
           break;
 
         case CREATE_ENTITY:
@@ -83,11 +83,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleGetEntity(IRI requestIRI, Message<String> message) throws IllegalArgumentException, IOException {
+  private void handleGetEntity(IRI requestIRI,EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
+    RDFSyntax syntax = RDFSyntax.TURTLE;
+    Optional<String> contentType = request.getHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE);
+
+    if (contentType.isPresent() && contentType.get().equals("application/ld+json")) {
+      syntax = RDFSyntax.JSONLD;
+    }
 
     if (result.isPresent() && result.get().size() > 0) {
-      replyWithPayload(message, store.graphToString(result.get(), RDFSyntax.TURTLE));
+      replyWithPayload(message, store.graphToString(result.get(), syntax));
     } else {
       replyEntityNotFound(message);
     }
@@ -97,7 +103,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * Creates an entity and adds it to the store
    * @param requestIRI	IRI where the request originated from
    * @param request Eventbus message describing the request
-   * @param message
+   * @param message Request
    * @throws IllegalArgumentException
    * @throws IOException
    */
@@ -114,9 +120,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       // Replace all null relative IRIs with the IRI generated for this entity
       String entityGraphStr = request.getPayload().get();
+
       if (contentType.isPresent() && contentType.get().equals("application/ld+json")) {
         entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.JSONLD);
-
       } else {
         entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
         entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);

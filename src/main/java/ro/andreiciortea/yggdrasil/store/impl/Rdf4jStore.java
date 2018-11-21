@@ -14,13 +14,9 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.RDFParser;
-import org.eclipse.rdf4j.rio.RDFWriter;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.*;
+import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
+import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 
@@ -82,8 +78,17 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    // TODO: don't hardcode the RDF format
-    RDFWriter writer = Rio.createWriter(RDFFormat.TURTLE, out);
+    RDFWriter writer;
+
+    if (syntax.equals(RDFSyntax.JSONLD)) {
+      writer = Rio.createWriter(RDFFormat.JSONLD, out);
+      writer.getWriterConfig().set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+      writer.getWriterConfig().set(JSONLDSettings.USE_NATIVE_TYPES, true);
+      writer.getWriterConfig().set(JSONLDSettings.OPTIMIZE, true);
+    } else {
+      writer = Rio.createWriter(RDFFormat.TURTLE, out);
+    }
+
 
     if (graph instanceof RDF4JGraph) {
       try {
@@ -114,13 +119,12 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public Graph stringToGraph(String graphString, IRI baseIRI, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     StringReader stringReader = new StringReader(graphString);
-    RDFFormat format = RDFFormat.JSONLD;
 
+    RDFFormat format = RDFFormat.JSONLD;
     if (syntax.equals(RDFSyntax.TURTLE)) {
       format = RDFFormat.TURTLE;
     }
 
-    // TODO: don't hardcode the RDF format
     RDFParser rdfParser = Rio.createParser(format);
     Model model = new LinkedHashModel();
     rdfParser.setRDFHandler(new StatementCollector(model));
