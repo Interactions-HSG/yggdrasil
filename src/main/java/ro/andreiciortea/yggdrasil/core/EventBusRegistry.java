@@ -7,4 +7,6 @@ public class EventBusRegistry {
 
   public static final String NOTIFICATION_DISPATCHER_BUS_ADDRESS = "ro.andreiciortea.yggdrasil.eventbus.dispatcher";
 
+  public static final String TEMPLATE_HANDLER_BUS_ADDRESS = "ro.andreiciortea.yggdrasil.eventbus.templateHandler";
+
 }

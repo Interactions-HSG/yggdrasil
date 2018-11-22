@@ -50,6 +50,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
 
     HttpEntityHandler handler = new HttpEntityHandler();
+    HttpTemplateHandler templateHandler = new HttpTemplateHandler();
 
     router.get("/environments/:envid").handler(handler::handleGetEntity);
     router.post("/environments/").handler(handler::handleCreateEntity);
@@ -60,6 +61,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/workspaces/").handler(handler::handleCreateEntity);
     router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
+
+    // TODO own route for templates
+    router.get("/artifacts/templates").handler(templateHandler::handleGetTemplates);
 
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/artifacts/").handler(handler::handleCreateEntity);

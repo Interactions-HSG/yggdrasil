@@ -27,6 +27,7 @@ dependencies {
   compile 'io.vertx:vertx-web-client:3.5.1'
   compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
   compile 'com.google.code.gson:gson:2.8.2'
+  compile 'io.github.classgraph:classgraph:4.4.12'
 
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
