@@ -10,10 +10,13 @@ import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 public class MyArtifact {
 
   @ObservableProperty
-  private int myProperty;
+  public int myProperty;
+
+  @ObservableProperty
+  public String property;
 
   @Action(path = "myArtifactActions/myMethod", name = "myFancyName")
-  public String myMethod() {
+  public String myMethod(int numberInput) {
     myProperty += 1;
     return someOtherMethod();
   }

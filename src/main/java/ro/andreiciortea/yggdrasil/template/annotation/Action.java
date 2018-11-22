@@ -13,6 +13,8 @@ public @interface Action {
   // name of the action
   // NOTE: gets replaced by actions name if not defined
   String name() default "";
+  // iot:switchOn
+  String type() default "";
 
 }
 
