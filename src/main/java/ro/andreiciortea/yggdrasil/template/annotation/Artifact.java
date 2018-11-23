@@ -12,4 +12,5 @@ public @interface Artifact {
   String type();
   // Name of the templated artifact -> gets replaced by classname if not defined..
   String name() default "";
+  String[] prefixes() default {};
 }

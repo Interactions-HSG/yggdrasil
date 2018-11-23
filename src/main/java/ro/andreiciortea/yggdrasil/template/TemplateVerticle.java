@@ -5,31 +5,32 @@ import io.github.classgraph.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.eclipse.rdf4j.model.*;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.eclipse.rdf4j.model.vocabulary.FOAF;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
-import ro.andreiciortea.yggdrasil.template.annotation.Action;
-import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
-import sun.java2d.pipe.SpanShapeRenderer;
-import sun.jvm.hotspot.types.basic.BasicNarrowOopField;
-
-import javax.jws.WebParam;
-import java.lang.reflect.Method;
-import java.util.List;
+import ro.andreiciortea.yggdrasil.store.RdfStore;
+import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 
 public class TemplateVerticle extends AbstractVerticle {
+  private RdfStore store;
+  private RDF4J rdfImpl;
+
   @Override
   public void start() {
 
     EventBus eventBus = vertx.eventBus();
-
     eventBus.consumer(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS, this::handleTemplatesRequest);
+
+    // create separate store for artifact templates to not mess them up with artifact instances
+    store = RdfStoreFactory.createStore("template_store");
+    rdfImpl = new RDF4J();
+
+    // scan for annotated artifact classes and add them to the RDF store
+    scanArtifactTemplates();
   }
 
   private void handleTemplatesRequest(Message<String> message) {
@@ -44,23 +45,23 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private void handleGetAllTemplates() {
-    // TODO: move this to the startup of the node! atm the templates are fixed!! And only redo for new artifact templates
+
+  }
+
+  private void scanArtifactTemplates() {
     // TODO: generate routes
-    System.out.println("Do reflection and stuff!");
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = pkg + ".annotation.Artifact";
 
     try (ScanResult scanResult =
            new ClassGraph()
-     //        .verbose()                   // Log to stderr
              .enableAllInfo()             // Scan classes, methods, fields, annotations
              .whitelistPackages(pkg)      // Scan com.xyz and subpackages (omit to scan all packages)
-             .scan()) {                   // Start the scan
+             .scan()) {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         generateTemplateRDF(artifactClassInfo);
       }
     }
-    // TODO reply all templates
   }
 
   private void generateTemplateRDF(ClassInfo artifactClassInfo) {
@@ -80,6 +81,8 @@ public class TemplateVerticle extends AbstractVerticle {
       artifactNameParam = fullClassName.substring(fullClassName.lastIndexOf(".")+1);
     }
     IRI artifactName = vf.createIRI(localPrefix + artifactNameParam);
+
+    LinkedHashModel graph = new LinkedHashModel();
 
     // generate model for actions
     artifactBuilder
@@ -102,11 +105,11 @@ public class TemplateVerticle extends AbstractVerticle {
     MethodInfoList events = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     addEventsRDF(artifactBuilder, events, vf);
 
+    // put created graph into store
     Model artifactModel = artifactBuilder.build();
-
-    Rio.write(artifactModel, System.out, RDFFormat.TURTLE);
-
-    // TODO: throw RDF to the store
+    org.apache.commons.rdf.api.Graph rdf4JGraph = rdfImpl.asGraph(artifactModel);
+    org.apache.commons.rdf.api.IRI rdf4JIRI = rdfImpl.createIRI(localPrefix + artifactNameParam);
+    store.addEntityGraph(rdf4JIRI, rdf4JGraph);
 
   }
 
