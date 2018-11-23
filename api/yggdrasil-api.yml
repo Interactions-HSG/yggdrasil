@@ -21,6 +21,9 @@ tags:
   - name: workspaces/id
     description: Operations on specific workspace object.
 
+  - name: workspaces/wId/aId
+    description: Operations on the relation of a specific workspace and an artifact
+
   - name: artifacts
     description: General operations on artifacts as resources and tools dynamically constructed, used, manipulated by agents.
 
@@ -637,7 +640,57 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServer'
     
+  /workspaces/{workspaceId}/{artifactID}:
+    put:
+      tags:
+        - workspaces/wId/aId
+      summary: Add artifact to workspace
+      description: Adds an existing artifact to a workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          description: Workspace ID
+          required: true 
+          schema:
+            type: string
+        - name: artifactId
+          description: Artifact ID
+          required: true 
+          schema:
+            type: string
+      responses:
+          '200':
+            description: Artifact successfully added to the workspace. New representation of workspace is returned.
+            content:
+              application/ld+json:
+                schema:
+                  $ref: '#/components/schemas/WorkspacePayloadJson'
+              text/turtle:
+                schema:
+                  $ref: '#/components/schemas/WorkspacePayloadTurtle'
+          '404':
+            description: Workspace with ID `workspaceId` not found or artifact with ID artifactId not found.
+          '500':
+            $ref: '#/components/responses/InternalServer'
 
+    delete:
+      tags:
+        - workspaces/wId/aId
+      summary: Remove artifact from workspace
+      description: Removes artifact from workspace. The artifact is added back to the default workspace, but not deleted directly
+      parameters:
+        - name: workspaceId
+          in: path
+          description: Workspace ID
+          required: true  
+          schema: 
+            type: string
+        - name: artifactId
+          required: true
+          in: path
+          description: Artifact ID
+          schema:
+            type: string
       
 # TODO: add response paylodads with id
 components:
