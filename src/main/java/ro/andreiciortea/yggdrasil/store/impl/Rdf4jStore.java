@@ -15,6 +15,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.*;
+import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
@@ -88,7 +89,7 @@ public class Rdf4jStore implements RdfStore {
     } else {
       writer = Rio.createWriter(RDFFormat.TURTLE, out);
     }
-
+    writer.getWriterConfig().set(BasicWriterSettings.INLINE_BLANK_NODES, true);
 
     if (graph instanceof RDF4JGraph) {
       try {
