@@ -21,7 +21,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-
+    // TODO: chain it before starting the http verticle
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS, this::handleTemplatesRequest);
 
@@ -41,11 +41,10 @@ public class TemplateVerticle extends AbstractVerticle {
         handleGetAllTemplates();
     }
     // TODO reply
-
   }
 
   private void handleGetAllTemplates() {
-
+    // TODO implement
   }
 
   private void scanArtifactTemplates() {

@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import io.vertx.core.Handler;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientResponse;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
@@ -19,7 +22,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
-import ro.andreiciortea.yggdrasil.environment.Event;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 
 public class RdfStoreVerticle extends AbstractVerticle {
@@ -27,11 +29,16 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
 
   private RdfStore store;
+  // Todo move to store!!
   private RDF4J rdf = new RDF4J();
+  private HttpClient httpClient;
 
   @Override
   public void start() {
     store = RdfStoreFactory.createStore(config().getString("store"));
+
+    // TODO: move http client to separate verticle?
+    httpClient = vertx.createHttpClient();
 
     EventBus eventBus = vertx.eventBus();
 
@@ -65,11 +72,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
         case DELETE_ENTITY:
           handleDeleteEntity(requestIRI, message);
-          break;
-
-          // TODO Remove!
-        case ACTIONS_ENTITY:
-          handleArtifactActions(requestIRI, message);
           break;
       }
     }
@@ -126,6 +128,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
       } else {
         entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
         entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);
+      }
+      IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
+
+      if (entityGraph.contains(null, subscribesIri, null)) {
+        System.out.println("Crawler subscription link found!");
+        subscribeCrawler(entityGraph);
       }
 
       store.createEntityGraph(entityIRI, entityGraph);
@@ -195,22 +203,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleArtifactActions(IRI artifactIRI, Message<String> message) throws IllegalArgumentException, IOException {
-	  // TODO implement
-	  Optional<Graph> entityGraph = store.getEntityGraph(artifactIRI);
-	  if (entityGraph.isPresent()) {
-		IRI interactionIri = rdf.createIRI("http://www.w3.org/ns/td#interaction");
-		for (Triple t : entityGraph.get().iterate(artifactIRI, interactionIri, null)) {
-      for(Triple j: entityGraph.get().iterate(rdf.createIRI(t.getObject().ntriplesString()), null, null)) {
-        replyWithPayload(message, store.graphToString(entityGraph.get(), RDFSyntax.TURTLE));
-      }
-		}
-	} else {
-      replyEntityNotFound(message);
-    }
-	  LOGGER.info(entityGraph.toString());
-  }
-
   private void replyWithPayload(Message<String> message, String payload) {
     EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
         .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
@@ -260,4 +252,19 @@ public class RdfStoreVerticle extends AbstractVerticle {
     // TODO
   }
 
+  private void subscribeCrawler(Graph entityGraph) {
+    IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
+    for (Triple t : entityGraph.iterate(null, subscribesIri, null)) {
+      String crawlerUrl = t.getObject().toString();
+      System.out.println(crawlerUrl);
+      String id = t.getSubject().toString();
+      httpClient.postAbs(crawlerUrl, new Handler<HttpClientResponse>() {
+
+        @Override
+        public void handle(HttpClientResponse httpClientResponse) {
+          System.out.println("Registered at crawler: " + crawlerUrl);
+        }
+      }).end(id);
+    }
+  }
 }

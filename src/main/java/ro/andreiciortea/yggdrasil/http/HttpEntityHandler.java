@@ -1,12 +1,10 @@
 package ro.andreiciortea.yggdrasil.http;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.rdf.api.IRI;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 
