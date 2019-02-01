@@ -90,7 +90,7 @@ public class HttpEntityHandler {
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
         .setPayload(entityRepresentation);
 
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReplyNext(routingContext));
   }
 
   public void handleDeleteEntity(RoutingContext routingContext) {
@@ -141,7 +141,24 @@ public class HttpEntityHandler {
     else {
       routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
     }
+  }
 
+  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext (RoutingContext routingContext) {
+    return handleStoreReplyNext(routingContext, HttpStatus.SC_OK);
+  }
+
+  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext, int succeededStatusCode) {
+    return handleStoreReplyNext(routingContext, succeededStatusCode, new HashMap<String,List<String>>());
+  }
+
+  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext,
+                                                                 int succeededStatusCode, Map<String,List<String>> headers) {
+    if (succeededStatusCode == HttpStatus.SC_OK) {
+      return handleStoreReply(routingContext, succeededStatusCode, headers);
+    } else {
+      routingContext.next();
+      return null;
+    }
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {

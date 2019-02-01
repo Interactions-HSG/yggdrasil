@@ -63,12 +63,16 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
 
     // TODO own route for templates
+    // TODO create template routes (either dynamically added?? or a generic default handler at the end)
     router.get("/artifacts/templates").handler(templateHandler::handleGetTemplates);
+    router.post("/artifacts/templates").handler(templateHandler::handleInstantiateTemp);
 
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/artifacts/").handler(handler::handleCreateEntity);
     router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
+
+    router.put("/artifacts/:artid/*").handler(templateHandler::handleTemplateExtended);
 
 
     router.post("/hub/").handler(handler::handleEntitySubscription);

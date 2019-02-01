@@ -1,22 +1,37 @@
 package ro.andreiciortea.yggdrasil.template;
 
+import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.google.gson.Gson;
 import io.github.classgraph.*;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.store.RdfStore;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
+import ro.andreiciortea.yggdrasil.template.annotation.Action;
+import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
+
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class TemplateVerticle extends AbstractVerticle {
   private RdfStore store;
+  private List<org.apache.commons.rdf.api.IRI> iris = new ArrayList<>();
+  private Map<String, String> classMapping = new HashMap<>();
+  private Map<String, Object> objectMapping = new HashMap<>();
+  private ClassInfoList artifactClasses;
   private RDF4J rdfImpl;
 
   @Override
@@ -38,17 +53,131 @@ public class TemplateVerticle extends AbstractVerticle {
 
     switch (request.getMessageType()) {
       case GET_TEMPLATES:
-        handleGetAllTemplates();
+        handleGetAllTemplates(message);
+        break;
+      case INSTANTIATE_TEMPLATE:
+        String requestIRIString = request.getHeader(EventBusMessage.Headers.REQUEST_IRI).get();
+        org.apache.commons.rdf.api.IRI requestIRI = store.createIRI(requestIRIString);
+        handleInstatiateTemplate(requestIRI, request, message);
+        break;
+      case TEMPLATE_ACTIVITY:
+        String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
+        String activity =  request.getHeader(EventBusMessage.Headers.ENTITY_ACTIVITY).get();
+        handleEntityActivity(entityIRI, activity, request, message);
     }
-    // TODO reply
+    // TODO reply 500 if no matches
   }
 
-  private void handleGetAllTemplates() {
-    // TODO implement
+  private void handleEntityActivity(String entityIRI, String activity, EventBusMessage request, Message<String> message) {
+    Object target = objectMapping.get(entityIRI);
+    if (target == null) {
+      // TODO 404 target not found!
+      return;
+    }
+    for (Method method : target.getClass().getMethods()) {
+      if (method.getAnnotation(Action.class) != null && method.getAnnotation(Action.class).path().equals(activity)) {
+        System.out.println("invoke action");
+        try {
+          // TODO add params
+          method.invoke(target);
+          // TODO: reply with better message/return value
+          replyWithPayload(message, "ok");
+          return;
+
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+        } catch (InvocationTargetException e) {
+          // TODO: reply fail
+          e.printStackTrace();
+        }
+      }
+    }
+    // check for observable property to be returned
+    for (Field field : target.getClass().getFields()) {
+      if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(activity)) {
+        try {
+          Object value = field.get(target);
+          replyWithPayload(message, value.toString());
+          return;
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+          // TODO reply fail
+        }
+      }
+    }
+  }
+
+  private void handleInstatiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
+    Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
+    String entityIRIString = generateEntityIRI(requestIRI.getIRIString().replaceAll("/templates", ""), slug);
+    org.apache.commons.rdf.api.IRI entityIRI = store.createIRI(entityIRIString);
+
+    Optional<String> classIri = request.getPayload();
+    if (classIri.isPresent() && classIri.get().length() > 0 && classMapping.containsKey(classIri.get())) {
+      Class<?> aClass;
+      String className = classMapping.get(classIri.get());
+      try {
+        aClass = Class.forName(className);
+        Constructor<?> ctor = aClass.getConstructor();
+        Object object = ctor.newInstance();
+        objectMapping.put(entityIRI.getIRIString(), object);
+        replyWithPayload(message, entityIRI.getIRIString());
+
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      } catch (NoSuchMethodException e) {
+        e.printStackTrace();
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      } catch (InstantiationException e) {
+        e.printStackTrace();
+      } catch (InvocationTargetException e) {
+        e.printStackTrace();
+      }
+    }
+    // TODO: handle fail!
+  }
+
+  private void handleGetAllTemplates(Message<String> message) {
+    RDFSyntax syntax = RDFSyntax.TURTLE;
+    String result = "";
+    for (org.apache.commons.rdf.api.IRI iri : iris) {
+      Optional<org.apache.commons.rdf.api.Graph> graph = store.getEntityGraph(iri);
+      if (graph.isPresent() && graph.get().size() > 0) {
+        try {
+          result = result + store.graphToString(graph.get(), syntax);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    replyWithPayload(message, result);
+  }
+
+  private String generateEntityIRI(String requestIRI, Optional<String> hint) {
+    if (!requestIRI.endsWith("/")) {
+      requestIRI = requestIRI.concat("/");
+    }
+
+    String candidateIRI;
+
+    // Try to generate an IRI using the hint provided in the initial request
+    if (hint.isPresent() && !hint.get().isEmpty()) {
+      candidateIRI = requestIRI.concat(hint.get());
+      if (!iris.contains(store.createIRI(candidateIRI))) {
+        return candidateIRI;
+      }
+    }
+
+    // Generate a new IRI
+    do {
+      candidateIRI = requestIRI.concat(UUID.randomUUID().toString());
+    } while (store.containsEntityGraph(store.createIRI(candidateIRI)));
+
+    return candidateIRI;
   }
 
   private void scanArtifactTemplates() {
-    // TODO: generate routes
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = pkg + ".annotation.Artifact";
 
@@ -57,13 +186,18 @@ public class TemplateVerticle extends AbstractVerticle {
              .enableAllInfo()             // Scan classes, methods, fields, annotations
              .whitelistPackages(pkg)      // Scan com.xyz and subpackages (omit to scan all packages)
              .scan()) {
+      artifactClasses = scanResult.getClassesWithAnnotation(artifactAnnotation);
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
-        generateTemplateRDF(artifactClassInfo);
+        String className = artifactClassInfo.getName();
+        org.apache.commons.rdf.api.IRI genIri = generateTemplateRDF(artifactClassInfo);
+        iris.add(genIri);
+        classMapping.put(genIri.getIRIString(), className);
+        System.out.println("Generated description for: " + genIri);
       }
     }
   }
 
-  private void generateTemplateRDF(ClassInfo artifactClassInfo) {
+  private org.apache.commons.rdf.api.IRI generateTemplateRDF(ClassInfo artifactClassInfo) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = new ModelBuilder();
     String localPrefix = "http://localhost:8080/artifacts/templates/";
@@ -80,8 +214,6 @@ public class TemplateVerticle extends AbstractVerticle {
       artifactNameParam = fullClassName.substring(fullClassName.lastIndexOf(".")+1);
     }
     IRI artifactName = vf.createIRI(localPrefix + artifactNameParam);
-
-    LinkedHashModel graph = new LinkedHashModel();
 
     // generate model for actions
     artifactBuilder
@@ -109,6 +241,7 @@ public class TemplateVerticle extends AbstractVerticle {
     org.apache.commons.rdf.api.Graph rdf4JGraph = rdfImpl.asGraph(artifactModel);
     org.apache.commons.rdf.api.IRI rdf4JIRI = rdfImpl.createIRI(localPrefix + artifactNameParam);
     store.addEntityGraph(rdf4JIRI, rdf4JGraph);
+    return rdf4JIRI;
 
   }
 
@@ -162,8 +295,6 @@ public class TemplateVerticle extends AbstractVerticle {
 
       artifactBuilder.add("td:properties", propertyBuilder.build());
     }
-
-
   }
 
   private void addActionRDF(ModelBuilder artifactBuilder, MethodInfoList actionMethods, ValueFactory vf) {
@@ -224,6 +355,14 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  private void replyWithPayload(Message<String> message, String payload) {
+    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
+      .setPayload(payload);
+
+    message.reply(response.toJson());
+  }
+
   private class ArtifactAnnotationFilter implements AnnotationInfoList.AnnotationInfoFilter {
 
     @Override
@@ -282,7 +421,3 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 }
-
-
-
-
