@@ -358,7 +358,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void replyNotFound(Message<String> message) {
     EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name())
+      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name());
 
     message.reply(response.toJson());
   }
