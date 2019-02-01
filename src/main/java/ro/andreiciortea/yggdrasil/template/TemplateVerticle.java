@@ -9,6 +9,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
+import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
@@ -65,13 +66,13 @@ public class TemplateVerticle extends AbstractVerticle {
         String activity =  request.getHeader(EventBusMessage.Headers.ENTITY_ACTIVITY).get();
         handleEntityActivity(entityIRI, activity, request, message);
     }
-    // TODO reply 500 if no matches
+    replyError(message);
   }
 
   private void handleEntityActivity(String entityIRI, String activity, EventBusMessage request, Message<String> message) {
     Object target = objectMapping.get(entityIRI);
     if (target == null) {
-      // TODO 404 target not found!
+      replyNotFound(message);
       return;
     }
     for (Method method : target.getClass().getMethods()) {
@@ -81,13 +82,11 @@ public class TemplateVerticle extends AbstractVerticle {
           // TODO add params
           method.invoke(target);
           // TODO: reply with better message/return value
-          replyWithPayload(message, "ok");
+          replyWithPayload(message,"ok");
           return;
 
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
-        } catch (InvocationTargetException e) {
-          // TODO: reply fail
+        } catch (IllegalAccessException | InvocationTargetException e) {
+          replyError(message);
           e.printStackTrace();
         }
       }
@@ -100,8 +99,8 @@ public class TemplateVerticle extends AbstractVerticle {
           replyWithPayload(message, value.toString());
           return;
         } catch (IllegalAccessException e) {
+          replyError(message);
           e.printStackTrace();
-          // TODO reply fail
         }
       }
     }
@@ -122,20 +121,14 @@ public class TemplateVerticle extends AbstractVerticle {
         Object object = ctor.newInstance();
         objectMapping.put(entityIRI.getIRIString(), object);
         replyWithPayload(message, entityIRI.getIRIString());
+        return;
 
-      } catch (ClassNotFoundException e) {
-        e.printStackTrace();
-      } catch (NoSuchMethodException e) {
-        e.printStackTrace();
-      } catch (IllegalAccessException e) {
-        e.printStackTrace();
-      } catch (InstantiationException e) {
-        e.printStackTrace();
-      } catch (InvocationTargetException e) {
+      } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |InstantiationException | InvocationTargetException e) {
+        replyError(message);
         e.printStackTrace();
       }
     }
-    // TODO: handle fail!
+    replyError(message);
   }
 
   private void handleGetAllTemplates(Message<String> message) {
@@ -147,6 +140,7 @@ public class TemplateVerticle extends AbstractVerticle {
         try {
           result = result + store.graphToString(graph.get(), syntax);
         } catch (IOException e) {
+          replyError(message);
           e.printStackTrace();
         }
       }
@@ -158,7 +152,6 @@ public class TemplateVerticle extends AbstractVerticle {
     if (!requestIRI.endsWith("/")) {
       requestIRI = requestIRI.concat("/");
     }
-
     String candidateIRI;
 
     // Try to generate an IRI using the hint provided in the initial request
@@ -359,6 +352,20 @@ public class TemplateVerticle extends AbstractVerticle {
     EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
       .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
       .setPayload(payload);
+
+    message.reply(response.toJson());
+  }
+
+  private void replyNotFound(Message<String> message) {
+    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name())
+
+    message.reply(response.toJson());
+  }
+
+  private void replyError(Message<String> message) {
+    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+      .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.FAILED.name());
 
     message.reply(response.toJson());
   }
