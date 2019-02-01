@@ -29,7 +29,6 @@ public class TemplateVerticle extends AbstractVerticle {
   private List<org.apache.commons.rdf.api.IRI> iris = new ArrayList<>();
   private Map<String, String> classMapping = new HashMap<>();
   private Map<String, Object> objectMapping = new HashMap<>();
-  private ClassInfoList artifactClasses;
   private RDF4J rdfImpl;
 
   @Override
@@ -176,7 +175,6 @@ public class TemplateVerticle extends AbstractVerticle {
              .enableAllInfo()             // Scan classes, methods, fields, annotations
              .whitelistPackages(pkg)      // Scan com.xyz and subpackages (omit to scan all packages)
              .scan()) {
-      artifactClasses = scanResult.getClassesWithAnnotation(artifactAnnotation);
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateRDF(artifactClassInfo);
