@@ -1,15 +1,12 @@
 package ro.andreiciortea.yggdrasil.template;
 
-import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.google.gson.Gson;
 import io.github.classgraph.*;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
