@@ -1,6 +1,8 @@
 package ro.andreiciortea.yggdrasil.template;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.github.classgraph.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
@@ -18,10 +20,7 @@ import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class TemplateVerticle extends AbstractVerticle {
@@ -67,6 +66,8 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void handleEntityActivity(String entityIRI, String activity, EventBusMessage request, Message<String> message) {
     Object target = objectMapping.get(entityIRI);
+    Gson gson = new Gson();
+
     if (target == null) {
       replyNotFound(message);
       return;
@@ -75,12 +76,43 @@ public class TemplateVerticle extends AbstractVerticle {
       if (method.getAnnotation(Action.class) != null && method.getAnnotation(Action.class).path().equals(activity)) {
         System.out.println("invoke action");
         try {
-          // TODO add params
-          method.invoke(target);
-          // TODO: reply with better message/return value
-          replyWithPayload(message,"ok");
-          return;
+          Object[] obj = new Object[method.getParameters().length];
+          // check for arguments of method
+          if (method.getParameters().length > 0 && request.getPayload().isPresent()) {
+            String payload = request.getPayload().get();
+            JsonElement jelem = gson.fromJson(payload, JsonElement.class);
+            JsonObject jobj = jelem.getAsJsonObject();
 
+            // prepare method to be invoked with arguments
+            Parameter[] params = method.getParameters();
+            for (int i = 0; i < params.length; i++) {
+              Parameter param = params[i];
+              Class paramType = param.getType();
+              JsonElement paramJson = jobj.get(param.getName());
+              if (paramType.equals(int.class)) {
+                int paramValInt = paramJson.getAsInt();
+                obj[i] = paramValInt;
+              } else if (paramType.equals(String.class)) {
+                String paramValStr = paramJson.getAsString();
+                obj[i] = paramValStr;
+              } else if (paramType.equals(double.class)) {
+                double paramValDoub = paramJson.getAsDouble();
+                obj[i] = paramValDoub;
+              } else if (paramType.equals(float.class)) {
+                float paramValFlo = paramJson.getAsFloat();
+                obj[i] = paramValFlo;
+              } else  if (paramType.equals(boolean.class)) {
+                boolean paramValBool = paramJson.getAsBoolean();
+                obj[i] = paramValBool;
+              }
+            }
+          }
+
+          Object result = method.invoke(target, obj);
+          String jsonStr = gson.toJson(result);
+
+          replyWithPayload(message, jsonStr);
+          return;
         } catch (IllegalAccessException | InvocationTargetException e) {
           replyError(message);
           e.printStackTrace();
@@ -92,6 +124,7 @@ public class TemplateVerticle extends AbstractVerticle {
       if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(activity)) {
         try {
           Object value = field.get(target);
+
           replyWithPayload(message, value.toString());
           return;
         } catch (IllegalAccessException e) {
@@ -261,7 +294,7 @@ public class TemplateVerticle extends AbstractVerticle {
   private void addPropertyRDF(ModelBuilder artifactBuilder, FieldInfoList propertyList, ValueFactory vf) {
     for (FieldInfo property : propertyList) {
       ModelBuilder propertyBuilder = new ModelBuilder();
-      // TODO map Java types
+      // TODO map Java classes to xml type
       String propertyType = property.getTypeDescriptor().toString();
       AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
 

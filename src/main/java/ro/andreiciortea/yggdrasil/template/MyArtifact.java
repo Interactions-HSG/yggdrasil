@@ -16,14 +16,15 @@ public class MyArtifact {
   public String property = "yay";
 
   @Action(path = "/myArtifactActions/myMethod", name = "myFancyName")
-  public String myMethod() {
-    myProperty += 1;
-    return someOtherMethod();
+  public String myMethod(int paramA, String paramB) {
+    myProperty += paramA;
+    System.out.println("myMethod: " + paramB);
+    return someOtherMethod(myProperty);
   }
 
-  public String someOtherMethod() {
+  public String someOtherMethod(int param) {
     // No action!
-    return "yay";
+    return "Result" + param;
   }
 
   @Event
