@@ -99,7 +99,7 @@ public class HttpEntityHandler {
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DELETE_ENTITY)
         .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
 
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext));
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReplyNext(routingContext));
   }
 
   public void handleEntitySubscription(RoutingContext routingContext) {

@@ -99,4 +99,14 @@ public class HttpTemplateHandler {
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
 
   }
+
+  public void handleDeleteInstance(RoutingContext routingContext) {
+
+    String artifactId = routingContext.request().getParam("artid");
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DELETE_INSTANCE)
+      .setHeader(EventBusMessage.Headers.ARTIFACT_ID, artifactId);
+
+    vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
+      message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
+  }
 }

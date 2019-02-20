@@ -60,8 +60,23 @@ public class TemplateVerticle extends AbstractVerticle {
         String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
         String activity =  request.getHeader(EventBusMessage.Headers.ENTITY_ACTIVITY).get();
         handleEntityActivity(entityIRI, activity, request, message);
+        break;
+      case DELETE_INSTANCE:
+        String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
+        handleDeleteInstance(artifactId, request, message);
     }
     replyError(message);
+  }
+
+  private void handleDeleteInstance(String artifactId, EventBusMessage request, Message<String> message) {
+    Gson gson = new Gson();
+    if (objectMapping.containsKey(artifactId)) {
+      objectMapping.remove(artifactId);
+      String jsonStr = gson.toJson("ok");
+      replyWithPayload(message, jsonStr);
+    } else {
+      replyNotFound(message);
+    }
   }
 
   private void handleEntityActivity(String entityIRI, String activity, EventBusMessage request, Message<String> message) {
