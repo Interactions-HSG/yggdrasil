@@ -5,15 +5,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.classgraph.*;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
+import org.apache.commons.rdf.rdf4j.RDF4JIRI;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
+import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
 import ro.andreiciortea.yggdrasil.store.RdfStore;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
@@ -24,6 +30,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 public class TemplateVerticle extends AbstractVerticle {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
+
   private RdfStore store;
   private List<org.apache.commons.rdf.api.IRI> iris = new ArrayList<>();
   private Map<String, String> classMapping = new HashMap<>();
@@ -64,8 +72,10 @@ public class TemplateVerticle extends AbstractVerticle {
       case DELETE_INSTANCE:
         String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
         handleDeleteInstance(artifactId, request, message);
+        break;
+      default:
+        replyError(message);
     }
-    replyError(message);
   }
 
   private void handleDeleteInstance(String artifactId, EventBusMessage request, Message<String> message) {
@@ -89,7 +99,7 @@ public class TemplateVerticle extends AbstractVerticle {
     }
     for (Method method : target.getClass().getMethods()) {
       if (method.getAnnotation(Action.class) != null && method.getAnnotation(Action.class).path().equals(activity)) {
-        System.out.println("invoke action");
+        System.out.println("invoke action " + activity + " on " + entityIRI);
         try {
           Object[] obj = new Object[method.getParameters().length];
           // check for arguments of method
@@ -152,8 +162,11 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void handleInstatiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
     Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
-    String entityIRIString = generateEntityIRI(requestIRI.getIRIString().replaceAll("/templates", ""), slug);
-    org.apache.commons.rdf.api.IRI entityIRI = store.createIRI(entityIRIString);
+    String requestArtifactString = requestIRI.getIRIString().replaceAll("/templates", "");
+    // String entityIRIString = generateEntityIRI(requestIRI.getIRIString().replaceAll("/templates", ""), slug);
+    // org.apache.commons.rdf.api.IRI entityIRI = store.createIRI(entityIRIString);
+
+    // 1st let the rdf store do the uri exclusivity generation checks and store it's representation
 
     Optional<String> classIri = request.getPayload();
     if (classIri.isPresent() && classIri.get().length() > 0 && classMapping.containsKey(classIri.get())) {
@@ -163,16 +176,56 @@ public class TemplateVerticle extends AbstractVerticle {
         aClass = Class.forName(className);
         Constructor<?> ctor = aClass.getConstructor();
         Object object = ctor.newInstance();
-        objectMapping.put(entityIRI.getIRIString(), object);
-        replyWithPayload(message, entityIRI.getIRIString());
-        return;
+        // add artifact instance to rdf store
+        RDF4JIRI iri = rdfImpl.createIRI(classIri.get());
+        Optional<org.apache.commons.rdf.api.Graph> graph = store.getEntityGraph(iri);
+        String graphString = store.graphToString(graph.get(), RDFSyntax.TURTLE);
+        String instanceTurtle = graphString.replace(classIri.get(), "");
+
+        EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
+          .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestArtifactString)
+          .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug.get())
+          .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, "text/turtle")
+          .setPayload(instanceTurtle);
+
+        vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, rdfStoreMessage.toJson(), handleRdfStoreReply(object, message));
 
       } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |InstantiationException | InvocationTargetException e) {
         replyError(message);
         e.printStackTrace();
+      } catch (IOException e) {
+        e.printStackTrace();
       }
+    } else {
+      replyNotFound(message);
     }
-    replyError(message);
+  }
+
+  private Handler<AsyncResult<Message<String>>> handleRdfStoreReply(Object generatedObject, Message<String> message) {
+    return reply -> {
+      if (reply.succeeded()) {
+        EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
+        // add object to object map
+        String payload = storeReply.getPayload().get();
+        String entityIri = payload.substring(payload.indexOf("<") + 1, payload.indexOf(">"));
+
+        if (storeReply.succeded()) {
+          objectMapping.put(entityIri, generatedObject);
+          replyWithPayload(message, payload);
+        }
+        else if (storeReply.entityNotFound()) {
+          replyNotFound(message);
+        }
+        else {
+          LOGGER.error(storeReply.getHeader(EventBusMessage.Headers.REPLY_STATUS));
+          replyError(message);
+        }
+      }
+      else {
+        LOGGER.error("Reply failed! " + reply.cause().getMessage());
+        replyError(message);
+      }
+    };
   }
 
   private void handleGetAllTemplates(Message<String> message) {

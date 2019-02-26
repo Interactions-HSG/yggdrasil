@@ -14,10 +14,9 @@ import org.apache.http.HttpStatus;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 
-
 public class HttpTemplateHandler {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
   private Vertx vertx;
 
   public HttpTemplateHandler() {
