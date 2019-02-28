@@ -1,6 +1,7 @@
 package ro.andreiciortea.yggdrasil.template;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.github.classgraph.*;
@@ -11,9 +12,12 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.commons.rdf.api.BlankNode;
 import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JIRI;
+import org.apache.commons.rdf.rdf4j.RDF4JLiteral;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
@@ -165,24 +169,49 @@ public class TemplateVerticle extends AbstractVerticle {
   private void handleInstatiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
     Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
     String requestArtifactString = requestIRI.getIRIString().replaceAll("/templates", "");
-    // String entityIRIString = generateEntityIRI(requestIRI.getIRIString().replaceAll("/templates", ""), slug);
-    // org.apache.commons.rdf.api.IRI entityIRI = store.createIRI(entityIRIString);
+    String classIri = "";
+    Set<Triple> additionalTriples = new HashSet<>();
 
     // 1st let the rdf store do the uri exclusivity generation checks and store it's representation
+    if (!request.getPayload().isPresent()){
+      replyBadRequest(message);
+    } else {
+      Optional<String> payload = request.getPayload();
 
-    Optional<String> classIri = request.getPayload();
-    if (classIri.isPresent() && classIri.get().length() > 0 && classMapping.containsKey(classIri.get())) {
+      Gson gson = new Gson();
+      JsonElement jelem = gson.fromJson(payload.get(), JsonElement.class);
+      JsonObject jobj = jelem.getAsJsonObject();
+      classIri = jobj.get("artifactClass").getAsString();
+      JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
+      for (int i = 0; i < additionsRdf.size(); i++) {
+        JsonObject obj = additionsRdf.get(i).getAsJsonObject();
+        BlankNode aliceBlankNode = rdfImpl.createBlankNode(classIri);
+        RDF4JIRI nameIri = rdfImpl.createIRI(obj.get("predicate").getAsString());
+        RDF4JLiteral aliceLiteral = rdfImpl.createLiteral(obj.get("object").getAsString());
+        Triple triple = rdfImpl.createTriple(aliceBlankNode, nameIri, aliceLiteral);
+        additionalTriples.add(triple);
+      }
+
+    }
+
+
+    if (classIri.length() > 0 && classMapping.containsKey(classIri)) {
       Class<?> aClass;
-      String className = classMapping.get(classIri.get());
+      String className = classMapping.get(classIri);
       try {
         aClass = Class.forName(className);
         Constructor<?> ctor = aClass.getConstructor();
         Object object = ctor.newInstance();
         // add artifact instance to rdf store
-        RDF4JIRI iri = rdfImpl.createIRI(classIri.get());
-        Optional<org.apache.commons.rdf.api.Graph> graph = store.getEntityGraph(iri);
-        String graphString = store.graphToString(graph.get(), RDFSyntax.TURTLE);
-        String instanceTurtle = graphString.replace(classIri.get(), "");
+          RDF4JIRI iri = rdfImpl.createIRI(classIri);
+        org.apache.commons.rdf.api.Graph graph = store.getEntityGraph(iri).get();
+        Iterator<Triple> itr = additionalTriples.iterator();
+        while (itr.hasNext()) {
+          graph.add(itr.next());
+        }
+
+        String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
+        String instanceTurtle = graphString.replace(classIri, "");
 
         EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
           .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestArtifactString)
@@ -201,6 +230,10 @@ public class TemplateVerticle extends AbstractVerticle {
     } else {
       replyNotFound(message);
     }
+  }
+
+  private void replyBadRequest(Message<String> message) {
+    // TODO implement
   }
 
   private Handler<AsyncResult<Message<String>>> handleRdfStoreReply(Object generatedObject, Message<String> message) {
