@@ -13,4 +13,5 @@ public @interface Artifact {
   // Name of the templated artifact -> gets replaced by classname if not defined..
   String name() default "";
   String[] prefixes() default {};
+  RdfAddition additions() default @RdfAddition();
 }

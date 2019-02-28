@@ -17,6 +17,7 @@ import org.apache.commons.rdf.rdf4j.RDF4JIRI;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.query.algebra.Str;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
@@ -26,6 +27,7 @@ import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -314,6 +316,29 @@ public class TemplateVerticle extends AbstractVerticle {
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam)
       .build();
+
+    AnnotationInfo additionsInfo = (AnnotationInfo) artifactParameters.get("additions");
+    AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
+
+    String[] predicatesList;
+    String[] objectsList;
+    String[] zeroElement = (String[]) additionsList.get(0).getValue();
+    String[] oneElement = (String[]) additionsList.get(1).getValue();
+    if (additionsList.get(0).getName().equals("predicates")) {
+      predicatesList = zeroElement;
+      objectsList = oneElement;
+    } else {
+      predicatesList = oneElement;
+      objectsList = zeroElement;
+    }
+
+    if (predicatesList.length != objectsList.length) {
+      throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
+    }
+
+    for (int i = 0; i< predicatesList.length; i++) {
+      artifactBuilder.add(predicatesList[i], objectsList[i]);
+    }
 
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     addActionRDF(artifactBuilder, actionMethods, vf);

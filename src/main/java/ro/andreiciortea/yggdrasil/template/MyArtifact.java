@@ -1,12 +1,11 @@
 package ro.andreiciortea.yggdrasil.template;
 
-import ro.andreiciortea.yggdrasil.template.annotation.Action;
-import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
-import ro.andreiciortea.yggdrasil.template.annotation.Event;
-import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
+import ro.andreiciortea.yggdrasil.template.annotation.*;
 
 // TODO: enable multiple types
-@Artifact(type = "Thing")
+@Artifact(type = "Thing", additions =
+  @RdfAddition(predicates ={"eve:test1"}, objects = {"eve:obj1"})
+)
 public class MyArtifact {
 
   @ObservableProperty(path = "/myProp")
