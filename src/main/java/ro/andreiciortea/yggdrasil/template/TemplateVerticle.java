@@ -182,16 +182,17 @@ public class TemplateVerticle extends AbstractVerticle {
       JsonElement jelem = gson.fromJson(payload.get(), JsonElement.class);
       JsonObject jobj = jelem.getAsJsonObject();
       classIri = jobj.get("artifactClass").getAsString();
-      JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
-      for (int i = 0; i < additionsRdf.size(); i++) {
-        JsonObject obj = additionsRdf.get(i).getAsJsonObject();
-        BlankNode aliceBlankNode = rdfImpl.createBlankNode(classIri);
-        RDF4JIRI nameIri = rdfImpl.createIRI(obj.get("predicate").getAsString());
-        RDF4JLiteral aliceLiteral = rdfImpl.createLiteral(obj.get("object").getAsString());
-        Triple triple = rdfImpl.createTriple(aliceBlankNode, nameIri, aliceLiteral);
-        additionalTriples.add(triple);
+      if (jobj.get("additionalTriples") != null ) {
+        JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
+        for (int i = 0; i < additionsRdf.size(); i++) {
+          JsonObject obj = additionsRdf.get(i).getAsJsonObject();
+          BlankNode aliceBlankNode = rdfImpl.createBlankNode(classIri);
+          RDF4JIRI nameIri = rdfImpl.createIRI(obj.get("predicate").getAsString());
+          RDF4JLiteral aliceLiteral = rdfImpl.createLiteral(obj.get("object").getAsString());
+          Triple triple = rdfImpl.createTriple(aliceBlankNode, nameIri, aliceLiteral);
+          additionalTriples.add(triple);
+        }
       }
-
     }
 
 
