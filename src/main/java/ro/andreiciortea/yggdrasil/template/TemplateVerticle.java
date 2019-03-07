@@ -77,8 +77,29 @@ public class TemplateVerticle extends AbstractVerticle {
         String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
         handleDeleteInstance(artifactId, request, message);
         break;
+      case GET_TEMPLATE_DESCRIPTION:
+        String classId = request.getHeader(EventBusMessage.Headers.CLASS_IRI).get();
+        handleGetTemplateDescription(classId, request, message);
       default:
         replyError(message);
+    }
+  }
+
+  private void handleGetTemplateDescription(String classIri, EventBusMessage request, Message<String> message) {
+    // TODO return jsonld or turtle depending on header
+    if (classMapping.containsKey(classIri)) {
+      org.apache.commons.rdf.api.IRI classIriProper = store.createIRI(classIri);
+      org.apache.commons.rdf.api.Graph classDescription = store.getEntityGraph(classIriProper).get();
+      try {
+        String classDescriptionString = store.graphToString(classDescription,RDFSyntax.TURTLE);
+        replyWithPayload(message, classDescriptionString);
+      } catch (IOException e) {
+        e.printStackTrace();
+        replyError(message);
+      }
+
+    } else {
+      replyNotFound(message);
     }
   }
 

@@ -64,6 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/artifacts/templates").handler(templateHandler::handleGetTemplates);
     router.post("/artifacts/templates").handler(templateHandler::handleInstantiateTemp);
+    router.get("/artifacts/templates/:classId").handler(templateHandler::handleGetClassDescription);
 
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/artifacts/").handler(handler::handleCreateEntity);
