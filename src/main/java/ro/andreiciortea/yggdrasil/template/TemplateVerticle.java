@@ -21,7 +21,6 @@ import org.apache.commons.rdf.rdf4j.RDF4JLiteral;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.eclipse.rdf4j.query.algebra.Str;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
@@ -31,7 +30,6 @@ import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -186,10 +184,10 @@ public class TemplateVerticle extends AbstractVerticle {
         JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
         for (int i = 0; i < additionsRdf.size(); i++) {
           JsonObject obj = additionsRdf.get(i).getAsJsonObject();
-          BlankNode aliceBlankNode = rdfImpl.createBlankNode(classIri);
-          RDF4JIRI nameIri = rdfImpl.createIRI(obj.get("predicate").getAsString());
-          RDF4JLiteral aliceLiteral = rdfImpl.createLiteral(obj.get("object").getAsString());
-          Triple triple = rdfImpl.createTriple(aliceBlankNode, nameIri, aliceLiteral);
+          BlankNode subject = rdfImpl.createBlankNode(classIri);
+          RDF4JIRI predicate = rdfImpl.createIRI(obj.get("predicate").getAsString());
+          RDF4JLiteral literal = rdfImpl.createLiteral(obj.get("object").getAsString());
+          Triple triple = rdfImpl.createTriple(subject, predicate, literal);
           additionalTriples.add(triple);
         }
       }
@@ -204,14 +202,19 @@ public class TemplateVerticle extends AbstractVerticle {
         Constructor<?> ctor = aClass.getConstructor();
         Object object = ctor.newInstance();
         // add artifact instance to rdf store
-          RDF4JIRI iri = rdfImpl.createIRI(classIri);
+        RDF4JIRI iri = rdfImpl.createIRI(classIri);
         org.apache.commons.rdf.api.Graph graph = store.getEntityGraph(iri).get();
-        Iterator<Triple> itr = additionalTriples.iterator();
-        while (itr.hasNext()) {
-          graph.add(itr.next());
-        }
 
         String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
+        graphString = graphString.substring(0, graphString.lastIndexOf(".")) + " ;";
+        Iterator<Triple> itr = additionalTriples.iterator();
+        while (itr.hasNext()) {
+          Triple current = itr.next();
+          String obj = current.getObject().ntriplesString();
+          String pred = current.getPredicate().ntriplesString();
+          graphString = graphString + "\n" + pred + " " + obj + " ;";
+        }
+        graphString = graphString.substring(0, graphString.lastIndexOf(";")) + " .";
         String instanceTurtle = graphString.replace(classIri, "");
 
         EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
