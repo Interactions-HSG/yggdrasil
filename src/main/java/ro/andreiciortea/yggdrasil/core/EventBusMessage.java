@@ -1,10 +1,10 @@
 package ro.andreiciortea.yggdrasil.core;
 
+import com.google.gson.Gson;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import com.google.gson.Gson;
 
 public class EventBusMessage {
 

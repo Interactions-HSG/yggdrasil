@@ -1,35 +1,32 @@
 package ro.andreiciortea.yggdrasil.store;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-
+import com.google.gson.Gson;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
-
-import com.google.gson.Gson;
-
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
 
 public class RdfStoreVerticle extends AbstractVerticle {
 
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
 
   private RdfStore store;
-  // Todo move to store!!
   private RDF4J rdf = new RDF4J();
   private HttpClient httpClient;
 
@@ -37,7 +34,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
   public void start() {
     store = RdfStoreFactory.createStore(config().getString("store"));
 
-    // TODO: move http client to separate verticle?
     httpClient = vertx.createHttpClient();
 
     EventBus eventBus = vertx.eventBus();
@@ -57,19 +53,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
         case GET_ENTITY:
           handleGetEntity(requestIRI, request, message);
           break;
-
         case CREATE_ENTITY:
           handleCreateEntity(requestIRI, request, message);
           break;
-
         case PATCH_ENTITY:
           handlePatchEntity(requestIRI, request, message);
           break;
-
         case UPDATE_ENTITY:
           handleUpdateEntity(requestIRI, request, message);
           break;
-
         case DELETE_ENTITY:
           handleDeleteEntity(requestIRI, message);
           break;
@@ -137,7 +129,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       }
 
       store.createEntityGraph(entityIRI, entityGraph);
-      // TODO: reply with original payload? or representation of created entity graph??
+      // TODO: reply with original payload? or representation of created entity graph? (In the ideal case they are the same)
       replyWithPayload(message, entityGraphStr);
 
       vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,

@@ -1,12 +1,9 @@
 package ro.andreiciortea.yggdrasil.store.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import org.apache.commons.rdf.api.*;
+import org.apache.commons.rdf.api.Dataset;
+import org.apache.commons.rdf.api.Graph;
+import org.apache.commons.rdf.api.IRI;
+import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JGraph;
 import org.apache.commons.rdf.rdf4j.RDF4JTriple;
@@ -20,8 +17,13 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-
 import ro.andreiciortea.yggdrasil.store.RdfStore;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class Rdf4jStore implements RdfStore {
 
@@ -113,7 +115,6 @@ public class Rdf4jStore implements RdfStore {
     } else {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
     }
-
     return out.toString();
   }
 
@@ -142,7 +143,6 @@ public class Rdf4jStore implements RdfStore {
     finally {
       stringReader.close();
     }
-
     return rdfImpl.asGraph(model);
   }
 

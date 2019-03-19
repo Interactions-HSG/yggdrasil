@@ -23,8 +23,6 @@ public class HttpTemplateHandler {
     vertx = Vertx.currentContext().owner();
     }
 
-  // TODO: add payload validation
-
   public void handleGetTemplates(RoutingContext routingContext) {
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_TEMPLATES);
 
@@ -79,9 +77,9 @@ public class HttpTemplateHandler {
 
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
-
   }
 
+  // TODO: add payload validation
   public void handleTemplateExtended(RoutingContext routingContext) {
     String body = routingContext.getBodyAsString();
     String artifactId = routingContext.request().getParam("artid");
@@ -96,7 +94,6 @@ public class HttpTemplateHandler {
 
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
-
   }
 
   public void handleDeleteInstance(RoutingContext routingContext) {

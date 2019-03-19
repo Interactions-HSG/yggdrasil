@@ -1,9 +1,6 @@
 package ro.andreiciortea.yggdrasil.http;
 
-import org.apache.http.HttpStatus;
-
 import com.google.common.net.HttpHeaders;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
@@ -11,6 +8,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.http.HttpStatus;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage.Headers;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage.MessageType;
@@ -71,12 +69,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
     // 1st try to delete standard artifact
     router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
-    // 2nd try to delete software artifact instantiation
+    // 2nd try to delete instantiated software artifact
     router.delete("/artifacts/:artid").handler(templateHandler::handleDeleteInstance);
-
-
+    // invoke actions on software artifacts defined in the annotations of the corresponding template
     router.put("/artifacts/:artid/*").handler(templateHandler::handleTemplateExtended);
-
 
     router.post("/hub/").handler(handler::handleEntitySubscription);
 
@@ -97,7 +93,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     });
-
     return router;
   }
 }

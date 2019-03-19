@@ -1,15 +1,6 @@
 package ro.andreiciortea.yggdrasil.http;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-
 import com.google.gson.Gson;
-
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -19,9 +10,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.core.SubscriberRegistry;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class HttpEntityHandler {
 
@@ -40,7 +38,6 @@ public class HttpEntityHandler {
     }
   }
 
-  // TODO: add payload validation
 
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
@@ -62,6 +59,7 @@ public class HttpEntityHandler {
         message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
   }
 
+  // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     String entityRepresentation = routingContext.getBodyAsString();
@@ -82,6 +80,7 @@ public class HttpEntityHandler {
     // TODO
   }
 
+  // TODO: add payload validation
   public void handleUpdateEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     String entityRepresentation = routingContext.getBodyAsString();

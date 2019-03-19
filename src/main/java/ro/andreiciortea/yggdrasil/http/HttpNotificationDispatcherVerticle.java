@@ -1,15 +1,7 @@
 package ro.andreiciortea.yggdrasil.http;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import org.apache.http.HttpStatus;
-
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -19,9 +11,15 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.http.HttpStatus;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.core.SubscriberRegistry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
   
@@ -53,7 +51,6 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
           for (String callbackIRI : callbacks) {
             HttpClientRequest httpRequest = client.postAbs(callbackIRI, reponseHandler(callbackIRI))
                                                     .putHeader("Link", linkHeaders);
-            
             if (notification.getMessageType() == EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION) {
               httpRequest.end();
             } else if (changes.isPresent()) {
@@ -84,7 +81,6 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
         || message.getMessageType() == EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION) {
       return true;
     }
-    
     return false;
   }
   
@@ -94,7 +90,6 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
     if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
       return httpConfig.getString("websub-hub");
     }
-    
     return null;
   }
 }
