@@ -56,6 +56,12 @@ run {
   args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
 }
 
+apply plugin: 'java'
+
+compileJava {
+  options.compilerArgs << '-parameters'
+}
+
 task wrapper(type: Wrapper) {
   gradleVersion = '4.5.1'
 }
