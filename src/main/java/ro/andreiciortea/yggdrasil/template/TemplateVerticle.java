@@ -40,6 +40,7 @@ public class TemplateVerticle extends AbstractVerticle {
   private List<org.apache.commons.rdf.api.IRI> iris = new ArrayList<>();
   private Map<String, String> classMapping = new HashMap<>();
   private Map<String, Object> objectMapping = new HashMap<>();
+  private Map<String, Set<Triple>> objectTriples = new HashMap<>();
   private Map<String, ClassInfo> classInfoMap = new HashMap<>();
   private RDF4J rdfImpl;
 
@@ -81,8 +82,39 @@ public class TemplateVerticle extends AbstractVerticle {
       case GET_TEMPLATE_DESCRIPTION:
         String classId = request.getHeader(EventBusMessage.Headers.CLASS_IRI).get();
         handleGetTemplateDescription(classId, request, message);
+      case ADD_TRIPLES_INSTANCE:
+        String objectArtifactID = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
+        handleUpdateTriples(objectArtifactID, request, message);
       default:
         replyError(message);
+    }
+  }
+
+  private void handleUpdateTriples(String objectArtifactID, EventBusMessage request, Message<String> message) {
+    if (!objectMapping.containsKey(objectArtifactID)) {
+      replyNotFound(message);
+    }
+    else {
+      Gson gson = new Gson();
+      Optional<String> triples = request.getPayload();
+      if (request.getPayload().isPresent()) {
+        JsonElement jelem = gson.fromJson(triples.get(), JsonElement.class);
+        JsonObject jobj = jelem.getAsJsonObject();
+        if (jobj.get("additionalTriples") != null ) {
+          JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
+          Set<Triple> additionalTriples = parseAdditionalTriples(additionsRdf, objectArtifactID);
+          if (additionalTriples.size() > 0) {
+            objectTriples.put(objectArtifactID, additionalTriples);
+          }
+          else {
+            objectTriples.remove(objectArtifactID);
+          }
+        } else {
+          replyBadRequest(message);
+        }
+      } else {
+        objectTriples.remove(objectArtifactID);
+      }
     }
   }
 
@@ -166,6 +198,9 @@ public class TemplateVerticle extends AbstractVerticle {
           ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
           org.apache.commons.rdf.api.Graph newGraph = generateTemplateRDF(classInfo, target, entityIRI);
           String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
+          Set<Triple> additionalTriples = objectTriples.get(entityIRI);
+          // add additional triples again
+          newRepresentation = addAdditionalTriplesRDF(newRepresentation, additionalTriples);
 
           EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.UPDATE_ENTITY)
             .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI)
@@ -218,17 +253,9 @@ public class TemplateVerticle extends AbstractVerticle {
       classIri = jobj.get("artifactClass").getAsString();
       if (jobj.get("additionalTriples") != null ) {
         JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
-        for (int i = 0; i < additionsRdf.size(); i++) {
-          JsonObject obj = additionsRdf.get(i).getAsJsonObject();
-          BlankNode subject = rdfImpl.createBlankNode(classIri);
-          RDF4JIRI predicate = rdfImpl.createIRI(obj.get("predicate").getAsString());
-          RDF4JLiteral literal = rdfImpl.createLiteral(obj.get("object").getAsString());
-          Triple triple = rdfImpl.createTriple(subject, predicate, literal);
-          additionalTriples.add(triple);
-        }
+        additionalTriples = parseAdditionalTriples(additionsRdf, classIri);
       }
     }
-
 
     if (classIri.length() > 0 && classMapping.containsKey(classIri)) {
       Class<?> aClass;
@@ -242,15 +269,8 @@ public class TemplateVerticle extends AbstractVerticle {
         org.apache.commons.rdf.api.Graph graph = generateTemplateRDF(classInfo, object, classIri);
 
         String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
-        graphString = graphString.substring(0, graphString.lastIndexOf(".")) + " ;";
-        Iterator<Triple> itr = additionalTriples.iterator();
-        while (itr.hasNext()) {
-          Triple current = itr.next();
-          String obj = current.getObject().ntriplesString();
-          String pred = current.getPredicate().ntriplesString();
-          graphString = graphString + "\n" + pred + " " + obj + " ;";
-        }
-        graphString = graphString.substring(0, graphString.lastIndexOf(";")) + " .";
+        graphString = addAdditionalTriplesRDF(graphString, additionalTriples);
+
         String instanceTurtle = graphString.replace(classIri, "");
 
         EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
@@ -259,7 +279,7 @@ public class TemplateVerticle extends AbstractVerticle {
           .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, "text/turtle")
           .setPayload(instanceTurtle);
 
-        vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, rdfStoreMessage.toJson(), handleRdfStoreReply(object, message));
+        vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, rdfStoreMessage.toJson(), handleRdfStoreReply(object, message, additionalTriples));
 
       } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException |InstantiationException | InvocationTargetException e) {
         replyError(message);
@@ -272,17 +292,32 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  private String addAdditionalTriplesRDF(String rdfString, Set<Triple> additionalTriples) {
+    String result = rdfString.substring(0, rdfString.lastIndexOf(".")) + " ;";
+    Iterator<Triple> itr = additionalTriples.iterator();
+    while (itr.hasNext()) {
+      Triple current = itr.next();
+      String obj = current.getObject().ntriplesString();
+      String pred = current.getPredicate().ntriplesString();
+      result = result + "\n" + pred + " " + obj + " ;";
+    }
+    result = result.substring(0, result.lastIndexOf(";")) + " .";
+    return result;
+  }
+
   private void replyBadRequest(Message<String> message) {
     // TODO implement
   }
 
-  private Handler<AsyncResult<Message<String>>> handleRdfStoreReply(Object generatedObject, Message<String> message) {
+  private Handler<AsyncResult<Message<String>>> handleRdfStoreReply(Object generatedObject, Message<String> message, Set<Triple> additionalTriples) {
     return reply -> {
       if (reply.succeeded()) {
         EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
         // add object to object map
         String payload = storeReply.getPayload().get();
         String entityIri = payload.substring(payload.indexOf("<") + 1, payload.indexOf(">"));
+
+        objectTriples.put(entityIri, additionalTriples);
 
         if (storeReply.succeded()) {
           objectMapping.put(entityIri, generatedObject);
@@ -342,6 +377,19 @@ public class TemplateVerticle extends AbstractVerticle {
       }
     }
     replyWithPayload(message, result);
+  }
+
+  private Set<Triple> parseAdditionalTriples(JsonArray additionsRdf, String classIri) {
+    Set<Triple> additionalTriples = new HashSet<>();
+    for (int i = 0; i < additionsRdf.size(); i++) {
+      JsonObject obj = additionsRdf.get(i).getAsJsonObject();
+        BlankNode subject = rdfImpl.createBlankNode(classIri);
+        RDF4JIRI predicate = rdfImpl.createIRI(obj.get("predicate").getAsString());
+        RDF4JLiteral literal = rdfImpl.createLiteral(obj.get("object").getAsString());
+        Triple triple = rdfImpl.createTriple(subject, predicate, literal);
+        additionalTriples.add(triple);
+      }
+    return additionalTriples;
   }
 
   private void scanArtifactTemplates() {

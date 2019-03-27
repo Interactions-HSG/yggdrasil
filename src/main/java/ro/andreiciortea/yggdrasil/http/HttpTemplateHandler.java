@@ -113,4 +113,15 @@ public class HttpTemplateHandler {
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
   }
+
+  public void handleUpdateTriples(RoutingContext routingContext) {
+    String artifactId = routingContext.request().getParam("artid");
+    String body = routingContext.getBodyAsString();
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.ADD_TRIPLES_INSTANCE)
+      .setPayload(body)
+      .setHeader(EventBusMessage.Headers.ARTIFACT_ID, artifactId);
+
+    vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
+      message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
+  }
 }
