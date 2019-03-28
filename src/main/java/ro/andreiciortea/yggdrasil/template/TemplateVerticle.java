@@ -472,7 +472,9 @@ public class TemplateVerticle extends AbstractVerticle {
     }
 
     for (int i = 0; i< predicatesList.length; i++) {
-      artifactBuilder.add(predicatesList[i], objectsList[i]);
+      String predicate = predicatesList[i];
+      String object = objectsList[i];
+      artifactBuilder.add(predicate, rdfImpl.createIRI(object));
     }
 
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
