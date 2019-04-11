@@ -83,7 +83,7 @@ public class TemplateVerticle extends AbstractVerticle {
         String classId = request.getHeader(EventBusMessage.Headers.CLASS_IRI).get();
         handleGetTemplateDescription(classId, request, message);
       case ADD_TRIPLES_INSTANCE:
-        String objectArtifactID = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
+        String objectArtifactID = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).isPresent() ? request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get() : null;
         handleUpdateTriples(objectArtifactID, request, message);
       default:
         replyError(message);
@@ -458,7 +458,15 @@ public class TemplateVerticle extends AbstractVerticle {
     String[] predicatesList;
     String[] objectsList;
     String[] zeroElement = (String[]) additionsList.get(0).getValue();
+    /*
+    for (String addition : zeroElement) {
+      String predicate = addition.split(" ")[0];
+      String objectt = addition.split(" ")[1];
+      artifactBuilder.add(predicate, objectt);
+    }
+    */
     String[] oneElement = (String[]) additionsList.get(1).getValue();
+
     if (additionsList.get(0).getName().equals("predicates")) {
       predicatesList = zeroElement;
       objectsList = oneElement;
@@ -467,6 +475,7 @@ public class TemplateVerticle extends AbstractVerticle {
       objectsList = zeroElement;
     }
 
+
     if (predicatesList.length != objectsList.length) {
       throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
     }
@@ -474,7 +483,7 @@ public class TemplateVerticle extends AbstractVerticle {
     for (int i = 0; i< predicatesList.length; i++) {
       String predicate = predicatesList[i];
       String object = objectsList[i];
-      artifactBuilder.add(predicate, rdfImpl.createIRI(object));
+      artifactBuilder.add(predicate, object);
     }
 
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());

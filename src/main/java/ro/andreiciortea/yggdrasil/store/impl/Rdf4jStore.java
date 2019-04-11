@@ -16,6 +16,7 @@ import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.rio.turtle.TurtleWriter;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import ro.andreiciortea.yggdrasil.store.RdfStore;
 
@@ -91,7 +92,10 @@ public class Rdf4jStore implements RdfStore {
     } else {
       writer = Rio.createWriter(RDFFormat.TURTLE, out);
     }
-    writer.getWriterConfig().set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+    writer.getWriterConfig()//.set(BasicWriterSettings.INLINE_BLANK_NODES, true)
+      .set(BasicWriterSettings.PRETTY_PRINT, true)
+      .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
+      .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true);
 
     if (graph instanceof RDF4JGraph) {
       try {

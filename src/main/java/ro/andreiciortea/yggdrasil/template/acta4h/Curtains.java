@@ -3,8 +3,11 @@ package ro.andreiciortea.yggdrasil.template.acta4h;
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
+import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
-@Artifact(type = "Curtains")
+@Artifact(type = "Curtains", additions =
+  @RdfAddition(predicates ={"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}, objects = {"td:Thing"})
+)
 public class Curtains {
 
   @ObservableProperty
