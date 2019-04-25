@@ -115,7 +115,7 @@ public class HttpTemplateHandler {
   }
 
   public void handleUpdateTriples(RoutingContext routingContext) {
-    String artifactId = routingContext.request().getParam("artid");
+    String artifactId = routingContext.request().absoluteURI().replaceAll("/updateTriples", "");
     String body = routingContext.getBodyAsString();
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.ADD_TRIPLES_INSTANCE)
       .setPayload(body)

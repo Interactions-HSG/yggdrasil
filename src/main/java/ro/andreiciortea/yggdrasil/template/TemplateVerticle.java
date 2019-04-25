@@ -109,6 +109,13 @@ public class TemplateVerticle extends AbstractVerticle {
           else {
             objectTriples.remove(objectArtifactID);
           }
+          try {
+            updateRepresentation(objectArtifactID, objectMapping.get(objectArtifactID), message);
+          } catch (IOException e) {
+            e.printStackTrace();
+            replyError(message);
+          }
+          replyWithPayload(message, "ok");
         } else {
           replyBadRequest(message);
         }
@@ -195,18 +202,17 @@ public class TemplateVerticle extends AbstractVerticle {
           String jsonStr = gson.toJson(result);
 
           // update representation with new value
-          ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
-          org.apache.commons.rdf.api.Graph newGraph = generateTemplateRDF(classInfo, target, entityIRI);
-          String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
-          Set<Triple> additionalTriples = objectTriples.get(entityIRI);
-          // add additional triples again
-          newRepresentation = addAdditionalTriplesRDF(newRepresentation, additionalTriples);
-
-          EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.UPDATE_ENTITY)
-            .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI)
-            .setPayload(newRepresentation);
-
-          vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, rdfStoreMessage.toJson(), handleRdfStoreReply(message));
+          updateRepresentation(entityIRI, target, message);
+          // TODO This feature is just added for demo purposes
+          // Send update notification
+          /*
+          vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
+            new EventBusMessage(EventBusMessage.MessageType.ENTITY_CHANGED_NOTIFICATION)
+              .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI)
+              .setPayload(jsonStr)
+              .toJson()
+          );
+          */
 
           replyWithPayload(message, jsonStr);
           return;
@@ -392,6 +398,22 @@ public class TemplateVerticle extends AbstractVerticle {
     return additionalTriples;
   }
 
+  private void updateRepresentation(String entityIRI, Object target,  Message<String> message) throws IOException {
+    ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
+    org.apache.commons.rdf.api.Graph newGraph = generateTemplateRDF(classInfo, target, entityIRI);
+    String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
+    Set<Triple> additionalTriples = objectTriples.get(entityIRI);
+    // add additional triples again
+    newRepresentation = addAdditionalTriplesRDF(newRepresentation, additionalTriples);
+
+    EventBusMessage rdfStoreMessage = new EventBusMessage(EventBusMessage.MessageType.UPDATE_ENTITY)
+      .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI)
+      .setPayload(newRepresentation);
+
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, rdfStoreMessage.toJson(), handleRdfStoreReply(message));
+
+  }
+
   private void scanArtifactTemplates() {
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = pkg + ".annotation.Artifact";
@@ -447,7 +469,7 @@ public class TemplateVerticle extends AbstractVerticle {
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("td", "http://www.w3.org/ns/td#")
       .subject(artifactName)
-      .add("eve:a", typeParam)
+      .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), typeParam)
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam)
       .build();
