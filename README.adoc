@@ -7,7 +7,7 @@ A platform for _hypermedia multi-agent systems (MAS)_ (see [1]) built with https
 
 [1] Andrei Ciortea, Olivier Boissier, and Alessandro Ricci. Engineering World-Wide Multi-Agent Systems with Hypermedia. In Engineering Multi-Agent Systems (V. Mascardi, A. Ricci, and D. Weyns,eds.), Springer International Publishing, 2018. To appear.
 
-[2] Alessandro Ricci, Michele Piunti, and Mirko Viroli. Environment Programming in multi-agent systems: an artifact-based perspective. Autonomous Agents and Multi-Agent Systems, 23(2):158{192, Sep 2011.
+[2] Alessandro Ricci, Michele Piunti, and Mirko Viroli. Environment Programming in multi-agent systems: an artifact-based perspective. Autonomous Agents and Multi-Agent Systems, 23(2):158-192, Sep 2011.
 
 
 == Prerequisites
