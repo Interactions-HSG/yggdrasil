@@ -32,7 +32,7 @@ To start an Yggdrasil node:
 
 [source]
 ----
-java -jar build/libs/yggdrasill-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config1.json
+java -jar build/libs/yggdrasil-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config1.json
 ----
 
 The configuration file is optional. Open your browser to http://localhost:8080. You should see an `Yggdrasil v0.0` message.
@@ -67,19 +67,19 @@ When retrieving the representation of a resource from Yggdrasil, the HTTP respon
 [source]
 ----
 GET /workspaces/wksp1 HTTP/1.1
-Host: yggdrasill.andreiciortea.ro
+Host: yggdrasil.andreiciortea.ro
 
 HTTP/1.1 200 OK
 Content-Type: text/turtle
-Link: <http://yggdrasill.andreiciortea.ro/hub>; rel="hub"
-Link: <http://yggdrasill.andreiciortea.ro/workspaces/wksp1>; rel="self"
+Link: <http://yggdrasil.andreiciortea.ro/hub>; rel="hub"
+Link: <http://yggdrasil.andreiciortea.ro/workspaces/wksp1>; rel="self"
 
-<http://yggdrasill.andreiciortea.ro/workspaces/wksp1> 
+<http://yggdrasil.andreiciortea.ro/workspaces/wksp1> 
   a <http://w3id.org/eve#Workspace> ;
   <http://w3id.org/eve#hasName> "wksp1" ;
   <http://w3id.org/eve#contains>
     <http://85.204.10.233:8080/artifacts/hue1> ,
-    <http://yggdrasill.andreiciortea.ro/artifacts/event-gen> .
+    <http://yggdrasil.andreiciortea.ro/artifacts/event-gen> .
 ----
 
 Using the discovered hub and topic IRIs, a client can subscribe for notification via a `POST` request that contains a JSON payload with the following fields (see the https://www.w3.org/TR/2018/REC-websub-20180123/[W3C WebSub recommendation]):
