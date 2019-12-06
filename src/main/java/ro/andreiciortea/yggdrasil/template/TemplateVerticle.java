@@ -55,7 +55,8 @@ public class TemplateVerticle extends AbstractVerticle {
     rdfImpl = new RDF4J();
 
     // scan for annotated artifact classes and add them to the RDF store
-    scanArtifactTemplates();
+    // Edit 6.12.19 (PJ): we currently do not want this for our demo [TODO: get rid of this entirely to keep things simple?]
+    // scanArtifactTemplates();
   }
 
   private void handleTemplatesRequest(Message<String> message) {
