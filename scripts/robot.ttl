@@ -1,0 +1,34 @@
+@prefix td: <http://www.w3.org/ns/td#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.com/> .
+@prefix http: <http://iotschema.org/protocol/http> .
+@prefix eve: <http://w3id.org/eve#> .
+
+<>
+  a td:Thing, eve:Artifact;
+  td:name "Robot2"^^xsd:string ;
+  td:base "http://127.0.0.1/"^^xsd:anyURI ;
+  td:interaction [
+    a td:Action, ex:move ;
+    td:name "Move"^^xsd:string ;
+    td:form [
+      http:methodName "PUT"^^xsd:string ;
+      td:href "/api/YqqaHVH8QF-o7iPm6L7ax9jRtu-NTxBAysr4-UQc/robots/2/move"^^xsd:anyURI ;
+      td:mediaType "application/json"^^xsd:string ;
+      td:rel "invokeAction"^^xsd:string
+    ] ;
+    td:inputSchema [
+      td:schemaType td:Object ;
+      td:field [
+        td:name "on"^^xsd:string ;
+        td:schema [ td:schemaType td:Boolean; td:const true ]
+      ] ;
+      td:field [
+        td:name "xyz"^^xsd:string ;
+        td:schema [
+          td:schemaType td:Array ;
+          td:items [ td:schemaType td:Number ], [td:schemaType td:Number ], [ td:schemaType td:Number ]
+        ]
+      ]
+    ]
+  ] .
