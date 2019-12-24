@@ -75,6 +75,14 @@ public class HttpServerVerticle extends AbstractVerticle {
     // invoke actions on software artifacts defined in the annotations of the corresponding template
     router.put("/artifacts/:artid/*").handler(templateHandler::handleTemplateExtended);
 
+    //route artifact manual requests
+    
+    router.get("/manuals/:wkspid").handler(handler::handleGetEntity);
+    router.post("/manuals/").handler(handler::handleCreateEntity);
+    router.put("/manuals/:wkspid").handler(handler::handleUpdateEntity);
+    router.delete("/manuals/:wkspid").handler(handler::handleDeleteEntity);
+
+
     router.post("/hub/").handler(handler::handleEntitySubscription);
 
 
