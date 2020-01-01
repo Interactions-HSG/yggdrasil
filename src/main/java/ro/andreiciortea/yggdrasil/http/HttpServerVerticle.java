@@ -8,11 +8,18 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.core.http.HttpMethod;
+
+
 import org.apache.http.HttpStatus;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage.Headers;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage.MessageType;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -39,6 +46,24 @@ public class HttpServerVerticle extends AbstractVerticle {
   private Router createRouter() {
     Router router = Router.router(vertx);
 
+    // to avoid CORS issues of GUI - source: https://github.com/vert-x3/vertx-examples/blob/master/web-examples/src/main/java/io/vertx/example/web/cors/Server.java#L27
+    Set<String> allowedHeaders = new HashSet<>();
+    allowedHeaders.add("x-requested-with");
+    allowedHeaders.add("Access-Control-Allow-Origin");
+    allowedHeaders.add("origin");
+    allowedHeaders.add("Content-Type");
+    allowedHeaders.add("accept");
+    allowedHeaders.add("X-PINGARUNER");
+    Set<HttpMethod> allowedMethods = new HashSet<>();
+    allowedMethods.add(HttpMethod.GET);
+    allowedMethods.add(HttpMethod.POST);
+    allowedMethods.add(HttpMethod.OPTIONS);
+    allowedMethods.add(HttpMethod.DELETE);
+    allowedMethods.add(HttpMethod.PATCH);
+    allowedMethods.add(HttpMethod.PUT);
+
+
+    router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
     router.route().handler(BodyHandler.create());
 
     router.get("/").handler((routingContext) -> {
@@ -76,7 +101,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/artifacts/:artid/*").handler(templateHandler::handleTemplateExtended);
 
     //route artifact manual requests
-    
+
     router.get("/manuals/:wkspid").handler(handler::handleGetEntity);
     router.post("/manuals/").handler(handler::handleCreateEntity);
     router.put("/manuals/:wkspid").handler(handler::handleUpdateEntity);
