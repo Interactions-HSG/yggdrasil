@@ -54,6 +54,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     allowedHeaders.add("Content-Type");
     allowedHeaders.add("accept");
     allowedHeaders.add("X-PINGARUNER");
+    allowedHeaders.add("slug");
     Set<HttpMethod> allowedMethods = new HashSet<>();
     allowedMethods.add(HttpMethod.GET);
     allowedMethods.add(HttpMethod.POST);
