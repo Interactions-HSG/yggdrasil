@@ -33,6 +33,12 @@ import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
 
+/*
+ * Handles artifact templates which are either present in form of a Java class in the current folder (ro.andreiciortea.yggdrasil.template)
+ * or provided at runtime in RDF representation. Templates can be instantiated
+ *
+ *
+ */
 public class TemplateVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
 
@@ -416,6 +422,7 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private void scanArtifactTemplates() {
+    // TODO: this path doesn't need to be hardcoded. Could be provided at runtime... Which would make it more useful in case Yggdrasil becomes a library.
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = pkg + ".annotation.Artifact";
 

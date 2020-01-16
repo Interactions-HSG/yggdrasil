@@ -21,6 +21,9 @@ import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import java.util.HashSet;
 import java.util.Set;
 
+/*
+ * The main entrypoint of Yggdrasil. All requests arrive here and are forwarded to the corresponding handler.
+ */
 public class HttpServerVerticle extends AbstractVerticle {
 
   public static final String DEFAULT_HOST = "0.0.0.0";

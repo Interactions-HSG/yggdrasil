@@ -21,7 +21,10 @@ import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
-
+/*
+ * Stores the RDF graphs representing the instantiated artifacts
+ *
+ */
 public class RdfStoreVerticle extends AbstractVerticle {
 
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
@@ -77,7 +80,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleGetEntity(IRI requestIRI,EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+  private void handleGetEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
     RDFSyntax syntax = RDFSyntax.TURTLE;
     Optional<String> contentType = request.getHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE);

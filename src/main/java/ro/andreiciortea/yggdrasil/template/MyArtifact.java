@@ -6,6 +6,9 @@ import ro.andreiciortea.yggdrasil.template.annotation.*;
 @Artifact(type = "Thing", additions =
   @RdfAddition(predicates ={"eve:test1"}, objects = {"eve:obj1"})
 )
+/*
+ * An example Artifact
+ */
 public class MyArtifact {
 
   @ObservableProperty(path = "/myProp")
