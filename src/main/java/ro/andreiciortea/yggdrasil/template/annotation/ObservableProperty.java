@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * @param name name representing the property in the generated TD. Replaced by the class members identifier if not given.
  *
  *             NOTE: At them moment, only the simple types like int, double, float, string, bool that are present in the json
- *             specification are working. But there's not typechecking happening!
+ *             specification are working. But there's no typechecking happening!
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
