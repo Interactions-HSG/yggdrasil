@@ -21,6 +21,7 @@ import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import java.util.HashSet;
 import java.util.Set;
 
+
 /*
  * The main entrypoint of Yggdrasil. All requests arrive here and are forwarded to the corresponding handler.
  */
@@ -43,7 +44,18 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
 
     Router router = createRouter();
-    server.requestHandler(router::accept).listen(port, host);
+    addGuiRoutesAndWebsocket(server, router);
+    server.requestHandler(router::accept).listen(port, host, res->{
+      if(res.succeeded()){
+          System.out.println("Successfully started http and websocket server");
+      } else {
+          System.out.println(res.cause().getLocalizedMessage());
+      }
+    });
+  }
+
+  private void addGuiRoutesAndWebsocket(HttpServer server, Router router) {
+    HttpGuiHandler guiHandler = new HttpGuiHandler(server, router);
   }
 
   private Router createRouter() {

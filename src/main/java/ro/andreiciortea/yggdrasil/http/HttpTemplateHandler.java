@@ -21,7 +21,7 @@ public class HttpTemplateHandler {
 
   public HttpTemplateHandler() {
     vertx = Vertx.currentContext().owner();
-    }
+  }
 
   public void handleGetTemplates(RoutingContext routingContext) {
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_TEMPLATES);
