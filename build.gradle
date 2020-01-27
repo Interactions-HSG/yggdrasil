@@ -21,11 +21,11 @@ def doOnChange = './gradlew classes'
 
 dependencies {
   compile "io.vertx:vertx-core:$vertxVersion"
-  compile 'io.vertx:vertx-config:3.5.1'
-  compile 'io.vertx:vertx-web:3.5.1'
-  compile 'io.vertx:vertx-web-api-contract:3.5.1'
-  compile 'io.vertx:vertx-web-client:3.5.1'
-  compile 'io.github.classgraph:classgraph:4.4.12'
+  compile "io.vertx:vertx-config:$vertxVersion"
+  compile "io.vertx:vertx-web:$vertxVersion"
+  compile "io.vertx:vertx-web-api-contract:$vertxVersion"
+  compile "io.vertx:vertx-web-client:$vertxVersion"
+  compile "io.github.classgraph:classgraph:4.4.12"
 
   // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
   compile group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
@@ -36,7 +36,7 @@ dependencies {
 
   compile 'org.apache.commons:commons-rdf-api:0.5.0'
   compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
-  compile 'com.google.code.gson:gson:2.8.2'
+  compile 'com.google.code.gson:gson:2.8.5'
 
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
