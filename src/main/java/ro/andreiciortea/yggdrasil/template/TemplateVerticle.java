@@ -61,8 +61,7 @@ public class TemplateVerticle extends AbstractVerticle {
     rdfImpl = new RDF4J();
 
     // scan for annotated artifact classes and add them to the RDF store
-    // Edit 6.12.19 (PJ): we currently do not want this for our demo [TODO: get rid of this entirely to keep things simple?]
-    // scanArtifactTemplates();
+    scanArtifactTemplates();
   }
 
   private void handleTemplatesRequest(Message<String> message) {
@@ -186,6 +185,8 @@ public class TemplateVerticle extends AbstractVerticle {
               Parameter param = params[i];
               Class paramType = param.getType();
               JsonElement paramJson = jobj.get(param.getName());
+
+              // TODO: convert into switch statement?
               if (paramType.equals(int.class)) {
                 int paramValInt = paramJson.getAsInt();
                 obj[i] = paramValInt;
@@ -610,7 +611,7 @@ public class TemplateVerticle extends AbstractVerticle {
         actionNameParam = action.getName();
       }
 
-      String path = (String ) actionParameters.get("path");
+      String path = (String) actionParameters.get("path");
       if (path.equals("")) {
         path = "/actions/" + actionNameParam;
       }

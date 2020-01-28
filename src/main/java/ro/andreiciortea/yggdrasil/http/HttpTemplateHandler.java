@@ -79,8 +79,7 @@ public class HttpTemplateHandler {
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));
   }
 
-  // TODO: add payload validation
-  public void handleTemplateExtended(RoutingContext routingContext) {
+  public void handleAction(RoutingContext routingContext) {
     String body = routingContext.getBodyAsString();
     String artifactId = routingContext.request().getParam("artid");
     String[] uriSplitted = routingContext.request().absoluteURI().split(artifactId);
