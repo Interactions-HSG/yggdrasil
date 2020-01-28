@@ -37,7 +37,6 @@ import java.util.*;
  * Handles artifact templates which are either present in form of a Java class in the current folder (ro.andreiciortea.yggdrasil.template)
  * or provided at runtime in RDF representation. Templates can be instantiated
  *
- *
  */
 public class TemplateVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
