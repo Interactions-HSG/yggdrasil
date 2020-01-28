@@ -75,7 +75,7 @@ public class TemplateVerticle extends AbstractVerticle {
       case INSTANTIATE_TEMPLATE:
         String requestIRIString = request.getHeader(EventBusMessage.Headers.REQUEST_IRI).get();
         org.apache.commons.rdf.api.IRI requestIRI = store.createIRI(requestIRIString);
-        handleInstatiateTemplate(requestIRI, request, message);
+        handleInstantiateTemplate(requestIRI, request, message);
         break;
       case TEMPLATE_ACTIVITY:
         String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
@@ -248,7 +248,7 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleInstatiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
+  private void handleInstantiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
     Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
     String requestArtifactString = requestIRI.getIRIString().replaceAll("/templates", "");
     String classIri = "";
