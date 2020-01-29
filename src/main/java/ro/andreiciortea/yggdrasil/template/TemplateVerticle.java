@@ -429,10 +429,9 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private void scanArtifactTemplates() {
-    // TODO: this path doesn't need to be hardcoded. Could be provided at runtime... Which would make it more useful in case Yggdrasil becomes a library.
     String pkg = "ro.andreiciortea.yggdrasil.template";
-    String artifactAnnotation = pkg + ".annotation.Artifact";
-
+    String artifactAnnotation = "ro.andreiciortea.yggdrasil.template.annotation.Artifact";
+    System.out.println("scanning for templates...");
     try (ScanResult scanResult =
            new ClassGraph()
              .enableAllInfo()             // Scan classes, methods, fields, annotations
