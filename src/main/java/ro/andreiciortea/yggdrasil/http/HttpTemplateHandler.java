@@ -6,6 +6,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
@@ -84,12 +85,13 @@ public class HttpTemplateHandler {
     String artifactId = routingContext.request().getParam("artid");
     String[] uriSplitted = routingContext.request().absoluteURI().split(artifactId);
     String entityIri = uriSplitted[0] + artifactId;
-    String activity = uriSplitted[1];
+    String attribute = uriSplitted[1];
+    HttpMethod httpMethod = routingContext.request().method();
 
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.TEMPLATE_ACTIVITY)
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.TEMPLATE_ACTIVITY, httpMethod)
       .setPayload(body)
       .setHeader(EventBusMessage.Headers.ENTITY_IRI, entityIri)
-      .setHeader(EventBusMessage.Headers.ENTITY_ACTIVITY, activity);
+      .setHeader(EventBusMessage.Headers.ENTITY_ATTRIBUTE, attribute);
 
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));

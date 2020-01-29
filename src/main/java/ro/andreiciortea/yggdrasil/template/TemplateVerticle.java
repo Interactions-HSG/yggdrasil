@@ -12,6 +12,7 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.http.HttpMethod;
 import org.apache.commons.rdf.api.BlankNode;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
@@ -26,7 +27,7 @@ import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
 import ro.andreiciortea.yggdrasil.store.RdfStore;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
-import ro.andreiciortea.yggdrasil.template.annotation.Action;
+import ro.andreiciortea.yggdrasil.template.annotation.RequestMapping;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
 import java.io.IOException;
@@ -78,8 +79,8 @@ public class TemplateVerticle extends AbstractVerticle {
         break;
       case TEMPLATE_ACTIVITY:
         String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
-        String activity =  request.getHeader(EventBusMessage.Headers.ENTITY_ACTIVITY).get();
-        handleEntityActivity(entityIRI, activity, request, message);
+        String attribute =  request.getHeader(EventBusMessage.Headers.ENTITY_ATTRIBUTE).get();
+        handleEntityRequest(entityIRI, attribute, request, message);
         break;
       case DELETE_INSTANCE:
         String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
@@ -160,17 +161,22 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleEntityActivity(String entityIRI, String activity, EventBusMessage request, Message<String> message) {
+  private boolean httpMethodAndAttributeMatches(Method method, HttpMethod httpMethod, String attribute) {
+    return method.getAnnotation(RequestMapping.class).path().equals(attribute) && method.getAnnotation(RequestMapping.class).httpMethod().equals(httpMethod);
+  }
+
+  private void handleEntityRequest(String entityIRI, String attribute, EventBusMessage request, Message<String> message) {
     Object target = objectMapping.get(entityIRI);
     Gson gson = new Gson();
+    HttpMethod httpMethod = request.getHttpMethod();
 
     if (target == null) {
       replyNotFound(message);
       return;
     }
     for (Method method : target.getClass().getMethods()) {
-      if (method.getAnnotation(Action.class) != null && method.getAnnotation(Action.class).path().equals(activity)) {
-        System.out.println("invoke action " + activity + " on " + entityIRI);
+      if (method.getAnnotation(RequestMapping.class) != null && httpMethodAndAttributeMatches(method, httpMethod, attribute)) {
+        System.out.println("invoke action " + attribute + " on " + entityIRI);
         try {
           Object[] obj = new Object[method.getParameters().length];
           // check for arguments of method
@@ -235,7 +241,7 @@ public class TemplateVerticle extends AbstractVerticle {
     }
     // check for observable property to be returned
     for (Field field : target.getClass().getFields()) {
-      if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(activity)) {
+      if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(attribute)) {
         try {
           Object value = field.get(target);
 
