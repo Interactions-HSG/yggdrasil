@@ -39,55 +39,55 @@ public class Radiator {
   @ObservableProperty
   public double temperature = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/Command")
+  @RequestMapping(requestMethod = "PUT", path = "/command")
   public String setCommand(String command) {
     this.command = command;
     return this.command;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Instruction")
+  @RequestMapping(requestMethod = "PUT", path = "/instruction")
   public String setInstruction(String instruction) {
     this.instruction = instruction;
     return this.instruction;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/EffectiveInstruction")
+  @RequestMapping(requestMethod = "PUT", path = "/effectiveInstruction")
   public String setEffectiveInstruction(String effectiveInstruction) {
     this.effectiveInstruction = effectiveInstruction;
     return this.effectiveInstruction;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/InstructionChange")
+  @RequestMapping(requestMethod = "PUT", path = "/instructionChange")
   public String setInstructionChange(String instructionChange) {
     this.instructionChange = instructionChange;
     return this.instructionChange;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Window")
+  @RequestMapping(requestMethod = "PUT", path = "/window")
   public String setWindwow(String window) {
     this.window = window;
     return this.window;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/BaseMode")
+  @RequestMapping(requestMethod = "PUT", path = "/baseMode")
   public String setBaseMode(String baseMode) {
     this.baseMode = baseMode;
     return this.baseMode;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/EffectiveMode")
+  @RequestMapping(requestMethod = "PUT", path = "/effectiveMode")
   public String setEffectiveMode(String effectiveMode) {
     this.effectiveMode = effectiveMode;
     return this.effectiveMode;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Presence")
+  @RequestMapping(requestMethod = "PUT", path = "/presence")
   public String setPresence(String presence) {
     this.presence = presence;
     return this.presence;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Temperature")
+  @RequestMapping(requestMethod = "PUT", path = "/temperature")
   public double setTemperature(double temperature) {
     this.temperature = temperature;
     return this.temperature;

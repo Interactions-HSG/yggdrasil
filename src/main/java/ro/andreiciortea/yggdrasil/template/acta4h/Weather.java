@@ -13,137 +13,137 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 public class Weather {
 
   @ObservableProperty
-  public String commonId_ext = "";
+  public String commonIdExt = "";
 
   @ObservableProperty
-  public String condition_ext = "";
+  public String conditionExt = "";
 
   @ObservableProperty
-  public String condition_ID_ext = "";
+  public String conditionIdExt = "";
 
   @ObservableProperty
-  public double humidity_ext = 0;
+  public double humidityExt = 0;
 
   @ObservableProperty
-  public String lastUpdate_ext = "";
+  public String lastUpdateExt = "";
 
   @ObservableProperty
-  public String observationTime_ext = "";
+  public String observationTimeExt = "";
 
   @ObservableProperty
-  public double pressure_ext = 0;
+  public double pressureExt = 0;
 
   @ObservableProperty
-  public String pressure_Trend_ext = "";
+  public String pressureTrendExt = "";
 
   @ObservableProperty
-  public double rain_ext = 0;
+  public double rainExt = 0;
 
   @ObservableProperty
-  public double snow_ext = 0;
+  public double snowExt = 0;
 
   @ObservableProperty
-  public double temp_Feel_ext = 0;
+  public double tempFeelExt = 0;
 
   @ObservableProperty
-  public double temperature_ext = 0;
+  public double temperatureExt = 0;
 
   @ObservableProperty
-  public String visibility_ext = "";
+  public String visibilityExt = "";
 
   @ObservableProperty
-  public String wind_Direction_ext = "";
+  public String windDirectionExt = "";
 
   @ObservableProperty
-  public double wind_Speed_ext = 0;
+  public double windSpeedExt = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/CommonId_ext")
-  public String setCommonId_ext(String commonId_ext) {
-    this.commonId_ext = commonId_ext;
-    return this.commonId_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/commonIdExt")
+  public String setCommonIdExt(String commonIdExt) {
+    this.commonIdExt = commonIdExt;
+    return this.commonIdExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Condition_ext")
-  public String setCondition_ext(String condition_ext) {
-    this.condition_ext = condition_ext;
-    return this.condition_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/conditionExt")
+  public String setConditionExt(String conditionExt) {
+    this.conditionExt = conditionExt;
+    return this.conditionExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Condition_ID_ext")
-  public String setCondition_ID_ext(String condition_ID_ext) {
-    this.condition_ID_ext = condition_ID_ext;
-    return this.condition_ID_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/conditionIdExt")
+  public String setConditionIdExt(String conditionIdExt) {
+    this.conditionIdExt = conditionIdExt;
+    return this.conditionIdExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Humidity_ext")
-  public double setHumidity_ext(double humidity_ext) {
-    this.humidity_ext = humidity_ext;
-    return this.humidity_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/humidityExt")
+  public double setHumidityExt(double humidityExt) {
+    this.humidityExt = humidityExt;
+    return this.humidityExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/LastUpdate_ext")
-  public String setLastUpdate_ext(String lastUpdate_ext) {
-    this.lastUpdate_ext = lastUpdate_ext;
-    return this.lastUpdate_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/lastUpdateExt")
+  public String setLastUpdateExt(String lastUpdateExt) {
+    this.lastUpdateExt = lastUpdateExt;
+    return this.lastUpdateExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/ObservationTime_ext")
-  public String setObservationTime_ext(String observationTime_ext) {
-    this.observationTime_ext = observationTime_ext;
-    return this.observationTime_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/observationTimeExt")
+  public String setObservationTimeExt(String observationTimeExt) {
+    this.observationTimeExt = observationTimeExt;
+    return this.observationTimeExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Pressure_ext")
-  public double setPressure_ext(double pressure_ext) {
-    this.pressure_ext = pressure_ext;
-    return this.pressure_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/pressureExt")
+  public double setPressureExt(double pressureExt) {
+    this.pressureExt = pressureExt;
+    return this.pressureExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Pressure_Trend_ext")
-  public String setPressure_Trend_ext(String pressure_Trend_ext) {
-    this.pressure_Trend_ext = pressure_Trend_ext;
-    return this.pressure_Trend_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/pressureTrendExt")
+  public String setPressureTrendExt(String pressureTrendExt) {
+    this.pressureTrendExt = pressureTrendExt;
+    return this.pressureTrendExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Rain_ext")
-  public double setRain_ext(double rain_ext) {
-    this.rain_ext = rain_ext;
-    return this.rain_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/rainExt")
+  public double setRainExt(double rainExt) {
+    this.rainExt = rainExt;
+    return this.rainExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Snow_ext")
-  public double setSnow_ext(double snow_ext) {
-    this.snow_ext = snow_ext;
-    return this.snow_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/snowExt")
+  public double setSnowExt(double snowExt) {
+    this.snowExt = snowExt;
+    return this.snowExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Temp_Feel_ext")
-  public double setTemp_Feel_ext(double temp_Feel_ext) {
-    this.temp_Feel_ext = temp_Feel_ext;
-    return this.temp_Feel_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/tempFeelExt")
+  public double setTempFeelExt(double tempFeelExt) {
+    this.tempFeelExt = tempFeelExt;
+    return this.tempFeelExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Temperature_ext")
-  public double setTemperature_ext(double temperature_ext) {
-    this.temperature_ext = temperature_ext;
-    return this.temperature_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/temperatureExt")
+  public double setTemperatureExt(double temperatureExt) {
+    this.temperatureExt = temperatureExt;
+    return this.temperatureExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Visibility_ext")
-  public String setVisibility_ext(String visibility_ext) {
-    this.visibility_ext = visibility_ext;
-    return this.visibility_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/visibilityExt")
+  public String setVisibilityExt(String visibilityExt) {
+    this.visibilityExt = visibilityExt;
+    return this.visibilityExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Wind_Direction_ext")
-  public String setWind_Direction_ext(String wind_Direction_ext) {
-    this.wind_Direction_ext = wind_Direction_ext;
-    return this.wind_Direction_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/windDirectionExt")
+  public String setWindDirectionExt(String windDirectionExt) {
+    this.windDirectionExt = windDirectionExt;
+    return this.windDirectionExt;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Wind_Speed_ext")
-  public double setWind_Speed_ext(double wind_Speed_ext) {
-    this.wind_Speed_ext = wind_Speed_ext;
-    return this.wind_Speed_ext;
+  @RequestMapping(requestMethod = "PUT", path = "/windSpeedExt")
+  public double setWindSpeedExt(double windSpeedExt) {
+    this.windSpeedExt = windSpeedExt;
+    return this.windSpeedExt;
   }
 }

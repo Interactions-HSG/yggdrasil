@@ -14,47 +14,47 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 public class Curtains {
 
   @ObservableProperty
-  public double Energie_Partielle_Volets_Roulants = 0;
+  public double partialEnergy = 0;
 
   @ObservableProperty
-  public double Energie_Totale_Volets_Roulants = 0;
+  public double totalEnergy = 0;
 
   @ObservableProperty
-  public double Intensite_Volets_Roulants = 0;
+  public double intensity = 0;
 
   @ObservableProperty
-  public double Puissance_Volets_Roulants = 0;
+  public double power = 0;
 
   @ObservableProperty
-  public double Tension_Volets_Roulants = 0;
+  public double tension = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Partielle_Volets_Roulants")
-  public double setEnergie_Partielle_Volets_Roulants(double energie_Partielle_Volets_Roulants) {
-    Energie_Partielle_Volets_Roulants = energie_Partielle_Volets_Roulants;
-    return this.Energie_Partielle_Volets_Roulants;
+  @RequestMapping(requestMethod = "PUT", path = "/partialEnergy")
+  public double setPartialEnergy(double partialEnergy) {
+    this.partialEnergy = partialEnergy;
+    return this.partialEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Totale_Volets_Roulants")
-  public double setEnergie_Totale_Volets_Roulants(double energie_Totale_Volets_Roulants) {
-    Energie_Totale_Volets_Roulants = energie_Totale_Volets_Roulants;
-    return this.Energie_Totale_Volets_Roulants;
+  @RequestMapping(requestMethod = "PUT", path = "/totalEnergy")
+  public double setTotalEnergy(double totalEnergy) {
+    this.totalEnergy = totalEnergy;
+    return this.totalEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Intensite_Volets_Roulants")
-  public double setIntensite_Volets_Roulants(double intensite_Volets_Roulants) {
-    Intensite_Volets_Roulants = intensite_Volets_Roulants;
-    return this.Intensite_Volets_Roulants;
+  @RequestMapping(requestMethod = "PUT", path = "/intensity")
+  public double setIntensity(double intensity) {
+    this.intensity = intensity;
+    return this.intensity;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Puissance_Volets_Roulants")
-  public double setPuissance_Volets_Roulants(double puissance_Volets_Roulants) {
-    Puissance_Volets_Roulants = puissance_Volets_Roulants;
-    return this.Puissance_Volets_Roulants;
+  @RequestMapping(requestMethod = "PUT", path = "/power")
+  public double setPower(double power) {
+    this.power = power;
+    return this.power;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Tension_Volets_Roulants")
-  public double setTension_Volets_Roulants(double tension_Volets_Roulants) {
-    Tension_Volets_Roulants = tension_Volets_Roulants;
-    return this.Tension_Volets_Roulants;
+  @RequestMapping(requestMethod = "PUT", path = "/tension")
+  public double setTension(double tension) {
+    this.tension = tension;
+    return this.tension;
   }
 }

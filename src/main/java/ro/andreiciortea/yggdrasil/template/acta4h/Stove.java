@@ -13,47 +13,47 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 public class Stove {
 
   @ObservableProperty
-  public double Energie_Partielle_Plaques = 0;
+  public double partialEnergy = 0;
 
   @ObservableProperty
-  public double Energie_Totale_Plaques = 0;
+  public double totalEnergy = 0;
 
   @ObservableProperty
-  public double Intensite_Plaques = 0;
+  public double intensity = 0;
 
   @ObservableProperty
-  public double Puissance_Plaques = 0;
+  public double power = 0;
 
   @ObservableProperty
-  public double Tension_Plaques = 0;
+  public double tension = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Partielle_Plaques")
-  public double setEnergie_Partielle_Plaques(double energie_Partielle_Plaques) {
-    Energie_Partielle_Plaques = energie_Partielle_Plaques;
-    return this.Energie_Partielle_Plaques;
+  @RequestMapping(requestMethod = "PUT", path = "/partialEnergy")
+  public double setPartialEnergy(double partialEnergy) {
+    this.partialEnergy = partialEnergy;
+    return this.partialEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Totale_Plaques")
-  public double setEnergie_Totale_Plaques(double energie_Totale_Plaques) {
-    Energie_Totale_Plaques = energie_Totale_Plaques;
-    return this.Energie_Totale_Plaques;
+  @RequestMapping(requestMethod = "PUT", path = "/totalEnergy")
+  public double setTotalEnergy(double totalEnergy) {
+    this.totalEnergy = totalEnergy;
+    return this.totalEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Intensite_Plaques")
-  public double setIntensite_Plaques(double intensite_Plaques) {
-    Intensite_Plaques = intensite_Plaques;
-    return this.Intensite_Plaques;
+  @RequestMapping(requestMethod = "PUT", path = "/intensity")
+  public double setIntensity(double intensity) {
+    this.intensity = intensity;
+    return this.intensity;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Puissance_Plaques")
-  public double setPuissance_Plaques(double puissance_Plaques) {
-    Puissance_Plaques = puissance_Plaques;
-    return this.Puissance_Plaques;
+  @RequestMapping(requestMethod = "PUT", path = "/power")
+  public double setPower(double power) {
+    this.power = power;
+    return this.power;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Tension_Plaques")
-  public double setTension_Plaques(double tension_Plaques) {
-    Tension_Plaques = tension_Plaques;
-    return this.Tension_Plaques;
+  @RequestMapping(requestMethod = "PUT", path = "/tension")
+  public double setTension(double tension) {
+    this.tension = tension;
+    return this.tension;
   }
 }

@@ -13,56 +13,57 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 public class Fridge {
 
   @ObservableProperty
-  public double energie_Partielle_Frigo = 0;
+  public double partialEnergy = 0;
 
   @ObservableProperty
-  public double energie_Totale_Frigo = 0;
+  public double totalEnergy = 0;
 
   @ObservableProperty
-  public double intensite_Frigo = 0;
+  public double intensity = 0;
 
   @ObservableProperty
-  public double puissance_Frigo = 0;
+  public double power = 0;
 
   @ObservableProperty
-  public double tension_Frigo = 0;
+  public double tension = 0;
 
   @ObservableProperty
   public String c3 = "";
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Partielle_Frigo")
-  public double setEnergie_Partielle_Frigo(double energie_Partielle_Frigo) {
-    this.energie_Partielle_Frigo = energie_Partielle_Frigo;
-    return this.energie_Partielle_Frigo;
+  @RequestMapping(requestMethod = "PUT", path = "/partialEnergy")
+  public double setPartialEnergy(double partialEnergy) {
+    this.partialEnergy = partialEnergy;
+    return this.partialEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Energie_Totale_Frigo")
-  public double setEnergie_Totale_Frigo(double energie_Totale_Frigo) {
-    this.energie_Totale_Frigo = energie_Totale_Frigo;
-    return this.energie_Totale_Frigo;
+  @RequestMapping(requestMethod = "PUT", path = "/totalEnergy")
+  public double setTotalEnergy(double totalEnergy) {
+    this.totalEnergy = totalEnergy;
+    return this.totalEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Intensite_Frigo")
-  public double setIntensite_Frigo(double intensite_Frigo) {
-    this.intensite_Frigo = intensite_Frigo;
-    return this.intensite_Frigo;
+  @RequestMapping(requestMethod = "PUT", path = "/intensity")
+  public double setIntensity(double intensity) {
+    this.intensity = intensity;
+    return this.intensity;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Puissance_Frigo")
-  public double setPuissance_Frigo(double puissance_Frigo) {
-    this.puissance_Frigo = puissance_Frigo;
-    return this.puissance_Frigo;
+  @RequestMapping(requestMethod = "PUT", path = "/power")
+  public double setPower(double power) {
+    this.power = power;
+    return this.power;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/Tension_Frigo")
-  public double setTension_Frigo(double tension_Frigo) {
-    this.tension_Frigo = tension_Frigo;
-    return this.tension_Frigo;
+  @RequestMapping(requestMethod = "PUT", path = "/tension")
+  public double setTension(double tension) {
+    this.tension = tension;
+    return this.tension;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/C3")
+  @RequestMapping(requestMethod = "PUT", path = "/c3")
   public String setC3(String c3) {
     this.c3 = c3;
     return this.c3;
   }
+
 }
