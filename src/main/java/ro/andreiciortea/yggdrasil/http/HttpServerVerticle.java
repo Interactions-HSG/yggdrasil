@@ -102,11 +102,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/artifacts/:artid").handler(templateHandler::handleDeleteInstance);
     router.put("/artifacts/updateTriples/:artid").handler(templateHandler::handleUpdateTriples);
     // invoke actions on software artifacts defined in the annotations of the corresponding template
-    router.put("/artifacts/:artid/*").handler(templateHandler::handleAction);
-    router.post("/artifacts/:artid/*").handler(templateHandler::handleAction);
-    router.put("/artifacts/:artid/*").handler(templateHandler::handleAction);
-    router.delete("/artifacts/:artid/*").handler(templateHandler::handleAction);
-    router.options("/artifacts/:artid/*").handler(templateHandler::handleAction);
+    router.route("/artifacts/:artid/*").handler(templateHandler::handleAction);
 
     //route artifact manual requests
 
