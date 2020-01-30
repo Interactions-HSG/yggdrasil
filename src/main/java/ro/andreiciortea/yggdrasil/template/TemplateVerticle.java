@@ -428,6 +428,10 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private void scanArtifactTemplates() {
+    /* TODO: this path doesn't need to be hardcoded. Could be provided at runtime, which would make it more useful in case
+    Yggdrasil becomes a library.
+    To scan for applicable templates, ClassGraph is being used and .overrideClassPath(...) might be helpful to achieve the
+    configurable template path [https://github.com/classgraph/classgraph/wiki/API:-ClassGraph-Constructor].*/
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = "ro.andreiciortea.yggdrasil.template.annotation.Artifact";
     System.out.println("scanning for templates...");
