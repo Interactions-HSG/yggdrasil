@@ -27,31 +27,31 @@ public class ExhaustHood {
   @ObservableProperty
   public double Tension_Hote = 0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Energie_Partielle_Hote")
+  @RequestMapping(requestMethod = "PUT", path = "/Energie_Partielle_Hote")
   public double setEnergie_Partielle_Hote(double energie_Partielle_Hote) {
     Energie_Partielle_Hote = energie_Partielle_Hote;
     return this.Energie_Partielle_Hote;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Energie_Totale_Hote")
+  @RequestMapping(requestMethod = "PUT", path = "/Energie_Totale_Hote")
   public double setEnergie_Totale_Hote(double energie_Totale_Hote) {
     Energie_Totale_Hote = energie_Totale_Hote;
     return this.Energie_Totale_Hote;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Intensite_Hote")
+  @RequestMapping(requestMethod = "PUT", path = "/Intensite_Hote")
   public double setIntensite_Hote(double intensite_Hote) {
     Intensite_Hote = intensite_Hote;
     return this.Intensite_Hote;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Puissance_Hote")
+  @RequestMapping(requestMethod = "PUT", path = "/Puissance_Hote")
   public double setPuissance_Hote(double puissance_Hote) {
     Puissance_Hote = puissance_Hote;
     return this.Puissance_Hote;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Tension_Hote")
+  @RequestMapping(requestMethod = "PUT", path = "/Tension_Hote")
   public double setTension_Hote(double tension_Hote) {
     Tension_Hote = tension_Hote;
     return this.Tension_Hote;

@@ -15,7 +15,7 @@ public class Rollershutter {
   @ObservableProperty
   public double percentage = 0.0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Percentage")
+  @RequestMapping(requestMethod = "PUT", path = "/Percentage")
   public double setPercentage(double percentage) {
     this.percentage = percentage;
     return this.percentage;

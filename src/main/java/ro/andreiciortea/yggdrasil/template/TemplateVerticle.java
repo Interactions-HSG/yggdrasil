@@ -12,7 +12,6 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.http.HttpMethod;
 import org.apache.commons.rdf.api.BlankNode;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
@@ -80,7 +79,8 @@ public class TemplateVerticle extends AbstractVerticle {
       case TEMPLATE_ACTIVITY:
         String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
         String attribute =  request.getHeader(EventBusMessage.Headers.ENTITY_ATTRIBUTE).get();
-        handleEntityRequest(entityIRI, attribute, request, message);
+        String requestMethod = request.getHeader(EventBusMessage.Headers.REQUEST_METHOD).get();
+        handleEntityRequest(entityIRI, attribute, requestMethod, request, message);
         break;
       case DELETE_INSTANCE:
         String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
@@ -161,21 +161,20 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
-  private boolean httpMethodAndAttributeMatches(Method method, HttpMethod httpMethod, String attribute) {
-    return method.getAnnotation(RequestMapping.class).path().equals(attribute) && method.getAnnotation(RequestMapping.class).httpMethod().equals(httpMethod);
+  private boolean requestMethodAndAttributeMatches(Method method, String requestMethod, String attribute) {
+    return method.getAnnotation(RequestMapping.class).path().equals(attribute) && method.getAnnotation(RequestMapping.class).requestMethod().equals(requestMethod);
   }
 
-  private void handleEntityRequest(String entityIRI, String attribute, EventBusMessage request, Message<String> message) {
+  private void handleEntityRequest(String entityIRI, String attribute, String requestMethod, EventBusMessage request, Message<String> message) {
     Object target = objectMapping.get(entityIRI);
     Gson gson = new Gson();
-    HttpMethod httpMethod = request.getHttpMethod();
 
     if (target == null) {
       replyNotFound(message);
       return;
     }
     for (Method method : target.getClass().getMethods()) {
-      if (method.getAnnotation(RequestMapping.class) != null && httpMethodAndAttributeMatches(method, httpMethod, attribute)) {
+      if (method.getAnnotation(RequestMapping.class) != null && requestMethodAndAttributeMatches(method, requestMethod, attribute)) {
         System.out.println("invoke action " + attribute + " on " + entityIRI);
         try {
           Object[] obj = new Object[method.getParameters().length];

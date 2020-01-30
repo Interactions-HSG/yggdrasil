@@ -30,37 +30,37 @@ public class Waterheater {
   @ObservableProperty
   public double voltage = 0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/switchOnOff")
+  @RequestMapping(requestMethod = "PUT", path = "/switchOnOff")
   public boolean switchOn() {
     onStatus = !onStatus;
     return onStatus;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Energy")
+  @RequestMapping(requestMethod = "PUT", path = "/Energy")
   public double setEnergy(double newEnergy) {
     energy = newEnergy;
     return energy;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/TotalEnergy")
+  @RequestMapping(requestMethod = "PUT", path = "/TotalEnergy")
   public double setTotalEnergy(double newEnergy) {
     totalEnergy = newEnergy;
     return totalEnergy;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/ElIntensity")
+  @RequestMapping(requestMethod = "PUT", path = "/ElIntensity")
   public double setElIntensity(double newIntensity) {
     elIntensity = newIntensity;
     return elIntensity;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Power")
+  @RequestMapping(requestMethod = "PUT", path = "/Power")
   public double setPower(double newPower) {
     power = newPower;
     return power;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Voltage")
+  @RequestMapping(requestMethod = "PUT", path = "/Voltage")
   public double setVoltage(double newVoltage) {
     voltage = newVoltage;
     return voltage;

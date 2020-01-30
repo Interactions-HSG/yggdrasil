@@ -24,25 +24,25 @@ public class SinkKitchen {
   @ObservableProperty
   public double eau_Froide_Evier_Total = 0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Chaude_Evier_Instantanee")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Chaude_Evier_Instantanee")
   public double setEau_Chaude_Evier_Instantanee(double eau_Chaude_Evier_Instantanee) {
     this.eau_Chaude_Evier_Instantanee = eau_Chaude_Evier_Instantanee;
     return this.eau_Chaude_Evier_Instantanee;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Chaude_Evier_Total")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Chaude_Evier_Total")
   public double setEau_Chaude_Evier_Total(double eau_Chaude_Evier_Total) {
     this.eau_Chaude_Evier_Total = eau_Chaude_Evier_Total;
     return this.eau_Chaude_Evier_Total;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_Evier_Instantanee")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_Evier_Instantanee")
   public double setEau_Froide_Evier_Instantanee(double eau_Froide_Evier_Instantanee) {
     this.eau_Froide_Evier_Instantanee = eau_Froide_Evier_Instantanee;
     return this.eau_Froide_Evier_Instantanee;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_Evier_Total")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_Evier_Total")
   public double setEau_Froide_Evier_Total(double eau_Froide_Evier_Total) {
     this.eau_Froide_Evier_Total = eau_Froide_Evier_Total;
     return this.eau_Froide_Evier_Total;

@@ -30,37 +30,37 @@ public class MusicPlayer {
   @ObservableProperty
   public String power = "OFF";
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Artist")
+  @RequestMapping(requestMethod = "PUT", path = "/Artist")
   public String setArtist(String artist) {
     this.artist = artist;
     return this.artist;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Genre")
+  @RequestMapping(requestMethod = "PUT", path = "/Genre")
   public String setGenre(String genre) {
     this.genre = genre;
     return this.genre;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Play")
+  @RequestMapping(requestMethod = "PUT", path = "/Play")
   public String setPlay(String play) {
     this.play = play;
     return this.play;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Title")
+  @RequestMapping(requestMethod = "PUT", path = "/Title")
   public String setTitle(String title) {
     this.title = title;
     return this.title;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Volume")
+  @RequestMapping(requestMethod = "PUT", path = "/Volume")
   public String setVolume(String volume) {
     this.volume = volume;
     return this.volume;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Power")
+  @RequestMapping(requestMethod = "PUT", path = "/Power")
   public String setPower(String power) {
     this.power = power;
     return this.power;

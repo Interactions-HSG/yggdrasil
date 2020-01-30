@@ -18,13 +18,13 @@ public class Toilet {
   @ObservableProperty
   public double Eau_Froide_WC_Total = 0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_WC_Instantanee")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_WC_Instantanee")
   public double setEau_Froide_WC_Instantanee(double eau_Froide_WC_Instantanee) {
     Eau_Froide_WC_Instantanee = eau_Froide_WC_Instantanee;
     return this.Eau_Froide_WC_Instantanee;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_WC_Total")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_WC_Total")
   public double setEau_Froide_WC_Total(double eau_Froide_WC_Total) {
     Eau_Froide_WC_Total = eau_Froide_WC_Total;
     return this.Eau_Froide_WC_Total;

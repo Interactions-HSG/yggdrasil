@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import io.vertx.core.http.HttpMethod;
-
 public class EventBusMessage {
 
   public static enum MessageType {
@@ -20,7 +18,7 @@ public class EventBusMessage {
 
   public static enum Headers {
     REQUEST_IRI, ENTITY_IRI_HINT, REQUEST_CONTENT_TYPE,
-    ENTITY_IRI, ENTITY_ATTRIBUTE, ARTIFACT_ID, CLASS_IRI, REPLY_STATUS
+    ENTITY_IRI, ENTITY_ATTRIBUTE, ARTIFACT_ID, CLASS_IRI, REPLY_STATUS, REQUEST_METHOD
   }
 
   public static enum ReplyStatus {
@@ -28,7 +26,6 @@ public class EventBusMessage {
   }
 
   private MessageType messageType;
-  private HttpMethod httpMethod;
   private Map<Headers,String> headers;
   private String payload;
 
@@ -36,20 +33,6 @@ public class EventBusMessage {
     this.messageType = messageType;
     this.headers = new HashMap<Headers,String>();
   }
-
-  public EventBusMessage(MessageType messageType, HttpMethod httpMethod) {
-    this(messageType);
-    this.httpMethod = httpMethod;
-}
-
-public HttpMethod getHttpMethod() {
-    return this.httpMethod;
-}
-
-public EventBusMessage setHttpMethod(HttpMethod httpMethod) {
-    this.httpMethod = httpMethod;
-    return this;
-}
 
   public MessageType getMessageType() {
     return this.messageType;

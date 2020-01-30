@@ -24,25 +24,25 @@ public class SinkBathroom {
   @ObservableProperty
   public double eau_Froide_Lavabo_Total = 0;
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Chaude_Lavabo_Instantanee")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Chaude_Lavabo_Instantanee")
   public double setEau_Chaude_Lavabo_Instantanee(double eau_Chaude_Lavabo_Instantanee) {
     this.eau_Chaude_Lavabo_Instantanee = eau_Chaude_Lavabo_Instantanee;
     return this.eau_Chaude_Lavabo_Instantanee;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Chaude_Lavabo_Total")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Chaude_Lavabo_Total")
   public double setEau_Chaude_Lavabo_Total(double eau_Chaude_Lavabo_Total) {
     this.eau_Chaude_Lavabo_Total = eau_Chaude_Lavabo_Total;
     return this.eau_Chaude_Lavabo_Total;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_Lavabo_Instantanee")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_Lavabo_Instantanee")
   public double setEau_Froide_Lavabo_Instantanee(double eau_Froide_Lavabo_Instantanee) {
     this.eau_Froide_Lavabo_Instantanee = eau_Froide_Lavabo_Instantanee;
     return this.eau_Froide_Lavabo_Instantanee;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Eau_Froide_Lavabo_Total")
+  @RequestMapping(requestMethod = "PUT", path = "/Eau_Froide_Lavabo_Total")
   public double setEau_Froide_Lavabo_Total(double eau_Froide_Lavabo_Total) {
     this.eau_Froide_Lavabo_Total = eau_Froide_Lavabo_Total;
     return this.eau_Froide_Lavabo_Total;

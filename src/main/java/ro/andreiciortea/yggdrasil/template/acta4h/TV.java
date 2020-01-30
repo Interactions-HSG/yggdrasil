@@ -21,19 +21,19 @@ public class TV {
   @ObservableProperty
   public String stop = "";
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Status")
+  @RequestMapping(requestMethod = "PUT", path = "/Status")
   public String setStatus(String status) {
     this.status = status;
     return this.status;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Open")
+  @RequestMapping(requestMethod = "PUT", path = "/Open")
   public String setOpen(String open) {
     this.open = open;
     return this.open;
   }
 
-  @RequestMapping(httpMethod = HttpMethod.PUT, path = "/Stop")
+  @RequestMapping(requestMethod = "PUT", path = "/Stop")
   public String setStop(String stop) {
     this.stop = stop;
     return this.stop;
