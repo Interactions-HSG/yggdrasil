@@ -37,32 +37,32 @@ public class Waterheater {
   }
 
   @RequestMapping(requestMethod = "PUT", path = "/energy")
-  public double setEnergy(double newEnergy) {
-    energy = newEnergy;
+  public double setEnergy(double energy) {
+    this.energy = energy;
     return energy;
   }
 
   @RequestMapping(requestMethod = "PUT", path = "/totalEnergy")
-  public double setTotalEnergy(double newEnergy) {
-    totalEnergy = newEnergy;
+  public double setTotalEnergy(double totalEnergy) {
+    this.totalEnergy = totalEnergy;
     return totalEnergy;
   }
 
   @RequestMapping(requestMethod = "PUT", path = "/elIntensity")
-  public double setElIntensity(double newIntensity) {
-    elIntensity = newIntensity;
+  public double setElIntensity(double elIntensity) {
+    this.elIntensity = elIntensity;
     return elIntensity;
   }
 
   @RequestMapping(requestMethod = "PUT", path = "/power")
-  public double setPower(double newPower) {
-    power = newPower;
+  public double setPower(double power) {
+    this.power = power;
     return power;
   }
 
   @RequestMapping(requestMethod = "PUT", path = "/voltage")
-  public double setVoltage(double newVoltage) {
-    voltage = newVoltage;
+  public double setVoltage(double voltage) {
+    this.voltage = voltage;
     return voltage;
   }
 }

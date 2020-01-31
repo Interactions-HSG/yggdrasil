@@ -176,6 +176,7 @@ public class TemplateVerticle extends AbstractVerticle {
     for (Method method : target.getClass().getMethods()) {
       if (method.getAnnotation(RequestMapping.class) != null && requestMethodAndAttributeMatches(method, requestMethod, attribute)) {
         System.out.println("invoke action " + attribute + " on " + entityIRI);
+        System.out.println(request.getPayload().get());
         try {
           Object[] obj = new Object[method.getParameters().length];
           // check for arguments of method
