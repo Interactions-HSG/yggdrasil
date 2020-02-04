@@ -614,16 +614,14 @@ public class TemplateVerticle extends AbstractVerticle {
 
       AnnotationInfoList annotationInfo = action.getAnnotationInfo();
       AnnotationParameterValueList actionParameters = annotationInfo.get(0).getParameterValues();
-      String actionNameParam = (String) actionParameters.get("name");
-      if (actionNameParam.equals("")) {
-        // set name to the class name
-        actionNameParam = action.getName();
-      }
+      String actionNameParam = action.getName();
 
       String path = (String) actionParameters.get("path");
       if (path.equals("")) {
-        path = "/actions/" + actionNameParam;
+        path = "/" + actionNameParam;
       }
+
+      String requestMethod = (String) actionParameters.get("requestMethod");
 
       BNode formNode = vf.createBNode("td:form");
       BNode inputSchemaNode = vf.createBNode("td:inputForm");
@@ -634,7 +632,7 @@ public class TemplateVerticle extends AbstractVerticle {
         .add("td:form", formNode)
         .add("td:inputSchema", inputSchemaNode)
         .subject(formNode)
-        .add("http:methodName", "PUT")
+        .add("http:methodName", requestMethod)
         .add("eve:path", path )
         .add("td:mediaType", "application/json")
         .add("td:rel", "invokeAction")
@@ -750,7 +748,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.Action";
+      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.RequestMapping";
       return annotationInfo.getName().equals(annotationName);
     }
   }
