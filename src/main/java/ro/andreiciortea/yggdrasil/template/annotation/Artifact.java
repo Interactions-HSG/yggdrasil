@@ -19,10 +19,10 @@ import java.lang.annotation.Target;
  *
  * @param type type of the artifact added to the description. E.g. iot:Lightbulb
  *
- * @param name name of the artifact put as artifactName in the generated route to access the template description
+ * @param name name of the artifact put as artifactName in the generated route to access the template description. If none provided the classname is used instead
  *
- * @param prefixes prefixes to be used as the type for example or in the additional triples.
- *                 TODO add example
+ * @param prefixes prefixes to be used as the type for example or in the additional triples. provided as a list of Strings,
+ *                 where each String is of the form "<abbreviaton>|<prefix>". e.g. {"eve|http://w3id.org/eve#", "td|http://www.w3.org/ns/td#"}
  *
  * @param additions an Annotation of the type RdfAddition to add more rdf triples to the artifacts description at implementation
  *                  time and not at at runtime (as payload argument)
@@ -32,7 +32,6 @@ import java.lang.annotation.Target;
 public @interface Artifact {
   // TODO: allow multiple types (better word for type?)
   String type();
-  // Name of the templated artifact -> gets replaced by classname if not defined..
   String name() default "";
   String[] prefixes() default {};
   RdfAddition additions() default @RdfAddition();
