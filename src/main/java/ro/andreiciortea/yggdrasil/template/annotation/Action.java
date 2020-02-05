@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation allowing REST methods on an attribute
+ * Annotation to specify an action on a template artifact
  *
  * @param requestMethod any of the allowed HTTP methods (GET, POST, PUT, OPTIONS, DELETE, ...)
  * @param path path appended to the uri of the artifact instance to call the DELETE method

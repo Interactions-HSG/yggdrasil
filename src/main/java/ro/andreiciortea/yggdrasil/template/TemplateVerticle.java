@@ -78,9 +78,9 @@ public class TemplateVerticle extends AbstractVerticle {
         break;
       case TEMPLATE_ACTIVITY:
         String entityIRI = request.getHeader(EventBusMessage.Headers.ENTITY_IRI).get();
-        String attribute =  request.getHeader(EventBusMessage.Headers.ENTITY_ATTRIBUTE).get();
+        String activity =  request.getHeader(EventBusMessage.Headers.ENTITY_ACTIVITY).get();
         String requestMethod = request.getHeader(EventBusMessage.Headers.REQUEST_METHOD).get();
-        handleEntityRequest(entityIRI, attribute, requestMethod, request, message);
+        handleEntityRequest(entityIRI, activity, requestMethod, request, message);
         break;
       case DELETE_INSTANCE:
         String artifactId = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get();
@@ -167,11 +167,11 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
-  private boolean requestMethodAndAttributeMatches(Method method, String requestMethod, String attribute) {
-    return method.getAnnotation(Action.class).path().equals(attribute) && method.getAnnotation(Action.class).requestMethod().equals(requestMethod);
+  private boolean requestMethodAndActionMatches(Method method, String requestMethod, String action) {
+    return method.getAnnotation(Action.class).path().equals(action) && method.getAnnotation(Action.class).requestMethod().equals(requestMethod);
   }
 
-  private void handleEntityRequest(String entityIRI, String attribute, String requestMethod, EventBusMessage request, Message<String> message) {
+  private void handleEntityRequest(String entityIRI, String action, String requestMethod, EventBusMessage request, Message<String> message) {
     Object target = objectMapping.get(entityIRI);
     Gson gson = new Gson();
 
@@ -180,8 +180,8 @@ public class TemplateVerticle extends AbstractVerticle {
       return;
     }
     for (Method method : target.getClass().getMethods()) {
-      if (method.getAnnotation(Action.class) != null && requestMethodAndAttributeMatches(method, requestMethod, attribute)) {
-        System.out.println("invoke action " + attribute + " on " + entityIRI);
+      if (method.getAnnotation(Action.class) != null && requestMethodAndActionMatches(method, requestMethod, action)) {
+        System.out.println("invoke action " + action + " on " + entityIRI);
         System.out.println(request.getPayload().get());
         try {
           Object[] obj = new Object[method.getParameters().length];
@@ -247,7 +247,7 @@ public class TemplateVerticle extends AbstractVerticle {
     }
     // check for observable property to be returned
     for (Field field : target.getClass().getFields()) {
-      if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(attribute)) {
+      if (field.getAnnotation(ObservableProperty.class) != null && field.getAnnotation(ObservableProperty.class).path().equals(action)) {
         try {
           Object value = field.get(target);
 
