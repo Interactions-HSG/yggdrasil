@@ -568,9 +568,9 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   /**
-   *
+   * Adds the actions which are provided by the @Action annotation to the rdfBuilder
    */
-  private void addActionRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  private void addActionRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
       ModelBuilder actionBuilder = new ModelBuilder();
@@ -622,12 +622,15 @@ public class TemplateVerticle extends AbstractVerticle {
         .subject(inputSchemaNode)
         .add("td:field", inputModel);
       Model actionModel = actionBuilder.build();
-      artifactBuilder
+      rdfBuilder
         .add("td:interactions", actionModel);
     }
   }
 
-  private void addEventsRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  /**
+   * Adds the events which are annotated with @Event to the rdfBuilder
+   */
+  private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
     // TODO: add descriptions
     MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     for (MethodInfo event: eventMethods) {
@@ -649,11 +652,14 @@ public class TemplateVerticle extends AbstractVerticle {
         .add("td:name", eventName)
         .add("eve:path", path);
 
-      artifactBuilder.add("td:events", eventBuilder.build());
+      rdfBuilder.add("td:events", eventBuilder.build());
     }
   }
 
-  private void addPropertyRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
+  /**
+   * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
+   */
+  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
       ModelBuilder propertyBuilder = new ModelBuilder();
@@ -690,7 +696,7 @@ public class TemplateVerticle extends AbstractVerticle {
           e.printStackTrace();
         }
       }
-      artifactBuilder.add("td:properties", propertyBuilder.build());
+      rdfBuilder.add("td:properties", propertyBuilder.build());
     }
   }
 
