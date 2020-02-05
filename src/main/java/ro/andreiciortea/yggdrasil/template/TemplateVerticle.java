@@ -474,46 +474,52 @@ public class TemplateVerticle extends AbstractVerticle {
    * as a namespace to the provided rdfBuilder ModelBuilder instance.
    */
   private void addPrefixesAsNamespace(ModelBuilder rdfBuilder, AnnotationParameterValueList parameters) {
-    String [] prefixes = (String[]) parameters.get("prefixes");
-    for (String prefix : prefixes) {
-      String[] splittedPrefix = prefix.split("|");
-      if (splittedPrefix.length == 2) {
-        rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
-      } else {
-        throw new Error("Provided prefix does not match required format \"<abbreviation>|<prefix>\": " + prefix);
+    if (!parameters.isEmpty()) {
+      LOGGER.info(String.format("parsing prefixes from template, found %d", parameters.size()));
+      String [] prefixes = (String[]) parameters.get("prefixes");
+      for (String prefix : prefixes) {
+        String[] splittedPrefix = prefix.split("|");
+        if (splittedPrefix.length == 2) {
+          rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
+        } else {
+          throw new Error("Provided prefix does not match required format \"<abbreviation>|<prefix>\": " + prefix);
+        }
       }
     }
   }
 
   /**
-   * Parses the additions parameter of the @Artifact annotation and adds the provided rdf additions to the provided rdfBuilder ModelBuilder instance
+   * Parses the additions parameter of the @Artifact annotation and adds the provided rdf additions to the provided rdfBuilder ModelBuilder instance.
+   * Additions are "Annotation adding additional rdf triples to a artifact templates description at implementation time"
    */
   private void addAdditions(ModelBuilder rdfBuilder, AnnotationParameterValueList parameters) {
     AnnotationInfo additionsInfo = (AnnotationInfo) parameters.get("additions");
     AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
+    if (!additionsList.isEmpty()) {
+      LOGGER.info(String.format("parsing additions from template, found %d", additionsList.size()));
+      String[] predicatesList;
+      String[] objectsList;
+      String[] zeroElement = (String[]) additionsList.get(0).getValue();
+      String[] oneElement = (String[]) additionsList.get(1).getValue();
 
-    String[] predicatesList;
-    String[] objectsList;
-    String[] zeroElement = (String[]) additionsList.get(0).getValue();
-    String[] oneElement = (String[]) additionsList.get(1).getValue();
-
-    if (additionsList.get(0).getName().equals("predicates")) {
-      predicatesList = zeroElement;
-      objectsList = oneElement;
-    } else {
-      predicatesList = oneElement;
-      objectsList = zeroElement;
-    }
+      if (additionsList.get(0).getName().equals("predicates")) {
+        predicatesList = zeroElement;
+        objectsList = oneElement;
+      } else {
+        predicatesList = oneElement;
+        objectsList = zeroElement;
+      }
 
 
-    if (predicatesList.length != objectsList.length) {
-      throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
-    }
+      if (predicatesList.length != objectsList.length) {
+        throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
+      }
 
-    for (int i = 0; i< predicatesList.length; i++) {
-      String predicate = predicatesList[i];
-      String object = objectsList[i];
-      rdfBuilder.add(predicate, object);
+      for (int i = 0; i< predicatesList.length; i++) {
+        String predicate = predicatesList[i];
+        String object = objectsList[i];
+        rdfBuilder.add(predicate, object);
+      }
     }
   }
 
