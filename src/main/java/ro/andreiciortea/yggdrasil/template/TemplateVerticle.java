@@ -480,8 +480,40 @@ public class TemplateVerticle extends AbstractVerticle {
       if (splittedPrefix.length == 2) {
         rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
       } else {
-        // TODO: invalid prefix string, throw / return error?
+        throw new Error("Provided prefix does not match required format \"<abbreviation>|<prefix>\": " + prefix);
       }
+    }
+  }
+
+  /**
+   * Parses the additions parameter of the @Artifact annotation and adds the provided rdf additions to the provided rdfBuilder ModelBuilder instance
+   */
+  private void addAdditions(ModelBuilder rdfBuilder, AnnotationParameterValueList parameters) {
+    AnnotationInfo additionsInfo = (AnnotationInfo) parameters.get("additions");
+    AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
+
+    String[] predicatesList;
+    String[] objectsList;
+    String[] zeroElement = (String[]) additionsList.get(0).getValue();
+    String[] oneElement = (String[]) additionsList.get(1).getValue();
+
+    if (additionsList.get(0).getName().equals("predicates")) {
+      predicatesList = zeroElement;
+      objectsList = oneElement;
+    } else {
+      predicatesList = oneElement;
+      objectsList = zeroElement;
+    }
+
+
+    if (predicatesList.length != objectsList.length) {
+      throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
+    }
+
+    for (int i = 0; i< predicatesList.length; i++) {
+      String predicate = predicatesList[i];
+      String object = objectsList[i];
+      rdfBuilder.add(predicate, object);
     }
   }
 
@@ -507,39 +539,7 @@ public class TemplateVerticle extends AbstractVerticle {
       .add("td:name", artifactNameParam)
       .build();
 
-    AnnotationInfo additionsInfo = (AnnotationInfo) artifactParameters.get("additions");
-    AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
-
-    String[] predicatesList;
-    String[] objectsList;
-    String[] zeroElement = (String[]) additionsList.get(0).getValue();
-    /*
-    for (String addition : zeroElement) {
-      String predicate = addition.split(" ")[0];
-      String objectt = addition.split(" ")[1];
-      artifactBuilder.add(predicate, objectt);
-    }
-    */
-    String[] oneElement = (String[]) additionsList.get(1).getValue();
-
-    if (additionsList.get(0).getName().equals("predicates")) {
-      predicatesList = zeroElement;
-      objectsList = oneElement;
-    } else {
-      predicatesList = oneElement;
-      objectsList = zeroElement;
-    }
-
-
-    if (predicatesList.length != objectsList.length) {
-      throw new Error("Incosistent RDF addition annotation given. Predicates and objects list length doesn't macht!");
-    }
-
-    for (int i = 0; i< predicatesList.length; i++) {
-      String predicate = predicatesList[i];
-      String object = objectsList[i];
-      artifactBuilder.add(predicate, object);
-    }
+    addAdditions(artifactBuilder, artifactParameters);
 
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     addActionRDF(artifactBuilder, actionMethods, vf);
