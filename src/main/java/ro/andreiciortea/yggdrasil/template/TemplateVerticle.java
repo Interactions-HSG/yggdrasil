@@ -590,6 +590,18 @@ public class TemplateVerticle extends AbstractVerticle {
     return rdfImpl.asGraph(artifactModel);
   }
 
+  /**
+   * Given an AnnotationInfo this function returns the parameter "name" or, if this parameter is empty, the name of the
+   */
+  private String getParam(AnnotationInfo annotationInfo, String designator, String defaultValue) {
+    String param = (String) annotationInfo.getParameterValues().get(designator);
+    if (param.equals("")) {
+      return defaultValue;
+    } else {
+      return param;
+    }
+  }
+
 
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
@@ -600,17 +612,12 @@ public class TemplateVerticle extends AbstractVerticle {
       ModelBuilder actionBuilder = new ModelBuilder();
       ModelBuilder inputFieldBuilder = new ModelBuilder();
 
-      AnnotationInfoList annotationInfo = action.getAnnotationInfo();
-      AnnotationParameterValueList actionParameters = annotationInfo.get(0).getParameterValues();
-      String actionNameParam = action.getName();
-
-      String path = (String) actionParameters.get("path");
-      if (path.equals("")) {
-        path = "/" + actionNameParam;
-      }
+      AnnotationInfo annotationInfo = action.getAnnotationInfo().get(0);
+      AnnotationParameterValueList actionParameters = annotationInfo.getParameterValues();
+      String actionNameParam = getParam(annotationInfo, "name", action.getName());
+      String path = getParam(annotationInfo, "path", "/" + actionNameParam);
 
       String requestMethod = (String) actionParameters.get("requestMethod");
-
       BNode formNode = vf.createBNode("td:form");
       BNode inputSchemaNode = vf.createBNode("td:inputForm");
 
@@ -661,15 +668,8 @@ public class TemplateVerticle extends AbstractVerticle {
       ModelBuilder eventBuilder = new ModelBuilder();
       AnnotationInfo annotation = event.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Event");
 
-      String eventName = (String) annotation.getParameterValues().get("name");
-      if (eventName.equals("")) {
-        eventName = event.getName();
-      }
-
-      String path = (String) annotation.getParameterValues().get("path");
-      if (path.equals("")) {
-        path = "/events/" + eventName;
-      }
+      String eventName = getParam(annotation, "name", event.getName());
+      String path = getParam(annotation, "path", "/events/" + eventName);
 
       eventBuilder
         .subject(vf.createBNode())
