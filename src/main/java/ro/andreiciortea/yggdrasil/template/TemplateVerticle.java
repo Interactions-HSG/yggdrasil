@@ -286,7 +286,7 @@ public class TemplateVerticle extends AbstractVerticle {
         Object object = ctor.newInstance();
         // add artifact instance to rdf store
         ClassInfo classInfo = classInfoMap.get(className);
-        org.apache.commons.rdf.api.Graph graph = generateRdfGraphFromTemplate(classInfo, object, classIri);
+        org.apache.commons.rdf.api.Graph graph = generateRdfGraphFromTemplate(classInfo, classIri, Optional.of(object));
 
         String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
         graphString = addAdditionalTriplesRDF(graphString, additionalTriples);
@@ -414,7 +414,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void updateRepresentation(String entityIRI, Object target,  Message<String> message) throws IOException {
     ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
-    org.apache.commons.rdf.api.Graph newGraph = generateRdfGraphFromTemplate(classInfo, target, entityIRI);
+    org.apache.commons.rdf.api.Graph newGraph = generateRdfGraphFromTemplate(classInfo, entityIRI, Optional.of(target));
     String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
     Set<Triple> additionalTriples = objectTriples.get(entityIRI);
     // add additional triples again
@@ -444,7 +444,7 @@ public class TemplateVerticle extends AbstractVerticle {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateClassIRI(artifactClassInfo);
-        org.apache.commons.rdf.api.Graph rdfGraph = generateRdfGraphFromTemplate(artifactClassInfo, null, genIri.getIRIString());
+        org.apache.commons.rdf.api.Graph rdfGraph = generateRdfGraphFromTemplate(artifactClassInfo, genIri.getIRIString(), Optional.empty());
         store.addEntityGraph(genIri, rdfGraph);
         iris.add(genIri);
         classMapping.put(genIri.getIRIString(), className);
@@ -542,9 +542,9 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   /**
-   *
+   * Given a
    */
-  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri, Optional<Object> currentTarget) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = new ModelBuilder();
 
@@ -656,7 +656,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
    */
-  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
+  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Optional<Object> currentTargetOpt) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
       ModelBuilder propertyBuilder = new ModelBuilder();
@@ -679,8 +679,7 @@ public class TemplateVerticle extends AbstractVerticle {
         .add("td:name", propertyName)
         .add("td:type", propertyType)
         .add("eve:path", path);
-
-      if (currentTarget != null) {
+      currentTargetOpt.ifPresent(currentTarget -> {
         Object propertyValue;
         try {
           propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
@@ -692,7 +691,7 @@ public class TemplateVerticle extends AbstractVerticle {
         } catch (NoSuchFieldException e) {
           e.printStackTrace();
         }
-      }
+      });
       rdfBuilder.add("td:properties", propertyBuilder.build());
     }
   }
