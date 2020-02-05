@@ -89,9 +89,15 @@ public class TemplateVerticle extends AbstractVerticle {
       case GET_TEMPLATE_DESCRIPTION:
         String classId = request.getHeader(EventBusMessage.Headers.CLASS_IRI).get();
         handleGetTemplateDescription(classId, request, message);
+        break;
       case ADD_TRIPLES_INSTANCE:
-        String objectArtifactID = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).isPresent() ? request.getHeader(EventBusMessage.Headers.ARTIFACT_ID).get() : null;
-        handleUpdateTriples(objectArtifactID, request, message);
+        Optional<String> objectArtifactIdOpt = request.getHeader(EventBusMessage.Headers.ARTIFACT_ID);
+        if(objectArtifactIdOpt.isPresent()) {
+          handleUpdateTriples(objectArtifactIdOpt.get(), request, message);
+        } else {
+          replyNotFound(message);
+        }
+        break;
       default:
         replyError(message);
     }
@@ -286,7 +292,7 @@ public class TemplateVerticle extends AbstractVerticle {
         Object object = ctor.newInstance();
         // add artifact instance to rdf store
         ClassInfo classInfo = classInfoMap.get(className);
-        org.apache.commons.rdf.api.Graph graph = generateRdfGraphFromTemplate(classInfo, classIri, Optional.of(object));
+        org.apache.commons.rdf.api.Graph graph = generateRdfGraphFromTemplate(classInfo, classIri, object);
 
         String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
         graphString = addAdditionalTriplesRDF(graphString, additionalTriples);
@@ -414,7 +420,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void updateRepresentation(String entityIRI, Object target,  Message<String> message) throws IOException {
     ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
-    org.apache.commons.rdf.api.Graph newGraph = generateRdfGraphFromTemplate(classInfo, entityIRI, Optional.of(target));
+    org.apache.commons.rdf.api.Graph newGraph = generateRdfGraphFromTemplate(classInfo, entityIRI, target);
     String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
     Set<Triple> additionalTriples = objectTriples.get(entityIRI);
     // add additional triples again
@@ -444,13 +450,12 @@ public class TemplateVerticle extends AbstractVerticle {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateClassIRI(artifactClassInfo);
-        org.apache.commons.rdf.api.Graph rdfGraph = generateRdfGraphFromTemplate(artifactClassInfo, genIri.getIRIString(), Optional.empty());
+        org.apache.commons.rdf.api.Graph rdfGraph = generateRdfGraphFromTemplate(artifactClassInfo, genIri.getIRIString());
         store.addEntityGraph(genIri, rdfGraph);
         iris.add(genIri);
         classMapping.put(genIri.getIRIString(), className);
         classInfoMap.put(className, artifactClassInfo);
         System.out.println("Generated description for: " + genIri);
-        break;
       }
     }
   }
@@ -541,11 +546,7 @@ public class TemplateVerticle extends AbstractVerticle {
       .build();
   }
 
-  /**
-   * Given a
-   */
-  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri, Optional<Object> currentTarget) {
-    ValueFactory vf = SimpleValueFactory.getInstance();
+  private ModelBuilder generateRdfModelBuilderForTemplate(ValueFactory vf, ClassInfo artifactClassInfo, String iri) {
     ModelBuilder artifactBuilder = new ModelBuilder();
 
     // extract relevant parts of the class
@@ -554,6 +555,15 @@ public class TemplateVerticle extends AbstractVerticle {
     initializeArtifactTemplateModelBuilder(artifactBuilder, artifactClassInfo, artifactParameters, iri, vf);
     addPrefixesAsNamespace(artifactBuilder, artifactParameters);
     addAdditions(artifactBuilder, artifactParameters);
+    return artifactBuilder;
+  }
+
+  /**
+   *
+   */
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri, Object currentTarget) {
+    ValueFactory vf = SimpleValueFactory.getInstance();
+    ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
     addActionRDF(artifactBuilder, artifactClassInfo, vf);
     addPropertyRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
@@ -563,6 +573,20 @@ public class TemplateVerticle extends AbstractVerticle {
     LOGGER.info(artifactModel.toString());
     return rdfImpl.asGraph(artifactModel);
   }
+
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri) {
+    ValueFactory vf = SimpleValueFactory.getInstance();
+    ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
+
+    addActionRDF(artifactBuilder, artifactClassInfo, vf);
+    addPropertyRDF(artifactBuilder, artifactClassInfo, vf);
+    addEventsRDF(artifactBuilder, artifactClassInfo, vf);
+
+    Model artifactModel = artifactBuilder.build();
+    LOGGER.info(artifactModel.toString());
+    return rdfImpl.asGraph(artifactModel);
+  }
+
 
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
@@ -625,7 +649,7 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   /**
-   * Adds the events which are annotated with @Event to the rdfBuilder
+   * Adds the events which are annotated with @Event to rdfBuilder
    */
   private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
     // TODO: add descriptions
@@ -654,46 +678,63 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   /**
-   * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
+   * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder and adds the value of currentTarget
    */
-  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Optional<Object> currentTargetOpt) {
+  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
-      ModelBuilder propertyBuilder = new ModelBuilder();
-      // TODO map Java classes to xml type
-      String propertyType = property.getTypeDescriptor().toString();
-      AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
-
-      String propertyName = (String) annotation.getParameterValues().get("name");
-      if (propertyName.equals("")) {
-        propertyName = property.getName();
-      }
-
-      String path = (String) annotation.getParameterValues().get("path");
-      if (path.equals("")) {
-        path = "/properties/" + propertyName;
-      }
-
-      propertyBuilder
-        .subject(vf.createBNode())
-        .add("td:name", propertyName)
-        .add("td:type", propertyType)
-        .add("eve:path", path);
-      currentTargetOpt.ifPresent(currentTarget -> {
-        Object propertyValue;
-        try {
-          propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
-          if (propertyValue != null) {
-            propertyBuilder.add("td:value", propertyValue.toString());
-          }
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-          e.printStackTrace();
+      ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
+      Object propertyValue;
+      try {
+        propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
+        if (propertyValue != null) {
+          propertyBuilder.add("td:value", propertyValue.toString());
         }
-      });
+      } catch (IllegalAccessException e) {
+        e.printStackTrace();
+      } catch (NoSuchFieldException e) {
+        e.printStackTrace();
+      }
       rdfBuilder.add("td:properties", propertyBuilder.build());
     }
+  }
+
+  /**
+  * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
+  */
+  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+    FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
+    for (FieldInfo property : propertyList) {
+      ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
+      rdfBuilder.add("td:properties", propertyBuilder.build());
+    }
+  }
+
+  /**
+   * Returns a ModelBuilder with the parameters of the ObservableProperty annotation added
+   */
+  private ModelBuilder createObservablePropertyModelBuilder(FieldInfo property, ValueFactory vf) {
+    ModelBuilder propertyBuilder = new ModelBuilder();
+    // TODO map Java classes to xml type
+    String propertyType = property.getTypeDescriptor().toString();
+    AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
+
+    String propertyName = (String) annotation.getParameterValues().get("name");
+    if (propertyName.equals("")) {
+      propertyName = property.getName();
+    }
+
+    String path = (String) annotation.getParameterValues().get("path");
+    if (path.equals("")) {
+      path = "/properties/" + propertyName;
+    }
+
+    propertyBuilder
+      .subject(vf.createBNode())
+      .add("td:name", propertyName)
+      .add("td:type", propertyType)
+      .add("eve:path", path);
+    return propertyBuilder;
   }
 
   /**
