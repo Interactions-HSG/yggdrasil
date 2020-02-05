@@ -444,7 +444,6 @@ public class TemplateVerticle extends AbstractVerticle {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateClassIRI(artifactClassInfo);
-        // why null?
         org.apache.commons.rdf.api.Graph rdfGraph = generateTemplateRDF(artifactClassInfo, null, genIri.getIRIString());
         store.addEntityGraph(genIri, rdfGraph);
         iris.add(genIri);
@@ -470,21 +469,36 @@ public class TemplateVerticle extends AbstractVerticle {
     return rdf4JIRI;
   }
 
+  /**
+   * Parses the prefixes parameter of the @Artifact annotation and adds each provided prefix (which is of the form "<abbreviation>|<prefix>")
+   * as a namespace to the provided rdfBuilder ModelBuilder instance.
+   */
+  private void addPrefixesAsNamespace(ModelBuilder rdfBuilder, AnnotationParameterValueList parameters) {
+    String [] prefixes = (String[]) parameters.get("prefixes");
+    for (String prefix : prefixes) {
+      String[] splittedPrefix = prefix.split("|");
+      if (splittedPrefix.length == 2) {
+        rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
+      } else {
+        // TODO: invalid prefix string, throw / return error?
+      }
+    }
+  }
+
   private org.apache.commons.rdf.api.Graph generateTemplateRDF(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = new ModelBuilder();
 
     // extract relevant parts of the class
     AnnotationInfoList artifactInfos = artifactClassInfo.getAnnotationInfo().filter(new ArtifactAnnotationFilter());
-
     AnnotationParameterValueList artifactParameters = artifactInfos.get(0).getParameterValues();
     String typeParam = (String) artifactParameters.get("type");
     String artifactNameParam = getArtifactNameParam(artifactParameters, artifactClassInfo);
     IRI artifactName = vf.createIRI(iri);
+    addPrefixesAsNamespace(artifactBuilder, artifactParameters);
 
     // generate model for actions
     artifactBuilder
-      // TODO: get prefixes from annotations
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("td", "http://www.w3.org/ns/td#")
       .subject(artifactName)
@@ -664,6 +678,9 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  /**
+   * Returns the name parameter, if provided, or else the name of the class
+   */
   private String getArtifactNameParam(AnnotationParameterValueList artifactParameters, ClassInfo artifactClassInfo) {
     String artifactNameParam = (String) artifactParameters.get("name");
     if (artifactNameParam.equals("")) {
