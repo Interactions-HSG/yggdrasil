@@ -559,7 +559,7 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   /**
-   *
+   * Generates an RDF graph for a given artifactClassInfo and an IRI for an already existing object currentTarget
    */
   private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri, Object currentTarget) {
     ValueFactory vf = SimpleValueFactory.getInstance();
@@ -574,6 +574,9 @@ public class TemplateVerticle extends AbstractVerticle {
     return rdfImpl.asGraph(artifactModel);
   }
 
+  /**
+  * Generates an RDF graph for a given artifactClassInfo and an IRI
+  */
   private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
