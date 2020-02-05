@@ -450,7 +450,7 @@ public class TemplateVerticle extends AbstractVerticle {
         classMapping.put(genIri.getIRIString(), className);
         classInfoMap.put(className, artifactClassInfo);
         System.out.println("Generated description for: " + genIri);
-        System.out.println(rdfGraph.toString());
+        break;
       }
     }
   }
@@ -523,20 +523,15 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
-  private org.apache.commons.rdf.api.Graph generateTemplateRDF(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
-    ValueFactory vf = SimpleValueFactory.getInstance();
-    ModelBuilder artifactBuilder = new ModelBuilder();
-
-    // extract relevant parts of the class
-    AnnotationInfoList artifactInfos = artifactClassInfo.getAnnotationInfo().filter(new ArtifactAnnotationFilter());
-    AnnotationParameterValueList artifactParameters = artifactInfos.get(0).getParameterValues();
-    String typeParam = (String) artifactParameters.get("type");
-    String artifactNameParam = getArtifactNameParam(artifactParameters, artifactClassInfo);
+  /**
+   * Initializes the RDF representation of an ArtifactTemplate with the corresponding namespaces and the start
+   */
+  private void initializeArtifactTemplateModelBuilder(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo,
+      AnnotationParameterValueList parameters, String iri, ValueFactory vf) {
+    String typeParam = (String) parameters.get("type");
+    String artifactNameParam = getArtifactNameParam(parameters, artifactClassInfo);
     IRI artifactName = vf.createIRI(iri);
-    addPrefixesAsNamespace(artifactBuilder, artifactParameters);
-
-    // generate model for actions
-    artifactBuilder
+    rdfBuilder
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("td", "http://www.w3.org/ns/td#")
       .subject(artifactName)
@@ -544,7 +539,17 @@ public class TemplateVerticle extends AbstractVerticle {
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam)
       .build();
+  }
 
+  private org.apache.commons.rdf.api.Graph generateTemplateRDF(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
+    ValueFactory vf = SimpleValueFactory.getInstance();
+    ModelBuilder artifactBuilder = new ModelBuilder();
+
+    // extract relevant parts of the class
+    AnnotationInfoList artifactInfos = artifactClassInfo.getAnnotationInfo().filter(new ArtifactAnnotationFilter());
+    AnnotationParameterValueList artifactParameters = artifactInfos.get(0).getParameterValues();
+    initializeArtifactTemplateModelBuilder(artifactBuilder, artifactClassInfo, artifactParameters, iri, vf);
+    addPrefixesAsNamespace(artifactBuilder, artifactParameters);
     addAdditions(artifactBuilder, artifactParameters);
 
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
@@ -559,7 +564,12 @@ public class TemplateVerticle extends AbstractVerticle {
 
     // put created graph into store
     Model artifactModel = artifactBuilder.build();
+    LOGGER.info(artifactModel.toString());
+
     org.apache.commons.rdf.api.Graph rdf4JGraph = rdfImpl.asGraph(artifactModel);
+    /*for (Triple t : rdf4JGraph.iterate()) {
+      LOGGER.debug("Subject: " + t.getSubject() + " predicate: " + t.getPredicate() + " object: " + t.getObject());
+    }*/
     return rdf4JGraph;
   }
 
