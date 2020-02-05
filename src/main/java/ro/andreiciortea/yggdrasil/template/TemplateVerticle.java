@@ -286,7 +286,7 @@ public class TemplateVerticle extends AbstractVerticle {
         Object object = ctor.newInstance();
         // add artifact instance to rdf store
         ClassInfo classInfo = classInfoMap.get(className);
-        org.apache.commons.rdf.api.Graph graph = generateTemplateRDF(classInfo, object, classIri);
+        org.apache.commons.rdf.api.Graph graph = generateRdfGraphFromTemplate(classInfo, object, classIri);
 
         String graphString = store.graphToString(graph, RDFSyntax.TURTLE);
         graphString = addAdditionalTriplesRDF(graphString, additionalTriples);
@@ -414,7 +414,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void updateRepresentation(String entityIRI, Object target,  Message<String> message) throws IOException {
     ClassInfo classInfo = classInfoMap.get(target.getClass().getName());
-    org.apache.commons.rdf.api.Graph newGraph = generateTemplateRDF(classInfo, target, entityIRI);
+    org.apache.commons.rdf.api.Graph newGraph = generateRdfGraphFromTemplate(classInfo, target, entityIRI);
     String newRepresentation = store.graphToString(newGraph, RDFSyntax.TURTLE);
     Set<Triple> additionalTriples = objectTriples.get(entityIRI);
     // add additional triples again
@@ -444,7 +444,7 @@ public class TemplateVerticle extends AbstractVerticle {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateClassIRI(artifactClassInfo);
-        org.apache.commons.rdf.api.Graph rdfGraph = generateTemplateRDF(artifactClassInfo, null, genIri.getIRIString());
+        org.apache.commons.rdf.api.Graph rdfGraph = generateRdfGraphFromTemplate(artifactClassInfo, null, genIri.getIRIString());
         store.addEntityGraph(genIri, rdfGraph);
         iris.add(genIri);
         classMapping.put(genIri.getIRIString(), className);
@@ -541,7 +541,10 @@ public class TemplateVerticle extends AbstractVerticle {
       .build();
   }
 
-  private org.apache.commons.rdf.api.Graph generateTemplateRDF(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
+  /**
+   *
+   */
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, Object currentTarget, String iri) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = new ModelBuilder();
 
