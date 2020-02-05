@@ -10,10 +10,9 @@ import java.lang.annotation.Target;
  *
  * @param predicates Array of string representing the predicates of the additional triples
  *
- * @param name Array of strings representing the objects of the addtional triples.
+ * @param objects Array of strings representing the objects of the addtional triples.
  *
- *             NOTE: The first predicate is mapped to the first object. At the moment, there's not checking of the length
- *             of these arrays happening. Be aware of that!
+ *             NOTE: The first predicate is mapped to the first object and so on. The length of predicates and objects have to be equal.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
