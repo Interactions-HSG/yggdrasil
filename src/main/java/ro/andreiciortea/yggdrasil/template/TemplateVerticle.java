@@ -556,15 +556,9 @@ public class TemplateVerticle extends AbstractVerticle {
     addPropertyRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf);
 
-    // put created graph into store
     Model artifactModel = artifactBuilder.build();
     LOGGER.info(artifactModel.toString());
-
-    org.apache.commons.rdf.api.Graph rdf4JGraph = rdfImpl.asGraph(artifactModel);
-    /*for (Triple t : rdf4JGraph.iterate()) {
-      LOGGER.debug("Subject: " + t.getSubject() + " predicate: " + t.getPredicate() + " object: " + t.getObject());
-    }*/
-    return rdf4JGraph;
+    return rdfImpl.asGraph(artifactModel);
   }
 
   /**
