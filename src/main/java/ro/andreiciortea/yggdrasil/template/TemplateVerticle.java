@@ -26,7 +26,7 @@ import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
 import ro.andreiciortea.yggdrasil.store.RdfStore;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
-import ro.andreiciortea.yggdrasil.template.annotation.RequestMapping;
+import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
 import java.io.IOException;
@@ -162,7 +162,7 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private boolean requestMethodAndAttributeMatches(Method method, String requestMethod, String attribute) {
-    return method.getAnnotation(RequestMapping.class).path().equals(attribute) && method.getAnnotation(RequestMapping.class).requestMethod().equals(requestMethod);
+    return method.getAnnotation(Action.class).path().equals(attribute) && method.getAnnotation(Action.class).requestMethod().equals(requestMethod);
   }
 
   private void handleEntityRequest(String entityIRI, String attribute, String requestMethod, EventBusMessage request, Message<String> message) {
@@ -174,7 +174,7 @@ public class TemplateVerticle extends AbstractVerticle {
       return;
     }
     for (Method method : target.getClass().getMethods()) {
-      if (method.getAnnotation(RequestMapping.class) != null && requestMethodAndAttributeMatches(method, requestMethod, attribute)) {
+      if (method.getAnnotation(Action.class) != null && requestMethodAndAttributeMatches(method, requestMethod, attribute)) {
         System.out.println("invoke action " + attribute + " on " + entityIRI);
         System.out.println(request.getPayload().get());
         try {
@@ -444,13 +444,14 @@ public class TemplateVerticle extends AbstractVerticle {
       for (ClassInfo artifactClassInfo : scanResult.getClassesWithAnnotation(artifactAnnotation)) {
         String className = artifactClassInfo.getName();
         org.apache.commons.rdf.api.IRI genIri = generateTemplateClassIRI(artifactClassInfo);
-
+        // why null?
         org.apache.commons.rdf.api.Graph rdfGraph = generateTemplateRDF(artifactClassInfo, null, genIri.getIRIString());
         store.addEntityGraph(genIri, rdfGraph);
         iris.add(genIri);
         classMapping.put(genIri.getIRIString(), className);
         classInfoMap.put(className, artifactClassInfo);
         System.out.println("Generated description for: " + genIri);
+        System.out.println(rdfGraph.toString());
       }
     }
   }
@@ -748,7 +749,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.RequestMapping";
+      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.Action";
       return annotationInfo.getName().equals(annotationName);
     }
   }

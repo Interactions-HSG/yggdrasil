@@ -2,7 +2,7 @@ package ro.andreiciortea.yggdrasil.template.acta4h;
 
 import io.vertx.core.http.HttpMethod;
 
-import ro.andreiciortea.yggdrasil.template.annotation.RequestMapping;
+import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
@@ -15,7 +15,7 @@ public class Rollershutter {
   @ObservableProperty
   public double percentage = 0.0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/percentage")
+  @Action(requestMethod = "PUT", path = "/percentage")
   public double setPercentage(double percentage) {
     this.percentage = percentage;
     return this.percentage;

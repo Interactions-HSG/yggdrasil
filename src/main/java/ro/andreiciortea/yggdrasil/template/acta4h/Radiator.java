@@ -2,7 +2,7 @@ package ro.andreiciortea.yggdrasil.template.acta4h;
 
 import io.vertx.core.http.HttpMethod;
 
-import ro.andreiciortea.yggdrasil.template.annotation.RequestMapping;
+import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
@@ -39,55 +39,55 @@ public class Radiator {
   @ObservableProperty
   public double temperature = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/command")
+  @Action(requestMethod = "PUT", path = "/command")
   public String setCommand(String command) {
     this.command = command;
     return this.command;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/instruction")
+  @Action(requestMethod = "PUT", path = "/instruction")
   public String setInstruction(String instruction) {
     this.instruction = instruction;
     return this.instruction;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/effectiveInstruction")
+  @Action(requestMethod = "PUT", path = "/effectiveInstruction")
   public String setEffectiveInstruction(String effectiveInstruction) {
     this.effectiveInstruction = effectiveInstruction;
     return this.effectiveInstruction;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/instructionChange")
+  @Action(requestMethod = "PUT", path = "/instructionChange")
   public String setInstructionChange(String instructionChange) {
     this.instructionChange = instructionChange;
     return this.instructionChange;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/window")
+  @Action(requestMethod = "PUT", path = "/window")
   public String setWindwow(String window) {
     this.window = window;
     return this.window;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/baseMode")
+  @Action(requestMethod = "PUT", path = "/baseMode")
   public String setBaseMode(String baseMode) {
     this.baseMode = baseMode;
     return this.baseMode;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/effectiveMode")
+  @Action(requestMethod = "PUT", path = "/effectiveMode")
   public String setEffectiveMode(String effectiveMode) {
     this.effectiveMode = effectiveMode;
     return this.effectiveMode;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/presence")
+  @Action(requestMethod = "PUT", path = "/presence")
   public String setPresence(String presence) {
     this.presence = presence;
     return this.presence;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/temperature")
+  @Action(requestMethod = "PUT", path = "/temperature")
   public double setTemperature(double temperature) {
     this.temperature = temperature;
     return this.temperature;

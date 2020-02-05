@@ -2,7 +2,7 @@ package ro.andreiciortea.yggdrasil.template.acta4h;
 
 import io.vertx.core.http.HttpMethod;
 
-import ro.andreiciortea.yggdrasil.template.annotation.RequestMapping;
+import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
@@ -27,31 +27,31 @@ public class Stove {
   @ObservableProperty
   public double tension = 0;
 
-  @RequestMapping(requestMethod = "PUT", path = "/partialEnergy")
+  @Action(requestMethod = "PUT", path = "/partialEnergy")
   public double setPartialEnergy(double partialEnergy) {
     this.partialEnergy = partialEnergy;
     return this.partialEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/totalEnergy")
+  @Action(requestMethod = "PUT", path = "/totalEnergy")
   public double setTotalEnergy(double totalEnergy) {
     this.totalEnergy = totalEnergy;
     return this.totalEnergy;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/intensity")
+  @Action(requestMethod = "PUT", path = "/intensity")
   public double setIntensity(double intensity) {
     this.intensity = intensity;
     return this.intensity;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/power")
+  @Action(requestMethod = "PUT", path = "/power")
   public double setPower(double power) {
     this.power = power;
     return this.power;
   }
 
-  @RequestMapping(requestMethod = "PUT", path = "/tension")
+  @Action(requestMethod = "PUT", path = "/tension")
   public double setTension(double tension) {
     this.tension = tension;
     return this.tension;
