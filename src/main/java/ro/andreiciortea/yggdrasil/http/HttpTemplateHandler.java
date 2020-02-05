@@ -85,13 +85,13 @@ public class HttpTemplateHandler {
     String artifactId = routingContext.request().getParam("artid");
     String[] uriSplitted = routingContext.request().absoluteURI().split(artifactId);
     String entityIri = uriSplitted[0] + artifactId;
-    String attribute = uriSplitted[1];
+    String activity = uriSplitted[1];
     HttpMethod httpMethod = routingContext.request().method();
 
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.TEMPLATE_ACTIVITY)
       .setPayload(body)
       .setHeader(EventBusMessage.Headers.ENTITY_IRI, entityIri)
-      .setHeader(EventBusMessage.Headers.ENTITY_ATTRIBUTE, attribute)
+      .setHeader(EventBusMessage.Headers.ENTITY_ACTIVITY, activity)
       .setHeader(EventBusMessage.Headers.REQUEST_METHOD, httpMethod.name());
 
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
