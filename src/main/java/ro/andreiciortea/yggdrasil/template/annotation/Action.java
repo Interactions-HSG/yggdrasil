@@ -21,4 +21,6 @@ public @interface Action {
   String path() default "";
   String type() default "";
   String name() default "";
+  Input[] inputs() default {};
+  Output output() default @Output();
 }
