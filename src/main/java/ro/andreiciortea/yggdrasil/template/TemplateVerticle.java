@@ -552,15 +552,9 @@ public class TemplateVerticle extends AbstractVerticle {
     addPrefixesAsNamespace(artifactBuilder, artifactParameters);
     addAdditions(artifactBuilder, artifactParameters);
 
-    MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
-    addActionRDF(artifactBuilder, actionMethods, vf);
-
-    //properties
-    FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
-    addPropertyRDF(artifactBuilder, propertyList, vf, currentTarget);
-
-    MethodInfoList events = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
-    addEventsRDF(artifactBuilder, events, vf);
+    addActionRDF(artifactBuilder, artifactClassInfo, vf);
+    addPropertyRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
+    addEventsRDF(artifactBuilder, artifactClassInfo, vf);
 
     // put created graph into store
     Model artifactModel = artifactBuilder.build();
@@ -573,72 +567,11 @@ public class TemplateVerticle extends AbstractVerticle {
     return rdf4JGraph;
   }
 
-  private void addEventsRDF(ModelBuilder artifactBuilder, MethodInfoList eventList, ValueFactory vf) {
-    // TODO: add descriptions
-    for (MethodInfo event: eventList) {
-      ModelBuilder eventBuilder = new ModelBuilder();
-      AnnotationInfo annotation = event.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Event");
-
-      String eventName = (String) annotation.getParameterValues().get("name");
-      if (eventName.equals("")) {
-        eventName = event.getName();
-      }
-
-      String path = (String) annotation.getParameterValues().get("path");
-      if (path.equals("")) {
-        path = "/events/" + eventName;
-      }
-
-      eventBuilder
-        .subject(vf.createBNode())
-        .add("td:name", eventName)
-        .add("eve:path", path);
-
-      artifactBuilder.add("td:events", eventBuilder.build());
-    }
-  }
-
-  private void addPropertyRDF(ModelBuilder artifactBuilder, FieldInfoList propertyList, ValueFactory vf, Object currentTarget) {
-    for (FieldInfo property : propertyList) {
-      ModelBuilder propertyBuilder = new ModelBuilder();
-      // TODO map Java classes to xml type
-      String propertyType = property.getTypeDescriptor().toString();
-      AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
-
-      String propertyName = (String) annotation.getParameterValues().get("name");
-      if (propertyName.equals("")) {
-        propertyName = property.getName();
-      }
-
-      String path = (String) annotation.getParameterValues().get("path");
-      if (path.equals("")) {
-        path = "/properties/" + propertyName;
-      }
-
-      propertyBuilder
-        .subject(vf.createBNode())
-        .add("td:name", propertyName)
-        .add("td:type", propertyType)
-        .add("eve:path", path);
-
-      if (currentTarget != null) {
-        Object propertyValue;
-        try {
-          propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
-          if (propertyValue != null) {
-            propertyBuilder.add("td:value", propertyValue.toString());
-          }
-        } catch (IllegalAccessException e) {
-          e.printStackTrace();
-        } catch (NoSuchFieldException e) {
-          e.printStackTrace();
-        }
-      }
-      artifactBuilder.add("td:properties", propertyBuilder.build());
-    }
-  }
-
-  private void addActionRDF(ModelBuilder artifactBuilder, MethodInfoList actionMethods, ValueFactory vf) {
+  /**
+   *
+   */
+  private void addActionRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+    MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
       ModelBuilder actionBuilder = new ModelBuilder();
       ModelBuilder inputFieldBuilder = new ModelBuilder();
@@ -691,6 +624,73 @@ public class TemplateVerticle extends AbstractVerticle {
       Model actionModel = actionBuilder.build();
       artifactBuilder
         .add("td:interactions", actionModel);
+    }
+  }
+
+  private void addEventsRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+    // TODO: add descriptions
+    MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
+    for (MethodInfo event: eventMethods) {
+      ModelBuilder eventBuilder = new ModelBuilder();
+      AnnotationInfo annotation = event.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Event");
+
+      String eventName = (String) annotation.getParameterValues().get("name");
+      if (eventName.equals("")) {
+        eventName = event.getName();
+      }
+
+      String path = (String) annotation.getParameterValues().get("path");
+      if (path.equals("")) {
+        path = "/events/" + eventName;
+      }
+
+      eventBuilder
+        .subject(vf.createBNode())
+        .add("td:name", eventName)
+        .add("eve:path", path);
+
+      artifactBuilder.add("td:events", eventBuilder.build());
+    }
+  }
+
+  private void addPropertyRDF(ModelBuilder artifactBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
+    FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
+    for (FieldInfo property : propertyList) {
+      ModelBuilder propertyBuilder = new ModelBuilder();
+      // TODO map Java classes to xml type
+      String propertyType = property.getTypeDescriptor().toString();
+      AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
+
+      String propertyName = (String) annotation.getParameterValues().get("name");
+      if (propertyName.equals("")) {
+        propertyName = property.getName();
+      }
+
+      String path = (String) annotation.getParameterValues().get("path");
+      if (path.equals("")) {
+        path = "/properties/" + propertyName;
+      }
+
+      propertyBuilder
+        .subject(vf.createBNode())
+        .add("td:name", propertyName)
+        .add("td:type", propertyType)
+        .add("eve:path", path);
+
+      if (currentTarget != null) {
+        Object propertyValue;
+        try {
+          propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
+          if (propertyValue != null) {
+            propertyBuilder.add("td:value", propertyValue.toString());
+          }
+        } catch (IllegalAccessException e) {
+          e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+          e.printStackTrace();
+        }
+      }
+      artifactBuilder.add("td:properties", propertyBuilder.build());
     }
   }
 
