@@ -21,6 +21,7 @@ import org.apache.commons.rdf.rdf4j.RDF4JLiteral;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.rio.*;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
@@ -29,6 +30,7 @@ import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
@@ -528,6 +530,26 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  private String rdfModelToString(Model m) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Rio.write(m, out, RDFFormat.TURTLE);
+    return out.toString();
+  }
+
+  private void printRDFModel(Model m) {
+    LOGGER.info(rdfModelToString(m));
+  }
+
+  private void printGraphToStringAndModelToString(Model m, String name) {
+    LOGGER.info("\nFirst part of RDF representation of " + name);
+    printRDFModel(m);
+    LOGGER.info("graphToString() function:");
+    try {
+      LOGGER.info(store.graphToString(rdfImpl.asGraph(m), RDFSyntax.TURTLE));
+    } catch(Exception e) {
+      LOGGER.error("error while converting the graph to a string");
+    }
+  }
   /**
    * Initializes the RDF representation of an ArtifactTemplate with the corresponding namespaces and the start
    */
@@ -542,19 +564,19 @@ public class TemplateVerticle extends AbstractVerticle {
       .subject(artifactName)
       .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), typeParam)
       .add("eve:a", "eve:ArtifactTemplate")
-      .add("td:name", artifactNameParam)
-      .build();
+      .add("td:name", artifactNameParam);
+    // printGraphToStringAndModelToString(rdfBuilder.build(), artifactNameParam); // --> still looks good, prefixes get added with graphToString but that's ok
   }
 
   private ModelBuilder generateRdfModelBuilderForTemplate(ValueFactory vf, ClassInfo artifactClassInfo, String iri) {
     ModelBuilder artifactBuilder = new ModelBuilder();
-
     // extract relevant parts of the class
     AnnotationInfoList artifactInfos = artifactClassInfo.getAnnotationInfo().filter(new ArtifactAnnotationFilter());
     AnnotationParameterValueList artifactParameters = artifactInfos.get(0).getParameterValues();
     initializeArtifactTemplateModelBuilder(artifactBuilder, artifactClassInfo, artifactParameters, iri, vf);
     addPrefixesAsNamespace(artifactBuilder, artifactParameters);
     addAdditions(artifactBuilder, artifactParameters);
+    // printGraphToStringAndModelToString(artifactBuilder.build(), iri);   // --> still looks good
     return artifactBuilder;
   }
 
@@ -565,12 +587,11 @@ public class TemplateVerticle extends AbstractVerticle {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
-    addActionRDF(artifactBuilder, artifactClassInfo, vf);
+    addActionRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addPropertyRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf);
 
     Model artifactModel = artifactBuilder.build();
-    LOGGER.info(artifactModel.toString());
     return rdfImpl.asGraph(artifactModel);
   }
 
@@ -580,13 +601,16 @@ public class TemplateVerticle extends AbstractVerticle {
   private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
+    // printGraphToStringAndModelToString(artifactBuilder.build(), iri); // --> still ok
 
-    addActionRDF(artifactBuilder, artifactClassInfo, vf);
-    addPropertyRDF(artifactBuilder, artifactClassInfo, vf);
-    addEventsRDF(artifactBuilder, artifactClassInfo, vf);
+    //TODO: re-activate and fix addPropertyRDF and addEventsRDF, only deactivated to focus on addActionRDF for now
+    addActionRDF(artifactBuilder, artifactClassInfo, vf, iri);
+    //addPropertyRDF(artifactBuilder, artifactClassInfo, vf);
+    //addEventsRDF(artifactBuilder, artifactClassInfo, vf);
+    printGraphToStringAndModelToString(artifactBuilder.build(), iri);
 
     Model artifactModel = artifactBuilder.build();
-    LOGGER.info(artifactModel.toString());
+    //LOGGER.info(artifactModel.toString());
     return rdfImpl.asGraph(artifactModel);
   }
 
@@ -606,40 +630,45 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
    */
-  private void addActionRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  private void addActionRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
+    LOGGER.info("IRI = " + iri);
+    IRI root = vf.createIRI(iri);
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
-      ModelBuilder actionBuilder = new ModelBuilder();
-      ModelBuilder inputFieldBuilder = new ModelBuilder();
-
       AnnotationInfo annotationInfo = action.getAnnotationInfo().get(0);
       AnnotationParameterValueList actionParameters = annotationInfo.getParameterValues();
       String actionNameParam = getParam(annotationInfo, "name", action.getName());
       String path = getParam(annotationInfo, "path", "/" + actionNameParam);
-
       String requestMethod = (String) actionParameters.get("requestMethod");
+
+      BNode actionNode = vf.createBNode(actionNameParam);
       BNode formNode = vf.createBNode("td:form");
       BNode inputSchemaNode = vf.createBNode("td:inputForm");
 
-      actionBuilder
-        .subject("td:interaction")
-        .add("td:name", actionNameParam)
-        .add("td:form", formNode)
-        .add("td:inputSchema", inputSchemaNode)
-        .subject(formNode)
-        .add("http:methodName", requestMethod)
-        .add("eve:path", path )
-        .add("td:mediaType", "application/json")
-        .add("td:rel", "invokeAction")
-        .subject(inputSchemaNode)
-        .add("td:schemaType", "td:Objcect");
-
+      rdfBuilder
+      .subject(root)
+        .add("td:interaction", actionNode)
+        .subject(actionNode)
+          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Action")
+          .add("td:name", actionNameParam)
+          .add("td:form", formNode)
+          .add("td:inputSchema", inputSchemaNode)
+          .subject(formNode)
+            .add("http:methodName", requestMethod)
+            .add("eve:path", path )
+            .add("td:mediaType", "application/json")
+            .add("td:rel", "invokeAction")
+            .subject(inputSchemaNode)
+              .add("td:schemaType", "td:Object");
+      /* TODO: finish / fix this
       MethodParameterInfo[] parameterInfos = action.getParameterInfo();
       for (MethodParameterInfo parameter : parameterInfos) {
         BNode fieldNode = vf.createBNode("td:field");
         BNode schemaNode = vf.createBNode("td:schema");
         String inputName = parameter.getName();
         String inputType = parameter.getTypeDescriptor().toString();
+        rdfBuilder.subject(inputSchemaNode)
+          .add("td:field", )
         inputFieldBuilder
           .subject(fieldNode)
           .add("td:name", inputName)
@@ -653,8 +682,7 @@ public class TemplateVerticle extends AbstractVerticle {
         .subject(inputSchemaNode)
         .add("td:field", inputModel);
       Model actionModel = actionBuilder.build();
-      rdfBuilder
-        .add("td:interactions", actionModel);
+      //rdfBuilder.add("td:interactions", actionModel);
     }
   }
 
