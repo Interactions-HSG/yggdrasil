@@ -16,7 +16,7 @@ public class MyArtifact {
 
   @ObservableProperty
   public String property = "yay";
-
+  // TODO: add input and output specification
   @Action(requestMethod = "PUT", path = "/myArtifactActions/myMethod", name = "myFancyName")
   @Input(name="paramA", type="someWotType")
   public String myMethod(int paramA, String paramB) {
