@@ -5,6 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+
 /**
  * Annotation to specify an action on a template artifact
  *
@@ -21,6 +22,6 @@ public @interface Action {
   String path() default "";
   String type() default "";
   String name() default "";
-  Input[] inputs() default {};
+  String[] inputs() default {};
   Output output() default @Output();
 }

@@ -485,7 +485,7 @@ public class TemplateVerticle extends AbstractVerticle {
       LOGGER.info(String.format("parsing prefixes from template, found %d", parameters.size()));
       String [] prefixes = (String[]) parameters.get("prefixes");
       for (String prefix : prefixes) {
-        String[] splittedPrefix = prefix.split("|");
+        String[] splittedPrefix = prefix.split("\\|");
         if (splittedPrefix.length == 2) {
           rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
         } else {
@@ -504,6 +504,7 @@ public class TemplateVerticle extends AbstractVerticle {
     AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
     if (!additionsList.isEmpty()) {
       LOGGER.info(String.format("parsing additions from template, found %d", additionsList.size()));
+      // TODO: simplify
       String[] predicatesList;
       String[] objectsList;
       String[] zeroElement = (String[]) additionsList.get(0).getValue();
@@ -635,15 +636,15 @@ public class TemplateVerticle extends AbstractVerticle {
     IRI root = vf.createIRI(iri);
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
-      AnnotationInfo annotationInfo = action.getAnnotationInfo().get(0);
+      AnnotationInfo annotationInfo = action.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Action");
       AnnotationParameterValueList actionParameters = annotationInfo.getParameterValues();
       String actionNameParam = getParam(annotationInfo, "name", action.getName());
       String path = getParam(annotationInfo, "path", "/" + actionNameParam);
       String requestMethod = (String) actionParameters.get("requestMethod");
 
       BNode actionNode = vf.createBNode(actionNameParam);
-      BNode formNode = vf.createBNode("td:form");
-      BNode inputSchemaNode = vf.createBNode("td:inputForm");
+      BNode formNode = vf.createBNode();
+      BNode inputSchemaNode = vf.createBNode();
 
       rdfBuilder
       .subject(root)
@@ -660,8 +661,38 @@ public class TemplateVerticle extends AbstractVerticle {
             .add("td:rel", "invokeAction")
             .subject(inputSchemaNode)
               .add("td:schemaType", "td:Object");
-      /* TODO: finish / fix this
-      MethodParameterInfo[] parameterInfos = action.getParameterInfo();
+
+      String[] inputInfos = (String[]) actionParameters.get("inputs");
+      if (inputInfos.length > 0){
+        LOGGER.info(String.format("found %d input infos", inputInfos.length));
+        for (String inputInfo : inputInfos) {
+          String[] splitting = inputInfo.split("\\|");
+          if (splitting.length == 2) {
+            BNode fieldNode = vf.createBNode("td:field");
+            BNode schemaNode = vf.createBNode("td:schema");
+            String inputName = splitting[0];
+            String inputType = splitting[1];
+            rdfBuilder.subject(inputSchemaNode)
+              .add("td:field", fieldNode)
+              .subject(fieldNode)
+                .add("td:schema", schemaNode)
+                .subject(schemaNode)
+                  // TODO: add default values e.g. from annotation?
+                  .add("td:SchemaType", "td:" + inputType);
+          } else {
+            for (String s : splitting) {
+              LOGGER.info(s);
+            }
+            throw new Error(String.format("Provided input does not match required format \"<parameterName>|<type>\" (len=%d): " + inputInfo, splitting.length));
+          }
+        }
+      } else {
+        // TODO: what if no types are provided via annotation? fall back to parameter name and java type?
+      }
+
+
+      /*MethodParameterInfo[] parameterInfos = action.getParameterInfo();
+
       for (MethodParameterInfo parameter : parameterInfos) {
         BNode fieldNode = vf.createBNode("td:field");
         BNode schemaNode = vf.createBNode("td:schema");
@@ -682,7 +713,7 @@ public class TemplateVerticle extends AbstractVerticle {
         .subject(inputSchemaNode)
         .add("td:field", inputModel);
       Model actionModel = actionBuilder.build();
-      //rdfBuilder.add("td:interactions", actionModel);
+      //rdfBuilder.add("td:interactions", actionModel);*/
     }
   }
 
