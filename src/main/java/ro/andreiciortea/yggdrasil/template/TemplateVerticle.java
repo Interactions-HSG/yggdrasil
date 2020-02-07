@@ -586,7 +586,7 @@ public class TemplateVerticle extends AbstractVerticle {
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
+    addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, currentTarget, iri);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
 
     Model artifactModel = artifactBuilder.build();
@@ -601,14 +601,12 @@ public class TemplateVerticle extends AbstractVerticle {
     IRI iri = vf.createIRI(iriString);
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
-    //TODO: re-activate and fix addPropertiesRDF and addEventsRDF, only deactivated to focus on addActionsRDF for now
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    //addPropertiesRDF(artifactBuilder, artifactClassInfo, vf);
+    addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
+    // printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
 
     Model artifactModel = artifactBuilder.build();
-    //LOGGER.info(artifactModel.toString());
     return rdfImpl.asGraph(artifactModel);
   }
 
@@ -672,7 +670,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
       rdfBuilder
       .subject(root)
-        .add("td:interaction", actionNode)
+        .add("td:actions", actionNode)
         .subject(actionNode)
           .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Action")
           .add("td:name", actionNameParam)
@@ -710,54 +708,51 @@ public class TemplateVerticle extends AbstractVerticle {
 
       String eventName = getParam(annotation, "name", event.getName());
       String path = getParam(annotation, "path", "/events/" + eventName);
-
-      eventBuilder
-        .subject(vf.createBNode())
-        .add("td:name", eventName)
-        .add("eve:path", path);
-
-      rdfBuilder.add("td:events", eventBuilder.build());
+      BNode eventNode = vf.createBNode();
+      rdfBuilder.subject(root)
+        .add("td:events", eventNode)
+        .subject(eventNode)
+          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Event")
+          .add("td:name", eventName)
+          .add("eve:path", path);
     }
   }
 
   /**
    * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder and adds the value of currentTarget
    */
-  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
+  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget, IRI root) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
-      ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
+      BNode propertyNode = addObservableProperty(rdfBuilder, root, property, vf);
       Object propertyValue;
       try {
         propertyValue = currentTarget.getClass().getField(property.getName()).get(currentTarget);
         if (propertyValue != null) {
-          propertyBuilder.add("td:value", propertyValue.toString());
+          rdfBuilder.subject(propertyNode).add("td:value", propertyValue.toString());
         }
       } catch (IllegalAccessException e) {
         e.printStackTrace();
       } catch (NoSuchFieldException e) {
         e.printStackTrace();
       }
-      rdfBuilder.add("td:properties", propertyBuilder.build());
     }
   }
 
   /**
   * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
   */
-  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, IRI root) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
-      ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
-      rdfBuilder.add("td:properties", propertyBuilder.build());
+      addObservableProperty(rdfBuilder, root, property, vf);
     }
   }
 
   /**
-   * Returns a ModelBuilder with the parameters of the ObservableProperty annotation added
+   * Returns a ModelBuilder with the parameters of the ObservableProperty annotation added, returns the property BNode
    */
-  private ModelBuilder createObservablePropertyModelBuilder(FieldInfo property, ValueFactory vf) {
-    ModelBuilder propertyBuilder = new ModelBuilder();
+  private BNode addObservableProperty(ModelBuilder rdfBuilder, IRI root, FieldInfo property, ValueFactory vf) {
     // TODO map Java classes to xml type
     String propertyType = property.getTypeDescriptor().toString();
     AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
@@ -771,13 +766,15 @@ public class TemplateVerticle extends AbstractVerticle {
     if (path.equals("")) {
       path = "/properties/" + propertyName;
     }
-
-    propertyBuilder
-      .subject(vf.createBNode())
-      .add("td:name", propertyName)
-      .add("td:type", propertyType)
-      .add("eve:path", path);
-    return propertyBuilder;
+    BNode propertyNode = vf.createBNode();
+    rdfBuilder.subject(root)
+      .add("td:properties", propertyNode)
+      .subject(propertyNode)
+        .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Property")
+        .add("td:name", propertyName)
+        .add("td:type", propertyType)
+        .add("eve:path", path);
+    return propertyNode;
   }
 
   /**
