@@ -554,20 +554,19 @@ public class TemplateVerticle extends AbstractVerticle {
    * Initializes the RDF representation of an ArtifactTemplate with the corresponding namespaces and the start
    */
   private void initializeArtifactTemplateModelBuilder(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo,
-      AnnotationParameterValueList parameters, String iri, ValueFactory vf) {
+      AnnotationParameterValueList parameters, IRI iri, ValueFactory vf) {
     String typeParam = (String) parameters.get("type");
     String artifactNameParam = getArtifactNameParam(parameters, artifactClassInfo);
-    IRI artifactName = vf.createIRI(iri);
     rdfBuilder
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("td", "http://www.w3.org/ns/td#")
-      .subject(artifactName)
+      .subject(iri)
       .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), typeParam)
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam);
   }
 
-  private ModelBuilder generateRdfModelBuilderForTemplate(ValueFactory vf, ClassInfo artifactClassInfo, String iri) {
+  private ModelBuilder generateRdfModelBuilderForTemplate(ValueFactory vf, ClassInfo artifactClassInfo, IRI iri) {
     ModelBuilder artifactBuilder = new ModelBuilder();
     // extract relevant parts of the class
     AnnotationInfoList artifactInfos = artifactClassInfo.getAnnotationInfo().filter(new ArtifactAnnotationFilter());
@@ -581,8 +580,9 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Generates an RDF graph for a given artifactClassInfo and an IRI for an already existing object currentTarget
    */
-  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri, Object currentTarget) {
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iriString, Object currentTarget) {
     ValueFactory vf = SimpleValueFactory.getInstance();
+    IRI iri = vf.createIRI(iriString);
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
@@ -596,15 +596,16 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
   * Generates an RDF graph for a given artifactClassInfo and an IRI
   */
-  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri) {
+  private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iriString) {
     ValueFactory vf = SimpleValueFactory.getInstance();
+    IRI iri = vf.createIRI(iriString);
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
     //TODO: re-activate and fix addPropertiesRDF and addEventsRDF, only deactivated to focus on addActionsRDF for now
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
     //addPropertiesRDF(artifactBuilder, artifactClassInfo, vf);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    printGraphToStringAndModelToString(artifactBuilder.build(), iri);
+    printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
 
     Model artifactModel = artifactBuilder.build();
     //LOGGER.info(artifactModel.toString());
@@ -656,9 +657,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
    */
-  private void addActionsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
-    LOGGER.info("IRI = " + iri);
-    IRI root = vf.createIRI(iri);
+  private void addActionsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, IRI root) {
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
       AnnotationInfo annotationInfo = action.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Action");
@@ -702,7 +701,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the events which are annotated with @Event to rdfBuilder
    */
-  private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
+  private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, IRI root) {
     // TODO: add descriptions
     MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     for (MethodInfo event: eventMethods) {
