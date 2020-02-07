@@ -1,4 +1,4 @@
-package ro.andreiciortea.yggdrasil.template.acta4h;
+package ro.andreiciortea.yggdrasil.template.hyperlab;
 
 import io.vertx.core.http.HttpMethod;
 
@@ -7,10 +7,17 @@ import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
-@Artifact(types = { "http://example.org/#OutsideWeatherArtifact" }, additions =
-  @RdfAddition(predicates ={"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}, objects = {"td:Thing"})
+@Artifact(types = { "td:Thing", "eve:Artifact" },
+          prefixes = {
+            "td|http://www.w3.org/ns/td#",
+            "xsd|http://www.w3.org/2001/XMLSchema#",
+            "iot|http://iotschema.org/",
+            "http|http://iotschema.org/protocol/http",
+            "eve|http://w3id.org/eve#",
+            "ex|http://example.com/"
+          }
 )
-public class Weather {
+public class PhantomxRobotArm {
 
   @ObservableProperty
   public String commonIdExt = "";

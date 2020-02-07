@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Artifact {
   // TODO: allow multiple types (better word for type?)
-  String type();
+  String[] types();
   String name() default "";
   String[] prefixes() default {};
   RdfAddition additions() default @RdfAddition();

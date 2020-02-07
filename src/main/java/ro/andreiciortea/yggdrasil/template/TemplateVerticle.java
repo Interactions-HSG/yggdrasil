@@ -555,13 +555,16 @@ public class TemplateVerticle extends AbstractVerticle {
    */
   private void initializeArtifactTemplateModelBuilder(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo,
       AnnotationParameterValueList parameters, IRI iri, ValueFactory vf) {
-    String typeParam = (String) parameters.get("type");
+    String[] typeParam = (String[]) parameters.get("types");
     String artifactNameParam = getArtifactNameParam(parameters, artifactClassInfo);
     rdfBuilder
       .setNamespace("eve", "http://w3id.org/eve#")
-      .setNamespace("td", "http://www.w3.org/ns/td#")
+      .setNamespace("td", "http://www.w3.org/ns/td#");
+    for (String type : typeParam) {
+      rdfBuilder.subject(iri).add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), type);
+    }
+    rdfBuilder
       .subject(iri)
-      .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), typeParam)
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam);
   }
