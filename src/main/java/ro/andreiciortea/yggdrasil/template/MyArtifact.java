@@ -17,8 +17,7 @@ public class MyArtifact {
   @ObservableProperty
   public String property = "yay";
   // TODO: add input and output specification
-  @Action(requestMethod = "PUT", path = "/myArtifactActions/myMethod", name = "myFancyName")
-  @Input(name="paramA", type="someWotType")
+  @Action(requestMethod = "PUT", path = "/myArtifactActions/myMethod", name = "myFancyName", inputs={"paramA|www.test.type", "paramB|www.test.type2"})
   public String myMethod(int paramA, String paramB) {
     myProperty += paramA;
     System.out.println("myMethod: " + paramB);
