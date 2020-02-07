@@ -79,6 +79,7 @@ public class Rdf4jStore implements RdfStore {
     return rdfImpl.createIRI(iriString);
   }
 
+  @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     RDFWriter writer;
