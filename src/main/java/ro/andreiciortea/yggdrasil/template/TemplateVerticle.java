@@ -607,7 +607,7 @@ public class TemplateVerticle extends AbstractVerticle {
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    // printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
+    printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
 
     Model artifactModel = artifactBuilder.build();
     return rdfImpl.asGraph(artifactModel);
@@ -673,7 +673,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
       rdfBuilder
       .subject(root)
-        .add("td:actions", actionNode)
+        .add("td:interaction", actionNode)
         .subject(actionNode)
           .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Action")
           .add("td:name", actionNameParam)
