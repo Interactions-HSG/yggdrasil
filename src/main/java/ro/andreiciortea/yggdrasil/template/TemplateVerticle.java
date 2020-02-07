@@ -183,8 +183,8 @@ public class TemplateVerticle extends AbstractVerticle {
     }
     for (Method method : target.getClass().getMethods()) {
       if (method.getAnnotation(Action.class) != null && requestMethodAndActionMatches(method, requestMethod, action)) {
-        System.out.println("invoke action " + action + " on " + entityIRI);
-        System.out.println(request.getPayload().get());
+        LOGGER.info("invoke action " + action + " on " + entityIRI);
+        LOGGER.info(request.getPayload().get());
         try {
           Object[] obj = new Object[method.getParameters().length];
           // check for arguments of method
@@ -443,7 +443,7 @@ public class TemplateVerticle extends AbstractVerticle {
     configurable template path [https://github.com/classgraph/classgraph/wiki/API:-ClassGraph-Constructor].*/
     String pkg = "ro.andreiciortea.yggdrasil.template";
     String artifactAnnotation = "ro.andreiciortea.yggdrasil.template.annotation.Artifact";
-    System.out.println("scanning for templates...");
+    LOGGER.info("scanning for templates...");
     try (ScanResult scanResult =
            new ClassGraph()
              .enableAllInfo()             // Scan classes, methods, fields, annotations
@@ -457,7 +457,7 @@ public class TemplateVerticle extends AbstractVerticle {
         iris.add(genIri);
         classMapping.put(genIri.getIRIString(), className);
         classInfoMap.put(className, artifactClassInfo);
-        System.out.println("Generated description for: " + genIri);
+        LOGGER.info("Generated description for: " + genIri);
       }
     }
   }
@@ -484,13 +484,9 @@ public class TemplateVerticle extends AbstractVerticle {
     if (!parameters.isEmpty()) {
       LOGGER.info(String.format("parsing prefixes from template, found %d", parameters.size()));
       String [] prefixes = (String[]) parameters.get("prefixes");
-      for (String prefix : prefixes) {
-        String[] splittedPrefix = prefix.split("\\|");
-        if (splittedPrefix.length == 2) {
-          rdfBuilder.setNamespace(splittedPrefix[0], splittedPrefix[1]);
-        } else {
-          throw new Error("Provided prefix does not match required format \"<abbreviation>|<prefix>\": " + prefix);
-        }
+      Map<String, String> prefixMapping = parseDelimitedStringsToMap("\\|", prefixes);
+      for (Map.Entry<String, String> entry : prefixMapping.entrySet()) {
+        rdfBuilder.setNamespace(entry.getKey(), entry.getValue());
       }
     }
   }
@@ -531,19 +527,22 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  /**
+   * For debug purposes: Converts a given rdf model into a string
+   */
   private String rdfModelToString(Model m) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Rio.write(m, out, RDFFormat.TURTLE);
     return out.toString();
   }
 
-  private void printRDFModel(Model m) {
-    LOGGER.info(rdfModelToString(m));
-  }
-
+  /**
+   * For debug purposes: Prints the model as well as the graph representation
+   * of the given model
+   */
   private void printGraphToStringAndModelToString(Model m, String name) {
     LOGGER.info("\nFirst part of RDF representation of " + name);
-    printRDFModel(m);
+    LOGGER.info(rdfModelToString(m));
     LOGGER.info("graphToString() function:");
     try {
       LOGGER.info(store.graphToString(rdfImpl.asGraph(m), RDFSyntax.TURTLE));
@@ -566,7 +565,6 @@ public class TemplateVerticle extends AbstractVerticle {
       .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), typeParam)
       .add("eve:a", "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam);
-    // printGraphToStringAndModelToString(rdfBuilder.build(), artifactNameParam); // --> still looks good, prefixes get added with graphToString but that's ok
   }
 
   private ModelBuilder generateRdfModelBuilderForTemplate(ValueFactory vf, ClassInfo artifactClassInfo, String iri) {
@@ -577,7 +575,6 @@ public class TemplateVerticle extends AbstractVerticle {
     initializeArtifactTemplateModelBuilder(artifactBuilder, artifactClassInfo, artifactParameters, iri, vf);
     addPrefixesAsNamespace(artifactBuilder, artifactParameters);
     addAdditions(artifactBuilder, artifactParameters);
-    // printGraphToStringAndModelToString(artifactBuilder.build(), iri);   // --> still looks good
     return artifactBuilder;
   }
 
@@ -602,7 +599,6 @@ public class TemplateVerticle extends AbstractVerticle {
   private org.apache.commons.rdf.api.Graph generateRdfGraphFromTemplate(ClassInfo artifactClassInfo, String iri) {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
-    // printGraphToStringAndModelToString(artifactBuilder.build(), iri); // --> still ok
 
     //TODO: re-activate and fix addPropertyRDF and addEventsRDF, only deactivated to focus on addActionRDF for now
     addActionRDF(artifactBuilder, artifactClassInfo, vf, iri);
@@ -627,6 +623,35 @@ public class TemplateVerticle extends AbstractVerticle {
     }
   }
 
+  /**
+   * adds an input, specified by name and type parameter, to the rdfBuilder ModelBuilder as a child node of the
+   * provided inputSchemaNode
+   */
+  private void addInput(ModelBuilder rdfBuilder, ValueFactory vf, BNode inputSchemaNode, String name, String type) {
+    BNode fieldNode = vf.createBNode();
+    BNode schemaNode = vf.createBNode();
+    rdfBuilder.subject(inputSchemaNode)
+      .add("td:field", fieldNode)
+      .subject(fieldNode)
+        .add("td:name", name)
+        .add("td:schema", schemaNode)
+        .subject(schemaNode)
+          // TODO: add default values e.g. from annotation?
+          .add("td:SchemaType", type);
+  }
+
+  private Map<String, String> parseDelimitedStringsToMap(String delimiter, String[] strings) {
+    Map<String, String> mapping = new HashMap<>();
+    for (String str : strings) {
+      String[] splitting = str.split(delimiter);
+      if (splitting.length == 2) {
+        mapping.put(splitting[0], splitting[1]);
+      } else {
+        throw new Error(String.format("Provided input does not match required format \"<...>" + delimiter + "<...>\": " + str));
+      }
+    }
+    return mapping;
+  }
 
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
@@ -655,65 +680,22 @@ public class TemplateVerticle extends AbstractVerticle {
           .add("td:form", formNode)
           .add("td:inputSchema", inputSchemaNode)
           .subject(formNode)
-            .add("http:methodName", requestMethod)
+            .add("htv:methodName", requestMethod)
             .add("eve:path", path )
             .add("td:mediaType", "application/json")
             .add("td:rel", "invokeAction")
-            .subject(inputSchemaNode)
-              .add("td:schemaType", "td:Object");
+          .subject(inputSchemaNode)
+            .add("td:schemaType", "td:Object");
 
       String[] inputInfos = (String[]) actionParameters.get("inputs");
-      if (inputInfos.length > 0){
-        LOGGER.info(String.format("found %d input infos", inputInfos.length));
-        for (String inputInfo : inputInfos) {
-          String[] splitting = inputInfo.split("\\|");
-          if (splitting.length == 2) {
-            BNode fieldNode = vf.createBNode("td:field");
-            BNode schemaNode = vf.createBNode("td:schema");
-            String inputName = splitting[0];
-            String inputType = splitting[1];
-            rdfBuilder.subject(inputSchemaNode)
-              .add("td:field", fieldNode)
-              .subject(fieldNode)
-                .add("td:schema", schemaNode)
-                .subject(schemaNode)
-                  // TODO: add default values e.g. from annotation?
-                  .add("td:SchemaType", "td:" + inputType);
-          } else {
-            for (String s : splitting) {
-              LOGGER.info(s);
-            }
-            throw new Error(String.format("Provided input does not match required format \"<parameterName>|<type>\" (len=%d): " + inputInfo, splitting.length));
-          }
-        }
-      } else {
-        // TODO: what if no types are provided via annotation? fall back to parameter name and java type?
-      }
-
-
-      /*MethodParameterInfo[] parameterInfos = action.getParameterInfo();
-
-      for (MethodParameterInfo parameter : parameterInfos) {
-        BNode fieldNode = vf.createBNode("td:field");
-        BNode schemaNode = vf.createBNode("td:schema");
+      LOGGER.info(String.format("found %d input infos", inputInfos.length));
+      Map<String, String> inputTypeMapping = parseDelimitedStringsToMap("\\|", inputInfos);
+      for (MethodParameterInfo parameter : action.getParameterInfo()) {
         String inputName = parameter.getName();
-        String inputType = parameter.getTypeDescriptor().toString();
-        rdfBuilder.subject(inputSchemaNode)
-          .add("td:field", )
-        inputFieldBuilder
-          .subject(fieldNode)
-          .add("td:name", inputName)
-          .add("td:schema", schemaNode)
-          .subject(schemaNode)
-          // TODO add default values, specified by annotation?
-          .add("td:SchemaType", "td:" + inputType);
+        // if no type is provided via annotation, we fall back to parameter java type
+        String inputType = inputTypeMapping.getOrDefault(inputName, parameter.getTypeDescriptor().toString());
+        addInput(rdfBuilder, vf, inputSchemaNode, inputName, inputType);
       }
-      Model inputModel = inputFieldBuilder.build();
-      actionBuilder
-        .subject(inputSchemaNode)
-        .add("td:field", inputModel);
-      Model actionModel = actionBuilder.build();
-      //rdfBuilder.add("td:interactions", actionModel);*/
     }
   }
 
