@@ -585,9 +585,9 @@ public class TemplateVerticle extends AbstractVerticle {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
-    addActionRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    addPropertyRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
-    addEventsRDF(artifactBuilder, artifactClassInfo, vf);
+    addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
+    addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, currentTarget);
+    addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
 
     Model artifactModel = artifactBuilder.build();
     return rdfImpl.asGraph(artifactModel);
@@ -600,10 +600,10 @@ public class TemplateVerticle extends AbstractVerticle {
     ValueFactory vf = SimpleValueFactory.getInstance();
     ModelBuilder artifactBuilder = generateRdfModelBuilderForTemplate(vf, artifactClassInfo, iri);
 
-    //TODO: re-activate and fix addPropertyRDF and addEventsRDF, only deactivated to focus on addActionRDF for now
-    addActionRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    //addPropertyRDF(artifactBuilder, artifactClassInfo, vf);
-    //addEventsRDF(artifactBuilder, artifactClassInfo, vf);
+    //TODO: re-activate and fix addPropertiesRDF and addEventsRDF, only deactivated to focus on addActionsRDF for now
+    addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
+    //addPropertiesRDF(artifactBuilder, artifactClassInfo, vf);
+    addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
     printGraphToStringAndModelToString(artifactBuilder.build(), iri);
 
     Model artifactModel = artifactBuilder.build();
@@ -656,7 +656,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the actions which are provided by the @Action annotation to the rdfBuilder
    */
-  private void addActionRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
+  private void addActionsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
     LOGGER.info("IRI = " + iri);
     IRI root = vf.createIRI(iri);
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
@@ -702,7 +702,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the events which are annotated with @Event to rdfBuilder
    */
-  private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  private void addEventsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, String iri) {
     // TODO: add descriptions
     MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     for (MethodInfo event: eventMethods) {
@@ -724,7 +724,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
    * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder and adds the value of currentTarget
    */
-  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
+  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, Object currentTarget) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
       ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
@@ -746,7 +746,7 @@ public class TemplateVerticle extends AbstractVerticle {
   /**
   * Adds the observable properties which are annotated with @ObservableProperty to the rdfBuilder
   */
-  private void addPropertyRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
+  private void addPropertiesRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf) {
     FieldInfoList propertyList = artifactClassInfo.getDeclaredFieldInfo().filter(new ObservablePropertyFilter());
     for (FieldInfo property : propertyList) {
       ModelBuilder propertyBuilder = createObservablePropertyModelBuilder(property, vf);
