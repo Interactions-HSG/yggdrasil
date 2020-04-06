@@ -265,7 +265,10 @@ public class TemplateVerticle extends AbstractVerticle {
 
   private void handleInstantiateTemplate(org.apache.commons.rdf.api.IRI requestIRI, EventBusMessage request, Message<String> message) {
     Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
+    LOGGER.info(request);
+    LOGGER.info(requestIRI);
     String requestArtifactString = requestIRI.getIRIString().replaceAll("/templates", "");
+    LOGGER.info(requestArtifactString);
     String classIri = "";
     Set<Triple> additionalTriples = new HashSet<>();
 
@@ -274,11 +277,17 @@ public class TemplateVerticle extends AbstractVerticle {
       replyBadRequest(message);
     } else {
       Optional<String> payload = request.getPayload();
+      try{
+      LOGGER.info(payload.get());
+      } catch (Exception e) {
+        LOGGER.error("failed to get payload");
+      }
 
       Gson gson = new Gson();
       JsonElement jelem = gson.fromJson(payload.get(), JsonElement.class);
       JsonObject jobj = jelem.getAsJsonObject();
       classIri = jobj.get("artifactClass").getAsString();
+      LOGGER.info(classIri);
       if (jobj.get("additionalTriples") != null ) {
         JsonArray additionsRdf = jobj.get("additionalTriples").getAsJsonArray();
         additionalTriples = parseAdditionalTriples(additionsRdf, classIri);
@@ -482,7 +491,7 @@ public class TemplateVerticle extends AbstractVerticle {
    */
   private void addPrefixesAsNamespace(ModelBuilder rdfBuilder, AnnotationParameterValueList parameters) {
     if (!parameters.isEmpty()) {
-      LOGGER.info(String.format("parsing prefixes from template, found %d", parameters.size()));
+      //LOGGER.info(String.format("parsing prefixes from template, found %d", parameters.size()));
       String [] prefixes = (String[]) parameters.get("prefixes");
       Map<String, String> prefixMapping = parseDelimitedStringsToMap("\\|", prefixes);
       for (Map.Entry<String, String> entry : prefixMapping.entrySet()) {
@@ -499,7 +508,7 @@ public class TemplateVerticle extends AbstractVerticle {
     AnnotationInfo additionsInfo = (AnnotationInfo) parameters.get("additions");
     AnnotationParameterValueList additionsList = additionsInfo.getParameterValues();
     if (!additionsList.isEmpty()) {
-      LOGGER.info(String.format("parsing additions from template, found %d", additionsList.size()));
+      //LOGGER.info(String.format("parsing additions from template, found %d", additionsList.size()));
       // TODO: simplify
       String[] predicatesList;
       String[] objectsList;
@@ -522,7 +531,11 @@ public class TemplateVerticle extends AbstractVerticle {
       for (int i = 0; i< predicatesList.length; i++) {
         String predicate = predicatesList[i];
         String object = objectsList[i];
-        rdfBuilder.add(predicate, object);
+        if (predicate.equals("a")){
+          rdfBuilder.add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, object);
+        } else {
+          rdfBuilder.add(predicate, object);
+        }
       }
     }
   }
@@ -561,11 +574,11 @@ public class TemplateVerticle extends AbstractVerticle {
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("td", "http://www.w3.org/ns/td#");
     for (String type : typeParam) {
-      rdfBuilder.subject(iri).add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), type);
+      rdfBuilder.subject(iri).add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, type);
     }
     rdfBuilder
       .subject(iri)
-      .add("eve:a", "eve:ArtifactTemplate")
+      .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, "eve:ArtifactTemplate")
       .add("td:name", artifactNameParam);
   }
 
@@ -607,7 +620,7 @@ public class TemplateVerticle extends AbstractVerticle {
     addActionsRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addPropertiesRDF(artifactBuilder, artifactClassInfo, vf, iri);
     addEventsRDF(artifactBuilder, artifactClassInfo, vf, iri);
-    printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
+    //printGraphToStringAndModelToString(artifactBuilder.build(), iri.toString());
 
     Model artifactModel = artifactBuilder.build();
     return rdfImpl.asGraph(artifactModel);
@@ -661,7 +674,7 @@ public class TemplateVerticle extends AbstractVerticle {
   private void addActionsRDF(ModelBuilder rdfBuilder, ClassInfo artifactClassInfo, ValueFactory vf, IRI root) {
     MethodInfoList actionMethods = artifactClassInfo.getMethodInfo().filter(new ActionMethodFilter());
     for (MethodInfo action: actionMethods) {
-      AnnotationInfo annotationInfo = action.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Action");
+      AnnotationInfo annotationInfo = action.getAnnotationInfo().filter(new ActionAnnotationFilter()).get(0);
       AnnotationParameterValueList actionParameters = annotationInfo.getParameterValues();
       String actionNameParam = getParam(annotationInfo, "name", action.getName());
       String path = getParam(annotationInfo, "path", "/" + actionNameParam);
@@ -675,12 +688,16 @@ public class TemplateVerticle extends AbstractVerticle {
       .subject(root)
         .add("td:interaction", actionNode)
         .subject(actionNode)
-          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Action")
+          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, "td:Action")
           .add("td:name", actionNameParam)
           .add("td:form", formNode)
-          .add("td:inputSchema", inputSchemaNode)
+          .add("td:inputSchema", inputSchemaNode);
+
+      addAdditions(rdfBuilder, actionParameters);
+
+      rdfBuilder
           .subject(formNode)
-            .add("htv:methodName", requestMethod)
+            .add("http:methodName", requestMethod)
             .add("eve:path", path )
             .add("td:mediaType", "application/json")
             .add("td:rel", "invokeAction")
@@ -688,7 +705,7 @@ public class TemplateVerticle extends AbstractVerticle {
             .add("td:schemaType", "td:Object");
 
       String[] inputInfos = (String[]) actionParameters.get("inputs");
-      LOGGER.info(String.format("found %d input infos", inputInfos.length));
+      //LOGGER.info(String.format("found %d input infos", inputInfos.length));
       Map<String, String> inputTypeMapping = parseDelimitedStringsToMap("\\|", inputInfos);
       for (MethodParameterInfo parameter : action.getParameterInfo()) {
         String inputName = parameter.getName();
@@ -715,7 +732,7 @@ public class TemplateVerticle extends AbstractVerticle {
       rdfBuilder.subject(root)
         .add("td:events", eventNode)
         .subject(eventNode)
-          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE.stringValue(), "td:Event")
+          .add(org.eclipse.rdf4j.model.vocabulary.RDF.TYPE, "td:Event")
           .add("td:name", eventName)
           .add("eve:path", path);
     }

@@ -20,12 +20,12 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 )
 public class PhantomxRobotArm {
 
-  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/wrist/rotation", inputs={"value|td:Number"})
+  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/wrist/rotation", inputs={"value|td:Number"}, additions= @RdfAddition(predicates={"a"}, objects={"ex:Base"}))
   public void rotate(double value) {
 
   }
 
-  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/gripper", inputs={"value|td:Number"})
+  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/gripper", inputs={"value|td:Number"}, additions= @RdfAddition(predicates={"a"}, objects={"ex:Gripper"}))
   public void gripper(double value){
 
   }
