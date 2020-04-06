@@ -697,8 +697,8 @@ public class TemplateVerticle extends AbstractVerticle {
 
       rdfBuilder
           .subject(formNode)
-            .add("http:methodName", requestMethod)
-            .add("eve:path", path )
+            .add("htv:methodName", requestMethod)
+            .add("td:href", path )
             .add("td:mediaType", "application/json")
             .add("td:rel", "invokeAction")
           .subject(inputSchemaNode)
