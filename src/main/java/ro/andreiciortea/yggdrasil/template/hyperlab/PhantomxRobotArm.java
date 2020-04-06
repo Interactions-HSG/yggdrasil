@@ -12,7 +12,6 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
             "td|http://www.w3.org/ns/td#",
             "xsd|http://www.w3.org/2001/XMLSchema#",
             "iot|http://iotschema.org/",
-            "http|http://iotschema.org/protocol/http",
             "eve|http://w3id.org/eve#",
             "ex|http://example.com/"
           },
