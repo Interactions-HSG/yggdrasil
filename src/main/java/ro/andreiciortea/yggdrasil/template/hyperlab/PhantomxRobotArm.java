@@ -15,105 +15,14 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
             "http|http://iotschema.org/protocol/http",
             "eve|http://w3id.org/eve#",
             "ex|http://example.com/"
-          }
+          },
+          additions = @RdfAddition(predicates ={"td:name", "td:base"}, objects = {"Robot3", "http://192.168.2.50/"})
 )
 public class PhantomxRobotArm {
 
-  @ObservableProperty
-  public String commonIdExt = "";
-
-  @ObservableProperty
-  public String conditionExt = "";
-
-  @ObservableProperty
-  public String conditionIdExt = "";
-
-  @ObservableProperty
-  public double humidityExt = 0;
-
-  @ObservableProperty
-  public String lastUpdateExt = "";
-
-  @ObservableProperty
-  public String observationTimeExt = "";
-
-  @ObservableProperty
-  public double pressureExt = 0;
-
-  @ObservableProperty
-  public String pressureTrendExt = "";
-
-  @ObservableProperty
-  public double rainExt = 0;
-
-  @ObservableProperty
-  public double snowExt = 0;
-
-  @ObservableProperty
-  public double tempFeelExt = 0;
-
-  @ObservableProperty
-  public double temperatureExt = 0;
-
-  @ObservableProperty
-  public String visibilityExt = "";
-
-  @ObservableProperty
-  public String windDirectionExt = "";
-
-  @ObservableProperty
-  public double windSpeedExt = 0;
-
-  @Action(requestMethod = "PUT", path = "/commonIdExt", inputs={"commonIdExt|www.test.type"})
-  public String setCommonIdExt(String commonIdExt) {
-    this.commonIdExt = commonIdExt;
-    return this.commonIdExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/conditionExt")
-  public String setConditionExt(String conditionExt) {
-    this.conditionExt = conditionExt;
-    return this.conditionExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/conditionIdExt")
-  public String setConditionIdExt(String conditionIdExt) {
-    this.conditionIdExt = conditionIdExt;
-    return this.conditionIdExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/humidityExt")
-  public double setHumidityExt(double humidityExt) {
-    this.humidityExt = humidityExt;
-    return this.humidityExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/lastUpdateExt")
-  public String setLastUpdateExt(String lastUpdateExt) {
-    this.lastUpdateExt = lastUpdateExt;
-    return this.lastUpdateExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/observationTimeExt")
-  public String setObservationTimeExt(String observationTimeExt) {
-    this.observationTimeExt = observationTimeExt;
-    return this.observationTimeExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/pressureExt")
-  public double setPressureExt(double pressureExt) {
-    this.pressureExt = pressureExt;
-    return this.pressureExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/pressureTrendExt")
-  public String setPressureTrendExt(String pressureTrendExt) {
-    this.pressureTrendExt = pressureTrendExt;
-    return this.pressureTrendExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/rainExt")
-  public double setRainExt(double rainExt) {
+// TODO: support full IRI vs. forward request to robot
+  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/wrist/rotation")
+  public void rotate(double rainExt) {
     this.rainExt = rainExt;
     return this.rainExt;
   }
