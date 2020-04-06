@@ -20,46 +20,13 @@ import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 )
 public class PhantomxRobotArm {
 
-// TODO: support full IRI vs. forward request to robot
-  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/wrist/rotation")
-  public void rotate(double rainExt) {
-    this.rainExt = rainExt;
-    return this.rainExt;
+  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/wrist/rotation", inputs={"value|td:Number"})
+  public void rotate(double value) {
+
   }
 
-  @Action(requestMethod = "PUT", path = "/snowExt")
-  public double setSnowExt(double snowExt) {
-    this.snowExt = snowExt;
-    return this.snowExt;
-  }
+  @Action(requestMethod = "PUT", path = "https://api.interactions.ics.unisg.ch/leubot/gripper", inputs={"value|td:Number"})
+  public void gripper(double value){
 
-  @Action(requestMethod = "PUT", path = "/tempFeelExt")
-  public double setTempFeelExt(double tempFeelExt) {
-    this.tempFeelExt = tempFeelExt;
-    return this.tempFeelExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/temperatureExt")
-  public double setTemperatureExt(double temperatureExt) {
-    this.temperatureExt = temperatureExt;
-    return this.temperatureExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/visibilityExt")
-  public String setVisibilityExt(String visibilityExt) {
-    this.visibilityExt = visibilityExt;
-    return this.visibilityExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/windDirectionExt")
-  public String setWindDirectionExt(String windDirectionExt) {
-    this.windDirectionExt = windDirectionExt;
-    return this.windDirectionExt;
-  }
-
-  @Action(requestMethod = "PUT", path = "/windSpeedExt")
-  public double setWindSpeedExt(double windSpeedExt) {
-    this.windSpeedExt = windSpeedExt;
-    return this.windSpeedExt;
   }
 }

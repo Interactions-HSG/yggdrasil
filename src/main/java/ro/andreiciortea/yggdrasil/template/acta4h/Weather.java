@@ -56,7 +56,7 @@ public class Weather {
   @ObservableProperty
   public double windSpeedExt = 0;
 
-  @Action(requestMethod = "PUT", path = "/commonIdExt", prefixes = {"xsd|http://www.w3.org/2001/XMLSchema#"}, inputs={"commonIdExt|xsd:string"})
+  @Action(requestMethod = "PUT", path = "/commonIdExt", inputs={"commonIdExt|xsd:string"})
   public String setCommonIdExt(String commonIdExt) {
     this.commonIdExt = commonIdExt;
     return this.commonIdExt;
