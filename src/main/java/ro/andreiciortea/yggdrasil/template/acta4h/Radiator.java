@@ -7,7 +7,7 @@ import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
-@Artifact(types = { "http://example.org/#Radiator" }, additions =
+@Artifact(types = { "http://example.org/#Radiator" }, prefixes = {"xsd|http://www.w3.org/2001/XMLSchema#"}, additions =
   @RdfAddition(predicates ={"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}, objects = {"td:Thing"})
 )
 public class Radiator {
@@ -39,55 +39,55 @@ public class Radiator {
   @ObservableProperty
   public double temperature = 0;
 
-  @Action(requestMethod = "PUT", path = "/command")
+  @Action(requestMethod = "PUT", path = "/command", inputs={"command|xsd:string"})
   public String setCommand(String command) {
     this.command = command;
     return this.command;
   }
 
-  @Action(requestMethod = "PUT", path = "/instruction")
+  @Action(requestMethod = "PUT", path = "/instruction", inputs={"instruction|xsd:string"})
   public String setInstruction(String instruction) {
     this.instruction = instruction;
     return this.instruction;
   }
 
-  @Action(requestMethod = "PUT", path = "/effectiveInstruction")
+  @Action(requestMethod = "PUT", path = "/effectiveInstruction", inputs={"effectiveInstruction|xsd:string"})
   public String setEffectiveInstruction(String effectiveInstruction) {
     this.effectiveInstruction = effectiveInstruction;
     return this.effectiveInstruction;
   }
 
-  @Action(requestMethod = "PUT", path = "/instructionChange")
+  @Action(requestMethod = "PUT", path = "/instructionChange", inputs={"instructionChange|xsd:string"})
   public String setInstructionChange(String instructionChange) {
     this.instructionChange = instructionChange;
     return this.instructionChange;
   }
 
-  @Action(requestMethod = "PUT", path = "/window")
+  @Action(requestMethod = "PUT", path = "/window", inputs={"window|xsd:string"})
   public String setWindwow(String window) {
     this.window = window;
     return this.window;
   }
 
-  @Action(requestMethod = "PUT", path = "/baseMode")
+  @Action(requestMethod = "PUT", path = "/baseMode", inputs={"basMode|xsd:string"})
   public String setBaseMode(String baseMode) {
     this.baseMode = baseMode;
     return this.baseMode;
   }
 
-  @Action(requestMethod = "PUT", path = "/effectiveMode")
+  @Action(requestMethod = "PUT", path = "/effectiveMode", inputs={"effectiveMode|xsd:string"})
   public String setEffectiveMode(String effectiveMode) {
     this.effectiveMode = effectiveMode;
     return this.effectiveMode;
   }
 
-  @Action(requestMethod = "PUT", path = "/presence")
+  @Action(requestMethod = "PUT", path = "/presence", inputs={"presence|xsd:string"})
   public String setPresence(String presence) {
     this.presence = presence;
     return this.presence;
   }
 
-  @Action(requestMethod = "PUT", path = "/temperature")
+  @Action(requestMethod = "PUT", path = "/temperature", inputs={"temperature|xsd:double"})
   public double setTemperature(double temperature) {
     this.temperature = temperature;
     return this.temperature;
