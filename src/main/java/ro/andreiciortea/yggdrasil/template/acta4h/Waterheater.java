@@ -7,7 +7,7 @@ import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
-@Artifact(types = { "http://example.org/#Waterheater" }, additions =
+@Artifact(types = { "http://example.org/#Waterheater" }, prefixes = {"xsd|http://www.w3.org/2001/XMLSchema#"}, additions =
   @RdfAddition(predicates ={"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}, objects = {"td:Thing"})
 )
 public class Waterheater {
@@ -36,31 +36,31 @@ public class Waterheater {
     return onStatus;
   }
 
-  @Action(requestMethod = "PUT", path = "/energy")
+  @Action(requestMethod = "PUT", path = "/energy", inputs={"energy|xsd:double"})
   public double setEnergy(double energy) {
     this.energy = energy;
     return energy;
   }
 
-  @Action(requestMethod = "PUT", path = "/totalEnergy")
+  @Action(requestMethod = "PUT", path = "/totalEnergy", inputs={"totalEnergy|xsd:double"})
   public double setTotalEnergy(double totalEnergy) {
     this.totalEnergy = totalEnergy;
     return totalEnergy;
   }
 
-  @Action(requestMethod = "PUT", path = "/elIntensity")
+  @Action(requestMethod = "PUT", path = "/elIntensity", inputs={"elIntensity|xsd:double"})
   public double setElIntensity(double elIntensity) {
     this.elIntensity = elIntensity;
     return elIntensity;
   }
 
-  @Action(requestMethod = "PUT", path = "/power")
+  @Action(requestMethod = "PUT", path = "/power", inputs={"power|xsd:double"})
   public double setPower(double power) {
     this.power = power;
     return power;
   }
 
-  @Action(requestMethod = "PUT", path = "/voltage")
+  @Action(requestMethod = "PUT", path = "/voltage", inputs={"voltage|xsd:double"})
   public double setVoltage(double voltage) {
     this.voltage = voltage;
     return voltage;

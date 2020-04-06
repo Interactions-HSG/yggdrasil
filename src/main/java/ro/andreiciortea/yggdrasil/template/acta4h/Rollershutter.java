@@ -7,7 +7,7 @@ import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
-@Artifact(types = { "http://example.org/#Rollershutter" }, additions =
+@Artifact(types = { "http://example.org/#Rollershutter" }, prefixes = {"xsd|http://www.w3.org/2001/XMLSchema#"}, additions =
   @RdfAddition(predicates ={"http://www.w3.org/1999/02/22-rdf-syntax-ns#type"}, objects = {"td:Thing"})
 )
 public class Rollershutter {
@@ -15,7 +15,7 @@ public class Rollershutter {
   @ObservableProperty
   public double percentage = 0.0;
 
-  @Action(requestMethod = "PUT", path = "/percentage")
+  @Action(requestMethod = "PUT", path = "/percentage", inputs={"percentage|xsd:double"})
   public double setPercentage(double percentage) {
     this.percentage = percentage;
     return this.percentage;
