@@ -13,6 +13,8 @@ import java.lang.annotation.Target;
  * @param path path appended to the uri of the artifact instance to call the DELETE method
  * @param name name of the action put as name in the generated turtle/json+ld description of the artifact.
  * @param type type of the action put as type triple in the generated turtle/json+ld description of the artifact. (E.g. iot:switchOn)
+ * @param inputs input parameters along with their types, provided as strings, where each String is of the form "<input_parameter_name>|<type>". e.g. {"param1|http://www.w3.org/2001/XMLSchema#double"}
+ * @param output output parameter name and type, see the Output annotation for more details
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
