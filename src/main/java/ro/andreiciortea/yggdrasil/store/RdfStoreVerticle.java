@@ -68,6 +68,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
         case DELETE_ENTITY:
           handleDeleteEntity(requestIRI, message);
           break;
+        default:
+        	break;
       }
     }
     catch (IOException e) {

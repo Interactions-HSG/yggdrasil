@@ -1,7 +1,5 @@
 package ro.andreiciortea.yggdrasil.template.acta4h;
 
-import io.vertx.core.http.HttpMethod;
-
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;

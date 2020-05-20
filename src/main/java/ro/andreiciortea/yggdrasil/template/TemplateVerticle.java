@@ -1,10 +1,52 @@
 package ro.andreiciortea.yggdrasil.template;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.apache.commons.rdf.api.BlankNode;
+import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.Triple;
+import org.apache.commons.rdf.rdf4j.RDF4J;
+import org.apache.commons.rdf.rdf4j.RDF4JIRI;
+import org.apache.commons.rdf.rdf4j.RDF4JLiteral;
+import org.eclipse.rdf4j.model.BNode;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import io.github.classgraph.*;
+
+import io.github.classgraph.AnnotationInfo;
+import io.github.classgraph.AnnotationInfoList;
+import io.github.classgraph.AnnotationParameterValueList;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.FieldInfo;
+import io.github.classgraph.FieldInfoList;
+import io.github.classgraph.MethodInfo;
+import io.github.classgraph.MethodInfoList;
+import io.github.classgraph.MethodParameterInfo;
+import io.github.classgraph.ScanResult;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -12,16 +54,6 @@ import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.commons.rdf.api.BlankNode;
-import org.apache.commons.rdf.api.RDFSyntax;
-import org.apache.commons.rdf.api.Triple;
-import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.apache.commons.rdf.rdf4j.RDF4JIRI;
-import org.apache.commons.rdf.rdf4j.RDF4JLiteral;
-import org.eclipse.rdf4j.model.*;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.eclipse.rdf4j.rio.*;
 import ro.andreiciortea.yggdrasil.core.EventBusMessage;
 import ro.andreiciortea.yggdrasil.core.EventBusRegistry;
 import ro.andreiciortea.yggdrasil.http.HttpTemplateHandler;
@@ -29,11 +61,6 @@ import ro.andreiciortea.yggdrasil.store.RdfStore;
 import ro.andreiciortea.yggdrasil.store.impl.RdfStoreFactory;
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.reflect.*;
-import java.util.*;
 
 /*
  * Handles artifact templates which are either present in form of a Java class in the current folder (ro.andreiciortea.yggdrasil.template)
@@ -197,7 +224,7 @@ public class TemplateVerticle extends AbstractVerticle {
             Parameter[] params = method.getParameters();
             for (int i = 0; i < params.length; i++) {
               Parameter param = params[i];
-              Class paramType = param.getType();
+              Class<?> paramType = param.getType();
               JsonElement paramJson = jobj.get(param.getName());
 
               // TODO: convert into switch statement?
@@ -472,7 +499,7 @@ public class TemplateVerticle extends AbstractVerticle {
   }
 
   private org.apache.commons.rdf.api.IRI generateTemplateClassIRI(ClassInfo artifactClassInfo) {
-    ValueFactory vf = SimpleValueFactory.getInstance();
+//    ValueFactory vf = SimpleValueFactory.getInstance();
     String localPrefix = "http://localhost:8080/artifacts/templates/";
 
     // extract relevant parts of the class
@@ -553,6 +580,7 @@ public class TemplateVerticle extends AbstractVerticle {
    * For debug purposes: Prints the model as well as the graph representation
    * of the given model
    */
+  @SuppressWarnings("unused")
   private void printGraphToStringAndModelToString(Model m, String name) {
     LOGGER.info("\nFirst part of RDF representation of " + name);
     LOGGER.info(rdfModelToString(m));
@@ -723,7 +751,7 @@ public class TemplateVerticle extends AbstractVerticle {
     // TODO: add descriptions
     MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     for (MethodInfo event: eventMethods) {
-      ModelBuilder eventBuilder = new ModelBuilder();
+//      ModelBuilder eventBuilder = new ModelBuilder();
       AnnotationInfo annotation = event.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Event");
 
       String eventName = getParam(annotation, "name", event.getName());

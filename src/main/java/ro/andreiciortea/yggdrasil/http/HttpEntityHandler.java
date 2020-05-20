@@ -160,9 +160,9 @@ public class HttpEntityHandler {
     }
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
-    return handleStoreReply(routingContext, HttpStatus.SC_OK);
-  }
+//  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
+//    return handleStoreReply(routingContext, HttpStatus.SC_OK);
+//  }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext, int succeededStatusCode) {
     return handleStoreReply(routingContext, succeededStatusCode, new HashMap<String,List<String>>());

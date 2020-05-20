@@ -1,10 +1,7 @@
 package ro.andreiciortea.yggdrasil.template.hyperlab;
 
-import io.vertx.core.http.HttpMethod;
-
 import ro.andreiciortea.yggdrasil.template.annotation.Action;
 import ro.andreiciortea.yggdrasil.template.annotation.Artifact;
-import ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty;
 import ro.andreiciortea.yggdrasil.template.annotation.RdfAddition;
 
 @Artifact(types = { "td:Thing", "eve:Artifact" },
