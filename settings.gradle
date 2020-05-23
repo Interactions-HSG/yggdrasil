@@ -4,3 +4,7 @@ if (!JavaVersion.current().java8Compatible) {
                                     |  You are using something else,
                                     |  Refresh. Try again.'''.stripMargin())
 }
+
+rootProject.name = 'yggdrasil'
+
+includeBuild('cartago')

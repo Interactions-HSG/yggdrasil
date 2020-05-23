@@ -1,0 +1,3 @@
+[submodule "cartago"]
+	path = cartago
+	url = git@github.com:CArtAgO-lang/cartago.git

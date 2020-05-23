@@ -8,6 +8,8 @@ defaultTasks 'shadowJar'
 
 repositories {
   jcenter()
+
+  maven { url "http://jacamo.sourceforge.net/maven2" }
 }
 
 group = "org.hyperagents"
@@ -27,6 +29,7 @@ dependencies {
   compile "io.vertx:vertx-web-api-contract:$vertxVersion"
   compile "io.vertx:vertx-web-client:$vertxVersion"
   compile "io.github.classgraph:classgraph:4.4.12"
+  compile name: "cartago", version: "2.5-SNAPSHOT"
 
   // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
   compile group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
