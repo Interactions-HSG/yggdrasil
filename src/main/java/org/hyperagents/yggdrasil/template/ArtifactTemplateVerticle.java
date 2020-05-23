@@ -63,12 +63,12 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 /*
- * Handles artifact templates which are either present in form of a Java class in the current folder (ro.andreiciortea.yggdrasil.template)
+ * Handles artifact templates which are either present in form of a Java class in the current folder (org.hyperagents.yggdrasil.template)
  * or provided at runtime in RDF representation. Templates can be instantiated
  *
  *
  */
-public class TemplateVerticle extends AbstractVerticle {
+public class ArtifactTemplateVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
 
   private RdfStore store;
@@ -477,9 +477,9 @@ public class TemplateVerticle extends AbstractVerticle {
     Yggdrasil becomes a library.
     To scan for applicable templates, ClassGraph is being used and .overrideClassPath(...) might be helpful to achieve the
     configurable template path [https://github.com/classgraph/classgraph/wiki/API:-ClassGraph-Constructor].*/
-    String pkg = "ro.andreiciortea.yggdrasil.template";
-    String artifactAnnotation = "ro.andreiciortea.yggdrasil.template.annotation.Artifact";
-    LOGGER.info("scanning for templates...");
+    String pkg = "org.hyperagents.yggdrasil.template";
+    String artifactAnnotation = "org.hyperagents.yggdrasil.template.annotation.Artifact";
+    LOGGER.info("scanning for templates in pkg: " + pkg);
     try (ScanResult scanResult =
            new ClassGraph()
              .enableAllInfo()             // Scan classes, methods, fields, annotations
@@ -497,7 +497,7 @@ public class TemplateVerticle extends AbstractVerticle {
       }
     }
   }
-
+      
   private org.apache.commons.rdf.api.IRI generateTemplateClassIRI(ClassInfo artifactClassInfo) {
 //    ValueFactory vf = SimpleValueFactory.getInstance();
     String localPrefix = "http://localhost:8080/artifacts/templates/";
@@ -752,7 +752,7 @@ public class TemplateVerticle extends AbstractVerticle {
     MethodInfoList eventMethods = artifactClassInfo.getMethodInfo().filter(new EventMethodFilter());
     for (MethodInfo event: eventMethods) {
 //      ModelBuilder eventBuilder = new ModelBuilder();
-      AnnotationInfo annotation = event.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.Event");
+      AnnotationInfo annotation = event.getAnnotationInfo().get("org.hyperagents.yggdrasil.template.annotation.Event");
 
       String eventName = getParam(annotation, "name", event.getName());
       String path = getParam(annotation, "path", "/events/" + eventName);
@@ -803,7 +803,7 @@ public class TemplateVerticle extends AbstractVerticle {
   private BNode addObservableProperty(ModelBuilder rdfBuilder, IRI root, FieldInfo property, ValueFactory vf) {
     // TODO map Java classes to xml type
     String propertyType = property.getTypeDescriptor().toString();
-    AnnotationInfo annotation = property.getAnnotationInfo().get("ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty");
+    AnnotationInfo annotation = property.getAnnotationInfo().get("org.hyperagents.yggdrasil.template.annotation.ObservableProperty");
 
     String propertyName = (String) annotation.getParameterValues().get("name");
     if (propertyName.equals("")) {
@@ -864,7 +864,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.Artifact";
+      String annotationName = "org.hyperagents.yggdrasil.template.annotation.Artifact";
       return annotationInfo.getName().equals(annotationName);
     }
   }
@@ -881,7 +881,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.Event";
+      String annotationName = "org.hyperagents.yggdrasil.template.annotation.Event";
       return annotationInfo.getName().equals(annotationName);
     }
   }
@@ -897,7 +897,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.ObservableProperty";
+      String annotationName = "org.hyperagents.yggdrasil.template.annotation.ObservableProperty";
       return annotationInfo.getName().equals(annotationName);
     }
   }
@@ -913,7 +913,7 @@ public class TemplateVerticle extends AbstractVerticle {
 
     @Override
     public boolean accept(AnnotationInfo annotationInfo) {
-      String annotationName = "ro.andreiciortea.yggdrasil.template.annotation.Action";
+      String annotationName = "org.hyperagents.yggdrasil.template.annotation.Action";
       return annotationInfo.getName().equals(annotationName);
     }
   }

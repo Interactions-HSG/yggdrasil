@@ -109,8 +109,9 @@ public class HttpTemplateHandler {
 
   public void handleGetClassDescription(RoutingContext routingContext) {
     String classIri = routingContext.request().absoluteURI();
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_TEMPLATE_DESCRIPTION)
-      .setHeader(EventBusMessage.Headers.CLASS_IRI, classIri);
+    EventBusMessage message = 
+        new EventBusMessage(EventBusMessage.MessageType.GET_TEMPLATE_DESCRIPTION)
+              .setHeader(EventBusMessage.Headers.CLASS_IRI, classIri);
 
     vertx.eventBus().send(EventBusRegistry.TEMPLATE_HANDLER_BUS_ADDRESS,
       message.toJson(), handleReply(routingContext, HttpStatus.SC_OK));

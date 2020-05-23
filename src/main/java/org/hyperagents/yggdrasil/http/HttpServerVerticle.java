@@ -1,6 +1,13 @@
 package org.hyperagents.yggdrasil.http;
 
+import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.core.EventBusMessage;
+import org.hyperagents.yggdrasil.core.EventBusMessage.Headers;
+import org.hyperagents.yggdrasil.core.EventBusMessage.MessageType;
+import org.hyperagents.yggdrasil.core.EventBusRegistry;
+
 import com.google.common.net.HttpHeaders;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
@@ -8,68 +15,48 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.core.http.HttpMethod;
 
 
-import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
-import org.hyperagents.yggdrasil.core.EventBusMessage.Headers;
-import org.hyperagents.yggdrasil.core.EventBusMessage.MessageType;
-
-import java.util.HashSet;
-import java.util.Set;
-
-/*
- * The main entrypoint of Yggdrasil. All requests arrive here and are forwarded to the corresponding handler.
+/** 
+ * This verticle exposes an HTTP/1.1 interface for Yggdrasil. All requests are forwarded to a 
+ * corresponding handler.
  */
 public class HttpServerVerticle extends AbstractVerticle {
 
   public static final String DEFAULT_HOST = "0.0.0.0";
   public static final int DEFAULT_PORT = 8080;
+  
+  /* Keys used when parsing a JSON config file to extract HTTP settings */
+  public static final String CONFIG_HTTP = "http-config";
+  public static final String CONFIG_HTTP_PORT = "port";
+  public static final String CONFIG_HTTP_HOST = "host";
 
+  
   @Override
   public void start() {
     HttpServer server = vertx.createHttpServer();
 
     String host = DEFAULT_HOST;
     int port = DEFAULT_PORT;
-    JsonObject httpConfig = config().getJsonObject("http-config");
+    JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
 
     if (httpConfig != null) {
-      port = httpConfig.getInteger("port", DEFAULT_PORT);
-      host = httpConfig.getString("host", DEFAULT_HOST);
+      port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
+      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
     }
 
     Router router = createRouter();
     server.requestHandler(router::accept).listen(port, host);
   }
 
+  /**
+   * The HTTP API is defined here when creating the router.
+   */
   private Router createRouter() {
     Router router = Router.router(vertx);
-
-    // to avoid CORS issues of GUI - source: https://github.com/vert-x3/vertx-examples/blob/master/web-examples/src/main/java/io/vertx/example/web/cors/Server.java#L27
-    Set<String> allowedHeaders = new HashSet<>();
-    allowedHeaders.add("x-requested-with");
-    allowedHeaders.add("Access-Control-Allow-Origin");
-    allowedHeaders.add("origin");
-    allowedHeaders.add("Content-Type");
-    allowedHeaders.add("accept");
-    allowedHeaders.add("X-PINGARUNER");
-    allowedHeaders.add("slug");
-    Set<HttpMethod> allowedMethods = new HashSet<>();
-    allowedMethods.add(HttpMethod.GET);
-    allowedMethods.add(HttpMethod.POST);
-    allowedMethods.add(HttpMethod.OPTIONS);
-    allowedMethods.add(HttpMethod.DELETE);
-    allowedMethods.add(HttpMethod.PATCH);
-    allowedMethods.add(HttpMethod.PUT);
-
-
-    router.route().handler(CorsHandler.create("*").allowedHeaders(allowedHeaders).allowedMethods(allowedMethods));
+    
     router.route().handler(BodyHandler.create());
-
+    
     router.get("/").handler((routingContext) -> {
       routingContext.response()
         .setStatusCode(HttpStatus.SC_OK)
@@ -105,15 +92,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route("/artifacts/:artid/*").handler(templateHandler::handleAction);
 
     //route artifact manual requests
-
     router.get("/manuals/:wkspid").handler(handler::handleGetEntity);
     router.post("/manuals/").handler(handler::handleCreateEntity);
     router.put("/manuals/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/manuals/:wkspid").handler(handler::handleDeleteEntity);
 
-
     router.post("/hub/").handler(handler::handleEntitySubscription);
-
 
     // TODO: the following feature is added just for demo purposes
     router.post("/events/").handler(routingContext -> {
@@ -125,12 +109,13 @@ public class HttpServerVerticle extends AbstractVerticle {
       EventBusMessage notification = new EventBusMessage(MessageType.ENTITY_CHANGED_NOTIFICATION)
                                             .setHeader(Headers.REQUEST_IRI, artifactIRI)
                                             .setPayload(routingContext.getBodyAsString());
-
+      
       vertx.eventBus()
         .publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, notification.toJson());
 
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     });
+    
     return router;
   }
 }
