@@ -38,7 +38,6 @@ public class HttpEntityHandler {
     }
   }
 
-
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     String contentType = routingContext.request().getHeader("Content-Type");
@@ -66,14 +65,50 @@ public class HttpEntityHandler {
     String contentType = routingContext.request().getHeader("Content-Type");
 
     String slug = routingContext.request().getHeader("Slug");
+    
+    String agentUri = routingContext.request().getHeader("X-Agent-WebID");
+    String artifactClass = routingContext.request().getHeader("X-Artifact-Class");
+    
+    if (artifactClass != null && !artifactClass.isEmpty()
+          && agentUri != null && !agentUri.isEmpty()) {
+      // The client wants to instantiate a known virtual artifact. 
+      // Send request to CArtAgO verticle to instantiate the artifact.
+      EventBusMessage cartagoRequest = new EventBusMessage(EventBusMessage.MessageType.INSTANTIATE_ARTIFACT)
+          .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
+          .setHeader(EventBusMessage.Headers.ARTIFACT_CLASS, artifactClass)
+          // TODO: the entity IRI should be decided before performing the CArtAgO operation
+          .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
+          .setPayload(entityRepresentation);
 
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
-        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType)
+      vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoRequest.toJson(), response -> {
+        if (response.succeeded()) {
+          LOGGER.info("CArtAgO action successed");
+          
+          // If the CArtAgO artifact was created successfully, generate the Thing Description and store it
+          EventBusMessage storeRequest = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
+              .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
+              .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
+              .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType)
+              .setPayload(entityRepresentation);
+
+          vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, storeRequest.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
+        }
+      });
+    }
+  }
+  
+  public void handleAction(RoutingContext routingContext) {
+    String entityRepresentation = routingContext.getBodyAsString();
+    
+    String agentUri = routingContext.request().getHeader("X-Agent-WebID");
+    
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DO_ACTION)
+        .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
         .setPayload(entityRepresentation);
-
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
+    
+    vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, message.toJson());
+    
+    routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
   }
 
   public void handlePatchEntity(RoutingContext routingContext) {

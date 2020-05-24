@@ -64,7 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     });
 
     HttpEntityHandler handler = new HttpEntityHandler();
-    HttpTemplateHandler templateHandler = new HttpTemplateHandler();
+//    HttpTemplateHandler templateHandler = new HttpTemplateHandler();
 
     router.get("/environments/:envid").handler(handler::handleGetEntity);
     router.post("/environments/").handler(handler::handleCreateEntity);
@@ -76,20 +76,22 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
 
-    router.get("/artifacts/templates").handler(templateHandler::handleGetTemplates);
-    router.post("/artifacts/templates").handler(templateHandler::handleInstantiateTemp);
-    router.get("/artifacts/templates/:classId").handler(templateHandler::handleGetClassDescription);
+//    router.get("/artifacts/templates").handler(templateHandler::handleGetTemplates);
+//    router.post("/artifacts/templates").handler(templateHandler::handleInstantiateTemp);
+//    router.get("/artifacts/templates/:classId").handler(templateHandler::handleGetClassDescription);
 
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/artifacts/").handler(handler::handleCreateEntity);
     router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
-    // 1st try to delete standard artifact
     router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
+    router.route("/artifacts/:artid/*").consumes("application/json").handler(handler::handleAction);
+    
     // 2nd try to delete instantiated software artifact
-    router.delete("/artifacts/:artid").handler(templateHandler::handleDeleteInstance);
-    router.put("/artifacts/updateTriples/:artid").handler(templateHandler::handleUpdateTriples);
+//    router.delete("/artifacts/:artid").handler(templateHandler::handleDeleteInstance);
+//    router.put("/artifacts/updateTriples/:artid").handler(templateHandler::handleUpdateTriples);
     // invoke actions on software artifacts defined in the annotations of the corresponding template
-    router.route("/artifacts/:artid/*").handler(templateHandler::handleAction);
+//    router.route("/artifacts/:artid/*").handler(templateHandler::handleAction);
+//    router.route("/artifacts/:artid/*").consumes("application/json").handler(handler::handleAction);
 
     //route artifact manual requests
     router.get("/manuals/:wkspid").handler(handler::handleGetEntity);
