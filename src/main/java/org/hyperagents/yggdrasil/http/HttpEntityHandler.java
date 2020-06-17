@@ -1,28 +1,31 @@
 package org.hyperagents.yggdrasil.http;
 
-import com.google.gson.Gson;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.RoutingContext;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
-import org.hyperagents.yggdrasil.core.SubscriberRegistry;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HttpEntityHandler {
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.core.EventBusMessage;
+import org.hyperagents.yggdrasil.core.EventBusRegistry;
+import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.core.SubscriberRegistry;
 
+import com.google.gson.Gson;
+
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.RoutingContext;
+
+public class HttpEntityHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
   private Vertx vertx;
 
@@ -63,7 +66,7 @@ public class HttpEntityHandler {
     String entityIri = routingContext.request().absoluteURI();
     String entityRepresentation = routingContext.getBodyAsString();
     String contentType = routingContext.request().getHeader("Content-Type");
-
+    
     String slug = routingContext.request().getHeader("Slug");
     
     String agentUri = routingContext.request().getHeader("X-Agent-WebID");
@@ -82,14 +85,16 @@ public class HttpEntityHandler {
 
       vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoRequest.toJson(), response -> {
         if (response.succeeded()) {
-          LOGGER.info("CArtAgO action successed");
+          String artifactDescrption = (String) response.result().body();
+          
+          LOGGER.info("CArtAgO artifact created: " + artifactDescrption);
           
           // If the CArtAgO artifact was created successfully, generate the Thing Description and store it
           EventBusMessage storeRequest = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
               .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
               .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
               .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType)
-              .setPayload(entityRepresentation);
+              .setPayload(artifactDescrption);
 
           vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, storeRequest.toJson(), handleStoreReply(routingContext, HttpStatus.SC_CREATED));
         }
@@ -98,13 +103,18 @@ public class HttpEntityHandler {
   }
   
   public void handleAction(RoutingContext routingContext) {
-    String entityRepresentation = routingContext.getBodyAsString();
+    HttpServerRequest request = routingContext.request();
     
-    String agentUri = routingContext.request().getHeader("X-Agent-WebID");
+    String agentUri = request.getHeader("X-Agent-WebID");
+    
+    String artifactName = request.params().get("artid");
+    String actionName = HypermediaArtifactRegistry.getInstance().getActionName(request.rawMethod(), 
+        request.absoluteURI());
     
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DO_ACTION)
         .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
-        .setPayload(entityRepresentation);
+        .setPayload("{ \"artifactName\": \"" + artifactName + "\", \"action\": \"" + actionName 
+            + "\" }");
     
     vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, message.toJson());
     

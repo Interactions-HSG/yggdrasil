@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.http.HttpTemplateHandler;
@@ -89,8 +90,15 @@ public class CartagoVerticle extends AbstractVerticle {
       case INSTANTIATE_ARTIFACT:
         String artifactClass = request.getHeader(EventBusMessage.Headers.ARTIFACT_CLASS).get();
         String artifactName = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT).get();
+        
         instantiateArtifact(agentUri.get(), artifactClass, artifactName);
-        message.reply(HttpStatus.SC_OK);
+        
+        String artifactDescription = HypermediaArtifactRegistry.getInstance()
+            .getArtifactDescription(artifactName);
+        
+        LOGGER.info("TD: " + artifactDescription);
+        
+        message.reply(artifactDescription);
         break;
       case DO_ACTION:
         JsonObject payload = new JsonObject(request.getPayload().get());
@@ -112,7 +120,6 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
       agentContext.makeArtifact(artifactName, artifactClass);
-      
     } catch (CartagoException e) {
       e.printStackTrace();
     }

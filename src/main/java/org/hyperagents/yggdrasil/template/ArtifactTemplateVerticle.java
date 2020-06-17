@@ -64,7 +64,10 @@ import io.vertx.core.logging.LoggerFactory;
 
 /*
  * Handles artifact templates which are either present in form of a Java class in the current folder (org.hyperagents.yggdrasil.template)
- * or provided at runtime in RDF representation. Templates can be instantiated
+ * or provided at runtime in RDF representation. Templates can be instantiated.
+ * 
+ * More precisely, the templates (TDs) are generated using a generic IRI for each template. The instantiation will then create and store
+ * a new graph (TD) replacing the generic class IRI with an IRI for the new instance.
  *
  */
 public class ArtifactTemplateVerticle extends AbstractVerticle {
