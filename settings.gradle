@@ -8,3 +8,4 @@ if (!JavaVersion.current().java8Compatible) {
 rootProject.name = 'yggdrasil'
 
 includeBuild('cartago')
+includeBuild('wot-td-java')

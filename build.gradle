@@ -30,6 +30,7 @@ dependencies {
   compile "io.vertx:vertx-web-client:$vertxVersion"
   compile "io.github.classgraph:classgraph:4.4.12"
   compile name: "cartago", version: "2.5-SNAPSHOT"
+  compile name: "wot-td-java", version: "0.0.1"
 
   // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
   compile group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
