@@ -5,10 +5,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
-import org.hyperagents.yggdrasil.http.HttpTemplateHandler;
+import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 
 import com.google.gson.Gson;
 
@@ -25,10 +24,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-
 public class CartagoVerticle extends AbstractVerticle {
-  
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpTemplateHandler.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
   private Map<String, CartagoContext> agentContexts;
   
