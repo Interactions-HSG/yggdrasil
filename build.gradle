@@ -41,7 +41,7 @@ dependencies {
 
   compile 'org.apache.commons:commons-rdf-api:0.5.0'
   compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
-  compile 'com.google.code.gson:gson:2.8.5'
+  compile 'com.google.code.gson:gson:2.8.6'
 
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
