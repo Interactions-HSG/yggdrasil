@@ -47,7 +47,15 @@ public abstract class HypermediaArtifact extends Artifact {
       }
     }
     
-    String td = TDGraphWriter.write(tdBuilder.build());
+    String td = new TDGraphWriter(tdBuilder.build())
+        .setNamespace("td", "https://www.w3.org/2019/wot/td#")
+        .setNamespace("htv", "http://www.w3.org/2011/http#")
+        .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
+        .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
+        .setNamespace("dct", "http://purl.org/dc/terms/")
+        .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
+        .setNamespace("eve", "http://w3id.org/eve#")
+        .write();
     
     LOGGER.info("Written TD: " + td);
     
