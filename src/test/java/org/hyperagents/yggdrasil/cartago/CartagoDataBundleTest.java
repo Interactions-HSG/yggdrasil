@@ -10,7 +10,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
-public class CartagoDataBindingUtilsTest {
+public class CartagoDataBundleTest {
   
   @Test
   public void testDeserializeArrayOfPrimitives(TestContext tc) {
@@ -19,7 +19,7 @@ public class CartagoDataBindingUtilsTest {
         + "[ \"java.lang.String\", \"my_test\" ], "
         + "[ \"java.lang.Boolean\", \"true\" ] ]";
     
-    Object[] params = CartagoDataBindingUtils.fromJson(payload);
+    Object[] params = CartagoDataBundle.fromJson(payload);
     tc.assertEquals(4, params.length);
     
     tc.assertTrue(params[0] instanceof Integer);
@@ -39,7 +39,7 @@ public class CartagoDataBindingUtilsTest {
     String payload = "[ [ \"java.lang.Integer\", \"2\" ], "
         + "[ \"java.lang.Double\", \"2\" ] ]";
     
-    Object[] params = CartagoDataBindingUtils.fromJson(payload);
+    Object[] params = CartagoDataBundle.fromJson(payload);
     tc.assertEquals(2, params.length);
     
     tc.assertTrue(params[0] instanceof Integer);
@@ -54,7 +54,7 @@ public class CartagoDataBindingUtilsTest {
     String payload = "[ [ \"java.lang.Integer\", \"2\" ], "
         + "[ \"java.lang.Integer\", \"2\" ] ]";
     
-    Object[] params = CartagoDataBindingUtils.fromJson(payload);
+    Object[] params = CartagoDataBundle.fromJson(payload);
     tc.assertEquals(2, params.length);
     
     tc.assertTrue(params[0] instanceof Integer);
@@ -70,7 +70,7 @@ public class CartagoDataBindingUtilsTest {
         + "[\"java.util.List\", [[\"java.lang.Double\",\"1.5\"],[\"java.lang.Boolean\",\"true\"]]],"
         + "[\"java.lang.String\", \"bla\"] ]";
     
-    Object[] params = CartagoDataBindingUtils.fromJson(payload);
+    Object[] params = CartagoDataBundle.fromJson(payload);
     tc.assertEquals(3, params.length);
     
     tc.assertTrue(params[0] instanceof Integer);
@@ -93,7 +93,7 @@ public class CartagoDataBindingUtilsTest {
     String payload = "[[\"java.util.List\",[[\"java.util.List\",[[\"java.lang.Double\",\"2.5\"],"
         + "[\"java.lang.String\",\"bla\"]]]]]]";
     
-    Object[] level1 = CartagoDataBindingUtils.fromJson(payload);
+    Object[] level1 = CartagoDataBundle.fromJson(payload);
     tc.assertEquals(1, level1.length);
     tc.assertTrue(level1[0] instanceof Object[]);
     
@@ -123,7 +123,7 @@ public class CartagoDataBindingUtilsTest {
         + "[\"java.util.List\",[[\"java.lang.Double\",\"1.5\"],[\"java.lang.Boolean\",\"true\"]]],"
         + "[\"java.lang.String\",\"bla\"]]";
     
-    tc.assertEquals(expected, CartagoDataBindingUtils.toJson(level1)); 
+    tc.assertEquals(expected, CartagoDataBundle.toJson(level1)); 
   }
   
   @Test
@@ -141,6 +141,6 @@ public class CartagoDataBindingUtilsTest {
     String expected = "[[\"java.util.List\",[[\"java.util.List\",[[\"java.lang.Double\",\"2.5\"],"
         + "[\"java.lang.String\",\"bla\"]]]]]]";
     
-    tc.assertEquals(expected, CartagoDataBindingUtils.toJson(level1));
+    tc.assertEquals(expected, CartagoDataBundle.toJson(level1));
   }
 }

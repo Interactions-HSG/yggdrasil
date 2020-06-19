@@ -8,7 +8,14 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public final class CartagoDataBindingUtils {
+/**
+ * A class for serializing and deserializing CArtAgO datatypes to JSON. This is used for
+ * sending action parameters via the event bus.
+ * 
+ * @author Andrei Ciortea
+ *
+ */
+public final class CartagoDataBundle {
 
   public static String toJson(List<Object> params) {
     List<List<Object>> typedParams = objectListToTypedList(params);

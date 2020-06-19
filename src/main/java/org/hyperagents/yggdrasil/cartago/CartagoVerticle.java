@@ -25,6 +25,11 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 public class CartagoVerticle extends AbstractVerticle {
+  public static final String AGENT_ID = "headers.agentID";
+  public static final String ARTIFACT_CLASS = "headers.artifactClass";
+  public static final String ARTIFACT_NAME = "headers.artifactName";
+  public static final String ACTION_NAME = "headers.actionName";
+  
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
   private Map<String, CartagoContext> agentContexts;
@@ -47,20 +52,20 @@ public class CartagoVerticle extends AbstractVerticle {
   
   private void handleCartagoRequest(Message<String> message) {
     EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
-
-    Optional<String> agentUri = request.getHeader(EventBusMessage.Headers.AGENT_WEBID);
     
-    if (agentUri.isEmpty()) {
+    String agentUri = message.headers().get(AGENT_ID);
+    
+    if (agentUri == null) {
       message.fail(HttpStatus.SC_BAD_REQUEST, "Agent WebID is missing.");
       return;
     }
     
     switch (request.getMessageType()) {
       case INSTANTIATE_ARTIFACT:
-        String artifactClass = request.getHeader(EventBusMessage.Headers.ARTIFACT_CLASS).get();
+        String artifactClass = message.headers().get(ARTIFACT_CLASS);
         String artifactName = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT).get();
         
-        instantiateArtifact(agentUri.get(), artifactClass, artifactName);
+        instantiateArtifact(agentUri, artifactClass, artifactName);
         
         String artifactDescription = HypermediaArtifactRegistry.getInstance()
             .getArtifactDescription(artifactName);
@@ -70,9 +75,9 @@ public class CartagoVerticle extends AbstractVerticle {
         message.reply(artifactDescription);
         break;
       case DO_ACTION:
-        String artifact = request.getHeader(EventBusMessage.Headers.ARTIFACT_NAME).get();
-        String action = request.getHeader(EventBusMessage.Headers.ACTION_NAME).get();
-        doAction(agentUri.get(), artifact, action, request.getPayload());
+        String artifact = message.headers().get(ARTIFACT_NAME);
+        String action = message.headers().get(ACTION_NAME);
+        doAction(agentUri, artifact, action, request.getPayload());
         message.reply(EventBusMessage.ReplyStatus.SUCCEEDED);
         break;
       default:
@@ -100,7 +105,7 @@ public class CartagoVerticle extends AbstractVerticle {
     Op operation;
     
     if (payload.isPresent()) {
-      Object[] params = CartagoDataBindingUtils.fromJson(payload.get());
+      Object[] params = CartagoDataBundle.fromJson(payload.get());
       operation = new Op(action, params);
     } else {
       operation = new Op(action);
