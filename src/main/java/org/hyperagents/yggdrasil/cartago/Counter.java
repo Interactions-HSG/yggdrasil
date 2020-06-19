@@ -6,20 +6,23 @@ import cartago.OPERATION;
 import cartago.ObsProperty;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
 public class Counter extends HypermediaArtifact {
   
   public void init() {
+    collectActionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);
     
     defineObsProperty("count", 0);
   }
   
   @OPERATION
-  public void inc() {
+  public void inc(int counter) {
     ObsProperty prop = getObsProperty("count");
     prop.updateValue(prop.intValue()+1);
-    signal("tick");
+    signal("tick", counter);
   }
   
   @Override
@@ -30,8 +33,14 @@ public class Counter extends HypermediaArtifact {
   @Override
   protected void collectActionAffordances() {
     exposeActionAffordance("inc", new ActionAffordance.Builder(
-        new Form.Builder(getArtifactUri() + "/increment")
+          new Form.Builder(getArtifactUri() + "/increment")
             .build())
+        .addTitle("inc")
+        .addInputSchema(new ArraySchema.Builder()
+          .addMinItems(1)
+          .addMaxItems(1)
+          .addItem(new IntegerSchema.Builder().build())
+          .build())
         .build());
   }
 }

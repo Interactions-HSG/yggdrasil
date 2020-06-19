@@ -4,16 +4,26 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBindingUtils;
 import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.SubscriberRegistry;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
+import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -102,19 +112,75 @@ public class HttpEntityHandler {
     }
   }
   
-  public void handleAction(RoutingContext routingContext) {
+  public void handleNewAction(RoutingContext routingContext) {
     HttpServerRequest request = routingContext.request();
+    String entityRepresentation = routingContext.getBodyAsString();
     
     String agentUri = request.getHeader("X-Agent-WebID");
+    String artifactName = request.params().get("artid");
+    String artifactIri = "http://localhost:8080/artifacts/" + artifactName;
+    String actionName = HypermediaArtifactRegistry.getInstance().getActionName(request.rawMethod(), 
+        request.absoluteURI());
+
+    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
+        .setHeader(EventBusMessage.Headers.REQUEST_IRI, artifactIri)
+        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, 
+            request.getHeader(HttpHeaders.CONTENT_TYPE));
     
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS,
+        message.toJson(), reply -> {
+          if (reply.succeeded()) {
+            EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), 
+                EventBusMessage.class);
+            
+            if (storeReply.succeded()) {
+              String artifactDescription = storeReply.getPayload().get();
+              ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, 
+                  artifactDescription);
+              
+              EventBusMessage cartagoMessage = new EventBusMessage(EventBusMessage.MessageType
+                    .DO_ACTION)
+                .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
+                .setHeader(EventBusMessage.Headers.ARTIFACT_NAME, artifactName)
+                .setHeader(EventBusMessage.Headers.ACTION_NAME, actionName);
+              
+              Optional<ActionAffordance> affordance = td.getActions().stream().filter(action -> 
+                  action.getTitle().get().compareTo(actionName) == 0).findFirst();
+              
+              if (affordance.isPresent()) {
+                Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
+                
+                if (inputSchema.isPresent() && inputSchema.get().getDatatype() == DataSchema.ARRAY) {
+                  JsonElement payload = JsonParser.parseString(entityRepresentation);
+                  List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
+                  
+                  String serializedPayload = CartagoDataBindingUtils.toJson(params);
+                  cartagoMessage.setPayload(serializedPayload);
+                }
+              }
+              
+              LOGGER.info("Sending message to CArtAgO verticle!");
+              vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoMessage.toJson());
+              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+            }
+          }
+        });
+  }
+  
+  public void handleAction(RoutingContext routingContext) {
+    HttpServerRequest request = routingContext.request();
+    String entityRepresentation = routingContext.getBodyAsString();
+    
+    String agentUri = request.getHeader("X-Agent-WebID");
     String artifactName = request.params().get("artid");
     String actionName = HypermediaArtifactRegistry.getInstance().getActionName(request.rawMethod(), 
         request.absoluteURI());
     
     EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DO_ACTION)
         .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
-        .setPayload("{ \"artifactName\": \"" + artifactName + "\", \"action\": \"" + actionName 
-            + "\" }");
+        .setHeader(EventBusMessage.Headers.ARTIFACT_NAME, artifactName)
+        .setHeader(EventBusMessage.Headers.ACTION_NAME, actionName)
+        .setPayload(entityRepresentation);
     
     vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, message.toJson());
     

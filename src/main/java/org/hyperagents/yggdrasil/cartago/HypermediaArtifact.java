@@ -10,8 +10,12 @@ import cartago.ArtifactId;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 public abstract class HypermediaArtifact extends Artifact {
+  private static final Logger LOGGER = LoggerFactory.getLogger(HypermediaArtifact.class.getName());
+  
   private Map<String, List<ActionAffordance>> actionAffordances = 
       new HashMap<String, List<ActionAffordance>>();
   
@@ -43,7 +47,11 @@ public abstract class HypermediaArtifact extends Artifact {
       }
     }
     
-    return TDGraphWriter.write(tdBuilder.build());
+    String td = TDGraphWriter.write(tdBuilder.build());
+    
+    LOGGER.info("Written TD: " + td);
+    
+    return td;
   }
   
   /**
@@ -56,7 +64,6 @@ public abstract class HypermediaArtifact extends Artifact {
   }
   
   public Map<String, List<ActionAffordance>> getActionAffordances() {
-    collectActionAffordances();
     return actionAffordances;
   }
   
@@ -77,5 +84,7 @@ public abstract class HypermediaArtifact extends Artifact {
     
     actions.add(action);
     actionAffordances.put(methodName, actions);
+    
+    LOGGER.info("exposed affordances: " + actionAffordances);
   }
 }

@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -20,7 +21,6 @@ import cartago.Op;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -40,37 +40,9 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoService.startNode();
-      
-      // Creates a new work session for a given agent in the default workspace.
-//      CartagoContext agentContext = new CartagoContext(new AgentIdCredential("agent-0"));
-//      
-//      agentContext.doAction(new Op("println","Hello, world!"));
-//      
-//      LOGGER.info("Creating artifact: " + Counter.class.getName());
-//      
-//      agentContext.makeArtifact("c0", Counter.class.getName());
-//      
-//      LOGGER.info("Focusing on artifact...");
-//      
-//      agentContext.doAction(new Op("focusWhenAvailable", "c0"));
-//      ArtifactId aId = agentContext.lookupArtifact("c0");
-//      
-//      agentContext.doAction(aId, new Op("inc"));
-//      
-//      Percept percept = agentContext.fetchPercept();
-      
-//      while (percept != null) {
-//        LOGGER.info("Pecept: " + percept);
-//        percept = agentContext.fetchPercept();
-//      }
-//      
-//      LOGGER.info("No percept available");
-      
     } catch (CartagoException e) {
       LOGGER.error(e.getMessage());
-    } //catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
+    }
   }
   
   private void handleCartagoRequest(Message<String> message) {
@@ -98,11 +70,10 @@ public class CartagoVerticle extends AbstractVerticle {
         message.reply(artifactDescription);
         break;
       case DO_ACTION:
-        JsonObject payload = new JsonObject(request.getPayload().get());
-        String name = payload.getString("artifactName");
-        String action = payload.getString("action");
-        doAction(agentUri.get(), name, action);
-        message.reply(HttpStatus.SC_OK);
+        String artifact = request.getHeader(EventBusMessage.Headers.ARTIFACT_NAME).get();
+        String action = request.getHeader(EventBusMessage.Headers.ACTION_NAME).get();
+        doAction(agentUri.get(), artifact, action, request.getPayload());
+        message.reply(EventBusMessage.ReplyStatus.SUCCEEDED);
         break;
       default:
         // TODO
@@ -122,17 +93,25 @@ public class CartagoVerticle extends AbstractVerticle {
     }
   }
   
-  private void doAction(String agentUri, String artifactName, String action) {
+  private void doAction(String agentUri, String artifactName, String action, 
+      Optional<String> payload) {
     CartagoContext agentContext = getAgentContext(agentUri);
     
+    Op operation;
+    
+    if (payload.isPresent()) {
+      Object[] params = CartagoDataBindingUtils.fromJson(payload.get());
+      operation = new Op(action, params);
+    } else {
+      operation = new Op(action);
+    }
+    
     try {
-      LOGGER.info("Performing action " + action + " on artifact " + artifactName);
+      LOGGER.info("Performing action " + action + " on artifact " + artifactName 
+          + " with params: " + Arrays.asList(operation.getParamValues()));
       
       ArtifactId artifactId = agentContext.lookupArtifact(artifactName);
-      
-      agentContext.doAction(artifactId, new Op(action));
-      
-      LOGGER.info("Artifact found, done!");
+      agentContext.doAction(artifactId, operation);
     } catch (CartagoException e) {
       e.printStackTrace();
     }
