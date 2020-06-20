@@ -1,6 +1,20 @@
 package org.hyperagents.yggdrasil.store;
 
-import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.rdf.api.Graph;
+import org.apache.commons.rdf.api.IRI;
+import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.Triple;
+import org.apache.commons.rdf.rdf4j.RDF4J;
+import org.apache.hc.core5.http.HttpStatus;
+import org.hyperagents.yggdrasil.core.EventBusMessage;
+import org.hyperagents.yggdrasil.core.EventBusRegistry;
+import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.eventbus.EventBus;
@@ -9,18 +23,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.commons.rdf.api.Graph;
-import org.apache.commons.rdf.api.IRI;
-import org.apache.commons.rdf.api.RDFSyntax;
-import org.apache.commons.rdf.api.Triple;
-import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
-import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
 /*
  * Stores the RDF graphs representing the instantiated artifacts
  *
@@ -47,25 +50,24 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleEntityRequest(Message<String> message) {
     try {
-      EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
-
-      String requestIRIString = request.getHeader(EventBusMessage.Headers.REQUEST_IRI).get();
+      String requestIRIString = message.headers().get(HttpEntityHandler.REQUEST_URI);
       IRI requestIRI = store.createIRI(requestIRIString);
 
-      switch (request.getMessageType()) {
-        case GET_ENTITY:
-          handleGetEntity(requestIRI, request, message);
+      String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
+      switch (requestMethod) {
+        case RdfStore.GET_ENTITY:
+          handleGetEntity(requestIRI, message);
           break;
-        case CREATE_ENTITY:
-          handleCreateEntity(requestIRI, request, message);
+        case RdfStore.CREATE_ENTITY:
+          handleCreateEntity(requestIRI, message);
           break;
-        case PATCH_ENTITY:
-          handlePatchEntity(requestIRI, request, message);
+        case RdfStore.PATCH_ENTITY:
+          handlePatchEntity(requestIRI, message);
           break;
-        case UPDATE_ENTITY:
-          handleUpdateEntity(requestIRI, request, message);
+        case RdfStore.UPDATE_ENTITY:
+          handleUpdateEntity(requestIRI, message);
           break;
-        case DELETE_ENTITY:
+        case RdfStore.DELETE_ENTITY:
           handleDeleteEntity(requestIRI, message);
           break;
         default:
@@ -82,15 +84,18 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleGetEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
-    Optional<Graph> result = store.getEntityGraph(requestIRI);
+  private void handleGetEntity(IRI requestIRI, Message<String> message) 
+      throws IllegalArgumentException, IOException {
+    
     RDFSyntax syntax = RDFSyntax.TURTLE;
-    Optional<String> contentType = request.getHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE);
-
-    if (contentType.isPresent() && contentType.get().equals("application/ld+json")) {
+    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
+    
+    if (contentType != null && contentType.equals("application/ld+json")) {
       syntax = RDFSyntax.JSONLD;
     }
-
+    
+    Optional<Graph> result = store.getEntityGraph(requestIRI);
+    
     if (result.isPresent() && result.get().size() > 0) {
       replyWithPayload(message, store.graphToString(result.get(), syntax));
     } else {
@@ -106,35 +111,38 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * @throws IllegalArgumentException
    * @throws IOException
    */
-  private void handleCreateEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+  private void handleCreateEntity(IRI requestIRI, Message<String> message) 
+      throws IllegalArgumentException, IOException {
 	// Create IRI for new entity
     Graph entityGraph;
-    Optional<String> slug = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT);
-    Optional<String> contentType = request.getHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE);
+    
+    String slug = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
+    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
     String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
+    
     IRI entityIRI = store.createIRI(entityIRIString);
 
-    if (!request.getPayload().isPresent()) {
+    if (message.body() == null || message.body().isEmpty()) {
       replyFailed(message);
     } else {
       // Replace all null relative IRIs with the IRI generated for this entity
-      String entityGraphStr = request.getPayload().get();
+      String entityGraphStr = message.body();
 
-      if (contentType.isPresent() && contentType.get().equals("application/ld+json")) {
-        entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.JSONLD);
+      if (contentType != null && contentType.equals("application/ld+json")) {
+        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
       } else {
         entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
-        entityGraph = store.stringToGraph(request.getPayload().get(), entityIRI, RDFSyntax.TURTLE);
+        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.TURTLE);
       }
+      
+      // TODO: seems like legacy integration from Simon Bienz, to be reviewed
       IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
-
       if (entityGraph.contains(null, subscribesIri, null)) {
-        System.out.println("Crawler subscription link found!");
+//        System.out.println("Crawler subscription link found!");
         subscribeCrawler(entityGraph);
       }
-
+      
       store.createEntityGraph(entityIRI, entityGraph);
-      // TODO: reply with original payload? or representation of created entity graph? (In the ideal case they are the same)
       replyWithPayload(message, entityGraphStr);
 
       vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
@@ -146,18 +154,20 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handlePatchEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+  private void handlePatchEntity(IRI requestIRI, Message<String> message) 
+      throws IllegalArgumentException, IOException {
     // TODO
   }
-
-  private void handleUpdateEntity(IRI requestIRI, EventBusMessage request, Message<String> message) throws IllegalArgumentException, IOException {
+  
+  private void handleUpdateEntity(IRI requestIRI, Message<String> message) 
+      throws IllegalArgumentException, IOException {
     if (store.containsEntityGraph(requestIRI)) {
-      if (!request.getPayload().isPresent()) {
+      if (message.body() == null || message.body().isEmpty()) {
         replyFailed(message);
       } else {
-        Graph entityGraph = store.stringToGraph(request.getPayload().get(), requestIRI, RDFSyntax.TURTLE);
+        Graph entityGraph = store.stringToGraph(message.body(), requestIRI, RDFSyntax.TURTLE);
         store.updateEntityGraph(requestIRI, entityGraph);
-
+        
         Optional<Graph> result = store.getEntityGraph(requestIRI);
 
         if (result.isPresent() && result.get().size() > 0) {
@@ -201,28 +211,25 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private void replyWithPayload(Message<String> message, String payload) {
-    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
-        .setPayload(payload);
-
-    message.reply(response.toJson());
+//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
+//        .setPayload(payload);
+    message.reply(payload);
   }
 
   private void replyFailed(Message<String> message) {
-    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.FAILED.name());
-
-    message.reply(response.toJson());
+//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.FAILED.name());
+    message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Store request failed.");
   }
-
+  
   private void replyEntityNotFound(Message<String> message) {
-    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name());
-
-    message.reply(response.toJson());
+//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
+//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name());
+    message.fail(HttpStatus.SC_NOT_FOUND, "Entity not found.");
   }
 
-  private String generateEntityIRI(String requestIRI, Optional<String> hint) {
+  private String generateEntityIRI(String requestIRI, String hint) {
     if (!requestIRI.endsWith("/")) {
       requestIRI = requestIRI.concat("/");
     }
@@ -230,8 +237,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     String candidateIRI;
 
     // Try to generate an IRI using the hint provided in the initial request
-    if (hint.isPresent() && !hint.get().isEmpty()) {
-      candidateIRI = requestIRI.concat(hint.get());
+    if (hint != null && !hint.isEmpty()) {
+      candidateIRI = requestIRI.concat(hint);
       if (!store.containsEntityGraph(store.createIRI(candidateIRI))) {
         return candidateIRI;
       }
@@ -248,7 +255,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private void handleQueryRequest(Message<String> message) {
     // TODO
   }
-
+  
   private void subscribeCrawler(Graph entityGraph) {
     IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
     for (Triple t : entityGraph.iterate(null, subscribesIri, null)) {

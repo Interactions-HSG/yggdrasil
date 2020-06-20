@@ -14,8 +14,8 @@ import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.SubscriberRegistry;
+import org.hyperagents.yggdrasil.store.RdfStore;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
@@ -30,6 +30,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -38,12 +39,14 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
 public class HttpEntityHandler {
+  public static final String REQUEST_METHOD = "headers.requestMethod";
   public static final String REQUEST_URI = "headers.requestUri";
+  public static final String ENTITY_URI_HINT = "headers.slug";
   public static final String CONTENT_TYPE = "headers.contentType";
   
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
   private Vertx vertx;
-
+  
   private String webSubHubIRI = null;
 
   public HttpEntityHandler() {
@@ -59,11 +62,12 @@ public class HttpEntityHandler {
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
     String contentType = routingContext.request().getHeader("Content-Type");
-
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
-        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType);
-
+    
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+        .addHeader(REQUEST_URI, entityIri)
+        .addHeader(CONTENT_TYPE, contentType);
+    
     Map<String,List<String>> headers = new HashMap<String,List<String>>();
 
     if (webSubHubIRI != null) {
@@ -71,11 +75,11 @@ public class HttpEntityHandler {
                                           "<" + entityIri + ">; rel=\"self\"")
           );
     }
-
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS,
-        message.toJson(), handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
+        handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
   }
-
+  
   // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
     String entityRepresentation = routingContext.getBodyAsString();
@@ -104,7 +108,8 @@ public class HttpEntityHandler {
                 
                 LOGGER.info("CArtAgO artifact created: " + artifactDescrption);
                 
-                // If the CArtAgO artifact was created successfully, generate the Thing Description and store it
+                // If the CArtAgO artifact was created successfully, generate the Thing Description 
+                // and store it
                 createEntity(routingContext, artifactDescrption);
               }
             });
@@ -123,35 +128,28 @@ public class HttpEntityHandler {
     String actionName = HypermediaArtifactRegistry.getInstance().getActionName(request.rawMethod(), 
         request.absoluteURI());
 
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, artifactIri)
-        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, 
-            request.getHeader(HttpHeaders.CONTENT_TYPE));
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+        .addHeader(REQUEST_URI, artifactIri)
+        .addHeader(CONTENT_TYPE, request.getHeader(HttpHeaders.CONTENT_TYPE));
     
     LOGGER.info("sending store request");
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS,
-        message.toJson(), reply -> {
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
+        reply -> {
           LOGGER.info("recevied store reply");
           if (reply.succeeded()) {
-            EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), 
-                EventBusMessage.class);
-            
-            if (storeReply.succeded()) {
-              String artifactDescription = storeReply.getPayload().get();
+              String artifactDescription = (String) reply.result().body();
               ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, 
                   artifactDescription);
               
-              DeliveryOptions options = new DeliveryOptions()
+              DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentUri)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
               
               EventBusMessage cartagoMessage = new EventBusMessage(EventBusMessage.MessageType
                     .DO_ACTION);
-//                .setHeader(EventBusMessage.Headers.AGENT_WEBID, agentUri)
-//                .setHeader(EventBusMessage.Headers.ARTIFACT_NAME, artifactName)
-//                .setHeader(EventBusMessage.Headers.ACTION_NAME, actionName);
               
               Optional<ActionAffordance> affordance = td.getActions().stream().filter(action -> 
                   action.getTitle().get().compareTo(actionName) == 0).findFirst();
@@ -170,10 +168,9 @@ public class HttpEntityHandler {
               
               LOGGER.info("Sending message to CArtAgO verticle!");
               vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoMessage.toJson(), 
-                  options);
+                  cartagoOptions);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
             }
-          }
         });
   }
   
@@ -186,56 +183,55 @@ public class HttpEntityHandler {
     String entityIri = routingContext.request().absoluteURI();
     String entityRepresentation = routingContext.getBodyAsString();
 
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.UPDATE_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
-        .setPayload(entityRepresentation);
-
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReplyNext(routingContext));
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(REQUEST_METHOD, RdfStore.UPDATE_ENTITY)
+        .addHeader(REQUEST_URI, entityIri);
+    
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, entityRepresentation, 
+        options, handleStoreReplyNext(routingContext));
   }
 
   public void handleDeleteEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
 
-    EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.DELETE_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri);
-
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(), handleStoreReplyNext(routingContext));
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(REQUEST_METHOD, RdfStore.DELETE_ENTITY)
+        .addHeader(REQUEST_URI, entityIri);
+    
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
+        handleStoreReplyNext(routingContext));
   }
 
   public void handleEntitySubscription(RoutingContext routingContext) {
     JsonObject subscribeRequest = routingContext.getBodyAsJson();
 
     String mode = subscribeRequest.getString("hub.mode");
-    String entityIRI = subscribeRequest.getString("hub.topic");
-    String callbackIRI = subscribeRequest.getString("hub.callback");
+    String entityIri = subscribeRequest.getString("hub.topic");
+    String callbackIri = subscribeRequest.getString("hub.callback");
 
     if (mode.equalsIgnoreCase("subscribe")) {
-      EventBusMessage message = new EventBusMessage(EventBusMessage.MessageType.GET_ENTITY)
-          .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRI);
-
-      vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, message.toJson(),
+      DeliveryOptions options = new DeliveryOptions()
+          .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+          .addHeader(REQUEST_URI, entityIri);
+      
+      vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options,
           reply -> {
             if (reply.succeeded()) {
-              EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
-
-              if (storeReply.succeded()) {
-                SubscriberRegistry.getInstance().addCallbackIRI(entityIRI, callbackIRI);
-                routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
-              }
-              else if (storeReply.entityNotFound()) {
+              SubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
+              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+            } else {
+              ReplyException exception = ((ReplyException) reply.cause());
+              
+              if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
                 routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
-              }
-              else {
+              } else {
                 routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
               }
-            }
-            else {
-              routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
             }
           });
     }
     else if (mode.equalsIgnoreCase("unsubscribe")) {
-      SubscriberRegistry.getInstance().removeCallbackIRI(entityIRI, callbackIRI);
+      SubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     }
     else {
@@ -248,13 +244,13 @@ public class HttpEntityHandler {
     String slug = context.request().getHeader("Slug");
     String contentType = context.request().getHeader("Content-Type");
     
-    EventBusMessage storeRequest = new EventBusMessage(EventBusMessage.MessageType.CREATE_ENTITY)
-        .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIri)
-        .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
-        .setHeader(EventBusMessage.Headers.REQUEST_CONTENT_TYPE, contentType)
-        .setPayload(representation);
-
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, storeRequest.toJson(), 
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
+        .addHeader(REQUEST_URI, entityIri)
+        .addHeader(ENTITY_URI_HINT, slug)
+        .addHeader(CONTENT_TYPE, contentType);
+    
+    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, representation, options, 
         handleStoreReply(context, HttpStatus.SC_CREATED));
   }
 
@@ -262,12 +258,15 @@ public class HttpEntityHandler {
     return handleStoreReplyNext(routingContext, HttpStatus.SC_OK);
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext, int succeededStatusCode) {
-    return handleStoreReplyNext(routingContext, succeededStatusCode, new HashMap<String,List<String>>());
+  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext, 
+      int succeededStatusCode) {
+    return handleStoreReplyNext(routingContext, succeededStatusCode, 
+        new HashMap<String,List<String>>());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext,
-                                                                 int succeededStatusCode, Map<String,List<String>> headers) {
+  private Handler<AsyncResult<Message<String>>> handleStoreReplyNext(RoutingContext routingContext, 
+      int succeededStatusCode, Map<String,List<String>> headers) {
+    
     if (succeededStatusCode == HttpStatus.SC_OK) {
       return handleStoreReply(routingContext, succeededStatusCode, headers);
     } else {
@@ -276,49 +275,40 @@ public class HttpEntityHandler {
     }
   }
 
-//  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext) {
-//    return handleStoreReply(routingContext, HttpStatus.SC_OK);
-//  }
-
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext, int succeededStatusCode) {
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext, 
+      int succeededStatusCode) {
     return handleStoreReply(routingContext, succeededStatusCode, new HashMap<String,List<String>>());
   }
-
+  
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
       int succeededStatusCode, Map<String,List<String>> headers) {
 
     return reply -> {
       if (reply.succeeded()) {
-        EventBusMessage storeReply = (new Gson()).fromJson((String) reply.result().body(), EventBusMessage.class);
+        HttpServerResponse httpResponse = routingContext.response();
+        
+        httpResponse
+          .setStatusCode(succeededStatusCode)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
 
-        if (storeReply.succeded()) {
-          HttpServerResponse httpResponse = routingContext.response();
-
-          httpResponse
-            .setStatusCode(succeededStatusCode)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
-
-          headers.forEach((k, v) -> {
-            httpResponse.putHeader(k, v);
-          });
-
-          if (storeReply.getPayload().isPresent()) {
-            httpResponse.end(storeReply.getPayload().get());
-          } else {
-            httpResponse.end();
-          }
+        headers.forEach((k, v) -> {
+          httpResponse.putHeader(k, v);
+        });
+        
+        String storeReply = reply.result().body();
+        if (storeReply != null && !storeReply.isEmpty()) {
+          httpResponse.end(storeReply);
+        } else {
+          httpResponse.end();
         }
-        else if (storeReply.entityNotFound()) {
-          routingContext.fail(HttpStatus.SC_NOT_FOUND);
+      } else {
+        ReplyException exception = ((ReplyException) reply.cause());
+        
+        if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
+          routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+        } else {
+          routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
         }
-        else {
-          LOGGER.error(storeReply.getHeader(EventBusMessage.Headers.REPLY_STATUS));
-          routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        }
-      }
-      else {
-        LOGGER.error("Reply failed! " + reply.cause().getMessage());
-        routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
       }
     };
   }

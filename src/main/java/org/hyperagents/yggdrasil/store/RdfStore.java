@@ -8,7 +8,12 @@ import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 
 public interface RdfStore {
-
+  public static final String GET_ENTITY = "methods.getEntity";
+  public static final String CREATE_ENTITY = "methods.createEntity";
+  public static final String UPDATE_ENTITY = "methods.updateEntity";
+  public static final String PATCH_ENTITY = "methods.patchEntity";
+  public static final String DELETE_ENTITY = "methods.deleteEntity";
+  
   boolean containsEntityGraph(IRI entityIRI);
 
   Optional<Graph> getEntityGraph(IRI entityIRI);

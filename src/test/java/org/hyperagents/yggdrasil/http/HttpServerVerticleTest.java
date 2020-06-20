@@ -20,6 +20,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.google.common.net.HttpHeaders;
+
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -58,6 +60,50 @@ public class HttpServerVerticleTest {
   }
   
   @Test
+  public void testGetEntity(TestContext tc) {
+    Async async = tc.async();
+    
+    createResourceAndThen(response -> {
+        tc.assertEquals(response.statusCode(), 201);
+        
+        vertx.createHttpClient().get(8080, "localhost", "/environments/test_env")
+            .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
+            .handler(getResponse -> {
+              tc.assertEquals(getResponse.statusCode(), 200);
+              getResponse.bodyHandler(body -> {
+                try {
+                  assertIsomorphic(tc, RDFFormat.TURTLE,
+                    "<http://localhost:8080/environments/test_env> a <http://w3id.org/eve#Environment>;\n"
+                    + "<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .",
+                    body.toString());
+                } catch (RDFParseException | RDFHandlerException | IOException e) {
+                  tc.fail(e);
+                }
+                
+                async.complete();
+              });
+            }).end();
+      });
+  }
+  
+  @Test
+  public void testGetEntityNotFound(TestContext tc) {
+    Async async = tc.async();
+    
+    vertx.createHttpClient().get(8080, "localhost", "/environments/bla123")
+        .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
+        .handler(getResponse -> {
+            tc.assertEquals(getResponse.statusCode(), 404);
+            async.complete();
+        }).end();
+  }
+  
+  @Test
+  public void testGetEntityWithoutContentType(TestContext tc) {
+    // TODO: null content types crash
+  }
+  
+  @Test
   public void testCreateEntity(TestContext tc) {
     Async async = tc.async();
     vertx.createHttpClient().post(8080, "localhost", "/environments/")
@@ -80,32 +126,6 @@ public class HttpServerVerticleTest {
           });
         }).end("<> a <http://w3id.org/eve#Environment> ;\n" + 
             "<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .");
-  }
-  
-  @Test
-  public void testGetEntity(TestContext tc) {
-    Async async = tc.async();
-    
-    createResourceAndThen(response -> {
-        tc.assertEquals(response.statusCode(), 201);
-        
-        vertx.createHttpClient().getNow(8080, "localhost", "/environments/test_env", 
-            getResponse -> {
-              tc.assertEquals(getResponse.statusCode(), 200);
-              getResponse.bodyHandler(body -> {
-                try {
-                  assertIsomorphic(tc, RDFFormat.TURTLE,
-                    "<http://localhost:8080/environments/test_env> a <http://w3id.org/eve#Environment>;\n"
-                    + "<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .",
-                    body.toString());
-                } catch (RDFParseException | RDFHandlerException | IOException e) {
-                  tc.fail(e);
-                }
-                
-                async.complete();
-              });
-            });
-      });
   }
   
   @Test
