@@ -9,7 +9,6 @@ public class SubscriberRegistry {
 
   private static SubscriberRegistry registry;
   private Map<String,Set<String>> subscriptions;
-
   
   private SubscriberRegistry() {
     subscriptions = new Hashtable<String,Set<String>>();

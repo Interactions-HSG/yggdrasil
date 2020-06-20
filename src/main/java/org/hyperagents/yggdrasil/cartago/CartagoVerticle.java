@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
@@ -23,6 +22,8 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 public class CartagoVerticle extends AbstractVerticle {
+  public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.cartago";
+  
   public static final String INSTANTIATE_ARTIFACT = "headers.methods.instantiateArtifact";
   public static final String PERFORM_ACTION = "headers.methods.performAction";
   
@@ -41,7 +42,7 @@ public class CartagoVerticle extends AbstractVerticle {
     agentContexts = new HashMap<String, CartagoContext>();
     
     EventBus eventBus = vertx.eventBus();
-    eventBus.consumer(EventBusRegistry.CARTAGO_BUS_ADDRESS, this::handleCartagoRequest);
+    eventBus.consumer(BUS_ADDRESS, this::handleCartagoRequest);
     
     try {
       LOGGER.info("Starting CArtAgO node...");

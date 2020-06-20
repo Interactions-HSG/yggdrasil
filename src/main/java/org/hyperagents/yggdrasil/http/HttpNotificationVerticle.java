@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.SubscriberRegistry;
 
 import com.google.common.net.HttpHeaders;
@@ -21,13 +20,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
+public class HttpNotificationVerticle extends AbstractVerticle {
+  public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.dispatcher";
+  
   public static final String ENTITY_CREATED_NOTIFICATION = "methods.notifications.entityCreated";
   public static final String ENTITY_CHANGED_NOTIFICATION = "methods.notifications.entityChanged";
   public static final String ENTITY_DELETED_NOTIFICATION = "methods.notifications.entityDeleted";
   
   private final static Logger LOGGER = LoggerFactory.getLogger(
-      HttpNotificationDispatcherVerticle.class.getName());
+      HttpNotificationVerticle.class.getName());
   
   private String webSubHubIRI = null;
   
@@ -35,7 +36,7 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
   public void start() {
     webSubHubIRI = getWebSubHubIRI(config());
     
-    vertx.eventBus().consumer(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, message -> {
+    vertx.eventBus().consumer(BUS_ADDRESS, message -> {
       if (isNotificationMessage(message)) {
         String entityIRI = message.headers().get(HttpEntityHandler.REQUEST_URI);
         

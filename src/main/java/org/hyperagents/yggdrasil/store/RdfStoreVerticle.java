@@ -10,9 +10,8 @@ import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.hc.core5.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
-import org.hyperagents.yggdrasil.http.HttpNotificationDispatcherVerticle;
+import org.hyperagents.yggdrasil.http.HttpNotificationVerticle;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 
 import io.vertx.core.AbstractVerticle;
@@ -30,7 +29,6 @@ import io.vertx.core.logging.LoggerFactory;
  *
  */
 public class RdfStoreVerticle extends AbstractVerticle {
-
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
 
   private RdfStore store;
@@ -45,8 +43,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
     EventBus eventBus = vertx.eventBus();
 
-    eventBus.consumer(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, this::handleEntityRequest);
-    eventBus.consumer(EventBusRegistry.RDF_STORE_QUERY_BUS_ADDRESS, this::handleQueryRequest);
+    eventBus.consumer(RdfStore.BUS_ADDRESS, this::handleEntityRequest);
   }
 
   private void handleEntityRequest(Message<String> message) {
@@ -147,12 +144,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
       replyWithPayload(message, entityGraphStr);
       
       DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
               .ENTITY_CREATED_NOTIFICATION)
           .addHeader(HttpEntityHandler.REQUEST_URI, entityIRIString);
       
-      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
-          options);
+      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
     }
   }
 
@@ -179,11 +175,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
 
           DeliveryOptions options = new DeliveryOptions()
-              .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+              .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
                   .ENTITY_CHANGED_NOTIFICATION)
               .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
           
-          vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
+          vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, 
               options);
         } else {
           replyFailed(message);
@@ -204,12 +200,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
       replyWithPayload(message, entityGraphStr);
 
       DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
               .ENTITY_DELETED_NOTIFICATION)
           .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
       
-      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
-          options);
+      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
     } else {
       replyEntityNotFound(message);
     }
@@ -250,10 +245,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     return candidateIRI;
   }
 
-  private void handleQueryRequest(Message<String> message) {
-    // TODO
-  }
-  
   private void subscribeCrawler(Graph entityGraph) {
     IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
     for (Triple t : entityGraph.iterate(null, subscribesIri, null)) {

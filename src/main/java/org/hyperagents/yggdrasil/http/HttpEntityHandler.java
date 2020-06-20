@@ -10,7 +10,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.SubscriberRegistry;
 import org.hyperagents.yggdrasil.store.RdfStore;
@@ -75,8 +74,8 @@ public class HttpEntityHandler {
           );
     }
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
-        handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, handleStoreReply(routingContext, 
+        HttpStatus.SC_OK, headers));
   }
   
   // TODO: add payload validation
@@ -97,7 +96,7 @@ public class HttpEntityHandler {
           .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass)
           .addHeader(ENTITY_URI_HINT, slug);
       
-      vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, entityRepresentation, options,
+      vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
           response -> {
               if (response.succeeded()) {
                 String artifactDescrption = (String) response.result().body();
@@ -131,8 +130,7 @@ public class HttpEntityHandler {
     
     LOGGER.info("sending store request");
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
-        reply -> {
+    vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, reply -> {
           LOGGER.info("recevied store reply");
           if (reply.succeeded()) {
               String artifactDescription = (String) reply.result().body();
@@ -162,8 +160,7 @@ public class HttpEntityHandler {
               }
               
               LOGGER.info("Sending message to CArtAgO verticle!");
-              vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, serializedPayload, 
-                  cartagoOptions);
+              vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
             }
         });
@@ -182,8 +179,8 @@ public class HttpEntityHandler {
         .addHeader(REQUEST_METHOD, RdfStore.UPDATE_ENTITY)
         .addHeader(REQUEST_URI, entityIri);
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, entityRepresentation, 
-        options, handleStoreReplyNext(routingContext));
+    vertx.eventBus().send(RdfStore.BUS_ADDRESS, entityRepresentation, options, 
+        handleStoreReplyNext(routingContext));
   }
 
   public void handleDeleteEntity(RoutingContext routingContext) {
@@ -193,8 +190,7 @@ public class HttpEntityHandler {
         .addHeader(REQUEST_METHOD, RdfStore.DELETE_ENTITY)
         .addHeader(REQUEST_URI, entityIri);
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options, 
-        handleStoreReplyNext(routingContext));
+    vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, handleStoreReplyNext(routingContext));
   }
 
   public void handleEntitySubscription(RoutingContext routingContext) {
@@ -209,8 +205,7 @@ public class HttpEntityHandler {
           .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
           .addHeader(REQUEST_URI, entityIri);
       
-      vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, null, options,
-          reply -> {
+      vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, reply -> {
             if (reply.succeeded()) {
               SubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
@@ -245,8 +240,8 @@ public class HttpEntityHandler {
         .addHeader(ENTITY_URI_HINT, slug)
         .addHeader(CONTENT_TYPE, contentType);
     
-    vertx.eventBus().send(EventBusRegistry.RDF_STORE_ENTITY_BUS_ADDRESS, representation, options, 
-        handleStoreReply(context, HttpStatus.SC_CREATED));
+    vertx.eventBus().send(RdfStore.BUS_ADDRESS, representation, options, handleStoreReply(context, 
+        HttpStatus.SC_CREATED));
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReplyNext (RoutingContext routingContext) {

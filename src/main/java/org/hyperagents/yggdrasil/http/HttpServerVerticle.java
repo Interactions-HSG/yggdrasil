@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
 
 import com.google.common.net.HttpHeaders;
 
@@ -95,11 +94,11 @@ public class HttpServerVerticle extends AbstractVerticle {
       logger.info("Got event for " + artifactIRI);
 
       DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
               .ENTITY_CHANGED_NOTIFICATION)
           .addHeader(HttpEntityHandler.REQUEST_URI, artifactIRI);
       
-      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
+      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, 
           routingContext.getBodyAsString(), options);
       
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
