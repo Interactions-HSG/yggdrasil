@@ -12,6 +12,14 @@ import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
+/**
+ * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
+ * a Vert.x LocalMap, but this is more convenient for managing artifact metadata. Can be refactored 
+ * using async shared maps to run over a cluster. 
+ * 
+ * @author Andrei Ciortea
+ *
+ */
 public class HypermediaArtifactRegistry {
   private static final Logger LOGGER = LoggerFactory.getLogger(HypermediaArtifactRegistry.class
       .getName());
