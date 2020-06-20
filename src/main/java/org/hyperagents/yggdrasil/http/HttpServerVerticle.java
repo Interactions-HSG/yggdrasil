@@ -1,14 +1,12 @@
 package org.hyperagents.yggdrasil.http;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
-import org.hyperagents.yggdrasil.core.EventBusMessage.Headers;
-import org.hyperagents.yggdrasil.core.EventBusMessage.MessageType;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 
 import com.google.common.net.HttpHeaders;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -30,7 +28,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   public static final String CONFIG_HTTP = "http-config";
   public static final String CONFIG_HTTP_PORT = "port";
   public static final String CONFIG_HTTP_HOST = "host";
-
+  
   
   @Override
   public void start() {
@@ -96,13 +94,14 @@ public class HttpServerVerticle extends AbstractVerticle {
       Logger logger = LoggerFactory.getLogger(this.getClass().getName());
       logger.info("Got event for " + artifactIRI);
 
-      EventBusMessage notification = new EventBusMessage(MessageType.ENTITY_CHANGED_NOTIFICATION)
-                                            .setHeader(Headers.REQUEST_IRI, artifactIRI)
-                                            .setPayload(routingContext.getBodyAsString());
+      DeliveryOptions options = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+              .ENTITY_CHANGED_NOTIFICATION)
+          .addHeader(HttpEntityHandler.REQUEST_URI, artifactIRI);
       
-      vertx.eventBus()
-        .publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, notification.toJson());
-
+      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, 
+          routingContext.getBodyAsString(), options);
+      
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     });
     

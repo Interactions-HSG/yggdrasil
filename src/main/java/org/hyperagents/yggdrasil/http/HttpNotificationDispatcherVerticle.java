@@ -1,29 +1,34 @@
 package org.hyperagents.yggdrasil.http;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.core.EventBusRegistry;
+import org.hyperagents.yggdrasil.core.SubscriberRegistry;
+
 import com.google.common.net.HttpHeaders;
-import com.google.gson.Gson;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
-import org.hyperagents.yggdrasil.core.EventBusRegistry;
-import org.hyperagents.yggdrasil.core.SubscriberRegistry;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
+  public static final String ENTITY_CREATED_NOTIFICATION = "methods.notifications.entityCreated";
+  public static final String ENTITY_CHANGED_NOTIFICATION = "methods.notifications.entityChanged";
+  public static final String ENTITY_DELETED_NOTIFICATION = "methods.notifications.entityDeleted";
   
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpNotificationDispatcherVerticle.class.getName());
+  private final static Logger LOGGER = LoggerFactory.getLogger(
+      HttpNotificationDispatcherVerticle.class.getName());
+  
   private String webSubHubIRI = null;
   
   @Override
@@ -31,32 +36,31 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
     webSubHubIRI = getWebSubHubIRI(config());
     
     vertx.eventBus().consumer(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, message -> {
-      EventBusMessage notification = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
-      
-      if (isNotificationMessage(notification)) {
-        Optional<String> entityIRI = notification.getHeader(EventBusMessage.Headers.REQUEST_IRI);
+      if (isNotificationMessage(message)) {
+        String entityIRI = message.headers().get(HttpEntityHandler.REQUEST_URI);
         
-        if (entityIRI.isPresent()) {
-          LOGGER.info("Dispatching notifications for: " + entityIRI.get() + ", changes: " + notification.getPayload());
+        if (entityIRI != null && !entityIRI.isEmpty()) {
+          String changes = (String) message.body();
+          LOGGER.info("Dispatching notifications for: " + entityIRI + ", changes: " + changes);
           
           HttpClient client = vertx.createHttpClient();
           
           List<String> linkHeaders = new ArrayList<String>();
           linkHeaders.add("<" + webSubHubIRI + ">; rel=\"hub\"");
-          linkHeaders.add("<" + entityIRI.get() + ">; rel=\"self\"");
+          linkHeaders.add("<" + entityIRI + ">; rel=\"self\"");
           
-          Optional<String> changes = notification.getPayload();
-          Set<String> callbacks = SubscriberRegistry.getInstance().getCallbackIRIs(entityIRI.get());
+          Set<String> callbacks = SubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
           
           for (String callbackIRI : callbacks) {
             HttpClientRequest httpRequest = client.postAbs(callbackIRI, reponseHandler(callbackIRI))
                                                     .putHeader("Link", linkHeaders);
-            if (notification.getMessageType() == EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION) {
+            if (message.headers().get(HttpEntityHandler.REQUEST_METHOD)
+                .compareTo(ENTITY_DELETED_NOTIFICATION) == 0) {
               httpRequest.end();
-            } else if (changes.isPresent()) {
+            } else if (changes != null && !changes.isEmpty()) {
               httpRequest
-                .putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.get().length())
-                .write(Buffer.factory.buffer(changes.get())).end();
+                .putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
+                .write(Buffer.factory.buffer(changes)).end();
             }
           }
         }
@@ -75,10 +79,12 @@ public class HttpNotificationDispatcherVerticle extends AbstractVerticle {
     };
   }
   
-  private boolean isNotificationMessage(EventBusMessage message) {
-    if (message.getMessageType() == EventBusMessage.MessageType.ENTITY_CREATED_NOTIFICATION
-        || message.getMessageType() == EventBusMessage.MessageType.ENTITY_CHANGED_NOTIFICATION
-        || message.getMessageType() == EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION) {
+  private boolean isNotificationMessage(Message<Object> message) {
+    String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
+    
+    if (requestMethod.compareTo(ENTITY_CREATED_NOTIFICATION) == 0
+        || requestMethod.compareTo(ENTITY_CHANGED_NOTIFICATION) == 0
+        || requestMethod.compareTo(ENTITY_DELETED_NOTIFICATION) == 0) {
       return true;
     }
     return false;

@@ -10,13 +10,14 @@ import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.hc.core5.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.http.HttpNotificationDispatcherVerticle;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpClient;
@@ -138,19 +139,20 @@ public class RdfStoreVerticle extends AbstractVerticle {
       // TODO: seems like legacy integration from Simon Bienz, to be reviewed
       IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
       if (entityGraph.contains(null, subscribesIri, null)) {
-//        System.out.println("Crawler subscription link found!");
+        System.out.println("Crawler subscription link found!");
         subscribeCrawler(entityGraph);
       }
       
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
-
-      vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
-          new EventBusMessage(EventBusMessage.MessageType.ENTITY_CREATED_NOTIFICATION)
-            .setHeader(EventBusMessage.Headers.REQUEST_IRI, entityIRIString)
-            .setPayload(entityGraphStr)
-            .toJson()
-        );
+      
+      DeliveryOptions options = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+              .ENTITY_CREATED_NOTIFICATION)
+          .addHeader(HttpEntityHandler.REQUEST_URI, entityIRIString);
+      
+      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
+          options);
     }
   }
 
@@ -176,12 +178,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
 
-          vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
-              new EventBusMessage(EventBusMessage.MessageType.ENTITY_CHANGED_NOTIFICATION)
-                .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestIRI.getIRIString())
-                .setPayload(entityGraphStr)
-                .toJson()
-            );
+          DeliveryOptions options = new DeliveryOptions()
+              .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+                  .ENTITY_CHANGED_NOTIFICATION)
+              .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+          
+          vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
+              options);
         } else {
           replyFailed(message);
         }
@@ -200,12 +203,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
       store.deleteEntityGraph(requestIRI);
       replyWithPayload(message, entityGraphStr);
 
-      vertx.eventBus().publish(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS,
-          new EventBusMessage(EventBusMessage.MessageType.ENTITY_DELETED_NOTIFICATION)
-            .setHeader(EventBusMessage.Headers.REQUEST_IRI, requestIRI.getIRIString())
-            .setPayload(entityGraphStr)
-            .toJson()
-        );
+      DeliveryOptions options = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationDispatcherVerticle
+              .ENTITY_DELETED_NOTIFICATION)
+          .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+      
+      vertx.eventBus().send(EventBusRegistry.NOTIFICATION_DISPATCHER_BUS_ADDRESS, entityGraphStr, 
+          options);
     } else {
       replyEntityNotFound(message);
     }
