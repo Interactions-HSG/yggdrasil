@@ -10,7 +10,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.core.SubscriberRegistry;
@@ -51,7 +50,7 @@ public class HttpEntityHandler {
 
   public HttpEntityHandler() {
     vertx = Vertx.currentContext().owner();
-
+    
     JsonObject httpConfig = Vertx.currentContext().config().getJsonObject("http-config");
 
     if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
@@ -94,14 +93,11 @@ public class HttpEntityHandler {
       // Send request to CArtAgO verticle to instantiate the artifact.
       DeliveryOptions options = new DeliveryOptions()
           .addHeader(CartagoVerticle.AGENT_ID, agentUri)
-          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass);
+          .addHeader(REQUEST_METHOD, CartagoVerticle.INSTANTIATE_ARTIFACT)
+          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass)
+          .addHeader(ENTITY_URI_HINT, slug);
       
-      EventBusMessage cartagoRequest = new EventBusMessage(EventBusMessage.MessageType.INSTANTIATE_ARTIFACT)
-          // TODO: the entity IRI should be decided before performing the CArtAgO operation
-          .setHeader(EventBusMessage.Headers.ENTITY_IRI_HINT, slug)
-          .setPayload(entityRepresentation);
-      
-      vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoRequest.toJson(), options,
+      vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, entityRepresentation, options,
           response -> {
               if (response.succeeded()) {
                 String artifactDescrption = (String) response.result().body();
@@ -145,14 +141,14 @@ public class HttpEntityHandler {
               
               DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentUri)
+                  .addHeader(REQUEST_METHOD, CartagoVerticle.PERFORM_ACTION)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
               
-              EventBusMessage cartagoMessage = new EventBusMessage(EventBusMessage.MessageType
-                    .DO_ACTION);
-              
               Optional<ActionAffordance> affordance = td.getActions().stream().filter(action -> 
                   action.getTitle().get().compareTo(actionName) == 0).findFirst();
+              
+              String serializedPayload = null;
               
               if (affordance.isPresent()) {
                 Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
@@ -161,13 +157,12 @@ public class HttpEntityHandler {
                   JsonElement payload = JsonParser.parseString(entityRepresentation);
                   List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
                   
-                  String serializedPayload = CartagoDataBundle.toJson(params);
-                  cartagoMessage.setPayload(serializedPayload);
+                  serializedPayload = CartagoDataBundle.toJson(params);
                 }
               }
               
               LOGGER.info("Sending message to CArtAgO verticle!");
-              vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, cartagoMessage.toJson(), 
+              vertx.eventBus().send(EventBusRegistry.CARTAGO_BUS_ADDRESS, serializedPayload, 
                   cartagoOptions);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
             }

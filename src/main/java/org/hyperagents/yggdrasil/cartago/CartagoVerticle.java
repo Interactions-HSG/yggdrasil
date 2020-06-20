@@ -6,11 +6,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.EventBusMessage;
 import org.hyperagents.yggdrasil.core.EventBusRegistry;
 import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
-
-import com.google.gson.Gson;
+import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
 import cartago.AgentIdCredential;
 import cartago.ArtifactId;
@@ -25,6 +23,9 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 public class CartagoVerticle extends AbstractVerticle {
+  public static final String INSTANTIATE_ARTIFACT = "headers.methods.instantiateArtifact";
+  public static final String PERFORM_ACTION = "headers.methods.performAction";
+  
   public static final String AGENT_ID = "headers.agentID";
   public static final String ARTIFACT_CLASS = "headers.artifactClass";
   public static final String ARTIFACT_NAME = "headers.artifactName";
@@ -51,19 +52,20 @@ public class CartagoVerticle extends AbstractVerticle {
   }
   
   private void handleCartagoRequest(Message<String> message) {
-    EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
+//    EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
     
     String agentUri = message.headers().get(AGENT_ID);
-    
     if (agentUri == null) {
       message.fail(HttpStatus.SC_BAD_REQUEST, "Agent WebID is missing.");
       return;
     }
     
-    switch (request.getMessageType()) {
+    String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
+    
+    switch (requestMethod) {
       case INSTANTIATE_ARTIFACT:
         String artifactClass = message.headers().get(ARTIFACT_CLASS);
-        String artifactName = request.getHeader(EventBusMessage.Headers.ENTITY_IRI_HINT).get();
+        String artifactName = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
         
         instantiateArtifact(agentUri, artifactClass, artifactName);
         
@@ -74,11 +76,15 @@ public class CartagoVerticle extends AbstractVerticle {
         
         message.reply(artifactDescription);
         break;
-      case DO_ACTION:
+      case PERFORM_ACTION:
         String artifact = message.headers().get(ARTIFACT_NAME);
         String action = message.headers().get(ACTION_NAME);
-        doAction(agentUri, artifact, action, request.getPayload());
-        message.reply(EventBusMessage.ReplyStatus.SUCCEEDED);
+        
+        Optional<String> payload = message.body() == null ? Optional.empty() 
+            : Optional.of(message.body());
+        
+        doAction(agentUri, artifact, action, payload);
+        message.reply(HttpStatus.SC_OK);
         break;
       default:
         // TODO

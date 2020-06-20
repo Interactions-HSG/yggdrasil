@@ -191,7 +191,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleDeleteEntity(IRI requestIRI, Message<String> message) throws IllegalArgumentException, IOException {
+  private void handleDeleteEntity(IRI requestIRI, Message<String> message) 
+      throws IllegalArgumentException, IOException {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
 
     if (result.isPresent() && result.get().size() > 0) {
@@ -211,21 +212,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private void replyWithPayload(Message<String> message, String payload) {
-//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.SUCCEEDED.name())
-//        .setPayload(payload);
     message.reply(payload);
   }
 
   private void replyFailed(Message<String> message) {
-//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.FAILED.name());
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Store request failed.");
   }
   
   private void replyEntityNotFound(Message<String> message) {
-//    EventBusMessage response = new EventBusMessage(EventBusMessage.MessageType.STORE_REPLY)
-//        .setHeader(EventBusMessage.Headers.REPLY_STATUS, EventBusMessage.ReplyStatus.ENTITY_NOT_FOUND.name());
     message.fail(HttpStatus.SC_NOT_FOUND, "Entity not found.");
   }
 
