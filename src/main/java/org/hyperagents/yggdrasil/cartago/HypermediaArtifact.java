@@ -11,7 +11,9 @@ import cartago.ArtifactId;
 import cartago.CartagoException;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 
 public abstract class HypermediaArtifact extends Artifact {
   private Map<String, List<ActionAffordance>> actionAffordances = 
@@ -76,12 +78,30 @@ public abstract class HypermediaArtifact extends Artifact {
     return "http://localhost:8080/artifacts/" + getArtifactName();
   }
   
-  protected final void registerActionAffordance(String methodName, ActionAffordance action) {
-    List<ActionAffordance> actions = actionAffordances.getOrDefault(methodName, 
+  protected final void registerActionAffordance(String actionName, String relativeUri, 
+      DataSchema inputSchema) {
+    registerActionAffordance(actionName, "POST", relativeUri, inputSchema);
+  }
+  
+  protected final void registerActionAffordance(String actionName, String methodName, 
+      String relativeUri, DataSchema inputSchema) {
+    ActionAffordance action = new ActionAffordance.Builder(
+            new Form.Builder(getArtifactUri() + relativeUri)
+              .setMethodName(methodName)
+              .build())
+        .addTitle("inc")
+        .addInputSchema(inputSchema)
+        .build();
+    
+    registerActionAffordance(actionName, action);
+  }
+  
+  protected final void registerActionAffordance(String actionName, ActionAffordance action) {
+    List<ActionAffordance> actions = actionAffordances.getOrDefault(actionName, 
         new ArrayList<ActionAffordance>());
     
     actions.add(action);
-    actionAffordances.put(methodName, actions);
+    actionAffordances.put(actionName, actions);
   }
   
   Map<String, List<ActionAffordance>> getActionAffordances() {
