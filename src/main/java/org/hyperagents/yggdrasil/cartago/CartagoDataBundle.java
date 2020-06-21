@@ -1,12 +1,12 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import io.vertx.core.json.Json;
 
 /**
  * A class for serializing and deserializing CArtAgO datatypes to JSON. This is used for
@@ -19,12 +19,12 @@ public final class CartagoDataBundle {
 
   public static String toJson(List<Object> params) {
     List<List<Object>> typedParams = objectListToTypedList(params);
-    return new Gson().toJson(typedParams);
+    return Json.encode(typedParams);
   }
   
   public static Object[] fromJson(String representation) {
-    Type paramListType = new TypeToken<List<List<Object>>>() {}.getType();
-    List<List<Object>> typedParams = new Gson().fromJson(representation, paramListType);
+    TypeReference<List<List<Object>>> paramListType = new TypeReference<List<List<Object>>>() {};
+    List<List<Object>> typedParams = Json.decodeValue(representation, paramListType);
     return typedListToObjectList(typedParams).toArray();
   }
   

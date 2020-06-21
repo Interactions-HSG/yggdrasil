@@ -9,10 +9,10 @@ import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.apache.hc.core5.http.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
-import org.hyperagents.yggdrasil.http.HttpNotificationVerticle;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
+import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;

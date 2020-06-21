@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
 import cartago.AgentIdCredential;
@@ -24,13 +23,15 @@ import io.vertx.core.logging.LoggerFactory;
 public class CartagoVerticle extends AbstractVerticle {
   public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.cartago";
   
-  public static final String INSTANTIATE_ARTIFACT = "headers.methods.instantiateArtifact";
-  public static final String PERFORM_ACTION = "headers.methods.performAction";
+  public static final String INSTANTIATE_ARTIFACT = "org.hyperagents.yggdrasil.eventbus.headers"
+      + ".methods.instantiateArtifact";
+  public static final String PERFORM_ACTION = "org.hyperagents.yggdrasil.eventbus.headers"
+      + ".methods.performAction";
   
-  public static final String AGENT_ID = "headers.agentID";
-  public static final String ARTIFACT_CLASS = "headers.artifactClass";
-  public static final String ARTIFACT_NAME = "headers.artifactName";
-  public static final String ACTION_NAME = "headers.actionName";
+  public static final String AGENT_ID = "org.hyperagents.yggdrasil.eventbus.headers.agentID";
+  public static final String ARTIFACT_CLASS = "org.hyperagents.yggdrasil.eventbus.headers.artifactClass";
+  public static final String ARTIFACT_NAME = "org.hyperagents.yggdrasil.eventbus.headers.artifactName";
+  public static final String ACTION_NAME = "org.hyperagents.yggdrasil.eventbus.headers.actionName";
   
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
@@ -38,6 +39,7 @@ public class CartagoVerticle extends AbstractVerticle {
   
   @Override
   public void start() {
+    HypermediaArtifactRegistry.getInstance().addArtifactTemplates(config());
     
     agentContexts = new HashMap<String, CartagoContext>();
     
@@ -53,8 +55,6 @@ public class CartagoVerticle extends AbstractVerticle {
   }
   
   private void handleCartagoRequest(Message<String> message) {
-//    EventBusMessage request = (new Gson()).fromJson(message.body().toString(), EventBusMessage.class);
-    
     String agentUri = message.headers().get(AGENT_ID);
     if (agentUri == null) {
       message.fail(HttpStatus.SC_BAD_REQUEST, "Agent WebID is missing.");
@@ -72,8 +72,6 @@ public class CartagoVerticle extends AbstractVerticle {
         
         String artifactDescription = HypermediaArtifactRegistry.getInstance()
             .getArtifactDescription(artifactName);
-        
-        LOGGER.info("TD: " + artifactDescription);
         
         message.reply(artifactDescription);
         break;

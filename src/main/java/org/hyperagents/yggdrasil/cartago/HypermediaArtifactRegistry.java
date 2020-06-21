@@ -1,29 +1,22 @@
-package org.hyperagents.yggdrasil.core;
+package org.hyperagents.yggdrasil.cartago;
 
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
-
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
- * a Vert.x LocalMap, but this is more convenient for managing artifact metadata. Can be refactored 
- * using async shared maps to run over a cluster. 
+ * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster. 
  * 
  * @author Andrei Ciortea
  *
  */
 public class HypermediaArtifactRegistry {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HypermediaArtifactRegistry.class
-      .getName());
-  
   private static HypermediaArtifactRegistry registry;
   
   private final Map<String, String> artifactSemanticTypes;
@@ -45,13 +38,10 @@ public class HypermediaArtifactRegistry {
   }
   
   public void register(HypermediaArtifact artifact) {
-    String artifactName = artifact.getArtifactId().getName();
-    
-    artifactSemanticTypes.put(artifactName, artifact.getSemanticType());
-    artifactDescriptions.put(artifactName, artifact.getHypermediaDescription());
+    String artifactTemplate = artifact.getArtifactId().getName();
+    artifactDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
     
     Map<String, List<ActionAffordance>> actions = artifact.getActionAffordances();
-    LOGGER.info("Actions: #" + actions.size());
     
     for (String actionName : actions.keySet()) {
       for (ActionAffordance action : actions.get(actionName)) {
@@ -63,8 +53,26 @@ public class HypermediaArtifactRegistry {
         }
       }
     }
+  }
+  
+  public void addArtifactTemplates(JsonObject artifactTemplates) {
+    artifactTemplates.forEach(entry -> 
+        artifactSemanticTypes.put(entry.getKey(), (String) entry.getValue()));
+  }
+  
+  public Optional<String> getArtifactSemanticType(String artifactTemplate) {
+    for (String artifactType : artifactSemanticTypes.keySet()) {
+      if (artifactSemanticTypes.get(artifactType).compareTo(artifactTemplate) == 0) {
+        return Optional.of(artifactType);
+      }
+    }
     
-    LOGGER.info("Action router:" + artifactActionRouter);
+    return Optional.empty();
+  }
+  
+  public Optional<String> getArtifactTemplate(String artifactClass) {
+    String artifactTemplate = artifactSemanticTypes.get(artifactClass);
+    return artifactTemplate == null ? Optional.empty() : Optional.of(artifactTemplate);
   }
   
   public String getArtifactDescription(String artifactName) {

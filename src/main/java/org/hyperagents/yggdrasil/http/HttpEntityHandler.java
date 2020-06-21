@@ -1,18 +1,24 @@
 package org.hyperagents.yggdrasil.http;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.core.HypermediaArtifactRegistry;
-import org.hyperagents.yggdrasil.core.SubscriberRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.store.RdfStore;
+import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -37,10 +43,10 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 
 public class HttpEntityHandler {
-  public static final String REQUEST_METHOD = "headers.requestMethod";
-  public static final String REQUEST_URI = "headers.requestUri";
-  public static final String ENTITY_URI_HINT = "headers.slug";
-  public static final String CONTENT_TYPE = "headers.contentType";
+  public static final String REQUEST_METHOD = "org.hyperagents.yggdrasil.eventbus.headers.requestMethod";
+  public static final String REQUEST_URI = "org.hyperagents.yggdrasil.eventbus.headers.requestUri";
+  public static final String ENTITY_URI_HINT = "org.hyperagents.yggdrasil.eventbus.headers.slug";
+  public static final String CONTENT_TYPE = "org.hyperagents.yggdrasil.eventbus.headers.contentType";
   
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
   private Vertx vertx;
@@ -82,30 +88,46 @@ public class HttpEntityHandler {
   public void handleCreateEntity(RoutingContext routingContext) {
     String entityRepresentation = routingContext.getBodyAsString();
     String slug = routingContext.request().getHeader("Slug");
-    
     String agentUri = routingContext.request().getHeader("X-Agent-WebID");
-    String artifactClass = routingContext.request().getHeader("X-Artifact-Class");
     
-    if (artifactClass != null && !artifactClass.isEmpty() && agentUri != null 
-        && !agentUri.isEmpty()) {
+    Optional<String> artifactClass = Optional.empty();
+    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    Set<IRI> types;
+    
+    try {
+      types = new RdfPayload(RDFFormat.TURTLE, entityRepresentation, "").getSemanticTypes();
+    } catch (RDFParseException | RDFHandlerException | IOException e) {
+      e.printStackTrace();
+      routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+      return;
+    }
+    
+    for (IRI type : types) {
+      artifactClass = artifactRegistry.getArtifactTemplate(type.stringValue());
+      if (artifactClass.isPresent()) {
+        break;
+      }
+    }
+    
+    if (artifactClass.isPresent() && agentUri != null && !agentUri.isEmpty()) {
       // The client wants to instantiate a known virtual artifact. 
       // Send request to CArtAgO verticle to instantiate the artifact.
       DeliveryOptions options = new DeliveryOptions()
           .addHeader(CartagoVerticle.AGENT_ID, agentUri)
           .addHeader(REQUEST_METHOD, CartagoVerticle.INSTANTIATE_ARTIFACT)
-          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass)
+          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass.get())
           .addHeader(ENTITY_URI_HINT, slug);
       
       vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
           response -> {
               if (response.succeeded()) {
-                String artifactDescrption = (String) response.result().body();
+                String artifactDescription = (String) response.result().body();
                 
-                LOGGER.info("CArtAgO artifact created: " + artifactDescrption);
+                LOGGER.info("CArtAgO artifact created: " + artifactDescription);
                 
                 // If the CArtAgO artifact was created successfully, generate the Thing Description 
                 // and store it
-                createEntity(routingContext, artifactDescrption);
+                createEntity(routingContext, artifactDescription);
               }
             });
     } else {
@@ -128,10 +150,7 @@ public class HttpEntityHandler {
         .addHeader(REQUEST_URI, artifactIri)
         .addHeader(CONTENT_TYPE, request.getHeader(HttpHeaders.CONTENT_TYPE));
     
-    LOGGER.info("sending store request");
-    
     vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, reply -> {
-          LOGGER.info("recevied store reply");
           if (reply.succeeded()) {
               String artifactDescription = (String) reply.result().body();
               ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, 
@@ -159,7 +178,6 @@ public class HttpEntityHandler {
                 }
               }
               
-              LOGGER.info("Sending message to CArtAgO verticle!");
               vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
             }
@@ -207,7 +225,7 @@ public class HttpEntityHandler {
       
       vertx.eventBus().send(RdfStore.BUS_ADDRESS, null, options, reply -> {
             if (reply.succeeded()) {
-              SubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
+              NotificationSubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
             } else {
               ReplyException exception = ((ReplyException) reply.cause());
@@ -221,7 +239,7 @@ public class HttpEntityHandler {
           });
     }
     else if (mode.equalsIgnoreCase("unsubscribe")) {
-      SubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
+      NotificationSubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
       routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
     }
     else {

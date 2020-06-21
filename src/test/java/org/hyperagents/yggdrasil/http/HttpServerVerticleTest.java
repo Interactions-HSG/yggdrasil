@@ -22,19 +22,20 @@ import org.junit.runner.RunWith;
 
 import com.google.common.net.HttpHeaders;
 
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class HttpServerVerticleTest {
-
   private Vertx vertx;
-
+  
   @Before
   public void setUp(TestContext tc) {
     vertx = Vertx.vertx();
@@ -176,13 +177,16 @@ public class HttpServerVerticleTest {
   
   @Test
   public void testCartagoArtifact(TestContext tc) {
-    vertx.deployVerticle(CartagoVerticle.class.getName(), tc.asyncAssertSuccess());
+    // Register artifact template for this test
+    JsonObject knownArtifacts = new JsonObject()
+        .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter");
+    vertx.deployVerticle(CartagoVerticle.class.getName(), 
+        new DeploymentOptions().setWorker(true).setConfig(knownArtifacts), tc.asyncAssertSuccess());
     
     Async async = tc.async();
     HttpClient client = vertx.createHttpClient();
     
     client.post(8080, "localhost", "/artifacts/")
-        .putHeader("X-Artifact-Class", "org.hyperagents.yggdrasil.cartago.Counter")
         .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
         .putHeader("Slug", "c0")
         .putHeader("Content-Type", "text/turtle")
@@ -198,7 +202,7 @@ public class HttpServerVerticleTest {
           })
           .end("[1]");
         })
-        .end("<> a <http://w3id.org/eve#Artifact> .");
+        .end("<> a <http://w3id.org/eve#Artifact>, <http://example.org/Counter> .");
   }
   
   private void createResourceAndThen(Handler<HttpClientResponse> handler) {

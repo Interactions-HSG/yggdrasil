@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.core;
+package org.hyperagents.yggdrasil.websub;
 
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -7,24 +7,23 @@ import java.util.Set;
 
 /**
  * A singleton used to manage WebSub subscribers. An equivalent implementation can be obtained with
- * a Vert.x LocalMap, but this is more convenient for managing subscribers. Can be refactored using
- * async shared maps to run over a cluster. 
+ * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster. 
  * 
  * @author Andrei Ciortea
  *
  */
-public class SubscriberRegistry {
+public class NotificationSubscriberRegistry {
 
-  private static SubscriberRegistry registry;
+  private static NotificationSubscriberRegistry registry;
   private Map<String,Set<String>> subscriptions;
   
-  private SubscriberRegistry() {
+  private NotificationSubscriberRegistry() {
     subscriptions = new Hashtable<String,Set<String>>();
   }
   
-  public static synchronized SubscriberRegistry getInstance() {
+  public static synchronized NotificationSubscriberRegistry getInstance() {
     if (registry == null) {
-        registry = new SubscriberRegistry();
+        registry = new NotificationSubscriberRegistry();
     }
     
     return registry;

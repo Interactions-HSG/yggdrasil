@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.http;
 
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import com.google.common.net.HttpHeaders;
 

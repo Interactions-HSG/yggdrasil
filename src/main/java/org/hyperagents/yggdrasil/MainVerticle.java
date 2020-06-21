@@ -1,9 +1,9 @@
 package org.hyperagents.yggdrasil;
 
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.http.HttpNotificationVerticle;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
+import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
@@ -23,9 +23,7 @@ public class MainVerticle extends AbstractVerticle {
     vertx.deployVerticle(new HttpNotificationVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
       );
-
-    vertx.deployVerticle(new CartagoVerticle(),
-        new DeploymentOptions().setWorker(true).setConfig(config())
-      );
+    
+    vertx.deployVerticle(new CartagoVerticle(), new DeploymentOptions().setWorker(true));
   }
 }

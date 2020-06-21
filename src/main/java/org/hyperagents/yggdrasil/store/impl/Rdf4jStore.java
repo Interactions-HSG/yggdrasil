@@ -32,12 +32,9 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.hyperagents.yggdrasil.store.RdfStore;
 
 public class Rdf4jStore implements RdfStore {
-
-//  private final static Logger LOGGER = LoggerFactory.getLogger(Rdf4jStore.class.getName());
-
   private RDF4J rdfImpl;
   private Dataset dataset;
-
+  
   public Rdf4jStore() {
     Repository repository = new SailRepository(new MemoryStore());
 

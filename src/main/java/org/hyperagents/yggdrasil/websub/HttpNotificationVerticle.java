@@ -1,11 +1,11 @@
-package org.hyperagents.yggdrasil.http;
+package org.hyperagents.yggdrasil.websub;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.core.SubscriberRegistry;
+import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
 import com.google.common.net.HttpHeaders;
 
@@ -23,9 +23,12 @@ import io.vertx.core.logging.LoggerFactory;
 public class HttpNotificationVerticle extends AbstractVerticle {
   public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.dispatcher";
   
-  public static final String ENTITY_CREATED_NOTIFICATION = "methods.notifications.entityCreated";
-  public static final String ENTITY_CHANGED_NOTIFICATION = "methods.notifications.entityChanged";
-  public static final String ENTITY_DELETED_NOTIFICATION = "methods.notifications.entityDeleted";
+  public static final String ENTITY_CREATED_NOTIFICATION = "org.hyperagents.yggdrasil.eventbus"
+      + ".notifications.entityCreated";
+  public static final String ENTITY_CHANGED_NOTIFICATION = "org.hyperagents.yggdrasil.eventbus"
+      + ".notifications.entityChanged";
+  public static final String ENTITY_DELETED_NOTIFICATION = "org.hyperagents.yggdrasil.eventbus"
+      + ".notifications.entityDeleted";
   
   private final static Logger LOGGER = LoggerFactory.getLogger(
       HttpNotificationVerticle.class.getName());
@@ -50,7 +53,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
           linkHeaders.add("<" + webSubHubIRI + ">; rel=\"hub\"");
           linkHeaders.add("<" + entityIRI + ">; rel=\"self\"");
           
-          Set<String> callbacks = SubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
+          Set<String> callbacks = NotificationSubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
           
           for (String callbackIRI : callbacks) {
             HttpClientRequest httpRequest = client.postAbs(callbackIRI, reponseHandler(callbackIRI))
