@@ -52,12 +52,12 @@ public class HttpEntityHandler {
   private Vertx vertx;
   
   private String webSubHubIRI = null;
-
+  
   public HttpEntityHandler() {
     vertx = Vertx.currentContext().owner();
     
     JsonObject httpConfig = Vertx.currentContext().config().getJsonObject("http-config");
-
+    
     if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
       webSubHubIRI = httpConfig.getString("websub-hub");
     }
@@ -141,9 +141,11 @@ public class HttpEntityHandler {
     
     String agentUri = request.getHeader("X-Agent-WebID");
     String artifactName = request.params().get("artid");
-    String artifactIri = "http://localhost:8080/artifacts/" + artifactName;
-    String actionName = HypermediaArtifactRegistry.getInstance().getActionName(request.rawMethod(), 
-        request.absoluteURI());
+    
+    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    
+    String artifactIri = artifactRegistry.getHttpPrefix() + "/artifacts/" + artifactName;
+    String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
 
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
@@ -178,8 +180,15 @@ public class HttpEntityHandler {
                 }
               }
               
-              vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions);
-              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+              vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions, 
+                  cartagoReply -> {
+                    if (cartagoReply.succeeded()) {
+                      routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+                    } else {
+                      routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                          .end();
+                    }
+                  });
             }
         });
   }

@@ -21,6 +21,8 @@ public class Counter extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    registerActionAffordance("inc", "/increment", new IntegerSchema.Builder().build());
+    registerActionAffordance("inc", "/increment", new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .build());
   }
 }

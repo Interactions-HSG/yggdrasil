@@ -17,6 +17,7 @@ import cartago.Op;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
@@ -39,7 +40,16 @@ public class CartagoVerticle extends AbstractVerticle {
   
   @Override
   public void start() {
-    HypermediaArtifactRegistry.getInstance().addArtifactTemplates(config());
+    JsonObject knownArtifacts = config().getJsonObject("known-artifacts");
+    HypermediaArtifactRegistry.getInstance().addArtifactTemplates(knownArtifacts);
+    
+    JsonObject httpConfig = config().getJsonObject("http-config");
+    if (httpConfig != null) {
+      int port = httpConfig.getInteger("port", 8080);
+      String host = httpConfig.getString("host", "localhost");
+      
+      HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host + ":" + port);
+    }
     
     agentContexts = new HashMap<String, CartagoContext>();
     
@@ -82,8 +92,12 @@ public class CartagoVerticle extends AbstractVerticle {
         Optional<String> payload = message.body() == null ? Optional.empty() 
             : Optional.of(message.body());
         
-        doAction(agentUri, artifact, action, payload);
-        message.reply(HttpStatus.SC_OK);
+        try {
+          doAction(agentUri, artifact, action, payload);
+          message.reply(HttpStatus.SC_OK);
+        } catch (CartagoException e) {
+          message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
         break;
       default:
         // TODO
@@ -103,8 +117,8 @@ public class CartagoVerticle extends AbstractVerticle {
     }
   }
   
-  private void doAction(String agentUri, String artifactName, String action, 
-      Optional<String> payload) {
+  private void doAction(String agentUri, String artifactName, String action, Optional<String> payload) 
+      throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
     
     Op operation;
@@ -116,15 +130,11 @@ public class CartagoVerticle extends AbstractVerticle {
       operation = new Op(action);
     }
     
-    try {
-      LOGGER.info("Performing action " + action + " on artifact " + artifactName 
-          + " with params: " + Arrays.asList(operation.getParamValues()));
-      
-      ArtifactId artifactId = agentContext.lookupArtifact(artifactName);
-      agentContext.doAction(artifactId, operation);
-    } catch (CartagoException e) {
-      e.printStackTrace();
-    }
+    LOGGER.info("Performing action " + action + " on artifact " + artifactName 
+        + " with params: " + Arrays.asList(operation.getParamValues()));
+    
+    ArtifactId artifactId = agentContext.lookupArtifact(artifactName);
+    agentContext.doAction(artifactId, operation);
   }
   
   private CartagoContext getAgentContext(String agentUri) {

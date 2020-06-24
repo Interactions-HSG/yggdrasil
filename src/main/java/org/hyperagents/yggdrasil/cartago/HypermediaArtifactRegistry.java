@@ -19,6 +19,8 @@ import io.vertx.core.json.JsonObject;
 public class HypermediaArtifactRegistry {
   private static HypermediaArtifactRegistry registry;
   
+  private String httpPrefix = "http://localhost:8080";
+  
   private final Map<String, String> artifactSemanticTypes;
   private final Map<String, String> artifactDescriptions;
   private final Map<String, String> artifactActionRouter;
@@ -81,5 +83,13 @@ public class HypermediaArtifactRegistry {
   
   public String getActionName(String method, String requestURI) {
     return artifactActionRouter.get(method + requestURI);
+  }
+  
+  public void setHttpPrefix(String prefix) {
+    this.httpPrefix = prefix;
+  }
+  
+  public String getHttpPrefix() {
+    return this.httpPrefix;
   }
 }

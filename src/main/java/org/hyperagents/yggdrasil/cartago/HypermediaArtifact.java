@@ -14,6 +14,7 @@ import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 
 public abstract class HypermediaArtifact extends Artifact {
   private Map<String, List<ActionAffordance>> actionAffordances = 
@@ -27,6 +28,7 @@ public abstract class HypermediaArtifact extends Artifact {
    */
   public String getHypermediaDescription() {
     ThingDescription.Builder tdBuilder = new ThingDescription.Builder(getArtifactName())
+        .addSecurityScheme(new NoSecurityScheme())
         .addSemanticType("http://w3id.org/eve#Artifact")
         .addSemanticType(getSemanticType())
         .addThingURI(getArtifactUri());
@@ -74,8 +76,8 @@ public abstract class HypermediaArtifact extends Artifact {
   }
   
   protected String getArtifactUri() {
-    // TODO: do not hard code the URI
-    return "http://localhost:8080/artifacts/" + getArtifactName();
+    return HypermediaArtifactRegistry.getInstance().getHttpPrefix() + "/artifacts/" 
+        + getArtifactName();
   }
   
   protected final void registerActionAffordance(String actionName, String relativeUri, 

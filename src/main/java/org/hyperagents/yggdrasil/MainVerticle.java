@@ -7,6 +7,7 @@ import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.json.JsonObject;
 
 public class MainVerticle extends AbstractVerticle {
   
@@ -23,7 +24,15 @@ public class MainVerticle extends AbstractVerticle {
     vertx.deployVerticle(new HttpNotificationVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
       );
+
+    JsonObject knownArtifacts = new JsonObject()
+        .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter");
     
-    vertx.deployVerticle(new CartagoVerticle(), new DeploymentOptions().setWorker(true));
+    JsonObject cartagoConfig = config();
+    cartagoConfig.put("known-artifacts", knownArtifacts);
+    
+    vertx.deployVerticle(new CartagoVerticle(), 
+        new DeploymentOptions().setWorker(true).setConfig(cartagoConfig)
+      );
   }
 }

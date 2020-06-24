@@ -29,7 +29,6 @@ public class HttpServerVerticle extends AbstractVerticle {
   public static final String CONFIG_HTTP_PORT = "port";
   public static final String CONFIG_HTTP_HOST = "host";
   
-  
   @Override
   public void start() {
     HttpServer server = vertx.createHttpServer();
@@ -37,12 +36,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     String host = DEFAULT_HOST;
     int port = DEFAULT_PORT;
     JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
-
+    
     if (httpConfig != null) {
       port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
       host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
     }
-
+    
     Router router = createRouter();
     server.requestHandler(router::accept).listen(port, host);
   }
