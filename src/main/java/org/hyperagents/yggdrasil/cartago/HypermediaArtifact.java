@@ -91,7 +91,7 @@ public abstract class HypermediaArtifact extends Artifact {
             new Form.Builder(getArtifactUri() + relativeUri)
               .setMethodName(methodName)
               .build())
-        .addTitle("inc")
+        .addTitle(actionName)
         .addInputSchema(inputSchema)
         .build();
     

@@ -78,7 +78,14 @@ public class CartagoVerticle extends AbstractVerticle {
         String artifactClass = message.headers().get(ARTIFACT_CLASS);
         String artifactName = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
         
-        instantiateArtifact(agentUri, artifactClass, artifactName);
+        Object[] params = new Object[] {
+            message.headers().get("robotUri"),
+            message.headers().get("apiKey"),
+            Integer.valueOf(message.headers().get("xr")),
+            Integer.valueOf(message.headers().get("yr"))
+        };
+        
+        instantiateArtifact(agentUri, artifactClass, artifactName, params);
         
         String artifactDescription = HypermediaArtifactRegistry.getInstance()
             .getArtifactDescription(artifactName);
@@ -106,12 +113,13 @@ public class CartagoVerticle extends AbstractVerticle {
     
   }
   
-  private void instantiateArtifact(String agentUri, String artifactClass, String artifactName) {
+  private void instantiateArtifact(String agentUri, String artifactClass, String artifactName, 
+      Object[] params) {
     CartagoContext agentContext = getAgentContext(agentUri); 
     
     try {
       LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
-      agentContext.makeArtifact(artifactName, artifactClass);
+      agentContext.makeArtifact(artifactName, artifactClass, params);
     } catch (CartagoException e) {
       e.printStackTrace();
     }

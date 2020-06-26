@@ -8,7 +8,6 @@ import com.google.common.net.HttpHeaders;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
@@ -35,12 +34,12 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     String host = DEFAULT_HOST;
     int port = DEFAULT_PORT;
-    JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
+//    JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
     
-    if (httpConfig != null) {
-      port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
-      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
-    }
+//    if (httpConfig != null) {
+//      port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
+//      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
+//    }
     
     Router router = createRouter();
     server.requestHandler(router::accept).listen(port, host);

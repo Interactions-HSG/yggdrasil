@@ -26,7 +26,9 @@ public class MainVerticle extends AbstractVerticle {
       );
 
     JsonObject knownArtifacts = new JsonObject()
-        .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter");
+        .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter")
+        .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
+            + ".SpatialCalculator2D");
     
     JsonObject cartagoConfig = config();
     cartagoConfig.put("known-artifacts", knownArtifacts);

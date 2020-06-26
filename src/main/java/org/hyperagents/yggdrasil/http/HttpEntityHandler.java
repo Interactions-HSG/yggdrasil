@@ -116,7 +116,12 @@ public class HttpEntityHandler {
           .addHeader(CartagoVerticle.AGENT_ID, agentUri)
           .addHeader(REQUEST_METHOD, CartagoVerticle.INSTANTIATE_ARTIFACT)
           .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass.get())
-          .addHeader(ENTITY_URI_HINT, slug);
+          .addHeader(ENTITY_URI_HINT, slug)
+          .addHeader("robotUri", "https://raw.githubusercontent.com/Interactions-HSG/wot-td-java"
+              + "/feature/phantomx/samples/phantomXRobotArm.ttl")
+          .addHeader("apiKey", "API-key")
+          .addHeader("xr", "1")
+          .addHeader("yr", "2");
       
       vertx.eventBus().send(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
           response -> {
