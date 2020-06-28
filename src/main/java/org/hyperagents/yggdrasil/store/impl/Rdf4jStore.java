@@ -152,7 +152,7 @@ public class Rdf4jStore implements RdfStore {
     }
     return rdfImpl.asGraph(model);
   }
-
+  
   public void addEntityGraph(IRI entityIri, Graph entityGraph) {
     try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
       stream.forEach(triple -> {

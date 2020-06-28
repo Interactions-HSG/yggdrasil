@@ -10,6 +10,7 @@ import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
@@ -126,9 +127,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
       // TODO: seems like legacy integration from Simon Bienz, to be reviewed
       IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
       if (entityGraph.contains(null, subscribesIri, null)) {
-        System.out.println("Crawler subscription link found!");
+        LOGGER.info("Crawler subscription link found!");
         subscribeCrawler(entityGraph);
       }
+      
+      entityGraph = addContainmentTriples(entityIRI, entityGraph);
       
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
@@ -140,6 +143,27 @@ public class RdfStoreVerticle extends AbstractVerticle {
       
       vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
     }
+  }
+  
+  private Graph addContainmentTriples(IRI entityIRI, Graph entityGraph) {
+    if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()), 
+        store.createIRI(("http://w3id.org/eve#Artifact")))) {
+      String artifactIRI = entityIRI.getIRIString();
+      IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
+      
+      LOGGER.info("Found workspace IRI: " + workspaceIRI);
+      
+      Optional<Graph> workspaceGraph = store.getEntityGraph(workspaceIRI);
+      if (workspaceGraph.isPresent()) {
+        Graph wkspGraph = workspaceGraph.get();
+        LOGGER.info("Found workspace graph: " + wkspGraph);
+        wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        // TODO: updateEntityGraph would yield 404, to be investigated
+        store.createEntityGraph(workspaceIRI, wkspGraph);
+      }
+    }
+    
+    return entityGraph;
   }
 
   private void handlePatchEntity(IRI requestIRI, Message<String> message) 

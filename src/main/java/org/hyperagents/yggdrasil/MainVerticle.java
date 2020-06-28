@@ -24,7 +24,7 @@ public class MainVerticle extends AbstractVerticle {
     vertx.deployVerticle(new HttpNotificationVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
       );
-
+    
     JsonObject knownArtifacts = new JsonObject()
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter")
         .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
