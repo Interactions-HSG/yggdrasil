@@ -206,24 +206,34 @@ public class HttpServerVerticleTest {
     
     Async async = tc.async();
     
-    client.post(8080, "localhost", "/artifacts/")
+    client.post(8080, "localhost", "/workspaces/")
       .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
-      .putHeader("Slug", "c0")
-      .putHeader("Content-Type", "text/turtle")
-      .sendBuffer(Buffer.buffer("<> a <http://w3id.org/eve#Artifact>, <http://example.org/Counter> ."), 
-        ar -> {
-          HttpResponse<Buffer> response = ar.result();
-          tc.assertEquals(response.statusCode(), 201);
-          
-          client.post(8080, "localhost", "/artifacts/c0/increment")
+      .putHeader("Slug", "wksp1")
+      .sendBuffer(Buffer.buffer(""), wkspAR -> {
+        HttpResponse<Buffer> wkspResponse = wkspAR.result();
+        tc.assertEquals(wkspResponse .statusCode(), 201);
+        
+        client.post(8080, "localhost", "/workspaces/wksp1/artifacts/")
           .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
+          .putHeader("Slug", "c0")
           .putHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
-          .sendBuffer(Buffer.buffer("[1]"), actionAr -> {
-              HttpResponse<Buffer> actionResponse = actionAr.result();
-              tc.assertEquals(actionResponse.statusCode(), 200);
-              async.complete();
-          });
-        });
+          .sendBuffer(Buffer.buffer("{\"artifactClass\" : \"http://example.org/Counter\"}"), 
+            ar -> {
+              System.out.println("artifact created");
+              HttpResponse<Buffer> response = ar.result();
+              tc.assertEquals(response.statusCode(), 201);
+              
+              client.post(8080, "localhost", "/workspaces/wksp1/artifacts/c0/increment")
+                .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
+                .putHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
+                .sendBuffer(Buffer.buffer("[1]"), actionAr -> {
+                  System.out.println("operation executed");
+                  HttpResponse<Buffer> actionResponse = actionAr.result();
+                  tc.assertEquals(actionResponse.statusCode(), 200);
+                  async.complete();
+              });
+            });
+      });
   }
   
   private void createResourceAndThen(Handler<AsyncResult<HttpResponse<Buffer>>> handler) {

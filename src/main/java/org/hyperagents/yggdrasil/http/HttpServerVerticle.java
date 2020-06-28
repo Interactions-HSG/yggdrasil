@@ -66,16 +66,15 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
     
     router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
-//    router.post("/workspaces/").handler(handler::handleCreateEntity);
     router.post("/workspaces/").handler(handler::handleCreateWorkspace);
     router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
     
-    router.get("/artifacts/:artid").handler(handler::handleGetEntity);
-    router.post("/artifacts/").handler(handler::handleCreateEntity);
-    router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
-    router.delete("/artifacts/:artid").handler(handler::handleDeleteEntity);
-    router.route("/artifacts/:artid/*").handler(handler::handleAction);
+    router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+    router.post("/workspaces/:wkspid/artifacts/").handler(handler::handleCreateArtifact);
+    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
+    router.delete("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
+    router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
     
     //route artifact manual requests
     router.get("/manuals/:wkspid").handler(handler::handleGetEntity);

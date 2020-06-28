@@ -51,6 +51,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
       switch (requestMethod) {
         case RdfStore.GET_ENTITY:
+          LOGGER.info("received get entity");
           handleGetEntity(requestIRI, message);
           break;
         case RdfStore.CREATE_ENTITY:
@@ -81,18 +82,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleGetEntity(IRI requestIRI, Message<String> message) 
       throws IllegalArgumentException, IOException {
-    
-    RDFSyntax syntax = RDFSyntax.TURTLE;
-    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
-    
-    if (contentType != null && contentType.equals("application/ld+json")) {
-      syntax = RDFSyntax.JSONLD;
-    }
-    
     Optional<Graph> result = store.getEntityGraph(requestIRI);
     
     if (result.isPresent() && result.get().size() > 0) {
-      replyWithPayload(message, store.graphToString(result.get(), syntax));
+      replyWithPayload(message, store.graphToString(result.get(), RDFSyntax.TURTLE));
     } else {
       replyEntityNotFound(message);
     }
@@ -223,7 +216,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     if (!requestIRI.endsWith("/")) {
       requestIRI = requestIRI.concat("/");
     }
-
+    
     String candidateIRI;
 
     // Try to generate an IRI using the hint provided in the initial request

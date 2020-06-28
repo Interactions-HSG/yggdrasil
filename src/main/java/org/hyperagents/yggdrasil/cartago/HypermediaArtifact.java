@@ -76,8 +76,10 @@ public abstract class HypermediaArtifact extends Artifact {
   }
   
   protected String getArtifactUri() {
-    return HypermediaArtifactRegistry.getInstance().getHttpPrefix() + "/artifacts/" 
-        + getArtifactName();
+    String workspaceName = getId().getWorkspaceId().getName();
+    
+    return HypermediaArtifactRegistry.getInstance().getHttpPrefix() + "/workspaces/" + workspaceName 
+        + "/artifacts/" + getArtifactName();
   }
   
   protected final void registerActionAffordance(String actionName, String relativeUri, 

@@ -17,6 +17,7 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -51,12 +52,15 @@ public class HttpEntityHandler {
   public static final String CONTENT_TYPE = "org.hyperagents.yggdrasil.eventbus.headers.contentType";
   
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
+  
   private Vertx vertx;
+  private CartagoEntityHandler cartagoHandler;
   
   private String webSubHubIRI = null;
   
   public HttpEntityHandler(Vertx vertx) {
     this.vertx = vertx;
+    this.cartagoHandler = new CartagoEntityHandler(vertx);
     
     JsonObject httpConfig = Vertx.currentContext().config().getJsonObject("http-config");
     
@@ -67,19 +71,16 @@ public class HttpEntityHandler {
 
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
-    String contentType = routingContext.request().getHeader("Content-Type");
     
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, entityIri)
-        .addHeader(CONTENT_TYPE, contentType);
+        .addHeader(REQUEST_URI, entityIri);
     
     Map<String,List<String>> headers = new HashMap<String,List<String>>();
-
+    
     if (webSubHubIRI != null) {
-      headers.put("Link", Arrays.asList("<" + webSubHubIRI + ">; rel=\"hub\"",
-                                          "<" + entityIri + ">; rel=\"self\"")
-          );
+      headers.put("Link", Arrays.asList("<" + webSubHubIRI + ">; rel=\"hub\"", 
+          "<" + entityIri + ">; rel=\"self\""));
     }
     
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, handleStoreReply(routingContext, 
@@ -92,25 +93,40 @@ public class HttpEntityHandler {
     String agentId = context.request().getHeader("X-Agent-WebID");
     
     Promise<String> cartagoPromise = Promise.promise();
-    WorkspaceHandler wkspHandler = new WorkspaceHandler(vertx);
-    wkspHandler.createWorkspace(agentId, workspaceName, representation, cartagoPromise);
+    cartagoHandler.createWorkspace(agentId, workspaceName, representation, cartagoPromise);
     
     cartagoPromise.future().compose(result ->  {
       return Future.future(promise -> storeEntity(context, workspaceName, result, promise));
     });
   }
   
-  private void storeEntity(RoutingContext context, String workspaceName, String representation, 
+  public void handleCreateArtifact(RoutingContext context) {
+    LOGGER.info("Received create artifact request");
+    String representation = context.getBodyAsString();
+    String workspaceName = context.pathParam("wkspid");
+    String artifactName = context.request().getHeader("Slug");
+    String agentId = context.request().getHeader("X-Agent-WebID");
+    
+    Promise<String> cartagoPromise = Promise.promise();
+    cartagoHandler.createArtifact(agentId, workspaceName, artifactName, representation, 
+        cartagoPromise);
+    
+    cartagoPromise.future().compose(result ->  {
+      return Future.future(promise -> storeEntity(context, artifactName, result, promise));
+    });
+  }
+  
+  private void storeEntity(RoutingContext context, String entityName, String representation, 
       Promise<Object> promise) {
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
         .addHeader(REQUEST_URI, context.request().absoluteURI())
-        .addHeader(ENTITY_URI_HINT, workspaceName)
-        .addHeader(CONTENT_TYPE, context.request().getHeader("Content-Type"));
+        .addHeader(ENTITY_URI_HINT, entityName);
+//        .addHeader(CONTENT_TYPE, context.request().getHeader("Content-Type"));
     
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
       if (result.succeeded()) {
-        context.response().setStatusCode(HttpStatus.SC_CREATED).end();
+        context.response().setStatusCode(HttpStatus.SC_CREATED).end(representation);
         promise.complete();
       } else {
         context.response().setStatusCode(HttpStatus.SC_CREATED).end();
@@ -152,11 +168,6 @@ public class HttpEntityHandler {
           .addHeader(REQUEST_METHOD, CartagoVerticle.CREATE_ARTIFACT)
           .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass.get())
           .addHeader(ENTITY_URI_HINT, slug);
-//          .addHeader("robotUri", "https://raw.githubusercontent.com/Interactions-HSG/wot-td-java"
-//              + "/feature/phantomx/samples/phantomXRobotArm.ttl")
-//          .addHeader("apiKey", "API-key")
-//          .addHeader("xr", "1")
-//          .addHeader("yr", "2");
       
       vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
           response -> {
@@ -175,18 +186,20 @@ public class HttpEntityHandler {
     }
   }
   
-  public void handleAction(RoutingContext routingContext) {
-    HttpServerRequest request = routingContext.request();
-    String entityRepresentation = routingContext.getBodyAsString();
+  public void handleAction(RoutingContext context) {
+    String entityRepresentation = context.getBodyAsString();
+    String workspaceName = context.pathParam("wkspid");
+    String artifactName = context.pathParam("artid");
     
+    HttpServerRequest request = context.request();
     String agentUri = request.getHeader("X-Agent-WebID");
-    String artifactName = request.params().get("artid");
     
     HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
     
-    String artifactIri = artifactRegistry.getHttpPrefix() + "/artifacts/" + artifactName;
+    String artifactIri = artifactRegistry.getHttpPrefix() + "/workspaces/" + workspaceName 
+        + "/artifacts/" + artifactName;
     String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
-
+    
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
         .addHeader(REQUEST_URI, artifactIri)
@@ -201,6 +214,7 @@ public class HttpEntityHandler {
               DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentUri)
                   .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
+                  .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
               
@@ -223,9 +237,9 @@ public class HttpEntityHandler {
               vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions, 
                   cartagoReply -> {
                     if (cartagoReply.succeeded()) {
-                      routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+                      context.response().setStatusCode(HttpStatus.SC_OK).end();
                     } else {
-                      routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                           .end();
                     }
                   });
@@ -360,6 +374,8 @@ public class HttpEntityHandler {
         }
       } else {
         ReplyException exception = ((ReplyException) reply.cause());
+        
+        LOGGER.info(exception.getMessage());
         
         if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
           routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
