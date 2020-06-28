@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -58,8 +59,14 @@ public class HypermediaArtifactRegistry {
   }
   
   public void addArtifactTemplates(JsonObject artifactTemplates) {
-    artifactTemplates.forEach(entry -> 
-        artifactSemanticTypes.put(entry.getKey(), (String) entry.getValue()));
+    if (artifactTemplates != null) {
+      artifactTemplates.forEach(entry -> 
+          artifactSemanticTypes.put(entry.getKey(), (String) entry.getValue()));
+    }
+  }
+  
+  public Set<String> getArtifactTemplates() {
+    return artifactSemanticTypes.keySet();
   }
   
   public Optional<String> getArtifactSemanticType(String artifactTemplate) {

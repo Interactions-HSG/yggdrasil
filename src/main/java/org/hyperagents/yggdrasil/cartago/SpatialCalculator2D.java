@@ -55,7 +55,8 @@ public class SpatialCalculator2D extends HypermediaArtifact {
           .setObjectPayload((ObjectSchema) action.getInputSchema().get(), payload)
           .execute();
       
-      if (response.getStatusCode() != 200 && response.getStatusCode() != 202) {
+      // Match any 2XX status code
+      if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
         failed("Robot request failed with status code: " + response.getStatusCode());
       }
     } catch (IOException | NoSuchElementException e) {
@@ -69,9 +70,9 @@ public class SpatialCalculator2D extends HypermediaArtifact {
     return dist * (360.0-degrees);
   }
   
-  //computes the degrees of clock-wise rotation for transfering an axis from the line L{R(xr,yr),P1(0,y)} to the line L{R(xr,yr) and P2(x,y)}
+  //computes the degrees of clock-wise rotation for transfering an axis from the line 
+  // L{R(xr,yr),P1(0,y)} to the line L{R(xr,yr) and P2(x,y)}
   double angularDisplacement(int x, int y){
-//    double distance = distance(x, y, xr, yr);
     double rad = Math.atan2((y - yr), (x - xr));
     double deg = rad * (180.0 / Math.PI);
     

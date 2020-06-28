@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.vertx.core.json.Json;
+import io.vertx.core.json.jackson.JacksonCodec;
 
 /**
  * A class for serializing and deserializing CArtAgO datatypes to JSON. This is used for
@@ -24,7 +25,7 @@ public final class CartagoDataBundle {
   
   public static Object[] fromJson(String representation) {
     TypeReference<List<List<Object>>> paramListType = new TypeReference<List<List<Object>>>() {};
-    List<List<Object>> typedParams = Json.decodeValue(representation, paramListType);
+    List<List<Object>> typedParams = JacksonCodec.decodeValue(representation, paramListType);
     return typedListToObjectList(typedParams).toArray();
   }
   

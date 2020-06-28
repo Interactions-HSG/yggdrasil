@@ -8,18 +8,17 @@ import com.google.common.net.HttpHeaders;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
-
 
 /** 
  * This verticle exposes an HTTP/1.1 interface for Yggdrasil. All requests are forwarded to a 
  * corresponding handler.
  */
 public class HttpServerVerticle extends AbstractVerticle {
-
   public static final String DEFAULT_HOST = "0.0.0.0";
   public static final int DEFAULT_PORT = 8080;
   
@@ -32,19 +31,19 @@ public class HttpServerVerticle extends AbstractVerticle {
   public void start() {
     HttpServer server = vertx.createHttpServer();
 
-    String host = DEFAULT_HOST;
     int port = DEFAULT_PORT;
-//    JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
+    String host = DEFAULT_HOST;
+    JsonObject httpConfig = config().getJsonObject(CONFIG_HTTP);
     
-//    if (httpConfig != null) {
-//      port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
+    if (httpConfig != null) {
+      port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
 //      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
-//    }
+    }
     
     Router router = createRouter();
-    server.requestHandler(router::accept).listen(port, host);
+    server.requestHandler(router).listen(port, host);
   }
-
+  
   /**
    * The HTTP API is defined here when creating the router.
    */
@@ -58,19 +57,20 @@ public class HttpServerVerticle extends AbstractVerticle {
         .setStatusCode(HttpStatus.SC_OK)
         .end("Yggdrasil v0.0");
     });
-
-    HttpEntityHandler handler = new HttpEntityHandler();
-
+    
+    HttpEntityHandler handler = new HttpEntityHandler(vertx);
+    
     router.get("/environments/:envid").handler(handler::handleGetEntity);
     router.post("/environments/").handler(handler::handleCreateEntity);
     router.put("/environments/:envid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
-
+    
     router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
-    router.post("/workspaces/").handler(handler::handleCreateEntity);
+//    router.post("/workspaces/").handler(handler::handleCreateEntity);
+    router.post("/workspaces/").handler(handler::handleCreateWorkspace);
     router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
-
+    
     router.get("/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/artifacts/").handler(handler::handleCreateEntity);
     router.put("/artifacts/:artid").handler(handler::handleUpdateEntity);
@@ -94,7 +94,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
       DeliveryOptions options = new DeliveryOptions()
           .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-              .ENTITY_CHANGED_NOTIFICATION)
+              .ENTITY_CHANGED)
           .addHeader(HttpEntityHandler.REQUEST_URI, artifactIRI);
       
       vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, 

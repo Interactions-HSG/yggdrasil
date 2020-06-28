@@ -15,14 +15,13 @@ import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.client.WebClient;
 
 /*
  * Stores the RDF graphs representing the instantiated artifacts
@@ -33,16 +32,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private RdfStore store;
   private RDF4J rdf = new RDF4J();
-  private HttpClient httpClient;
+  private WebClient client;
 
   @Override
   public void start() {
     store = RdfStoreFactory.createStore(config().getString("store"));
-
-    httpClient = vertx.createHttpClient();
+    client = WebClient.create(vertx);
 
     EventBus eventBus = vertx.eventBus();
-
     eventBus.consumer(RdfStore.BUS_ADDRESS, this::handleEntityRequest);
   }
 
@@ -145,7 +142,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       
       DeliveryOptions options = new DeliveryOptions()
           .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-              .ENTITY_CREATED_NOTIFICATION)
+              .ENTITY_CREATED)
           .addHeader(HttpEntityHandler.REQUEST_URI, entityIRIString);
       
       vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
@@ -176,7 +173,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
           DeliveryOptions options = new DeliveryOptions()
               .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-                  .ENTITY_CHANGED_NOTIFICATION)
+                  .ENTITY_CHANGED)
               .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
           
           vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, 
@@ -201,7 +198,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       DeliveryOptions options = new DeliveryOptions()
           .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-              .ENTITY_DELETED_NOTIFICATION)
+              .ENTITY_DELETED)
           .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
       
       vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
@@ -249,15 +246,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
     IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");
     for (Triple t : entityGraph.iterate(null, subscribesIri, null)) {
       String crawlerUrl = t.getObject().toString();
-      System.out.println(crawlerUrl);
+      LOGGER.info(crawlerUrl);
+      
       String id = t.getSubject().toString();
-      httpClient.postAbs(crawlerUrl, new Handler<HttpClientResponse>() {
-
-        @Override
-        public void handle(HttpClientResponse httpClientResponse) {
-          System.out.println("Registered at crawler: " + crawlerUrl);
-        }
-      }).end(id);
+      client.postAbs(crawlerUrl).sendBuffer(Buffer.buffer(id), response -> {
+        LOGGER.info("Registered at crawler: " + crawlerUrl);
+      });
     }
   }
 }

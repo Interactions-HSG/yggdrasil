@@ -17,7 +17,7 @@ version = '0.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 mainClassName = 'io.vertx.core.Launcher'
 
-def vertxVersion = '3.5.1'
+def vertxVersion = '3.9.0'
 def mainVerticleName = 'org.hyperagents.yggdrasil.MainVerticle'
 def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
