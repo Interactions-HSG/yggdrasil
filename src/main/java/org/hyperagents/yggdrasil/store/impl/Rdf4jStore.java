@@ -24,6 +24,7 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
@@ -84,17 +85,21 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
+    
     RDFWriter writer;
 
-    if (syntax.equals(RDFSyntax.JSONLD)) {
+    if (syntax.equals(RDFSyntax.TURTLE)) {
+      writer = Rio.createWriter(RDFFormat.TURTLE, out);
+    } else if (syntax.equals(RDFSyntax.JSONLD)) {
       writer = Rio.createWriter(RDFFormat.JSONLD, out);
       writer.getWriterConfig().set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
       writer.getWriterConfig().set(JSONLDSettings.USE_NATIVE_TYPES, true);
       writer.getWriterConfig().set(JSONLDSettings.OPTIMIZE, true);
     } else {
-      writer = Rio.createWriter(RDFFormat.TURTLE, out);
+      throw new IllegalArgumentException("Unsupported RDF serialization format.");
     }
-    writer.getWriterConfig()//.set(BasicWriterSettings.INLINE_BLANK_NODES, true)
+    
+    writer.getWriterConfig()
       .set(BasicWriterSettings.PRETTY_PRINT, true)
       .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
       .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
@@ -103,6 +108,16 @@ public class Rdf4jStore implements RdfStore {
     if (graph instanceof RDF4JGraph) {
       try {
         writer.startRDF();
+        
+        writer.handleNamespace("eve", "http://w3id.org/eve#");
+        writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
+        writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
+        writer.handleNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#");
+        writer.handleNamespace("wotsec", "https://www.w3.org/2019/wot/security#");
+        writer.handleNamespace("dct", "http://purl.org/dc/terms/");
+        writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
+        writer.handleNamespace("saref", "https://w3id.org/saref#");
+        
         try (Stream<RDF4JTriple> stream = ((RDF4JGraph) graph).stream()) {
           stream.forEach(triple -> {
             writer.handleStatement(triple.asStatement());
