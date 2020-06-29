@@ -37,7 +37,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     
     if (httpConfig != null) {
       port = httpConfig.getInteger(CONFIG_HTTP_PORT, DEFAULT_PORT);
-//      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
+      host = httpConfig.getString(CONFIG_HTTP_HOST, DEFAULT_HOST);
     }
     
     Router router = createRouter();

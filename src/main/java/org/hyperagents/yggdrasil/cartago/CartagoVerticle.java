@@ -62,10 +62,14 @@ public class CartagoVerticle extends AbstractVerticle {
     
     JsonObject httpConfig = config().getJsonObject("http-config");
     if (httpConfig != null) {
-      int port = httpConfig.getInteger("port", 8080);
-      String host = httpConfig.getString("host", "localhost");
+      String host = httpConfig.getString("virtual-host", "localhost");
+      Integer port = httpConfig.getInteger("virtual-host-port");
       
-      HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host + ":" + port);
+      if (port == null) {
+        HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host);
+      } else {
+        HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host + ":" + port);
+      }
     }
     
     agentContexts = new HashMap<String, CartagoContext>();
