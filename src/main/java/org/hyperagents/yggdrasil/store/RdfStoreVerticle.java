@@ -106,7 +106,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     Graph entityGraph;
     
     String slug = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
-    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
+//    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
     String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
     
     IRI entityIRI = store.createIRI(entityIRIString);
@@ -117,12 +117,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
       // Replace all null relative IRIs with the IRI generated for this entity
       String entityGraphStr = message.body();
 
-      if (contentType != null && contentType.equals("application/ld+json")) {
-        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
-      } else {
+//      if (contentType != null && contentType.equals("application/ld+json")) {
+//        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
+//      } else {
         entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
         entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.TURTLE);
-      }
+//      }
       
       // TODO: seems like legacy integration from Simon Bienz, to be reviewed
       IRI subscribesIri = rdf.createIRI("http://w3id.org/eve#subscribes");

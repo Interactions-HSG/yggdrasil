@@ -1,19 +1,13 @@
 package org.hyperagents.yggdrasil.http;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.RDFParseException;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
@@ -96,6 +90,7 @@ public class HttpEntityHandler {
     
     ThingDescription td = new ThingDescription.Builder(envName)
         .addThingURI(envURI)
+        .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
         .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
             .addSemanticType("http://w3id.org/eve#MakeWorkspace")
             .build())
@@ -157,52 +152,52 @@ public class HttpEntityHandler {
   // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
     String entityRepresentation = routingContext.getBodyAsString();
-    String slug = routingContext.request().getHeader("Slug");
-    String agentUri = routingContext.request().getHeader("X-Agent-WebID");
+//    String slug = routingContext.request().getHeader("Slug");
+//    String agentUri = routingContext.request().getHeader("X-Agent-WebID");
     
-    Optional<String> artifactClass = Optional.empty();
-    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
-    Set<IRI> types;
+//    Optional<String> artifactClass = Optional.empty();
+//    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+//    Set<IRI> types;
     
-    try {
-      types = new RdfPayload(RDFFormat.TURTLE, entityRepresentation, "").getSemanticTypes();
-    } catch (RDFParseException | RDFHandlerException | IOException e) {
-      e.printStackTrace();
-      routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
-      return;
-    }
+//    try {
+//      types = new RdfPayload(RDFFormat.TURTLE, entityRepresentation, "").getSemanticTypes();
+//    } catch (RDFParseException | RDFHandlerException | IOException e) {
+//      e.printStackTrace();
+//      routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+//      return;
+//    }
+//    
+//    for (IRI type : types) {
+//      artifactClass = artifactRegistry.getArtifactTemplate(type.stringValue());
+//      if (artifactClass.isPresent()) {
+//        break;
+//      }
+//    }
     
-    for (IRI type : types) {
-      artifactClass = artifactRegistry.getArtifactTemplate(type.stringValue());
-      if (artifactClass.isPresent()) {
-        break;
-      }
-    }
-    
-    if (artifactClass.isPresent() && agentUri != null && !agentUri.isEmpty()) {
-      // The client wants to instantiate a known virtual artifact. 
-      // Send request to CArtAgO verticle to instantiate the artifact.
-      DeliveryOptions options = new DeliveryOptions()
-          .addHeader(CartagoVerticle.AGENT_ID, agentUri)
-          .addHeader(REQUEST_METHOD, CartagoVerticle.CREATE_ARTIFACT)
-          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass.get())
-          .addHeader(ENTITY_URI_HINT, slug);
-      
-      vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
-          response -> {
-              if (response.succeeded()) {
-                String artifactDescription = (String) response.result().body();
-                
-                LOGGER.info("CArtAgO artifact created: " + artifactDescription);
-                
-                // If the CArtAgO artifact was created successfully, generate the Thing Description 
-                // and store it
-                createEntity(routingContext, artifactDescription);
-              }
-            });
-    } else {
+//    if (artifactClass.isPresent() && agentUri != null && !agentUri.isEmpty()) {
+//      // The client wants to instantiate a known virtual artifact. 
+//      // Send request to CArtAgO verticle to instantiate the artifact.
+//      DeliveryOptions options = new DeliveryOptions()
+//          .addHeader(CartagoVerticle.AGENT_ID, agentUri)
+//          .addHeader(REQUEST_METHOD, CartagoVerticle.CREATE_ARTIFACT)
+//          .addHeader(CartagoVerticle.ARTIFACT_CLASS, artifactClass.get())
+//          .addHeader(ENTITY_URI_HINT, slug);
+//      
+//      vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, entityRepresentation, options,
+//          response -> {
+//              if (response.succeeded()) {
+//                String artifactDescription = (String) response.result().body();
+//                
+//                LOGGER.info("CArtAgO artifact created: " + artifactDescription);
+//                
+//                // If the CArtAgO artifact was created successfully, generate the Thing Description 
+//                // and store it
+//                createEntity(routingContext, artifactDescription);
+//              }
+//            });
+//    } else {
       createEntity(routingContext, entityRepresentation);
-    }
+//    }
   }
   
   public void handleAction(RoutingContext context) {
@@ -331,13 +326,13 @@ public class HttpEntityHandler {
   private void createEntity(RoutingContext context, String representation) {
     String entityIri = context.request().absoluteURI();
     String slug = context.request().getHeader("Slug");
-    String contentType = context.request().getHeader("Content-Type");
+//    String contentType = context.request().getHeader("Content-Type");
     
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
         .addHeader(REQUEST_URI, entityIri)
-        .addHeader(ENTITY_URI_HINT, slug)
-        .addHeader(CONTENT_TYPE, contentType);
+        .addHeader(ENTITY_URI_HINT, slug);
+//        .addHeader(CONTENT_TYPE, contentType);
     
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, handleStoreReply(context, 
         HttpStatus.SC_CREATED));
