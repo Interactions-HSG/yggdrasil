@@ -43,7 +43,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(RdfStore.BUS_ADDRESS, this::handleEntityRequest);
   }
-
+  
   private void handleEntityRequest(Message<String> message) {
     try {
       String requestIRIString = message.headers().get(HttpEntityHandler.REQUEST_URI);
@@ -146,6 +146,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
   
   private Graph addContainmentTriples(IRI entityIRI, Graph entityGraph) {
+    LOGGER.info("Looking for containment triples for: " + entityIRI.getIRIString());
+    
     if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()), 
         store.createIRI(("http://w3id.org/eve#Artifact")))) {
       String artifactIRI = entityIRI.getIRIString();
@@ -160,6 +162,21 @@ public class RdfStoreVerticle extends AbstractVerticle {
         wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(workspaceIRI, wkspGraph);
+      }
+    } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()), 
+        store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
+      String workspaceIRI = entityIRI.getIRIString();
+      IRI envIRI = store.createIRI(workspaceIRI.substring(0, workspaceIRI.indexOf("/workspaces")));
+      
+      LOGGER.info("Found env IRI: " + workspaceIRI);
+      
+      Optional<Graph> envGraph = store.getEntityGraph(envIRI);
+      if (envGraph.isPresent()) {
+        Graph graph = envGraph.get();
+        LOGGER.info("Found env graph: " + graph);
+        graph.add(envIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        // TODO: updateEntityGraph would yield 404, to be investigated
+        store.createEntityGraph(envIRI, graph);
       }
     }
     

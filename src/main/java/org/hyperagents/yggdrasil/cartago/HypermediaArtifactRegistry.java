@@ -22,11 +22,13 @@ public class HypermediaArtifactRegistry {
   
   private String httpPrefix = "http://localhost:8080";
   
+  private final Map<String, String> workspaceEnvironmentMap;
   private final Map<String, String> artifactSemanticTypes;
   private final Map<String, String> artifactDescriptions;
   private final Map<String, String> artifactActionRouter;
   
   private HypermediaArtifactRegistry() {
+    workspaceEnvironmentMap = new Hashtable<String, String>();
     artifactSemanticTypes = new Hashtable<String, String>();
     artifactDescriptions = new Hashtable<String, String>();
     artifactActionRouter = new Hashtable<String, String>();
@@ -56,6 +58,15 @@ public class HypermediaArtifactRegistry {
         }
       }
     }
+  }
+  
+  public void addWorkspace(String envName, String wkspName) {
+    workspaceEnvironmentMap.put(wkspName, envName);
+  }
+  
+  public Optional<String> getEnvironmentForWorkspace(String wkspName) {
+    String envName = workspaceEnvironmentMap.get(wkspName);
+    return envName == null ? Optional.empty() : Optional.of(envName);
   }
   
   public void addArtifactTemplates(JsonObject artifactTemplates) {
@@ -98,5 +109,23 @@ public class HypermediaArtifactRegistry {
   
   public String getHttpPrefix() {
     return this.httpPrefix;
+  }
+  
+  public String getHttpEnvironmentsPrefix() {
+    return getHttpPrefix() + "/environments/";
+  }
+  
+  public String getHttpWorkspacesPrefix(String envId) {
+    return getHttpEnvironmentsPrefix() + envId + "/workspaces/";
+  }
+  
+  public String getHttpArtifactsPrefix(String wkspName) {
+    Optional<String> envId = this.getEnvironmentForWorkspace(wkspName);
+    
+    if (envId.isPresent()) {
+      return getHttpWorkspacesPrefix(envId.get()) + wkspName + "/artifacts/";
+    }
+    
+    throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
   }
 }

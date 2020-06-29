@@ -45,6 +45,7 @@ public class CartagoVerticle extends AbstractVerticle {
   
   public static final String AGENT_ID = "org.hyperagents.yggdrasil.eventbus.headers.agentID";
   public static final String ARTIFACT_CLASS = "org.hyperagents.yggdrasil.eventbus.headers.artifactClass";
+  public static final String ENV_NAME = "org.hyperagents.yggdrasil.eventbus.headers.envName";
   public static final String WORKSPACE_NAME = "org.hyperagents.yggdrasil.eventbus.headers.workspaceName";
   public static final String ARTIFACT_NAME = "org.hyperagents.yggdrasil.eventbus.headers.artifactName";
   public static final String ACTION_NAME = "org.hyperagents.yggdrasil.eventbus.headers.actionName";
@@ -99,7 +100,8 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       switch (requestMethod) {
         case CREATE_WORKSPACE:
-          String workspaceDescription = instatiateWorkspace(agentUri, workspaceName);
+          String envName = message.headers().get(ENV_NAME);
+          String workspaceDescription = instatiateWorkspace(agentUri, envName, workspaceName);
           message.reply(workspaceDescription);
           break;
         case CREATE_ARTIFACT:
@@ -142,13 +144,14 @@ public class CartagoVerticle extends AbstractVerticle {
     
   }
   
-  private String instatiateWorkspace(String agentUri, String workspaceName) throws ActionFailedException, 
-      CartagoException {
+  private String instatiateWorkspace(String agentUri, String envName, String workspaceName) 
+      throws ActionFailedException, CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
     LOGGER.info("Creating workspace " + workspaceName);
     agentContext.doAction(new Op("createWorkspace", workspaceName));
     
-    String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpPrefix() + "/workspaces/" 
+    // TODO: handle env IRIs
+    String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName) 
         + workspaceName;
     
     ThingDescription td = new ThingDescription.Builder(workspaceName)

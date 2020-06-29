@@ -24,10 +24,11 @@ public class CartagoEntityHandler {
    * @param representation representation of the workspace to be created
    * @param result a promise with the result of the create workspace operation
    */
-  public void createWorkspace(String agentId, String workspaceName, String representation, 
-      Promise<String> result) {
+  public void createWorkspace(String agentId, String envName, String workspaceName, 
+      String representation, Promise<String> result) {
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE);
+        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
+        .addHeader(CartagoVerticle.ENV_NAME, envName);
     
     sendCartagoMessage(representation, options, result);
   }

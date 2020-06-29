@@ -15,9 +15,9 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
+import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
-import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -27,7 +27,9 @@ import com.google.gson.JsonParser;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import io.vertx.core.AsyncResult;
@@ -87,15 +89,32 @@ public class HttpEntityHandler {
         HttpStatus.SC_OK, headers));
   }
   
+  public void handleCreateEnvironment(RoutingContext context) {
+    String envName = context.request().getHeader("Slug");
+    
+    String envURI = HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix() + envName;
+    
+    ThingDescription td = new ThingDescription.Builder(envName)
+        .addThingURI(envURI)
+        .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
+            .addSemanticType("http://w3id.org/eve#MakeWorkspace")
+            .build())
+        .build();
+    
+    createEntity(context, TDGraphWriter.write(td));
+  }
+  
   public void handleCreateWorkspace(RoutingContext context) {
     String representation = context.getBodyAsString();
+    String envName = context.pathParam("envid");
     String workspaceName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
     
     Promise<String> cartagoPromise = Promise.promise();
-    cartagoHandler.createWorkspace(agentId, workspaceName, representation, cartagoPromise);
+    cartagoHandler.createWorkspace(agentId, envName, workspaceName, representation, cartagoPromise);
     
     cartagoPromise.future().compose(result ->  {
+      HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
       return Future.future(promise -> storeEntity(context, workspaceName, result, promise));
     });
   }
@@ -188,7 +207,7 @@ public class HttpEntityHandler {
   
   public void handleAction(RoutingContext context) {
     String entityRepresentation = context.getBodyAsString();
-    String workspaceName = context.pathParam("wkspid");
+    String wkspName = context.pathParam("wkspid");
     String artifactName = context.pathParam("artid");
     
     HttpServerRequest request = context.request();
@@ -196,8 +215,7 @@ public class HttpEntityHandler {
     
     HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
     
-    String artifactIri = artifactRegistry.getHttpPrefix() + "/workspaces/" + workspaceName 
-        + "/artifacts/" + artifactName;
+    String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
     String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
     
     DeliveryOptions options = new DeliveryOptions()
@@ -214,7 +232,7 @@ public class HttpEntityHandler {
               DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentUri)
                   .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
-                  .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName)
+                  .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
               
