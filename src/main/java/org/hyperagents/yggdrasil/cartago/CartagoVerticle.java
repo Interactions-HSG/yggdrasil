@@ -1,22 +1,25 @@
 package org.hyperagents.yggdrasil.cartago;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import cartago.AgentIdCredential;
 import cartago.ArtifactId;
+import cartago.ArtifactObsProperty;
 import cartago.CartagoContext;
 import cartago.CartagoException;
 import cartago.CartagoService;
 import cartago.Op;
 import cartago.WorkspaceId;
 import cartago.util.agent.ActionFailedException;
+import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -25,6 +28,7 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.Json;
@@ -35,7 +39,7 @@ import io.vertx.core.logging.LoggerFactory;
 
 public class CartagoVerticle extends AbstractVerticle {
   public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.cartago";
-
+  
   public static final String CREATE_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".createWorkspace";
   public static final String CREATE_ARTIFACT = "org.hyperagents.yggdrasil.eventbus.headers.methods"
@@ -73,7 +77,7 @@ public class CartagoVerticle extends AbstractVerticle {
       }
     }
     
-    agentContexts = new HashMap<String, CartagoContext>();
+    agentContexts = new Hashtable<String, CartagoContext>();
     
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleCartagoRequest);
@@ -81,6 +85,34 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoService.startNode();
+      
+//      CartagoContext agentContext = new CartagoContext(new AgentIdCredential("agent-0"));
+//      CartagoService.startSession(wspName, cred, eventListener)
+      
+//      agentContext.doAction(new Op("println","Hello, world!"));
+      
+//      LOGGER.info("Creating artifact: " + SimpleCounter.class.getName() + " for agent context: " + 
+//          agentContext.getName());
+      
+//      agentContexts.put("agent-0", agentContext);
+      new CartagoPerceptFecther().start();
+//      
+//      LOGGER.info("Creating c0...");
+//      agentContext.makeArtifact("c0", SimpleCounter.class.getName());
+//      agentContext.doAction(new Op("focusWhenAvailable", "c0"));
+//      ArtifactId aId = agentContext.lookupArtifact("c0");
+//      agentContext.doAction(aId, new Op("inc", 1));
+//      agentContext.doAction(aId, new Op("inc", 1));
+//      
+//      LOGGER.info("Creating c1...");
+//      agentContext.makeArtifact("c1", SimpleCounter.class.getName());
+//      agentContext.doAction(new Op("focusWhenAvailable", "c1"));
+//      ArtifactId c1Id = agentContext.lookupArtifact("c1");
+//      agentContext.doAction(c1Id, new Op("inc", 1));
+//      agentContext.doAction(c1Id, new Op("inc", 1));
+      
+//      new CartagoPerceptFecther().start();
+      
     } catch (CartagoException e) {
       LOGGER.error(e.getMessage());
     }
@@ -150,6 +182,9 @@ public class CartagoVerticle extends AbstractVerticle {
     LOGGER.info("Creating workspace " + workspaceName);
     agentContext.doAction(new Op("createWorkspace", workspaceName));
     
+//    CartagoContext agent0 = agentContexts.get("agent-0");
+//    agent0.joinWorkspace(workspaceName);
+    
     // TODO: handle env IRIs
     String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName) 
         + workspaceName;
@@ -164,9 +199,13 @@ public class CartagoVerticle extends AbstractVerticle {
                     .addSemanticType("http://w3id.org/eve#ArtifactClass")
                     .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
                     .build())
+                .addProperty("artifactName", new StringSchema.Builder()
+                    .addSemanticType("http://w3id.org/eve#ArtifactName")
+                    .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+                    .build())
                 .addProperty("initParams", new ArraySchema.Builder()
                     .build())
-                .addRequiredProperties("artifactClass")
+                .addRequiredProperties("artifactClass", "artifactName")
                 .build())
             .build())
         .build();
@@ -188,12 +227,25 @@ public class CartagoVerticle extends AbstractVerticle {
     
     WorkspaceId wkspId = agentContext.joinWorkspace(workspaceName);
     
+//    CartagoContext agent0 = agentContexts.get("agent-0");
+//    agent0.joinWorkspace(workspaceName);
+    
     LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
     
     if (params.isPresent()) {
       agentContext.makeArtifact(wkspId, artifactName, artifactClass, params.get());
+      agentContext.doAction(new Op("focusWhenAvailable", artifactName));
+//      agent0.doAction(new Op("focusWhenAvailable", artifactName));
     } else {
+      LOGGER.info("Creating artifact...");
       agentContext.makeArtifact(wkspId, artifactName, artifactClass);
+      agentContext.doAction(new Op("focusWhenAvailable", artifactName));
+//      LOGGER.info("Done, focusing agent0 on artifact, first lookup...");
+      ArtifactId artId = agentContext.lookupArtifact(wkspId, artifactName);
+      artId.getId();
+//      LOGGER.info("Found artifact...");
+//      agent0.doAction(new Op("focus", artId));
+      LOGGER.info("Done!");
     }
   }
   
@@ -227,6 +279,72 @@ public class CartagoVerticle extends AbstractVerticle {
       return context;
     } else {
       return agentContexts.get(agentUri);
+    }
+  }
+  
+  class CartagoPerceptFecther extends Thread {
+    public void run() {
+      try {
+        while (true) {
+          for (CartagoContext context : agentContexts.values()) {
+//            CartagoContext context = agentContexts.get("agent-0");
+            Percept percept = context.fetchPercept();
+            
+            if (percept != null) {
+              LOGGER.info(printPercept(percept) + " for agent " + context.getName() + " from artifact " 
+                  + percept.getArtifactSource());
+              
+              // Signals don;t have an artifact source
+              if (percept.hasSignal() || percept.getPropChanged() == null) {
+                continue;
+              }
+              
+              ArtifactId source = percept.getArtifactSource();
+                  
+              String artifactIri = HypermediaArtifactRegistry.getInstance()
+                  .getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
+              LOGGER.info("artifactIri: " + artifactIri + ", precept: " + percept.getPropChanged()[0].toString());
+              
+              DeliveryOptions options = new DeliveryOptions()
+                  .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
+                  .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
+              
+              vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, percept.getPropChanged()[0].toString(), 
+                  options);
+              
+              LOGGER.info("message sent to notification verticle");
+            }
+          }
+          
+          sleep(100);
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    
+    private String printPercept(Percept percept) {
+      String output = "Percept: " + percept.getSignal();
+      
+      output += ", [" + printProps(percept.getAddedProperties()) + "]";
+      output += ", [" + printProps(percept.getPropChanged()) + "]";
+      output += ", [" + printProps(percept.getRemovedProperties()) + "]";
+      
+      return output;
+    }
+    
+    private String printProps(ArtifactObsProperty[] props) {
+      if (props == null) {
+        return "";
+      }
+      
+      String output = "";
+      for (ArtifactObsProperty prop : props) {
+        output += prop.toString() + ", id: " + prop.getId() + ", fullId: " + prop.getFullId() 
+            + ", annot: " + prop.getAnnots();
+      }
+      
+      return output;
     }
   }
 }

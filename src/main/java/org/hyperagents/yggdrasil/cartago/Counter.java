@@ -2,8 +2,6 @@ package org.hyperagents.yggdrasil.cartago;
 
 import cartago.OPERATION;
 import cartago.ObsProperty;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
 public class Counter extends HypermediaArtifact {
   
@@ -12,17 +10,14 @@ public class Counter extends HypermediaArtifact {
   }
   
   @OPERATION
-  public void inc(int counter) {
+  public void inc() {
     ObsProperty prop = getObsProperty("count");
-    prop.updateValue(prop.intValue()+1);
-    signal("tick", counter);
+    prop.updateValue(prop.intValue() + 1);
   }
   
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    registerActionAffordance("inc", "/increment", new ArraySchema.Builder()
-        .addItem(new IntegerSchema.Builder().build())
-        .build());
+    registerActionAffordance("http://example.org/Increment", "inc", "/increment");
   }
 }

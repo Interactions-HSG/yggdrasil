@@ -1,0 +1,29 @@
+Positive:
++ this paper introduces a semantic model for citations in scholarly articles
++ the paper is accompanied by a manually-annotated corpus of 1380 citations
++ the paper is well structured and written, the presentation is clear for the most part
+
+Negative:
+- hard to evaluate at this point what is the usefulness / impact of the provided corpus
+- parts of the paper can be presented more clearly
+
+
+This paper introduces a semantic model of citations in scholarly articles. The model builds on the state of the art to define 5 classes of citation intents, three of which include subcategories. The proposed model introduce two fields, object and context, for representing citational semantics.
+
+
+The paper reports statistics and results of the annotation process.
+
+
+The title of Section 3 ("Motivations and Research Questions") is misleading, this section does not define any research questions explicitly -- it is left to the reader to identify the research questions. I would suggest to either define the research questions explicitly, or otherwise to change the title of this section.
+
+A couple of statements in Section 5.1 could also be made more explicit:
+- "These statistics confirm the initial hypotheses (...)": it would help the reader to elaborate on this statement (what are the hypotheses and why they are confirmed), to point back to the assumptions made in the beginnig of Section 4, or maybe just use a more direct communication style when introducting the assumptions in the intro to Section 4. Without such elements to aid the reader, it is easy to miss the point.
+- "Another important consideration concerns the nature of the object in the various classes (...)": this paragraph makes an interesting observation, but the conclusion is left to the reader. What are the implications of this important consideration?
+
+
+Introduction: not a new problem, goes back to 1945 and Vannevar Bush's "As We May Think"
+
+- page 2: the footnote is not a URI
+- page 3: "A part from" => Apart from?
+- page 11: "we found that may exist some overlapping" => that there may exist?
+- page 14: "we took inspiration form both" => from both

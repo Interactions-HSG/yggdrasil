@@ -36,6 +36,7 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -67,6 +68,8 @@ public class HttpEntityHandler {
 
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
+    
+    LOGGER.info("GET request: " + entityIri);
     
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
@@ -118,8 +121,11 @@ public class HttpEntityHandler {
     LOGGER.info("Received create artifact request");
     String representation = context.getBodyAsString();
     String workspaceName = context.pathParam("wkspid");
-    String artifactName = context.request().getHeader("Slug");
+//    String artifactName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
+    
+    JsonObject artifactInit = (JsonObject) Json.decodeValue(representation);
+    String artifactName = artifactInit.getString("artifactName");
     
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createArtifact(agentId, workspaceName, artifactName, representation, 

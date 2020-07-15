@@ -24,13 +24,13 @@ public class HypermediaArtifactRegistry {
   
   private final Map<String, String> workspaceEnvironmentMap;
   private final Map<String, String> artifactSemanticTypes;
-  private final Map<String, String> artifactDescriptions;
+  private final Map<String, String> artifactTemplateDescriptions;
   private final Map<String, String> artifactActionRouter;
   
   private HypermediaArtifactRegistry() {
     workspaceEnvironmentMap = new Hashtable<String, String>();
     artifactSemanticTypes = new Hashtable<String, String>();
-    artifactDescriptions = new Hashtable<String, String>();
+    artifactTemplateDescriptions = new Hashtable<String, String>();
     artifactActionRouter = new Hashtable<String, String>();
   }
   
@@ -44,7 +44,7 @@ public class HypermediaArtifactRegistry {
   
   public void register(HypermediaArtifact artifact) {
     String artifactTemplate = artifact.getArtifactId().getName();
-    artifactDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+    artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
     
     Map<String, List<ActionAffordance>> actions = artifact.getActionAffordances();
     
@@ -66,6 +66,7 @@ public class HypermediaArtifactRegistry {
   
   public Optional<String> getEnvironmentForWorkspace(String wkspName) {
     String envName = workspaceEnvironmentMap.get(wkspName);
+    System.out.println("env: " + envName);
     return envName == null ? Optional.empty() : Optional.of(envName);
   }
   
@@ -96,7 +97,7 @@ public class HypermediaArtifactRegistry {
   }
   
   public String getArtifactDescription(String artifactName) {
-    return artifactDescriptions.get(artifactName);
+    return artifactTemplateDescriptions.get(artifactName);
   }
   
   public String getActionName(String method, String requestURI) {
@@ -125,6 +126,8 @@ public class HypermediaArtifactRegistry {
     if (envId.isPresent()) {
       return getHttpWorkspacesPrefix(envId.get()) + wkspName + "/artifacts/";
     }
+    
+    System.out.println("workspace not found!");
     
     throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
   }

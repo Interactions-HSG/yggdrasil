@@ -82,11 +82,11 @@ public class SpatialCalculator2D extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    registerActionAffordance("moveTo", "/moveTo", new ArraySchema.Builder()
-        .addSemanticType(PREFIX + "2DCoordinates")
-        .addItem(new IntegerSchema.Builder().build())
-        .addMinItems(2)
-        .addMaxItems(2)
-        .build());
+    registerActionAffordance("http://example.org#MoveTo", "moveTo", "/moveTo", 
+            new ArraySchema.Builder().addSemanticType(PREFIX + "2DCoordinates")
+              .addItem(new IntegerSchema.Builder().build())
+              .addMinItems(2)
+              .addMaxItems(2)
+              .build());
   }
 }

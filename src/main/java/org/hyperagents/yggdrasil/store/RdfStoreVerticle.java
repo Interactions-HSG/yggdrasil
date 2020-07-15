@@ -52,7 +52,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
       String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
       switch (requestMethod) {
         case RdfStore.GET_ENTITY:
-          LOGGER.info("received get entity");
           handleGetEntity(requestIRI, message);
           break;
         case RdfStore.CREATE_ENTITY:
@@ -136,16 +135,19 @@ public class RdfStoreVerticle extends AbstractVerticle {
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
       
-      DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-              .ENTITY_CREATED)
-          .addHeader(HttpEntityHandler.REQUEST_URI, entityIRIString);
+//      DeliveryOptions options = new DeliveryOptions()
+//          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
+//              .ENTITY_CREATED)
+//          .addHeader(HttpEntityHandler.REQUEST_URI, entityIRIString);
+//      
+//      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
       
-      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
+      pushNotification(HttpNotificationVerticle.ENTITY_CREATED, requestIRI, entityGraphStr);
     }
   }
   
-  private Graph addContainmentTriples(IRI entityIRI, Graph entityGraph) {
+  private Graph addContainmentTriples(IRI entityIRI, Graph entityGraph) 
+      throws IllegalArgumentException, IOException {
     LOGGER.info("Looking for containment triples for: " + entityIRI.getIRIString());
     
     if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()), 
@@ -162,6 +164,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(workspaceIRI, wkspGraph);
+        
+        String entityGraphStr = store.graphToString(wkspGraph, RDFSyntax.TURTLE);
+        pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
       }
     } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()), 
         store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
@@ -177,6 +182,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         graph.add(envIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(envIRI, graph);
+        
+        String entityGraphStr = store.graphToString(graph, RDFSyntax.TURTLE);
+        pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, envIRI, entityGraphStr);
       }
     }
     
@@ -205,13 +213,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
 
-          DeliveryOptions options = new DeliveryOptions()
-              .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-                  .ENTITY_CHANGED)
-              .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+//          DeliveryOptions options = new DeliveryOptions()
+//              .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
+//                  .ENTITY_CHANGED)
+//              .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+//          
+//          vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, 
+//              options);
           
-          vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, 
-              options);
+          pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, requestIRI, entityGraphStr);
         } else {
           replyFailed(message);
         }
@@ -230,15 +240,25 @@ public class RdfStoreVerticle extends AbstractVerticle {
       store.deleteEntityGraph(requestIRI);
       replyWithPayload(message, entityGraphStr);
 
-      DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
-              .ENTITY_DELETED)
-          .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+//      DeliveryOptions options = new DeliveryOptions()
+//          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle
+//              .ENTITY_DELETED)
+//          .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+//      
+//      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
       
-      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
+      pushNotification(HttpNotificationVerticle.ENTITY_DELETED, requestIRI, entityGraphStr);
     } else {
       replyEntityNotFound(message);
     }
+  }
+  
+  private void pushNotification(String notificationType, IRI requestIRI, String entityGraph) {
+    DeliveryOptions options = new DeliveryOptions()
+        .addHeader(HttpEntityHandler.REQUEST_METHOD, notificationType)
+        .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+    
+    vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraph, options);
   }
 
   private void replyWithPayload(Message<String> message, String payload) {

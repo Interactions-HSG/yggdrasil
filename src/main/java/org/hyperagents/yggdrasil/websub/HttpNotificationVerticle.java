@@ -30,6 +30,8 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       + ".entityChanged";
   public static final String ENTITY_DELETED = "org.hyperagents.yggdrasil.eventbus.notifications"
       + ".entityDeleted";
+  public static final String ARTIFACT_OBS_PROP = "org.hyperagents.yggdrasil.eventbus.notifications"
+      + ".artifactObsProp";
   
   private final static Logger LOGGER = LoggerFactory.getLogger(
       HttpNotificationVerticle.class.getName());
@@ -57,11 +59,15 @@ public class HttpNotificationVerticle extends AbstractVerticle {
           Set<String> callbacks = NotificationSubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
           
           for (String callbackIRI : callbacks) {
-            HttpRequest<Buffer> request = client.post(callbackIRI).putHeader("Link", linkHeaders);
+            HttpRequest<Buffer> request = client.postAbs(callbackIRI)
+                .putHeader("Link", linkHeaders.get(0))
+                .putHeader("Link", linkHeaders.get(1));
             
             if (message.headers().get(HttpEntityHandler.REQUEST_METHOD).equals(ENTITY_DELETED)) {
+              LOGGER.info("Sending notification to: " + callbackIRI + "; changes: entity deleted");
               request.send(reponseHandler(callbackIRI));
             } else if (changes != null && !changes.isEmpty()) {
+              LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
               request.putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
                 .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
             }
@@ -74,7 +80,11 @@ public class HttpNotificationVerticle extends AbstractVerticle {
   private Handler<AsyncResult<HttpResponse<Buffer>>> reponseHandler(String callbackIRI) {
     return ar -> {
       HttpResponse<Buffer> response = ar.result();
-      if (response.statusCode() == HttpStatus.SC_OK) {
+      
+      if (response == null) {
+        LOGGER.info("Failed to send notification to: " + callbackIRI + ", operation failed: " 
+            + ar.cause().getMessage());
+      } else if (response.statusCode() == HttpStatus.SC_OK) {
         LOGGER.info("Notification sent to: " + callbackIRI + ", status code: " + response.statusCode());
       } else {
         LOGGER.info("Failed to send notification to: " + callbackIRI + ", status code: " 
@@ -86,9 +96,8 @@ public class HttpNotificationVerticle extends AbstractVerticle {
   private boolean isNotificationMessage(Message<Object> message) {
     String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
     
-    if (requestMethod.compareTo(ENTITY_CREATED) == 0
-        || requestMethod.compareTo(ENTITY_CHANGED) == 0
-        || requestMethod.compareTo(ENTITY_DELETED) == 0) {
+    if (requestMethod.equals(ENTITY_CREATED) || requestMethod.equals(ENTITY_CHANGED) 
+        || requestMethod.equals(ENTITY_DELETED) || requestMethod.equals(ARTIFACT_OBS_PROP)) {
       return true;
     }
     return false;

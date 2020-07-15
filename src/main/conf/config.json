@@ -4,6 +4,6 @@
     "port" : 8080,
     "virtual-host" : "localhost",
     "virtual-host-port" : 8080,
-    "websub-hub" : "http://localhost:8080/hub"
+    "websub-hub" : "http://localhost:8080/hub/"
   }
 }

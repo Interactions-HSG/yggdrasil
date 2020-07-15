@@ -82,22 +82,30 @@ public abstract class HypermediaArtifact extends Artifact {
         + getArtifactName();
   }
   
-  protected final void registerActionAffordance(String actionName, String relativeUri, 
-      DataSchema inputSchema) {
-    registerActionAffordance(actionName, "POST", relativeUri, inputSchema);
+  protected final void registerActionAffordance(String actionClass, String actionName, 
+      String relativeUri) {
+    registerActionAffordance(actionClass, actionName, relativeUri, null);
   }
   
-  protected final void registerActionAffordance(String actionName, String methodName, 
+  protected final void registerActionAffordance(String actionClass, String actionName, 
       String relativeUri, DataSchema inputSchema) {
-    ActionAffordance action = new ActionAffordance.Builder(
+    registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
+  }
+  
+  protected final void registerActionAffordance(String actionClass, String actionName, 
+      String methodName, String relativeUri, DataSchema inputSchema) {
+    ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(
             new Form.Builder(getArtifactUri() + relativeUri)
               .setMethodName(methodName)
               .build())
-        .addTitle(actionName)
-        .addInputSchema(inputSchema)
-        .build();
+        .addSemanticType(actionClass)
+        .addTitle(actionName);
     
-    registerActionAffordance(actionName, action);
+    if (inputSchema != null) {
+      actionBuilder.addInputSchema(inputSchema);
+    }
+    
+    registerActionAffordance(actionName, actionBuilder.build());
   }
   
   protected final void registerActionAffordance(String actionName, ActionAffordance action) {
