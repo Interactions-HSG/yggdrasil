@@ -88,6 +88,11 @@ public class HttpEntityHandler {
   
   public void handleCreateEnvironment(RoutingContext context) {
     String envName = context.request().getHeader("Slug");
+    String agentId = context.request().getHeader("X-Agent-WebID");
+    
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
     
     String envURI = HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix() + envName;
     
@@ -108,6 +113,10 @@ public class HttpEntityHandler {
     String workspaceName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
     
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+    
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createWorkspace(agentId, envName, workspaceName, representation, cartagoPromise);
     
@@ -121,8 +130,11 @@ public class HttpEntityHandler {
     LOGGER.info("Received create artifact request");
     String representation = context.getBodyAsString();
     String workspaceName = context.pathParam("wkspid");
-//    String artifactName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
+    
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
     
     JsonObject artifactInit = (JsonObject) Json.decodeValue(representation);
     String artifactName = artifactInit.getString("artifactName");
@@ -212,7 +224,11 @@ public class HttpEntityHandler {
     String artifactName = context.pathParam("artid");
     
     HttpServerRequest request = context.request();
-    String agentUri = request.getHeader("X-Agent-WebID");
+    String agentId = request.getHeader("X-Agent-WebID");
+    
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
     
     HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
     
@@ -221,8 +237,13 @@ public class HttpEntityHandler {
     
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, artifactIri)
-        .addHeader(CONTENT_TYPE, request.getHeader(HttpHeaders.CONTENT_TYPE));
+        .addHeader(REQUEST_URI, artifactIri);
+    
+    String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
+    
+    if (contentType != null) {
+      options.addHeader(CONTENT_TYPE, contentType);
+    }
     
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
           if (reply.succeeded()) {
@@ -231,7 +252,7 @@ public class HttpEntityHandler {
                   artifactDescription);
               
               DeliveryOptions cartagoOptions = new DeliveryOptions()
-                  .addHeader(CartagoVerticle.AGENT_ID, agentUri)
+                  .addHeader(CartagoVerticle.AGENT_ID, agentId)
                   .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
                   .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
