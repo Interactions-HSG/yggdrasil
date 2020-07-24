@@ -8,14 +8,18 @@ defaultTasks 'shadowJar'
 
 repositories {
   jcenter()
+
+  maven { url "http://jacamo.sourceforge.net/maven2" }
+  maven { url "https://raw.github.com/jacamo-lang/mvn-repo/master" }
 }
 
+group = "org.hyperagents"
 version = '0.0-SNAPSHOT'
 sourceCompatibility = '1.8'
 mainClassName = 'io.vertx.core.Launcher'
 
-def vertxVersion = '3.5.1'
-def mainVerticleName = 'ro.andreiciortea.yggdrasil.MainVerticle'
+def vertxVersion = '3.9.0'
+def mainVerticleName = 'org.hyperagents.yggdrasil.MainVerticle'
 def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
 
@@ -26,6 +30,8 @@ dependencies {
   compile "io.vertx:vertx-web-api-contract:$vertxVersion"
   compile "io.vertx:vertx-web-client:$vertxVersion"
   compile "io.github.classgraph:classgraph:4.4.12"
+  compile name: "cartago", version: "2.5-SNAPSHOT"
+  compile name: "wot-td-java", version: "0.0.1"
 
   // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
   compile group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
@@ -36,7 +42,7 @@ dependencies {
 
   compile 'org.apache.commons:commons-rdf-api:0.5.0'
   compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
-  compile 'com.google.code.gson:gson:2.8.5'
+  compile 'com.google.code.gson:gson:2.8.6'
 
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"

@@ -89,3 +89,4 @@ Using the discovered hub and topic IRIs, a client can subscribe for notification
  * `hub.callback`
 
 When a resource is updated, Yggdrasil issues `POST` requests with the (updated) resource representation to all registered callbacks.
+
