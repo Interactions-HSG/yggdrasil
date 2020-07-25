@@ -27,11 +27,14 @@ public class HypermediaArtifactRegistry {
   private final Map<String, String> artifactTemplateDescriptions;
   private final Map<String, String> artifactActionRouter;
   
+  private final Map<String, String> artifactAPIKeys;
+  
   private HypermediaArtifactRegistry() {
     workspaceEnvironmentMap = new Hashtable<String, String>();
     artifactSemanticTypes = new Hashtable<String, String>();
     artifactTemplateDescriptions = new Hashtable<String, String>();
     artifactActionRouter = new Hashtable<String, String>();
+    artifactAPIKeys = new Hashtable<String, String>();
   }
   
   public static synchronized HypermediaArtifactRegistry getInstance() {
@@ -102,6 +105,14 @@ public class HypermediaArtifactRegistry {
   
   public String getActionName(String method, String requestURI) {
     return artifactActionRouter.get(method + requestURI);
+  }
+  
+  public String setAPIKeyForArtifact(String artifactId, String apiKey) {
+    return artifactAPIKeys.put(artifactId, apiKey);
+  }
+  
+  public String getAPIKeyForArtifact(String artifactId) {
+    return artifactAPIKeys.get(artifactId);
   }
   
   public void setHttpPrefix(String prefix) {

@@ -99,6 +99,7 @@ public abstract class HypermediaArtifact extends Artifact {
               .setMethodName(methodName)
               .build())
         .addSemanticType(actionClass)
+        .addName(actionName)
         .addTitle(actionName);
     
     if (inputSchema != null) {

@@ -48,6 +48,8 @@ public class CartagoVerticle extends AbstractVerticle {
       + ".performAction";
   
   public static final String AGENT_ID = "org.hyperagents.yggdrasil.eventbus.headers.agentID";
+//  public static final String API_KEY = "org.hyperagents.yggdrasil.eventbus.headers.apiKey";
+  
   public static final String ARTIFACT_CLASS = "org.hyperagents.yggdrasil.eventbus.headers.artifactClass";
   public static final String ENV_NAME = "org.hyperagents.yggdrasil.eventbus.headers.envName";
   public static final String WORKSPACE_NAME = "org.hyperagents.yggdrasil.eventbus.headers.workspaceName";

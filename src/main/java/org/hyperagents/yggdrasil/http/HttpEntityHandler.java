@@ -258,6 +258,11 @@ public class HttpEntityHandler {
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
               
+              String apiKey = context.request().getHeader("X-API-Key");
+              if (apiKey != null && !apiKey.isEmpty()) {
+                artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
+              }
+              
               Optional<ActionAffordance> affordance = td.getActions().stream().filter(action -> 
                   action.getTitle().get().compareTo(actionName) == 0).findFirst();
               
@@ -274,11 +279,27 @@ public class HttpEntityHandler {
                 }
               }
               
+//              context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end();
+//              
+//              vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions, 
+//                  cartagoReply -> {
+//                    if (cartagoReply.succeeded()) {
+////                      context.response().setStatusCode(HttpStatus.SC_OK).end();
+//                      LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+//                    } else {
+//                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName);
+//                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+//                          .end();
+//                    }
+//                  });
+              
               vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions, 
                   cartagoReply -> {
                     if (cartagoReply.succeeded()) {
+                      LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
                       context.response().setStatusCode(HttpStatus.SC_OK).end();
                     } else {
+                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName);
                       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                           .end();
                     }

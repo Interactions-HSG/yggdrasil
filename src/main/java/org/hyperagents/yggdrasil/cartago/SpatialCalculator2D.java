@@ -50,7 +50,7 @@ public class SpatialCalculator2D extends HypermediaArtifact {
       payload.put(PREFIX + "BaseJoint", Math.round(digital));
       
       TDHttpResponse response = new TDHttpRequest(action.getFirstForm().get(), TD.invokeAction)
-          .setAPIKey((APIKeySecurityScheme) td.getSecuritySchemeByType(WoTSec.APIKeySecurityScheme)
+          .setAPIKey((APIKeySecurityScheme) td.getFirstSecuritySchemeByType(WoTSec.APIKeySecurityScheme)
               .get(), apiKey)
           .setObjectPayload((ObjectSchema) action.getInputSchema().get(), payload)
           .execute();
