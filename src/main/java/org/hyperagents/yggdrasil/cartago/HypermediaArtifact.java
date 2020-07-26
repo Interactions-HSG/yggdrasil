@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
@@ -15,10 +18,14 @@ import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
+import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 
 public abstract class HypermediaArtifact extends Artifact {
   private Map<String, List<ActionAffordance>> actionAffordances = 
       new HashMap<String, List<ActionAffordance>>();
+  
+  private SecurityScheme securityScheme = new NoSecurityScheme();
+  private Model metadata = new LinkedHashModel();
   
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -28,10 +35,11 @@ public abstract class HypermediaArtifact extends Artifact {
    */
   public String getHypermediaDescription() {
     ThingDescription.Builder tdBuilder = new ThingDescription.Builder(getArtifactName())
-        .addSecurityScheme(new NoSecurityScheme())
+        .addSecurityScheme(securityScheme)
         .addSemanticType("http://w3id.org/eve#Artifact")
         .addSemanticType(getSemanticType())
-        .addThingURI(getArtifactUri());
+        .addThingURI(getArtifactUri())
+        .addGraph(metadata);
     
     for (String actionName : actionAffordances.keySet()) {
       for (ActionAffordance action : actionAffordances.get(actionName)) {
@@ -115,6 +123,14 @@ public abstract class HypermediaArtifact extends Artifact {
     
     actions.add(action);
     actionAffordances.put(actionName, actions);
+  }
+  
+  protected final void setSecurityScheme(SecurityScheme scheme) {
+    this.securityScheme = scheme;
+  }
+  
+  protected final void addMetadata(Model model) {
+    this.metadata.addAll(model);
   }
   
   Map<String, List<ActionAffordance>> getActionAffordances() {
