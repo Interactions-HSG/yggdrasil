@@ -299,7 +299,8 @@ public class HttpEntityHandler {
                       LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
                       context.response().setStatusCode(HttpStatus.SC_OK).end();
                     } else {
-                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName);
+                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
+                          + "; reason: " + cartagoReply.cause().getMessage());
                       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                           .end();
                     }

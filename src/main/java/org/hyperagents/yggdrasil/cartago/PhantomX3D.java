@@ -122,6 +122,8 @@ public class PhantomX3D extends HypermediaArtifact {
   private void moveToPickUpLocationFromNeural() {
     state = State.IN_TRANSIT;
     
+    this.await_time(SHORT_WAIT_TIME);
+    invokeAction(SET_GRIPPER_URI, 512);
     this.await_time(WAIT_TIME);
     invokeAction(SET_BASE_URI, 512);
     this.await_time(WAIT_TIME);
