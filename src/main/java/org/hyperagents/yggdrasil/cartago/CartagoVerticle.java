@@ -13,9 +13,9 @@ import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 import cartago.AgentIdCredential;
 import cartago.ArtifactId;
 import cartago.ArtifactObsProperty;
-import cartago.CartagoContext;
+import cartago.util.agent.CartagoContext;
 import cartago.CartagoException;
-import cartago.CartagoService;
+import cartago.CartagoEnvironment;
 import cartago.Op;
 import cartago.WorkspaceId;
 import cartago.util.agent.ActionFailedException;
@@ -86,10 +86,10 @@ public class CartagoVerticle extends AbstractVerticle {
     
     try {
       LOGGER.info("Starting CArtAgO node...");
-      CartagoService.startNode();
+      CartagoEnvironment.getInstance().init();
       
 //      CartagoContext agentContext = new CartagoContext(new AgentIdCredential("agent-0"));
-//      CartagoService.startSession(wspName, cred, eventListener)
+//      CartagoEnvironment.startSession(wspName, cred, eventListener)
       
 //      agentContext.doAction(new Op("println","Hello, world!"));
       
@@ -151,6 +151,9 @@ public class CartagoVerticle extends AbstractVerticle {
             params = Optional.of(initParams.getList().toArray());
           }
           
+          LOGGER.info("Received request to create artifact: " + workspaceName + " " + artifactClass 
+              + " " + artifactName + " " + params);
+          
           instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
           
           String artifactDescription = HypermediaArtifactRegistry.getInstance()
@@ -181,8 +184,10 @@ public class CartagoVerticle extends AbstractVerticle {
   private String instatiateWorkspace(String agentUri, String envName, String workspaceName) 
       throws ActionFailedException, CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
+    
     LOGGER.info("Creating workspace " + workspaceName);
-    agentContext.doAction(new Op("createWorkspace", workspaceName));
+    agentContext.doAction(new Op("createWorkspace", workspaceName), 
+        agentContext.getJoinedWspId("main"));
     
 //    CartagoContext agent0 = agentContexts.get("agent-0");
 //    agent0.joinWorkspace(workspaceName);
@@ -227,7 +232,13 @@ public class CartagoVerticle extends AbstractVerticle {
       String artifactName, Optional<Object[]> params) throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri); 
     
+    LOGGER.info("Joining workspace: " + workspaceName + "; current workspaces: " 
+        + agentContext.getJoinedWorkspaces());
+    
     WorkspaceId wkspId = agentContext.joinWorkspace(workspaceName);
+    
+//    agentContext.doAction(new Op("joinWorkspace", workspaceName), 
+//        agentContext.getJoinedWspId("main"));
     
 //    CartagoContext agent0 = agentContexts.get("agent-0");
 //    agent0.joinWorkspace(workspaceName);
