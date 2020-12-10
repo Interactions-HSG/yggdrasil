@@ -10,7 +10,7 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonObject;
 
 public class MainVerticle extends AbstractVerticle {
-  
+
   @Override
   public void start() {
     vertx.deployVerticle(new HttpServerVerticle(),
@@ -26,16 +26,17 @@ public class MainVerticle extends AbstractVerticle {
       );
     
     JsonObject knownArtifacts = new JsonObject()
-        .put("https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D", 
+        .put("https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D",
             "org.hyperagents.yggdrasil.cartago.PhantomX3D")
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.Counter")
         .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
-            + ".SpatialCalculator2D");
-    
+            + ".SpatialCalculator2D")
+        .put("http://example.org/Annotator", "org.hyperagents.yggdrasil.cartago.Annotator");
+
     JsonObject cartagoConfig = config();
     cartagoConfig.put("known-artifacts", knownArtifacts);
-    
-    vertx.deployVerticle(new CartagoVerticle(), 
+
+    vertx.deployVerticle(new CartagoVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(cartagoConfig)
       );
   }
