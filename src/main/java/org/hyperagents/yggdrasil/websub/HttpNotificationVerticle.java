@@ -1,10 +1,25 @@
 package org.hyperagents.yggdrasil.websub;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
 import com.google.common.net.HttpHeaders;
@@ -37,10 +52,12 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       HttpNotificationVerticle.class.getName());
   
   private String webSubHubIRI = null;
+  private String rdfSubHubIRI = null;
   
   @Override
   public void start() {
-    webSubHubIRI = getWebSubHubIRI(config());
+    webSubHubIRI = getSubHubIRI(config(), "websub-hub");
+    rdfSubHubIRI = getSubHubIRI(config(), "rdfsub-hub");
     
     vertx.eventBus().consumer(BUS_ADDRESS, message -> {
       if (isNotificationMessage(message)) {
@@ -72,6 +89,18 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                 .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
             }
           }
+          
+          // TODO: refactor pushing data to the RDFSub hub
+          String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
+          if (requestMethod.equals(ENTITY_CREATED) || requestMethod.equals(ENTITY_CHANGED)) {
+            String updateQuery = constructUpdateQuery(entityIRI, changes);
+            LOGGER.info("SPARQL Update query: " + updateQuery);
+            
+            client.postAbs(rdfSubHubIRI + "publish")
+              .putHeader("Content-Type", "application/sparql-update")
+              .sendBuffer(Buffer.buffer(updateQuery), reponseHandler(rdfSubHubIRI + "publish"));
+            
+          }
         }
       }
     });
@@ -84,7 +113,8 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       if (response == null) {
         LOGGER.info("Failed to send notification to: " + callbackIRI + ", operation failed: " 
             + ar.cause().getMessage());
-      } else if (response.statusCode() == HttpStatus.SC_OK) {
+      } else if (response.statusCode() == HttpStatus.SC_OK 
+          || response.statusCode() == HttpStatus.SC_ACCEPTED) {
         LOGGER.info("Notification sent to: " + callbackIRI + ", status code: " + response.statusCode());
       } else {
         LOGGER.info("Failed to send notification to: " + callbackIRI + ", status code: " 
@@ -103,12 +133,67 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     return false;
   }
   
-  private String getWebSubHubIRI(JsonObject config) {
+  private String getSubHubIRI(JsonObject config, String hubType) {
     JsonObject httpConfig = config.getJsonObject("http-config");
     
-    if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
-      return httpConfig.getString("websub-hub");
+    if (httpConfig != null && httpConfig.getString(hubType) != null) {
+      return httpConfig.getString(hubType);
     }
     return null;
+  }
+  
+  // TODO: refactor, what follows is a quick-and-dirty implementation for the MASTech Dec 2020 demo
+  private String constructUpdateQuery(String graphIRI, String graph) {
+    String payload = "";
+    
+    try {
+      Model model = readModelFromString(RDFFormat.TURTLE, graph, "http://example.org/");
+      payload = writeToString(RDFFormat.TURTLE, model);
+      
+    } catch (RDFParseException | RDFHandlerException | IOException e) {
+      LOGGER.error(e.getMessage());
+    }
+    
+    String query = "INSERT DATA { GRAPH <http://hyperagents.org/> { " + payload + " } }";
+    
+    return query;
+  }
+  
+  private Model readModelFromString(RDFFormat format, String description, String baseURI) 
+      throws RDFParseException, RDFHandlerException, IOException {
+    StringReader stringReader = new StringReader(description);
+    
+    RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
+    Model model = new LinkedHashModel();
+    rdfParser.setRDFHandler(new StatementCollector(model));
+    
+    rdfParser.parse(stringReader, baseURI);
+    
+    return model;
+  }
+  
+  private String writeToString(RDFFormat format, Model model) {
+    OutputStream out = new ByteArrayOutputStream();
+    
+    List<String> namespaces = model.getNamespaces().stream().map(n -> n.getPrefix())
+        .collect(Collectors.toList());
+    
+    for (String n : namespaces) {
+      model.removeNamespace(n);
+    }
+    
+    try {
+      Rio.write(model, out, format, 
+          new WriterConfig().set(BasicWriterSettings.INLINE_BLANK_NODES, true)
+            .set(BasicWriterSettings.PRETTY_PRINT, false));
+    } finally {
+      try {
+        out.close();
+      } catch (IOException e) {
+        LOGGER.info(e.getMessage());
+      }
+    }
+    
+    return out.toString();
   }
 }
