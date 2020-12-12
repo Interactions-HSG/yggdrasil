@@ -71,7 +71,11 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/environments/:envid/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid/workspaces/:wkspid").handler(handler::handleDeleteEntity);
     
-    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+//    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid")
+      .handler((routingContext) -> {
+        handler.handleGetEntity(routingContext, true); 
+      });
     router.post("/environments/:envid/workspaces/:wkspid/artifacts/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
     router.post("/environments/:envid/workspaces/:wkspid/artifacts/").consumes("application/json")

@@ -54,6 +54,7 @@ public class HttpEntityHandler {
   private CartagoEntityHandler cartagoHandler;
   
   private String webSubHubIRI = null;
+  private String rdfSubHubIRI = null;
   
   public HttpEntityHandler(Vertx vertx) {
     this.vertx = vertx;
@@ -61,12 +62,21 @@ public class HttpEntityHandler {
     
     JsonObject httpConfig = Vertx.currentContext().config().getJsonObject("http-config");
     
-    if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
-      webSubHubIRI = httpConfig.getString("websub-hub");
+    if (httpConfig != null) {
+      if (httpConfig.getString("websub-hub") != null) {
+        webSubHubIRI = httpConfig.getString("websub-hub");
+      }
+      if (httpConfig.getString("rdfsub-hub") != null) {
+        rdfSubHubIRI = httpConfig.getString("rdfsub-hub");
+      }
     }
   }
-
+  
   public void handleGetEntity(RoutingContext routingContext) {
+    handleGetEntity(routingContext, false);
+  }
+  
+  public void handleGetEntity(RoutingContext routingContext, boolean isCartagoArtifact) {
     String entityIri = routingContext.request().absoluteURI();
     
     LOGGER.info("GET request: " + entityIri);
@@ -77,9 +87,15 @@ public class HttpEntityHandler {
     
     Map<String,List<String>> headers = new HashMap<String,List<String>>();
     
-    if (webSubHubIRI != null) {
-      headers.put("Link", Arrays.asList("<" + webSubHubIRI + ">; rel=\"hub\"", 
-          "<" + entityIri + ">; rel=\"self\""));
+    // Use RDFSub by default for all entities, we use WebSub only for CArtAgO artifacts
+    if (isCartagoArtifact) {
+      if (webSubHubIRI != null) {
+        headers.put("Link", Arrays.asList("<" + webSubHubIRI + ">; rel=\"hub\"", 
+            "<" + entityIri + ">; rel=\"self\""));
+      }
+    } else if (rdfSubHubIRI != null) {
+      headers.put("Link", Arrays.asList("<" + rdfSubHubIRI + ">; rel=\"rdfhub\"",
+          "<http://hyperagents.org/>; rel=\"topic\"")); // TODO: quick-and-dirty for MASTech demo
     }
     
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, handleStoreReply(routingContext, 
