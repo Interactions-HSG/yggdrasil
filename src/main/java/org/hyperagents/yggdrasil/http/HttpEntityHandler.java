@@ -94,7 +94,7 @@ public class HttpEntityHandler {
             "<" + entityIri + ">; rel=\"self\""));
       }
     } else if (rdfSubHubIRI != null) {
-      headers.put("Link", Arrays.asList("<" + rdfSubHubIRI + ">; rel=\"rdfhub\"",
+      headers.put("Link", Arrays.asList("<" + rdfSubHubIRI + "subscription>; rel=\"rdfhub\"",
           "<http://hyperagents.org/>; rel=\"topic\"")); // TODO: quick-and-dirty for MASTech demo
     }
     

@@ -130,8 +130,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
         subscribeCrawler(entityGraph);
       }
       
-      entityGraph = addContainmentTriples(entityIRI, entityGraph);
-      
       store.createEntityGraph(entityIRI, entityGraph);
       replyWithPayload(message, entityGraphStr);
       
@@ -143,6 +141,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
 //      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraphStr, options);
       
       pushNotification(HttpNotificationVerticle.ENTITY_CREATED, requestIRI, entityGraphStr);
+      
+      entityGraph = addContainmentTriples(entityIRI, entityGraph);
     }
   }
   
