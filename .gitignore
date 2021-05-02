@@ -4,6 +4,7 @@ bin/
 .settings
 .classpath
 .project
+.idea/
 
 # Ignore VertX file cache
 .vertx/
