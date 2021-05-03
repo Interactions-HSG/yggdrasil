@@ -5,8 +5,8 @@ import io.vertx.core.json.JsonObject;
 import java.util.Optional;
 
 public class HttpInterfaceConfig {
-  private String host;
-  private int port;
+  private String host = "0.0.0.0";
+  private int port = 8080;
 
   private String webSubHubIRI;
 
