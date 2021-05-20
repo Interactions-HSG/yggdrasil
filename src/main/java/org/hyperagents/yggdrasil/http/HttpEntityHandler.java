@@ -141,6 +141,12 @@ public class HttpEntityHandler {
 
   // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+
     String entityRepresentation = routingContext.getBodyAsString();
     createEntity(routingContext, entityRepresentation);
   }
