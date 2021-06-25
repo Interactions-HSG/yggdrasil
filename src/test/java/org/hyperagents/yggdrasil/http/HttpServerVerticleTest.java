@@ -63,8 +63,8 @@ public class HttpServerVerticleTest {
     client.get(TEST_PORT, "localhost", "/")
       .send(ar -> {
         HttpResponse<Buffer> response = ar.result();
-        tc.assertEquals(response.statusCode(), HttpStatus.SC_OK);
-        tc.assertTrue(response.bodyAsString().length() > 0);
+        tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), "Status code should be OK");
+        tc.assertTrue(response.bodyAsString().length() > 0, "Body length should be greater than zero");
         async.complete();
       });
   }
@@ -75,13 +75,13 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+      tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(),"Status code should be CREATED");
 
       client.get(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
         .send(ar -> {
           HttpResponse<Buffer> getResponse = ar.result();
-          tc.assertEquals(getResponse.statusCode(), HttpStatus.SC_OK);
+          tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), "Status code should be OK");
 
           try {
             // TODO: Check that the following makes sense (the response that comes back is certainly not isomorphic to the expected string)
@@ -107,7 +107,7 @@ public class HttpServerVerticleTest {
       .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
       .send(ar -> {
         HttpResponse<Buffer> getResponse = ar.result();
-        tc.assertEquals(getResponse.statusCode(), HttpStatus.SC_NOT_FOUND);
+        tc.assertEquals(HttpStatus.SC_NOT_FOUND, getResponse.statusCode(), "Status code should be NOT FOUND");
         async.complete();
       });
   }
@@ -118,7 +118,7 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+      tc.assertEquals(HttpStatus.SC_CREATED, getResponse.statusCode(), "Status code should be CREATED");
 
       client.get(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
@@ -159,7 +159,7 @@ public class HttpServerVerticleTest {
           "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
         ar -> {
           HttpResponse<Buffer> response = ar.result();
-          tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+          tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
           try {
             // TODO: Check that the following makes sense (the response that comes back is certainly not isomorphic to the expected string)
@@ -187,7 +187,7 @@ public class HttpServerVerticleTest {
           "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
         ar -> {
           HttpResponse<Buffer> response = ar.result();
-          tc.assertEquals(response.statusCode(), HttpStatus.SC_UNAUTHORIZED);
+          tc.assertEquals(HttpStatus.SC_UNAUTHORIZED, response.statusCode(), "Status code should be UNAUTHORIZED");
           async.complete();
         });
   }
@@ -198,7 +198,7 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+      tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
       client.put(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader("Content-Type", "text/turtle")
@@ -207,7 +207,8 @@ public class HttpServerVerticleTest {
             + "<http://localhost:" + TEST_PORT + "/workspaces/wksp2> ."),
           ar -> {
             HttpResponse<Buffer> updateResponse = ar.result();
-            tc.assertEquals(updateResponse.statusCode(), HttpStatus.SC_OK);
+            tc.assertEquals(HttpStatus.SC_OK, updateResponse.statusCode(), "Status code should be OK");
+
             try {
               assertIsomorphic(tc, RDFFormat.TURTLE,
                 "<http://localhost:" + TEST_PORT + "/environments/test_env> "
@@ -230,12 +231,12 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+      tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
-      client.delete(8080, "localhost", "/environments/test_env")
+      client.delete(TEST_PORT, "localhost", "/environments/test_env")
         .send(ar -> {
           HttpResponse<Buffer> updateResponse = ar.result();
-          tc.assertEquals(updateResponse.statusCode(), HttpStatus.SC_OK);
+          tc.assertEquals(HttpStatus.SC_OK, updateResponse.statusCode(), "Status code should be OK");
           async.complete();
         });
     });
@@ -245,6 +246,8 @@ public class HttpServerVerticleTest {
   public void testCartagoVerticleNoArtifactTemplates(TestContext tc) {
     vertx.deployVerticle(CartagoVerticle.class.getName(), new DeploymentOptions().setWorker(true)
       .setConfig(null), tc.asyncAssertSuccess());
+
+    // TODO: Why is this flagged as test?
   }
 
   @Test
@@ -259,14 +262,14 @@ public class HttpServerVerticleTest {
     Async async = tc.async();
 
     // TODO: This test seems wrong. Why would there be a localhost:8080/workspaces path?
-    client.post(8080, "localhost", "/workspaces/")
+    client.post(TEST_PORT, "localhost", "/workspaces/")
       .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
       .putHeader("Slug", "wksp1")
       .sendBuffer(Buffer.buffer(""), wkspAR -> {
         HttpResponse<Buffer> wkspResponse = wkspAR.result();
-        tc.assertEquals(wkspResponse.statusCode(), HttpStatus.SC_CREATED);
+        tc.assertEquals(HttpStatus.SC_CREATED, wkspResponse.statusCode(), "Status code should be CREATED");
 
-        client.post(8080, "localhost", "/workspaces/wksp1/artifacts/")
+        client.post(TEST_PORT, "localhost", "/workspaces/wksp1/artifacts/")
           .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
           .putHeader("Slug", "c0")
           .putHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
@@ -274,15 +277,15 @@ public class HttpServerVerticleTest {
             ar -> {
               System.out.println("artifact created");
               HttpResponse<Buffer> response = ar.result();
-              tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+              tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
-              client.post(8080, "localhost", "/workspaces/wksp1/artifacts/c0/increment")
+              client.post(TEST_PORT, "localhost", "/workspaces/wksp1/artifacts/c0/increment")
                 .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
                 .putHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType())
                 .sendBuffer(Buffer.buffer("[1]"), actionAr -> {
                   System.out.println("operation executed");
                   HttpResponse<Buffer> actionResponse = actionAr.result();
-                  tc.assertEquals(actionResponse.statusCode(), HttpStatus.SC_OK);
+                  tc.assertEquals(HttpStatus.SC_OK, actionResponse.statusCode(), "Status code should be OK");
                   async.complete();
                 });
             });
@@ -290,7 +293,7 @@ public class HttpServerVerticleTest {
   }
 
   private void createResourceAndThen(Handler<AsyncResult<HttpResponse<Buffer>>> handler) {
-    client.post(8080, "localhost", "/environments/")
+    client.post(TEST_PORT, "localhost", "/environments/")
       .putHeader("Slug", "test_env")
       .putHeader("Content-Type", "text/turtle")
       .putHeader("X-Agent-WebID", "TestAgentID")
