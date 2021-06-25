@@ -63,7 +63,7 @@ public class HttpServerVerticleTest {
     client.get(TEST_PORT, "localhost", "/")
       .send(ar -> {
         HttpResponse<Buffer> response = ar.result();
-        tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), "Status code should be OK");
+        tc.assertEquals(HttpStatus.SC_OK, response.statusCode(), "Status code should be OK");
         tc.assertTrue(response.bodyAsString().length() > 0, "Body length should be greater than zero");
         async.complete();
       });
@@ -118,7 +118,7 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(HttpStatus.SC_CREATED, getResponse.statusCode(), "Status code should be CREATED");
+      tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
       client.get(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
