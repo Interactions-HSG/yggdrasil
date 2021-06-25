@@ -1,11 +1,10 @@
 package org.hyperagents.yggdrasil.http;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
@@ -72,7 +71,7 @@ public class HttpEntityHandler {
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
         .addHeader(REQUEST_URI, entityIRI);
 
-    Map<String,List<String>> headers = getWebSubHeaders(entityIRI);
+    Map<String,List<String>> headers = getHeaders(entityIRI);
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
       handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
@@ -283,6 +282,14 @@ public class HttpEntityHandler {
     }
   }
 
+  private Map<String, List<String>> getHeaders(String entityIRI) {
+
+    Map<String,List<String>> headers = getWebSubHeaders(entityIRI);
+    headers.putAll(getCORSHeaders());
+
+    return headers;
+  }
+
   private Map<String, List<String>> getWebSubHeaders(String entityIRI) {
     Map<String,List<String>> headers = new HashMap<>();
 
@@ -293,6 +300,16 @@ public class HttpEntityHandler {
       "<" + entityIRI + ">; rel=\"self\"")));
 
     return headers;
+  }
+
+  private Map<String, ? extends List<String>> getCORSHeaders() {
+    Map<String,List<String>> corsHeaders = new HashMap<String, List<String>>();
+
+    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, Arrays.asList("*"));
+    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, Arrays.asList("true"));
+    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, Arrays.asList(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(), HttpMethod.DELETE.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name()));
+
+    return corsHeaders;
   }
 
   private void storeEntity(RoutingContext context, String entityName, String representation,
@@ -340,13 +357,17 @@ public class HttpEntityHandler {
 
     return reply -> {
       if (reply.succeeded()) {
+        LOGGER.info("Creating Response");
+
         HttpServerResponse httpResponse = routingContext.response();
+        httpResponse.setStatusCode(succeededStatusCode);
 
-        httpResponse
-          .setStatusCode(succeededStatusCode)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+        httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
 
-        headers.forEach(httpResponse::putHeader);
+        // Note: forEach produces duplicate keys. If anyone wants to, please replace this with a Java 8 version ;-)
+        for(String headerName : headers.keySet()) {
+          httpResponse.putHeader(headerName, headers.get(headerName).stream().collect(Collectors.joining(",")));
+        }
 
         String storeReply = reply.result().body();
         if (storeReply != null && !storeReply.isEmpty()) {
