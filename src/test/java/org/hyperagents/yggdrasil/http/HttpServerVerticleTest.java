@@ -3,7 +3,10 @@ package org.hyperagents.yggdrasil.http;
 import java.io.IOException;
 import java.io.StringReader;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.http.HttpMethod;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
@@ -60,7 +63,7 @@ public class HttpServerVerticleTest {
     client.get(TEST_PORT, "localhost", "/")
       .send(ar -> {
         HttpResponse<Buffer> response = ar.result();
-        tc.assertEquals(response.statusCode(), 200);
+        tc.assertEquals(response.statusCode(), HttpStatus.SC_OK);
         tc.assertTrue(response.bodyAsString().length() > 0);
         async.complete();
       });
@@ -72,19 +75,20 @@ public class HttpServerVerticleTest {
 
     createResourceAndThen(createAR -> {
       HttpResponse<Buffer> response = createAR.result();
-      tc.assertEquals(response.statusCode(), 201);
+      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
 
       client.get(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
         .send(ar -> {
           HttpResponse<Buffer> getResponse = ar.result();
-          tc.assertEquals(getResponse.statusCode(), 200);
+          tc.assertEquals(getResponse.statusCode(), HttpStatus.SC_OK);
 
           try {
+            // TODO: Check that the following makes sense (the response that comes back is certainly not isomorphic to the expected string)
             assertIsomorphic(tc, RDFFormat.TURTLE,
               "<http://localhost:" + TEST_PORT + "/environments/test_env> "
-                  + "a <http://w3id.org/eve#Environment>;\n"
-              + "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> .",
+                + "a <http://w3id.org/eve#Environment>;\n"
+                + "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> .",
               getResponse.bodyAsString());
           } catch (RDFParseException | RDFHandlerException | IOException e) {
             tc.fail(e);
@@ -92,7 +96,7 @@ public class HttpServerVerticleTest {
 
           async.complete();
         });
-      });
+    });
   }
 
   @Test
@@ -103,9 +107,39 @@ public class HttpServerVerticleTest {
       .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
       .send(ar -> {
         HttpResponse<Buffer> getResponse = ar.result();
-        tc.assertEquals(getResponse.statusCode(), 404);
+        tc.assertEquals(getResponse.statusCode(), HttpStatus.SC_NOT_FOUND);
         async.complete();
       });
+  }
+
+  @Test
+  public void testEntityCORSHeaders(TestContext tc) {
+    Async async = tc.async();
+
+    createResourceAndThen(createAR -> {
+      HttpResponse<Buffer> response = createAR.result();
+      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
+
+      client.get(TEST_PORT, "localhost", "/environments/test_env")
+        .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
+        .send(ar -> {
+          HttpResponse<Buffer> getResponse = ar.result();
+
+          tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), "Response code should be OK");
+
+          tc.assertEquals("*", getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN), "CORS origin should be open");
+          tc.assertEquals("true", getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS), "CORS credentials should be allowed");
+
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.GET.name()), "CORS should permit GET on entities");
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.POST.name()), "CORS should permit POST on entities");
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.PUT.name()), "CORS should permit PUT on entities");
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.DELETE.name()), "CORS should permit DELETE on entities");
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.HEAD.name()), "CORS should permit HEAD on entities");
+          tc.assertTrue(getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS).contains(HttpMethod.OPTIONS.name()), "CORS should permit OPTIONS on entities");
+
+          async.complete();
+        });
+    });
   }
 
   @Test
@@ -120,17 +154,19 @@ public class HttpServerVerticleTest {
     client.post(TEST_PORT, "localhost", "/environments/")
       .putHeader("Slug", "env1")
       .putHeader("Content-Type", "text/turtle")
+      .putHeader("X-Agent-WebID", "TestAgentID")
       .sendBuffer(Buffer.buffer("<> a <http://w3id.org/eve#Environment> ;\n" +
-        "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
+          "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
         ar -> {
           HttpResponse<Buffer> response = ar.result();
-          tc.assertEquals(response.statusCode(), 201);
+          tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
 
           try {
+            // TODO: Check that the following makes sense (the response that comes back is certainly not isomorphic to the expected string)
             assertIsomorphic(tc, RDFFormat.TURTLE,
               "<http://localhost:" + TEST_PORT + "/environments/env1> "
-                  + "a <http://w3id.org/eve#Environment> ;\n" +
-              "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> .",
+                + "a <http://w3id.org/eve#Environment> ;\n" +
+                "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> .",
               response.bodyAsString());
           } catch (RDFParseException | RDFHandlerException | IOException e) {
             tc.fail(e);
@@ -141,35 +177,51 @@ public class HttpServerVerticleTest {
   }
 
   @Test
+  public void testCreateEntityUnauthorzedNoWebID(TestContext tc) {
+    Async async = tc.async();
+
+    client.post(TEST_PORT, "localhost", "/environments/")
+      .putHeader("Slug", "test_env")
+      .putHeader("Content-Type", "text/turtle")
+      .sendBuffer(Buffer.buffer("<> a <http://w3id.org/eve#Environment> ;\n" +
+          "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
+        ar -> {
+          HttpResponse<Buffer> response = ar.result();
+          tc.assertEquals(response.statusCode(), HttpStatus.SC_UNAUTHORIZED);
+          async.complete();
+        });
+  }
+
+  @Test
   public void testUpdateEntity(TestContext tc) {
     Async async = tc.async();
 
     createResourceAndThen(createAR -> {
-        HttpResponse<Buffer> response = createAR.result();
-        tc.assertEquals(response.statusCode(), 201);
+      HttpResponse<Buffer> response = createAR.result();
+      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
 
-        client.put(8080, "localhost", "/environments/test_env")
+      client.put(TEST_PORT, "localhost", "/environments/test_env")
         .putHeader("Content-Type", "text/turtle")
         .sendBuffer(Buffer.buffer("<> a <http://w3id.org/eve#Environment> ;\n" +
             "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1>, "
             + "<http://localhost:" + TEST_PORT + "/workspaces/wksp2> ."),
           ar -> {
             HttpResponse<Buffer> updateResponse = ar.result();
-            tc.assertEquals(updateResponse.statusCode(), 200);
+            tc.assertEquals(updateResponse.statusCode(), HttpStatus.SC_OK);
             try {
               assertIsomorphic(tc, RDFFormat.TURTLE,
                 "<http://localhost:" + TEST_PORT + "/environments/test_env> "
-                    + "a <http://w3id.org/eve#Environment>;\n" +
-                "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1>, "
-                + "<http://localhost:" + TEST_PORT + "/workspaces/wksp2> .",
+                  + "a <http://w3id.org/eve#Environment>;\n" +
+                  "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1>, "
+                  + "<http://localhost:" + TEST_PORT + "/workspaces/wksp2> .",
                 updateResponse.bodyAsString());
             } catch (RDFParseException | RDFHandlerException | IOException e) {
               tc.fail(e);
             }
 
             async.complete();
-        });
-      });
+          });
+    });
   }
 
   @Test
@@ -177,41 +229,42 @@ public class HttpServerVerticleTest {
     Async async = tc.async();
 
     createResourceAndThen(createAR -> {
-        HttpResponse<Buffer> response = createAR.result();
-        tc.assertEquals(response.statusCode(), 201);
+      HttpResponse<Buffer> response = createAR.result();
+      tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
 
-        client.delete(8080, "localhost", "/environments/test_env")
-          .send(ar -> {
-            HttpResponse<Buffer> updateResponse = ar.result();
-            tc.assertEquals(updateResponse.statusCode(), 200);
-            async.complete();
-          });
+      client.delete(8080, "localhost", "/environments/test_env")
+        .send(ar -> {
+          HttpResponse<Buffer> updateResponse = ar.result();
+          tc.assertEquals(updateResponse.statusCode(), HttpStatus.SC_OK);
+          async.complete();
         });
+    });
   }
 
   @Test
   public void testCartagoVerticleNoArtifactTemplates(TestContext tc) {
     vertx.deployVerticle(CartagoVerticle.class.getName(), new DeploymentOptions().setWorker(true)
-        .setConfig(null), tc.asyncAssertSuccess());
+      .setConfig(null), tc.asyncAssertSuccess());
   }
 
   @Test
   public void testCartagoArtifact(TestContext tc) {
     // Register artifact template for this test
     JsonObject knownArtifacts = new JsonObject()
-        .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter");
+      .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter");
 
     vertx.deployVerticle(CartagoVerticle.class.getName(), new DeploymentOptions().setWorker(true)
-        .setConfig(new JsonObject().put("known-artifacts", knownArtifacts)), tc.asyncAssertSuccess());
+      .setConfig(new JsonObject().put("known-artifacts", knownArtifacts)), tc.asyncAssertSuccess());
 
     Async async = tc.async();
 
+    // TODO: This test seems wrong. Why would there be a localhost:8080/workspaces path?
     client.post(8080, "localhost", "/workspaces/")
       .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
       .putHeader("Slug", "wksp1")
       .sendBuffer(Buffer.buffer(""), wkspAR -> {
         HttpResponse<Buffer> wkspResponse = wkspAR.result();
-        tc.assertEquals(wkspResponse .statusCode(), 201);
+        tc.assertEquals(wkspResponse.statusCode(), HttpStatus.SC_CREATED);
 
         client.post(8080, "localhost", "/workspaces/wksp1/artifacts/")
           .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
@@ -221,7 +274,7 @@ public class HttpServerVerticleTest {
             ar -> {
               System.out.println("artifact created");
               HttpResponse<Buffer> response = ar.result();
-              tc.assertEquals(response.statusCode(), 201);
+              tc.assertEquals(response.statusCode(), HttpStatus.SC_CREATED);
 
               client.post(8080, "localhost", "/workspaces/wksp1/artifacts/c0/increment")
                 .putHeader("X-Agent-WebID", "http://andreiciortea.ro/#me")
@@ -229,9 +282,9 @@ public class HttpServerVerticleTest {
                 .sendBuffer(Buffer.buffer("[1]"), actionAr -> {
                   System.out.println("operation executed");
                   HttpResponse<Buffer> actionResponse = actionAr.result();
-                  tc.assertEquals(actionResponse.statusCode(), 200);
+                  tc.assertEquals(actionResponse.statusCode(), HttpStatus.SC_OK);
                   async.complete();
-              });
+                });
             });
       });
   }
@@ -240,8 +293,9 @@ public class HttpServerVerticleTest {
     client.post(8080, "localhost", "/environments/")
       .putHeader("Slug", "test_env")
       .putHeader("Content-Type", "text/turtle")
+      .putHeader("X-Agent-WebID", "TestAgentID")
       .sendBuffer(Buffer.buffer("<> a <http://w3id.org/eve#Environment> ;\n" +
-        "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
+          "<http://w3id.org/eve#contains> <http://localhost:" + TEST_PORT + "/workspaces/wksp1> ."),
         handler);
   }
 
@@ -255,7 +309,7 @@ public class HttpServerVerticleTest {
   }
 
   private Model readModelFromString(RDFFormat format, String description, String baseURI)
-      throws RDFParseException, RDFHandlerException, IOException {
+    throws RDFParseException, RDFHandlerException, IOException {
     StringReader stringReader = new StringReader(description);
 
     RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
