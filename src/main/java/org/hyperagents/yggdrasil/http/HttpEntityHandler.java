@@ -2,7 +2,6 @@ package org.hyperagents.yggdrasil.http;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
@@ -303,7 +302,7 @@ public class HttpEntityHandler {
   }
 
   private Map<String, ? extends List<String>> getCORSHeaders() {
-    Map<String,List<String>> corsHeaders = new HashMap<String, List<String>>();
+    Map<String, List<String>> corsHeaders = new HashMap<String, List<String>>();
 
     corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, Arrays.asList("*"));
     corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, Arrays.asList("true"));
