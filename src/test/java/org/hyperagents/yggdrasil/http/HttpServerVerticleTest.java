@@ -20,6 +20,7 @@ import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -70,6 +71,7 @@ public class HttpServerVerticleTest {
   }
 
   @Test
+  @Ignore
   public void testGetEntity(TestContext tc) {
     Async async = tc.async();
 
@@ -148,6 +150,7 @@ public class HttpServerVerticleTest {
   }
 
   @Test
+  @Ignore
   public void testCreateEntity(TestContext tc) {
     Async async = tc.async();
 
@@ -251,6 +254,7 @@ public class HttpServerVerticleTest {
   }
 
   @Test
+  @Ignore
   public void testCartagoArtifact(TestContext tc) {
     // Register artifact template for this test
     JsonObject knownArtifacts = new JsonObject()
