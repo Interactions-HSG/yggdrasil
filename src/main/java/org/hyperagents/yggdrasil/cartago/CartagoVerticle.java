@@ -1,23 +1,12 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
+import cartago.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
-import cartago.AgentIdCredential;
-import cartago.ArtifactId;
-import cartago.ArtifactObsProperty;
-import cartago.CartagoContext;
-import cartago.CartagoException;
-import cartago.CartagoService;
-import cartago.Op;
-import cartago.WorkspaceId;
 import cartago.util.agent.ActionFailedException;
 import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
@@ -46,6 +35,9 @@ public class CartagoVerticle extends AbstractVerticle {
       + ".instantiateArtifact";
   public static final String DO_ACTION = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".performAction";
+
+  public static final String DO_ACTION_REPLY = "org.hyperagents.yggdrasil.eventbys.headers.methods"
+    + ".performActionReply";
 
   public static final String AGENT_ID = "org.hyperagents.yggdrasil.eventbus.headers.agentID";
 
@@ -139,6 +131,17 @@ public class CartagoVerticle extends AbstractVerticle {
           doAction(agentUri, workspaceName, artifact, action, payload);
           message.reply(HttpStatus.SC_OK);
           break;
+        case DO_ACTION_REPLY:
+          artifact = message.headers().get(ARTIFACT_NAME);
+          action = message.headers().get(ACTION_NAME);
+
+          payload = message.body() == null ? Optional.empty()
+            : Optional.of(message.body());
+
+          OpFeedbackParam<Object> replyObject = new OpFeedbackParam<>();
+          doActionReply(agentUri, workspaceName, artifact, action, payload, replyObject);
+          message.reply(replyObject.get());
+
         default:
           // TODO
           break;
@@ -236,6 +239,43 @@ public class CartagoVerticle extends AbstractVerticle {
 
     LOGGER.info("Performing action " + action + " on artifact " + artifactName
         + " with params: " + Arrays.asList(operation.getParamValues()));
+
+    ArtifactId artifactId = agentContext.lookupArtifact(workspaceId, artifactName);
+    OpFeedbackParam<Boolean> bool =  new OpFeedbackParam<>();
+    Op checkReturn = new Op("checkReturn", bool);
+    agentContext.doAction(artifactId, checkReturn);
+    if (bool.get().booleanValue()){
+      String operationName = operation.getName();
+      Object[] params = operation.getParamValues();
+      OpFeedbackParam<Object> returnParam = new OpFeedbackParam<>();
+      List<Object> paramList = Arrays.asList(params);
+      paramList.add(returnParam);
+      params = paramList.toArray();
+      operation = new Op(operationName, params);
+    }
+    agentContext.doAction(artifactId, operation);
+  }
+
+  private void doActionReply(String agentUri, String workspaceName, String artifactName, String action,
+                        Optional<String> payload, OpFeedbackParam<Object> replyObject) throws CartagoException {
+    CartagoContext agentContext = getAgentContext(agentUri);
+
+    WorkspaceId workspaceId = agentContext.joinWorkspace(workspaceName);
+
+    Op operation;
+
+    if (payload.isPresent()) {
+      Object[] params = CartagoDataBundle.fromJson(payload.get());
+      List<Object> paramList = Arrays.asList(params);
+      paramList.add(replyObject);
+      params = paramList.toArray();
+      operation = new Op(action, params);
+    } else {
+      operation = new Op(action);
+    }
+
+    LOGGER.info("Performing action " + action + " on artifact " + artifactName
+      + " with params: " + Arrays.asList(operation.getParamValues()));
 
     ArtifactId artifactId = agentContext.lookupArtifact(workspaceId, artifactName);
     agentContext.doAction(artifactId, operation);

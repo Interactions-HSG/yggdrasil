@@ -54,6 +54,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
     router.route("/environments/:envid/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
+    router.get("/signifiers/:signifierid").handler(handler::handleGetSignifier);
 
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph

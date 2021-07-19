@@ -1,17 +1,16 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import cartago.*;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 
-import cartago.Artifact;
-import cartago.ArtifactId;
-import cartago.CartagoException;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -142,5 +141,27 @@ public abstract class HypermediaArtifact extends Artifact {
     }
 
     throw new RuntimeException("Artifact was not registered!");
+  }
+
+  public boolean hasReturn(String operationName){
+    boolean b = false;
+    try {
+      Method m = this.getClass().getMethod(operationName);
+      Class[] types = m.getParameterTypes();
+      int n = types.length;
+      if (n>0) {
+        Class type = types[n - 1];
+        b = type.equals(OpFeedbackParam.class);
+      }
+    } catch( NoSuchMethodException e){
+      e.printStackTrace();
+    }
+    return b;
+  }
+
+  @OPERATION
+  public void checkReturn(String operationName, OpFeedbackParam<Boolean> bool){
+    boolean b = hasReturn(operationName);
+    bool.set(b);
   }
 }

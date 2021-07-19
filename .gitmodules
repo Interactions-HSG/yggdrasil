@@ -5,3 +5,6 @@
 	path = wot-td-java
 	url = git@github.com:Interactions-HSG/wot-td-java.git
 	branch = master
+[submodule "signifier-java"]
+	path = signifier-java
+	url = git@github.com:Interactions-HSG/signifier-java.git

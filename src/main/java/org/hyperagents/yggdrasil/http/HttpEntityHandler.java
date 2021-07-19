@@ -12,6 +12,8 @@ import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.signifiers.SignifierRegistry;
+import org.hyperagents.yggdrasil.signifiers.SignifierVerticle;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -163,65 +165,177 @@ public class HttpEntityHandler {
     String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
 
     DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, artifactIri);
+      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+      .addHeader(REQUEST_URI, artifactIri);
 
     String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
 
     if (contentType != null) {
       options.addHeader(CONTENT_TYPE, contentType);
     }
+    String needsReply = request.getHeader("Reply");
+    if (needsReply.equals("true")) {
 
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
-          if (reply.succeeded()) {
-              String artifactDescription = (String) reply.result().body();
-              ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
-                  artifactDescription);
+      vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
+        if (reply.succeeded()) {
+          String artifactDescription = (String) reply.result().body();
+          ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
+            artifactDescription);
 
-              DeliveryOptions cartagoOptions = new DeliveryOptions()
-                  .addHeader(CartagoVerticle.AGENT_ID, agentId)
-                  .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
-                  .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
-                  .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
-                  .addHeader(CartagoVerticle.ACTION_NAME, actionName);
+          DeliveryOptions cartagoOptions = new DeliveryOptions()
+            .addHeader(CartagoVerticle.AGENT_ID, agentId)
+            .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION_REPLY)
+            .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
+            .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
+            .addHeader(CartagoVerticle.ACTION_NAME, actionName);
 
-              String apiKey = context.request().getHeader("X-API-Key");
-              if (apiKey != null && !apiKey.isEmpty()) {
-                artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
-              }
+          String apiKey = context.request().getHeader("X-API-Key");
+          if (apiKey != null && !apiKey.isEmpty()) {
+            artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
+          }
 
-              Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
-                  action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
-                  .findFirst();
+          Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
+            action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+            .findFirst();
 
-              String serializedPayload = null;
+          String serializedPayload = null;
 
-              if (affordance.isPresent()) {
-                Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
+          if (affordance.isPresent()) {
+            Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
 
-                if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
-                  JsonElement payload = JsonParser.parseString(entityRepresentation);
-                  List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
+            if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
+              JsonElement payload = JsonParser.parseString(entityRepresentation);
+              List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
 
-                  serializedPayload = CartagoDataBundle.toJson(params);
-                }
-              }
-
-              vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
-                  cartagoReply -> {
-                    if (cartagoReply.succeeded()) {
-                      LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
-                      context.response().setStatusCode(HttpStatus.SC_OK).end();
-                    } else {
-                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
-                          + "; reason: " + cartagoReply.cause().getMessage());
-                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                          .end();
-                    }
-                  });
+              serializedPayload = CartagoDataBundle.toJson(params);
             }
-        });
+          }
+
+          vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
+            cartagoReply -> {
+              if (cartagoReply.succeeded()) {
+                LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+                context.response().setStatusCode(HttpStatus.SC_OK)
+                  .write(cartagoReply.result().body().toString())
+                  .end();
+              } else {
+                LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
+                  + "; reason: " + cartagoReply.cause().getMessage());
+                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                  .end();
+              }
+            });
+        }
+      });
+    }
+    else {
+      vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
+        if (reply.succeeded()) {
+          String artifactDescription = (String) reply.result().body();
+          ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
+            artifactDescription);
+
+          DeliveryOptions cartagoOptions = new DeliveryOptions()
+            .addHeader(CartagoVerticle.AGENT_ID, agentId)
+            .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
+            .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
+            .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
+            .addHeader(CartagoVerticle.ACTION_NAME, actionName);
+
+          String apiKey = context.request().getHeader("X-API-Key");
+          if (apiKey != null && !apiKey.isEmpty()) {
+            artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
+          }
+
+          Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
+            action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+            .findFirst();
+
+          String serializedPayload = null;
+
+          if (affordance.isPresent()) {
+            Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
+
+            if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
+              JsonElement payload = JsonParser.parseString(entityRepresentation);
+              List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
+
+              serializedPayload = CartagoDataBundle.toJson(params);
+            }
+          }
+
+          vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
+            cartagoReply -> {
+              if (cartagoReply.succeeded()) {
+                LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+                context.response().setStatusCode(HttpStatus.SC_OK)
+                  .end();
+              } else {
+                LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
+                  + "; reason: " + cartagoReply.cause().getMessage());
+                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                  .end();
+              }
+            });
+        }
+      });
+
+    }
   }
+
+  public void handleGetSignifier(RoutingContext routingContext) {
+    SignifierRegistry signifierRegistry = SignifierRegistry.getInstance();
+    String signifierName = routingContext.pathParam("signifierid");
+    HttpServerRequest request = routingContext.request();
+    String agentId = request.getHeader("X-Agent-WebID");
+    String signifierIri = signifierRegistry.getSignifierPrefix()+signifierName;
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+      .addHeader(REQUEST_URI, signifierIri);
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
+      if (reply.succeeded()) {
+
+        DeliveryOptions signifierOptions = new DeliveryOptions()
+          .addHeader(SignifierVerticle.AGENT_ID, agentId)
+          .addHeader(REQUEST_METHOD, SignifierVerticle.GET_SIGNIFIER)
+          .addHeader(SignifierVerticle.SIGNIFIER_NAME, signifierName);
+        String serializedPayload = null;
+        vertx.eventBus().request(SignifierVerticle.BUS_ADDRESS, serializedPayload, signifierOptions,
+          signifierReply -> {
+            if (signifierReply.succeeded()) {
+              LOGGER.info("Signifier operation succeeded: " + signifierName);
+              routingContext.response().setStatusCode(HttpStatus.SC_OK)
+                .write(signifierReply.result().body().toString())
+                .end();
+            } else {
+              LOGGER.info("Signifier operation failed: " + signifierName
+                + "; reason: " + signifierReply.cause().getMessage());
+              routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND)
+                .end();
+            }
+          });
+
+        //Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
+        //action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+        // .findFirst();
+
+        // String serializedPayload = null;
+
+       /* if (affordance.isPresent()) {
+          Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
+
+          if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
+            JsonElement payload = JsonParser.parseString(entityRepresentation);
+            List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
+
+            serializedPayload = CartagoDataBundle.toJson(params);
+          }
+        }*/
+      }
+
+    });
+  }
+
 
   // TODO: add payload validation
   public void handleUpdateEntity(RoutingContext routingContext) {

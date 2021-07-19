@@ -9,3 +9,4 @@ rootProject.name = 'yggdrasil'
 
 includeBuild('cartago')
 includeBuild('wot-td-java')
+includeBuild('signifier-java')
