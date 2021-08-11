@@ -11,6 +11,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.hyperagents.signifier.Signifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -86,7 +87,7 @@ public class SignifierRegistry {
       Signifier s = (Signifier) t.getContent(1);
       Visibility v = (Visibility) t.getContent(2);
       SignifierHypermediaArtifact artifact = (SignifierHypermediaArtifact) t.getContent(3);
-      b = v.isVisible(artifact.getState(),artifact.getAgentProfile(agentName), s);
+      b = v.isVisible(s, artifact.getState(), artifact.getAgentProfile(agentName));
 
     }
     return b;
@@ -101,12 +102,12 @@ public class SignifierRegistry {
       String signifierContent = (String) t.getContent(1);
       Visibility v = (Visibility) t.getContent(2);
       SignifierHypermediaArtifact artifact = (SignifierHypermediaArtifact) t.getContent(3);
-      ArtifactState state = artifact.getState();
+      Model state = artifact.getState();
       AgentProfile profile = artifact.getAgentProfile(agentUri);
       Signifier s = new Signifier.Builder(getSignifierId(signifier))
         .add(contentToModel(signifierContent, signifierUri.toString()))
         .build();
-      boolean b = v.isVisible(state, profile, s);
+      boolean b = v.isVisible(s, state, profile);
       if (b){
         str = signifierContent;
       }

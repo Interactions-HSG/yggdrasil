@@ -3,23 +3,27 @@ package org.hyperagents.yggdrasil.signifiers;
 import cartago.AgentId;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
+import cartago.Tuple;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.hyperagents.signifier.Signifier;
+import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
 public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
-  private SignifierRegistry registry = SignifierRegistry.getInstance();
+  protected SignifierRegistry registry = SignifierRegistry.getInstance();
 
   protected Map<String, IRI> agentProfiles=new HashMap<String, IRI>();
 
-  public abstract ArtifactState getState();
+  public abstract Model getState();
 
   public abstract AgentProfile getAgentProfile(AgentId agent);
 
@@ -43,7 +47,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   }
 
-  @OPERATION
+ /* @OPERATION
   public void useOperation(String operation, Object[] params){
     Class signifierClass = this.getClass();
     try {
@@ -60,7 +64,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     catch(Exception e){
       e.printStackTrace();
     }
-  }
+  }*/
 
   private Method getMethodFromList(List<Method> methods, String methodName){
     Method method = null;
@@ -72,6 +76,12 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     return method;
   }
 
+  @OPERATION
+  public void addSignifier(String signifierName, Signifier signifier){
+    Visibility visibility = new VisibilityImpl();
+    Tuple t = new Tuple(signifierName, signifier, visibility, this );
+    registry.addSignifier(RDFS.rdf.createIRI(signifierName),t);
+  }
 
 
   @OPERATION
@@ -92,6 +102,48 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     List<IRI> signifiers = new Vector<>(visibles);
     returnParam.set(signifiers);
 
+  }
+
+  @OPERATION
+  public void useOperation(String operation, Object[] params){
+    Class signifierClass = this.getClass();
+    try {
+      Method[] methods = signifierClass.getMethods();
+      List<Method> methodList = Arrays.asList(methods);
+      for (Method method : methodList){
+        //System.out.println("Method Name : "+method.getName());
+      }
+      Method method = getMethodFromList(methodList, operation);
+      if (isOperation(method)) {
+        method.invoke(this, params);
+      } else {
+        //System.out.println("Method invoked is not an operation");
+        throw new Exception("Method invoked is not an operation");
+      }
+      //Method method = signifierClass.getMethod(operation);
+      //method.invoke(this,params);
+    }
+    catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  private boolean isOperation(Method m){
+    boolean b = false;
+    Annotation[] annotations = m.getAnnotations();
+    for (Annotation annotation : annotations){
+      Class atype = annotation.annotationType();
+      if (atype.equals(OPERATION.class)){
+        System.out.println("is operation");
+        b = true;
+      }
+    }
+    return b;
+  }
+
+  protected void registerSignifierAffordances(){
+    registerActionAffordance("http://example.com/retrieve", "retrieveVisibleSignifiers", "/retrieve");
+    registerActionAffordance("http://example.com/add", "addSignifier", "/addsignifier");
   }
 
 

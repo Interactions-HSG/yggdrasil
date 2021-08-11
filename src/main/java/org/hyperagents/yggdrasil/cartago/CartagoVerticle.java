@@ -1,12 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.*;
-
 import cartago.*;
-import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.http.HttpEntityHandler;
-import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
-
 import cartago.util.agent.ActionFailedException;
 import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
@@ -25,6 +19,11 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
+
+import java.util.*;
 
 public class CartagoVerticle extends AbstractVerticle {
   public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.cartago";
