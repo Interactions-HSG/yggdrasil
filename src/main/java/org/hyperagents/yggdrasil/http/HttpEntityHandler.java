@@ -1,11 +1,26 @@
 package org.hyperagents.yggdrasil.http;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
+import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import io.vertx.core.*;
+import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.Message;
+import io.vertx.core.eventbus.ReplyException;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
@@ -17,32 +32,7 @@ import org.hyperagents.yggdrasil.signifiers.SignifierVerticle;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.Message;
-import io.vertx.core.eventbus.ReplyException;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.ext.web.RoutingContext;
+import java.util.*;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations (e.g.,
@@ -123,6 +113,7 @@ public class HttpEntityHandler {
   public void handleCreateArtifact(RoutingContext context) {
     LOGGER.info("Received create artifact request");
     String representation = context.getBodyAsString();
+    LOGGER.info("body");
     String workspaceName = context.pathParam("wkspid");
     String agentId = context.request().getHeader("X-Agent-WebID");
 
@@ -132,13 +123,14 @@ public class HttpEntityHandler {
 
     JsonObject artifactInit = (JsonObject) Json.decodeValue(representation);
     String artifactName = artifactInit.getString("artifactName");
-
     Promise<String> cartagoPromise = Promise.promise();
+    LOGGER.info("Promise created");
     cartagoHandler.createArtifact(agentId, workspaceName, artifactName, representation,
         cartagoPromise);
-
+    LOGGER.info("artifact created");
     cartagoPromise.future().compose(result ->
       Future.future(promise -> storeEntity(context, artifactName, result, promise)));
+    LOGGER.info("entity created");
   }
 
   // TODO: add payload validation

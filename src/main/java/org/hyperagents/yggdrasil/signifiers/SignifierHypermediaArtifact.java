@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.signifiers;
 
-import cartago.AgentId;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import cartago.Tuple;
@@ -9,6 +8,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.signifier.Signifier;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
@@ -17,21 +17,27 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
+public class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   protected SignifierRegistry registry = SignifierRegistry.getInstance();
 
-  protected Map<String, IRI> agentProfiles=new HashMap<String, IRI>();
+  protected Map<String, IRI> agentProfiles = new HashMap<String, IRI>();
 
-  public abstract Model getState();
+  public void init(){
 
-  public abstract AgentProfile getAgentProfile(AgentId agent);
+  }
 
-  public AgentProfile getAgentProfile(String agentName){
+  public Model getState() {
+    Model model = new ModelBuilder().build();
+    return model;
+  }
+
+
+  public AgentProfile getAgentProfile(String agentName) {
     ValueFactory rdf = SimpleValueFactory.getInstance();
     Resource agentId = rdf.createIRI("http://example.com/thisAgent");
     AgentProfile profile = new AgentProfile(agentId);
-    if (agentProfiles.containsKey(agentName)){
+    if (agentProfiles.containsKey(agentName)) {
       IRI agentProfileIRI = agentProfiles.get(agentName);
       profile = retrieveAgentProfile(agentProfileIRI);
 
@@ -39,7 +45,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     return profile;
   }
 
-  public AgentProfile retrieveAgentProfile(IRI agentProfileIRI){
+  public AgentProfile retrieveAgentProfile(IRI agentProfileIRI) {
     ValueFactory rdf = SimpleValueFactory.getInstance();
     Resource agentId = rdf.createIRI("http://example.com/thisAgent");
     AgentProfile profile = new AgentProfile(agentId);
@@ -47,34 +53,6 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   }
 
- /* @OPERATION
-  public void useOperation(String operation, Object[] params){
-    Class signifierClass = this.getClass();
-    try {
-      Method[] methods = signifierClass.getDeclaredMethods();
-      List<Method> methodList = Arrays.asList(methods);
-      for (Method method : methodList){
-        //System.out.println("Method Name : "+method.getName());
-      }
-      Method method = getMethodFromList(methodList, operation);
-      method.invoke(this,params);
-      //Method method = signifierClass.getMethod(operation);
-      //method.invoke(this,params);
-    }
-    catch(Exception e){
-      e.printStackTrace();
-    }
-  }*/
-
-  private Method getMethodFromList(List<Method> methods, String methodName){
-    Method method = null;
-    for (Method m: methods){
-      if (m.getName().equals(methodName)){
-        method=m;
-      }
-    }
-    return method;
-  }
 
   @OPERATION
   public void addSignifier(String signifierName, Signifier signifier){
@@ -102,6 +80,16 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     List<IRI> signifiers = new Vector<>(visibles);
     returnParam.set(signifiers);
 
+  }
+
+  private Method getMethodFromList(List<Method> methods, String methodName){
+    Method method = null;
+    for (Method m: methods){
+      if (m.getName().equals(methodName)){
+        method=m;
+      }
+    }
+    return method;
   }
 
   @OPERATION
@@ -147,4 +135,12 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
   }
 
 
+
+
+  @Override
+  protected void registerInteractionAffordances() {
+    registerSignifierAffordances();
+
+  }
 }
+

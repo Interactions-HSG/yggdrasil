@@ -101,6 +101,7 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply(workspaceDescription);
           break;
         case CREATE_ARTIFACT:
+          LOGGER.info("artifact is being created");
           String artifactName = message.headers().get(ARTIFACT_NAME);
 
           JsonObject artifactInit = (JsonObject) Json.decodeValue(message.body());

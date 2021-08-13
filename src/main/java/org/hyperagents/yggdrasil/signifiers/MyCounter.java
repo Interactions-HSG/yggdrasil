@@ -1,10 +1,10 @@
-package org.hyperagents.yggdrasil.cartago.artifacts;
+package org.hyperagents.yggdrasil.signifiers;
 
 import cartago.OPERATION;
 import cartago.ObsProperty;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
-public class Counter extends HypermediaArtifact {
+public class MyCounter extends HypermediaArtifact {
 
   public void init() {
     System.out.println("init");

@@ -34,6 +34,13 @@ public class SignifierRegistry {
   //The tuple contains the content of the signifier at index 1.
   //The tuple contains the visibility of the signifier at index 2.
   //The tuple contains the artifact of the signifier at index 3.
+
+
+  //The IRI is the IRI of the signifier
+  //The tuple contains:
+  //The content of the signifier at index 0
+  //The visibility of the signifier at index 2.
+  //The artifact of the signifier at index 3
   private Map<IRI, Tuple> signifiers;
 
   private ValueFactory rdf;
@@ -52,7 +59,7 @@ public class SignifierRegistry {
   }
 
   public String getSignifierPrefix(){
-    return this + "/signifiers/";
+    return httpPrefix + "/signifiers/";
   }
 
   public IRI getSignifierIRI(String name){
@@ -77,6 +84,7 @@ public class SignifierRegistry {
   public void addSignifier(IRI name, Tuple t){
     this.signifiers.put(name, t);
   }
+  
 
   public boolean isVisible(String agentName, String signifierUri){
     ValueFactory rdf = SimpleValueFactory.getInstance();
