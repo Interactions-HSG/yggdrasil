@@ -23,6 +23,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.model.IRI;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
@@ -275,29 +276,46 @@ public class HttpEntityHandler {
     }
   }
 
+  public void handleGetAllSignifiers(RoutingContext routingContext){
+    SignifierRegistry signifierRegistry = SignifierRegistry.getInstance();
+    List<IRI> iris = signifierRegistry.getAllSignifierIRIs();
+    int length = iris.size();
+    String content = iris.toString();
+    String lengthString = Integer.toString(content.length());
+    routingContext.response().setStatusCode(HttpStatus.SC_OK)
+      .putHeader("Content-Length",lengthString)
+      .write(content)
+      .end();
+
+
+  }
+
+
   public void handleGetSignifier(RoutingContext routingContext) {
     SignifierRegistry signifierRegistry = SignifierRegistry.getInstance();
     String signifierName = routingContext.pathParam("signifierid");
+    LOGGER.info("Signifier id: "+signifierName);
     HttpServerRequest request = routingContext.request();
     String agentId = request.getHeader("X-Agent-WebID");
     String signifierIri = signifierRegistry.getSignifierPrefix()+signifierName;
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-      .addHeader(REQUEST_URI, signifierIri);
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
-      if (reply.succeeded()) {
-
-        DeliveryOptions signifierOptions = new DeliveryOptions()
+    DeliveryOptions signifierOptions = new DeliveryOptions()
           .addHeader(SignifierVerticle.AGENT_ID, agentId)
           .addHeader(REQUEST_METHOD, SignifierVerticle.GET_SIGNIFIER)
           .addHeader(SignifierVerticle.SIGNIFIER_NAME, signifierName);
+    LOGGER.info(signifierOptions);
         String serializedPayload = null;
         vertx.eventBus().request(SignifierVerticle.BUS_ADDRESS, serializedPayload, signifierOptions,
           signifierReply -> {
+          LOGGER.info("reply received");
             if (signifierReply.succeeded()) {
-              LOGGER.info("Signifier operation succeeded: " + signifierName);
+              LOGGER.info("Signifier operation succeeded: " + signifierName); //can reach here
+              String content = signifierReply.result().body().toString();
+              int length = content.length();
+              String lengthString = Integer.toString(length);
+              LOGGER.info(content);
               routingContext.response().setStatusCode(HttpStatus.SC_OK)
-                .write(signifierReply.result().body().toString())
+                .putHeader("Content-Length",lengthString)
+                .write(content)
                 .end();
             } else {
               LOGGER.info("Signifier operation failed: " + signifierName
@@ -307,27 +325,7 @@ public class HttpEntityHandler {
             }
           });
 
-        //Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
-        //action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
-        // .findFirst();
-
-        // String serializedPayload = null;
-
-       /* if (affordance.isPresent()) {
-          Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
-
-          if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
-            JsonElement payload = JsonParser.parseString(entityRepresentation);
-            List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
-
-            serializedPayload = CartagoDataBundle.toJson(params);
-          }
-        }*/
-      }
-
-    });
   }
-
 
   // TODO: add payload validation
   public void handleUpdateEntity(RoutingContext routingContext) {

@@ -2,7 +2,6 @@ package org.hyperagents.yggdrasil.signifiers;
 
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
-import cartago.Tuple;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -10,7 +9,6 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 import java.lang.annotation.Annotation;
@@ -54,11 +52,19 @@ public class SignifierHypermediaArtifact extends HypermediaArtifact {
   }
 
 
-  @OPERATION
+  /*@OPERATION
   public void addSignifier(String signifierName, Signifier signifier){
     Visibility visibility = new VisibilityImpl();
-    Tuple t = new Tuple(signifierName, signifier, visibility, this );
+    //Tuple t = new Tuple(signifierName, signifier, visibility, this );
+    SignifierRegistryTuple t = new SignifierRegistryTuple(signifier, visibility, this);
     registry.addSignifier(RDFS.rdf.createIRI(signifierName),t);
+  }*/
+
+  @OPERATION
+  public void addSignifier(Signifier signifier){
+    Visibility visibility = new VisibilityImpl();
+    SignifierRegistryTuple t = new SignifierRegistryTuple(signifier, visibility, this);
+    registry.addSignifier(t);
   }
 
 

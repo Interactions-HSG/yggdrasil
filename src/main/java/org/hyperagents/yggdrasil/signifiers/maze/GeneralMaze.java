@@ -9,6 +9,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact;
+import org.hyperagents.yggdrasil.signifiers.SignifierRegistryTuple;
 
 import java.util.*;
 
@@ -37,7 +38,8 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
     Iterator<SignifierTuple> iterator = initializer.getSignifiers().iterator();
     while (iterator.hasNext()){
       SignifierTuple t = iterator.next();
-      this.registry.addSignifier(rdf.createIRI(t.getName()), t.toTuple());
+      SignifierRegistryTuple tuple = new SignifierRegistryTuple(t.getSignifier(),t.getVisibility(), this);
+      this.registry.addSignifier(tuple);
     }
     System.out.println("end init");
   }

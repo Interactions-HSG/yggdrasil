@@ -36,6 +36,7 @@ public class MainVerticle extends AbstractVerticle {
       .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
         + ".SpatialCalculator2D")
       .put("http://example.org/Adder", "org.hyperagents.yggdrasil.cartago.artifacts.Adder")
+      .put("http://example.org/SignifierTest","org.hyperagents.yggdrasil.signifiers.SignifierTest")
       .put("http://example.org/SignifierArtifact", "org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact")
       .put("http://example.org/Maze", "org.hyperagents.yggdrasil.signifiers.maze.GeneralMaze")
       .put("http://example.org/Maze1", "org.hyperagents.yggdrasil.signifiers.maze.Maze1")
@@ -50,18 +51,6 @@ public class MainVerticle extends AbstractVerticle {
       new DeploymentOptions().setWorker(true).setConfig(cartagoConfig)
     );
 
-    /*ProcessBuilder processBuilder = new ProcessBuilder();
-    System.out.println("process builder created");
-    processBuilder.command("./signifiers/maze/scripts/init.sh");
-    System.out.println("script launched");*/
   }
 
-  public void addArtifact(JsonObject object, Class classe){
-    String name = classe.getName();
-    String key = "http://example.org/"+name;
-    String packageName = classe.getPackage().getName();
-    String value = packageName+"."+name;
-    object.put(key, value);
-
-  }
 }

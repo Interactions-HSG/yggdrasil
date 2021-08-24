@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.signifiers;
 
-import cartago.Tuple;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -16,11 +15,7 @@ import org.hyperagents.signifier.Signifier;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import java.util.*;
 
 
 public class SignifierRegistry {
@@ -41,9 +36,11 @@ public class SignifierRegistry {
   //The content of the signifier at index 0
   //The visibility of the signifier at index 2.
   //The artifact of the signifier at index 3
-  private Map<IRI, Tuple> signifiers;
+  private Map<IRI, SignifierRegistryTuple> signifiers;
 
   private ValueFactory rdf;
+
+  private int n = 1;
 
   private SignifierRegistry(){
     signifiers = new HashMap<>();
@@ -63,7 +60,7 @@ public class SignifierRegistry {
   }
 
   public IRI getSignifierIRI(String name){
-    String iri = this + "/signifiers/" + name;
+    String iri = httpPrefix + "/signifiers/" + name;
     return rdf.createIRI(iri);
   }
 
@@ -71,8 +68,8 @@ public class SignifierRegistry {
     Set<IRI> signifierIds = new HashSet<>();
     Set<IRI> keySet = this.signifiers.keySet();
     for (IRI key : keySet){
-      Tuple t = signifiers.get(key);
-      SignifierHypermediaArtifact a = (SignifierHypermediaArtifact) t.getContent(3);
+      SignifierRegistryTuple t = signifiers.get(key);
+      SignifierHypermediaArtifact a = t.getArtifact();
       if (a.equals(artifact)){
         signifierIds.add(key);
       }
@@ -81,20 +78,36 @@ public class SignifierRegistry {
 
   }
 
-  public void addSignifier(IRI name, Tuple t){
+  public void addSignifier(IRI name, SignifierRegistryTuple t){
     this.signifiers.put(name, t);
   }
-  
+
+  public void addSignifier(SignifierRegistryTuple t){
+    //IRI name = getSignifierIRI(getRandomName());
+    IRI name = getSignifierIRI(createName());
+    System.out.println("Signifier name: "+name);
+    this.signifiers.put(name, t);
+  }
+
+  public String createName(){
+    String s = ""+this.n;
+    this.n++;
+    return s;
+  }
+
+  public String getRandomName(){
+    return UUID.randomUUID().toString();
+  }
 
   public boolean isVisible(String agentName, String signifierUri){
     ValueFactory rdf = SimpleValueFactory.getInstance();
     IRI key = rdf.createIRI(signifierUri);
     boolean b = false;
     if (signifiers.containsKey(key)){
-      Tuple t = signifiers.get(key);
-      Signifier s = (Signifier) t.getContent(1);
-      Visibility v = (Visibility) t.getContent(2);
-      SignifierHypermediaArtifact artifact = (SignifierHypermediaArtifact) t.getContent(3);
+      SignifierRegistryTuple t = signifiers.get(key);
+      Signifier s = t.getSignifier();
+      Visibility v = t.getVisibility();
+      SignifierHypermediaArtifact artifact = t.getArtifact();
       b = v.isVisible(s, artifact.getState(), artifact.getAgentProfile(agentName));
 
     }
@@ -106,10 +119,10 @@ public class SignifierRegistry {
     String str = null;
     IRI signifierUri = getSignifierIRI(signifier);
     if (signifiers.containsKey(signifierUri)){
-      Tuple t = signifiers.get(signifierUri);
-      String signifierContent = (String) t.getContent(1);
-      Visibility v = (Visibility) t.getContent(2);
-      SignifierHypermediaArtifact artifact = (SignifierHypermediaArtifact) t.getContent(3);
+      SignifierRegistryTuple t = signifiers.get(signifierUri);
+      String signifierContent = t.getSignifierContent();
+      Visibility v = t.getVisibility();
+      SignifierHypermediaArtifact artifact = t.getArtifact();
       Model state = artifact.getState();
       AgentProfile profile = artifact.getAgentProfile(agentUri);
       Signifier s = new Signifier.Builder(getSignifierId(signifier))
@@ -144,10 +157,15 @@ public class SignifierRegistry {
   public String retrieveSignifier(IRI signifierId){
     String s = null;
     if (signifiers.containsKey(signifierId)){
-      Tuple t = signifiers.get(signifierId);
-      s = (String) t.getContent(1);
+      SignifierRegistryTuple t = signifiers.get(signifierId);
+      s = t.getSignifierContent();
     }
     return s;
 
+  }
+
+  public List<IRI> getAllSignifierIRIs(){
+    Set<IRI> iris = signifiers.keySet();
+    return new ArrayList<>(iris);
   }
 }

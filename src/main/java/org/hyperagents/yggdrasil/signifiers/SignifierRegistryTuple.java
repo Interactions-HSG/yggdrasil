@@ -2,15 +2,14 @@ package org.hyperagents.yggdrasil.signifiers;
 
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 public class SignifierRegistryTuple {
 
   private Signifier signifier;
   private Visibility visibility;
-  private HypermediaArtifact artifact;
+  private SignifierHypermediaArtifact artifact;
 
-  public void SignifierRegistryTuple(Signifier signifier, Visibility visibility, HypermediaArtifact artifact){
+  public SignifierRegistryTuple(Signifier signifier, Visibility visibility, SignifierHypermediaArtifact artifact){
     this.signifier = signifier;
     this.visibility = visibility;
     this.artifact = artifact;
@@ -28,7 +27,7 @@ public class SignifierRegistryTuple {
     return this.visibility;
   }
 
-  public HypermediaArtifact getArtifact(){
+  public SignifierHypermediaArtifact getArtifact(){
     return this.artifact;
   }
 }
