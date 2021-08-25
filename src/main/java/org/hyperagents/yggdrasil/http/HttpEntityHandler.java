@@ -144,7 +144,6 @@ public class HttpEntityHandler {
     String entityRepresentation = context.getBodyAsString();
     String wkspName = context.pathParam("wkspid");
     String artifactName = context.pathParam("artid");
-
     HttpServerRequest request = context.request();
     String agentId = request.getHeader("X-Agent-WebID");
 
@@ -166,7 +165,11 @@ public class HttpEntityHandler {
     if (contentType != null) {
       options.addHeader(CONTENT_TYPE, contentType);
     }
-    String needsReply = request.getHeader("Reply");
+    String needsReply = request.getHeader("X-Reply");
+    if (needsReply == null){
+      needsReply = "false";
+
+    }
     if (needsReply.equals("true")) {
 
       vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
@@ -208,7 +211,10 @@ public class HttpEntityHandler {
             cartagoReply -> {
               if (cartagoReply.succeeded()) {
                 LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+                String content = cartagoReply.result().body().toString();
+                String lengthString = Integer.toString(content.length());
                 context.response().setStatusCode(HttpStatus.SC_OK)
+                  .putHeader("Content-Length",lengthString)
                   .write(cartagoReply.result().body().toString())
                   .end();
               } else {
@@ -234,12 +240,10 @@ public class HttpEntityHandler {
             .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
             .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
             .addHeader(CartagoVerticle.ACTION_NAME, actionName);
-
           String apiKey = context.request().getHeader("X-API-Key");
           if (apiKey != null && !apiKey.isEmpty()) {
             artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
           }
-
           Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
             action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
             .findFirst();
@@ -256,7 +260,6 @@ public class HttpEntityHandler {
               serializedPayload = CartagoDataBundle.toJson(params);
             }
           }
-
           vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
             cartagoReply -> {
               if (cartagoReply.succeeded()) {

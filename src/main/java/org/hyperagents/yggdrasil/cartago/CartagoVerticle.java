@@ -127,7 +127,6 @@ public class CartagoVerticle extends AbstractVerticle {
 
           Optional<String> payload = message.body() == null ? Optional.empty()
               : Optional.of(message.body());
-
           doAction(agentUri, workspaceName, artifact, action, payload);
           message.reply(HttpStatus.SC_OK);
           break;
@@ -223,7 +222,7 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void doAction(String agentUri, String workspaceName, String artifactName, String action,
-      Optional<String> payload) throws CartagoException {
+                        Optional<String> payload) throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
 
     WorkspaceId workspaceId = agentContext.joinWorkspace(workspaceName);
@@ -238,21 +237,9 @@ public class CartagoVerticle extends AbstractVerticle {
     }
 
     LOGGER.info("Performing action " + action + " on artifact " + artifactName
-        + " with params: " + Arrays.asList(operation.getParamValues()));
+      + " with params: " + Arrays.asList(operation.getParamValues()));
 
     ArtifactId artifactId = agentContext.lookupArtifact(workspaceId, artifactName);
-    OpFeedbackParam<Boolean> bool =  new OpFeedbackParam<>();
-    Op checkReturn = new Op("checkReturn", bool);
-    agentContext.doAction(artifactId, checkReturn);
-    if (bool.get().booleanValue()){
-      String operationName = operation.getName();
-      Object[] params = operation.getParamValues();
-      OpFeedbackParam<Object> returnParam = new OpFeedbackParam<>();
-      List<Object> paramList = Arrays.asList(params);
-      paramList.add(returnParam);
-      params = paramList.toArray();
-      operation = new Op(operationName, params);
-    }
     agentContext.doAction(artifactId, operation);
   }
 
@@ -266,12 +253,13 @@ public class CartagoVerticle extends AbstractVerticle {
 
     if (payload.isPresent()) {
       Object[] params = CartagoDataBundle.fromJson(payload.get());
-      List<Object> paramList = Arrays.asList(params);
+      List<Object> paramList = new ArrayList<>(Arrays.asList(params));
       paramList.add(replyObject);
       params = paramList.toArray();
       operation = new Op(action, params);
     } else {
-      operation = new Op(action);
+      Object[] params = new Object[]{replyObject};
+      operation = new Op(action, params);
     }
 
     LOGGER.info("Performing action " + action + " on artifact " + artifactName
