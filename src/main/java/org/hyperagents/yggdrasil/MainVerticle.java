@@ -35,6 +35,7 @@ public class MainVerticle extends AbstractVerticle {
       .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter")
       .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
         + ".SpatialCalculator2D")
+      .put("http://example.org/AgentProfileArtifact", "org.hyperagents.yggdrasil.signifiers.AgentProfileArtifact")
       .put("http://example.org/Adder", "org.hyperagents.yggdrasil.cartago.artifacts.Adder")
       .put("http://example.org/SignifierTest","org.hyperagents.yggdrasil.signifiers.SignifierTest")
       .put("http://example.org/SignifierArtifact", "org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact")
@@ -42,7 +43,8 @@ public class MainVerticle extends AbstractVerticle {
       .put("http://example.org/Maze1", "org.hyperagents.yggdrasil.signifiers.maze.Maze1")
       .put("http://example.org/Maze2", "org.hyperagents.yggdrasil.signifiers.maze.Maze2")
       .put("http://example.org/Maze3", "org.hyperagents.yggdrasil.signifiers.maze.Maze3")
-      .put("http://example.org/Maze4", "org.hyperagents.yggdrasil.signifiers.maze.Maze4");
+      .put("http://example.org/Maze4", "org.hyperagents.yggdrasil.signifiers.maze.Maze4")
+      .put("http://example.org/ConveyingWorkshop", "org.hyperagents.yggdrasil.signifiers.maze.ConveyingWorkshop");
 
     JsonObject cartagoConfig = config();
     cartagoConfig.put("known-artifacts", knownArtifacts);

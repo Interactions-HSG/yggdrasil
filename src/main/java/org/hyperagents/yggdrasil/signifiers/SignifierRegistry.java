@@ -136,6 +136,26 @@ public class SignifierRegistry {
     return str;
   }
 
+  public String getSignifierfromUri(String agentUri, String signifierUri){
+    String str = null;
+    if (signifiers.containsKey(signifierUri)){
+      SignifierRegistryTuple t = signifiers.get(signifierUri);
+      String signifierContent = t.getSignifierContent();
+      Visibility v = t.getVisibility();
+      SignifierHypermediaArtifact artifact = t.getArtifact();
+      Model state = artifact.getState();
+      AgentProfile profile = artifact.getAgentProfile(agentUri);
+      Signifier s = new Signifier.Builder(rdf.createIRI(signifierUri))
+        .add(contentToModel(signifierContent, signifierUri))
+        .build();
+      boolean b = v.isVisible(s, state, profile);
+      if (b){
+        str = signifierContent;
+      }
+    }
+    return str;
+  }
+
   private Model contentToModel(String content, String baseUri){
     Model model = new LinkedHashModel();
     InputStream stream = new ByteArrayInputStream(content.getBytes());

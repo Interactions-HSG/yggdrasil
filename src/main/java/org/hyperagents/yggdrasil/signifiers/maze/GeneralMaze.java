@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil.signifiers.maze;
 import cartago.AgentId;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import org.eclipse.rdf4j.model.Model;
@@ -48,44 +49,41 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
     return new MazeInitializer();
   }
 
-  @OPERATION
+  /*@OPERATION
   public void register(){
     AgentId agent = this.getCurrentOpAgentId();
     this.locations.put(agent, 1);
     this.goals.put(agent, 9);
     System.out.println("registration done");
-  }
+  }*/
 
   /**
    * The agent can select where he wants to enter the maze.
    * @param entrance
    */
   @OPERATION
-  public void register(int entrance){
+  public void register(int entrance, int useless){
     AgentId agent = this.getCurrentOpAgentId();
     this.locations.put(agent, entrance);
-    this.goals.put(agent, 9);
+    //this.goals.put(agent, 9);
   }
 
-  @OPERATION
+  /*@OPERATION
   public void register(int entrance, int goal){
     AgentId agent = this.getCurrentOpAgentId();
     this.locations.put(agent, entrance);
     this.goals.put(agent, goal);
 
-  }
+  }*/
 
 
   @OPERATION
-  public void move(int m){
+  public void move(int m, int useless){
     AgentId agent = this.getCurrentOpAgentId();
     int room = this.locations.get(agent).intValue();
     int newRoom = nextRoom(room, m);
     this.locations.put(agent, newRoom);
     System.out.println("new  room : "+newRoom);
-    if (newRoom == this.goals.get(agent)){
-      System.out.println("Victory for agent: "+agent);
-    }
   }
 
   private int nextRoom(int room,int m){
@@ -139,9 +137,13 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     registerSignifierAffordances();
-    registerActionAffordance("http://example.org/register", "register", "/register");
     DataSchema intParameter = new IntegerSchema.Builder().build();
-    registerActionAffordance("http://example.org/move", "move", "/move",intParameter);
+    DataSchema arrayParameter = new ArraySchema.Builder()
+      .addItem(new IntegerSchema.Builder().build())
+      .addItem(new IntegerSchema.Builder().build())
+      .build();
+    registerActionAffordance("http://example.org/register", "register", "/register", arrayParameter);
+    registerActionAffordance("http://example.org/move", "move", "/move",arrayParameter);
     registerActionAffordance("http://example.org/available", "availableRooms", "/available", intParameter);
     registerActionAffordance("http://example.org/current", "getCurrentRoom", "/current");
 

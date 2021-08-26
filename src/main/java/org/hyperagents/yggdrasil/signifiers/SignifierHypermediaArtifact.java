@@ -7,7 +7,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.signifier.Signifier;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
@@ -15,7 +14,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public class SignifierHypermediaArtifact extends HypermediaArtifact {
+public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   protected SignifierRegistry registry = SignifierRegistry.getInstance();
 
@@ -25,15 +24,13 @@ public class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   }
 
-  public Model getState() {
-    Model model = new ModelBuilder().build();
-    return model;
-  }
+public abstract Model getState();
 
 
   public AgentProfile getAgentProfile(String agentName) {
     ValueFactory rdf = SimpleValueFactory.getInstance();
-    Resource agentId = rdf.createIRI("http://example.com/thisAgent");
+    //Resource agentId = rdf.createIRI("http://example.com/thisAgent");
+    Resource agentId = rdf.createIRI(agentName);
     AgentProfile profile = new AgentProfile(agentId);
     if (agentProfiles.containsKey(agentName)) {
       IRI agentProfileIRI = agentProfiles.get(agentName);
@@ -74,7 +71,7 @@ public class SignifierHypermediaArtifact extends HypermediaArtifact {
     returnParam.set(b);
   }
 
-  @OPERATION
+  /*@OPERATION
   public void retrieveVisibleSignifiers(String agentName, OpFeedbackParam<Object> returnParam){
     Set<IRI> visibles = new HashSet<>();
     Set<IRI> artifactSignifiers = registry.getArtifactSignifiers(this);
@@ -85,6 +82,31 @@ public class SignifierHypermediaArtifact extends HypermediaArtifact {
     }
     List<IRI> signifiers = new Vector<>(visibles);
     returnParam.set(signifiers);
+
+  }*/
+
+  @OPERATION
+  public void retrieveVisibleSignifiers(OpFeedbackParam<Object> returnParam){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    System.out.println("agent name: "+agentName);
+    Set<IRI> visibles = new HashSet<>();
+    Set<IRI> artifactSignifiers = registry.getArtifactSignifiers(this);
+    for (IRI signifierId : artifactSignifiers){
+      if (registry.isVisible(agentName, signifierId.toString())){
+        visibles.add(signifierId);
+      }
+    }
+    List<IRI> signifierList = new Vector<>(visibles);
+    String signifiers = signifierList.toString();
+    System.out.println(signifiers);
+    returnParam.set(signifiers);
+
+  }
+  @OPERATION
+  public void retrieveSignifier(String signifierUrl, OpFeedbackParam<Object> returnParam){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    String signifierContent = registry.getSignifierfromUri(agentName, signifierUrl);
+    returnParam.set(signifierContent);
 
   }
 
@@ -136,17 +158,13 @@ public class SignifierHypermediaArtifact extends HypermediaArtifact {
   }
 
   protected void registerSignifierAffordances(){
-    registerActionAffordance("http://example.com/retrieve", "retrieveVisibleSignifiers", "/retrieve");
-    registerActionAffordance("http://example.com/add", "addSignifier", "/addsignifier");
+    registerActionAffordance("http://example.org/retrieve", "retrieveVisibleSignifiers", "/retrieve");
+    registerActionAffordance("http://example.org/retrievesignifier", "retrieveSignifier", "/retrievesignifier");
+    registerActionAffordance("http://example.org/add", "addSignifier", "/addsignifier");
   }
 
 
 
 
-  @Override
-  protected void registerInteractionAffordances() {
-    registerSignifierAffordances();
-
-  }
 }
 
