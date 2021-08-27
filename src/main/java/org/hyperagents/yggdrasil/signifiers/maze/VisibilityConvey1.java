@@ -38,13 +38,20 @@ public class VisibilityConvey1 implements Visibility {
 
   private int getParameter1(Signifier signifier){
     int parameter1 = 0;
+    System.out.println("start getParameter1");
+    System.out.println("signifierId: "+signifier.getSignifierId());
+    System.out.println(signifier.getAffordanceList());
     Plan plan = signifier.getAffordanceList().get(0).getFirstPlan();
+    System.out.println("hasFirstPlan");
     HypermediaPlan hypermediaPlan = HypermediaPlan.getAsHypermediaPlan(plan);
     Optional<String> payload = hypermediaPlan.getPayload();
     if (payload.isPresent()){
+      System.out.println("payload present");
       String str = payload.get();
+      System.out.println("payload: "+payload);
       JsonElement e = JsonParser.parseString(str);
       JsonArray array = e.getAsJsonArray();
+      System.out.println(array);
       parameter1 = array.get(0).getAsInt();
     }
     return parameter1;
@@ -103,6 +110,10 @@ public class VisibilityConvey1 implements Visibility {
       int j = getParameter2(signifier);
       if (isFree(artifactState, i, j)){
         b = true;
+        System.out.println("is visible: "+i+" "+j);
+      }
+      else {
+        System.out.println("not is visible: "+i+" "+j);
       }
     }
     return b;

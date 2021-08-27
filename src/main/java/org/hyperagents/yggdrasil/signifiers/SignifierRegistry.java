@@ -115,7 +115,7 @@ public class SignifierRegistry {
 
   }
 
-  public String getSignifier(String agentUri, String signifier){
+  public String getSignifier1(String agentUri, String signifier){
     String str = null;
     IRI signifierUri = getSignifierIRI(signifier);
     if (signifiers.containsKey(signifierUri)){
@@ -134,6 +134,18 @@ public class SignifierRegistry {
       }
     }
     return str;
+  }
+
+  public String getSignifier(String agentUri, String signifierName){
+    String str = null;
+    System.out.println(signifierName);
+    IRI signifierUri = getSignifierIRI(signifierName);
+    if (signifiers.containsKey(signifierUri)) {
+      SignifierRegistryTuple t = signifiers.get(signifierUri);
+      str = t.getSignifierContent();
+    }
+    return str;
+
   }
 
   public String getSignifierfromUri(String agentUri, String signifierUri){

@@ -11,15 +11,25 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.hyperagents.util.RDFS;
+import org.hyperagents.util.State;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AgentProfileArtifact extends HypermediaArtifact {
 
-  AgentProfile profile;
+  private AgentProfile profile;
+
+  private Optional<State> purpose;
+
+  private Optional<State> currentSituation;
+
+
 
   public void init(Resource agent){
     profile = new AgentProfile(agent);
@@ -27,6 +37,15 @@ public class AgentProfileArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void getAgentProfile(OpFeedbackParam<Object> returnParam){
+    Resource agent = profile.getAgent();
+    if (purpose.isPresent()){
+      State purposeState = purpose.get();
+      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), purposeState);
+    }
+    if (currentSituation.isPresent()){
+      State currentSituationState = currentSituation.get();
+      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasCurrentSituation), currentSituationState);
+    }
     returnParam.set(profile);
 
   }
@@ -65,6 +84,7 @@ public class AgentProfileArtifact extends HypermediaArtifact {
   public void rewrite(Model m){
     this.profile.rewrite(m);
   }
+
 
   public Statement getAsStatement(String str) {
     Pattern tripleTermPattern = Pattern.compile("rdf\\((.*),(.*),(.*)\\)");

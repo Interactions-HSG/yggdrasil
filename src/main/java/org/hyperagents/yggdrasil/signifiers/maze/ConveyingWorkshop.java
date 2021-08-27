@@ -7,6 +7,10 @@ import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
+import org.hyperagents.affordance.Affordance;
+import org.hyperagents.hypermedia.HypermediaPlan;
+import org.hyperagents.signifier.Signifier;
+import org.hyperagents.util.Plan;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact;
 import org.hyperagents.yggdrasil.signifiers.maze.scripts.ConveyOntology;
@@ -18,7 +22,27 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
   PositionMap map;
   boolean wait;
 
-  public void init(int n, int m){
+  public void init(){
+    System.out.println("start init");
+    this.n = 10;
+    this.m = 5;
+    this.map = new PositionMap();
+    for (int i = 0; i<n; i++){
+      for (int j = 0; j<m;j++){
+        this.map.add(i, j, true);
+
+      }
+    }
+    this.wait = false;
+    System.out.println("before creating signifier");
+    createSignifiers(n,m);
+  }
+
+  /*public void init(){
+    init(10,5);
+  }*/
+
+  /*public void init(int n, int m){
     this.n = n;
     this.m = m;
     this.map = new PositionMap();
@@ -29,9 +53,10 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
       }
     }
     this.wait = false;
+    System.out.println("before creating signifier");
     createSignifiers(n,m);
 
-  }
+  }*/
 
   @OPERATION
   public void pickItem(int i, int j){
@@ -87,10 +112,45 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
   }
 
   public void createOneSignifier(int i, int j){
+    Resource parameterId = RDFS.rdf.createBNode("pick item "+i+" "+j+" parameters");
+
+    Resource planId = RDFS.rdf.createBNode("pick item "+i+" "+j+" plan");
+
+    Resource affordanceId = RDFS.rdf.createBNode("pick item "+i+" "+j+" affordance");
+    String payload = "["+i+","+j+"]";
+    Plan plan = new HypermediaPlan.Builder(planId, "http://example.org/pickItem", "POST")
+      .setPayload(payload)
+      .build();
+    Affordance pick = new Affordance.Builder(affordanceId)
+      .addPlan(plan)
+      .build();
+    String name = "signifier "+i+" "+j;
+    Resource signifierId = RDFS.rdf.createBNode(name);
+    Signifier signifier = new Signifier.Builder(signifierId)
+      .addAffordance(pick)
+      .build();
+    registerSignifier(signifier, new VisibilityConvey1());
+    System.out.println(name +" added");
 
   }
 
   public void createEmptySignifier(){
+    Resource planId = RDFS.rdf.createBNode("order milk plan");
+  Plan plan = new Plan.Builder(planId).build();
+  plan = new HypermediaPlan.Builder(planId, "http://example.org/orderMilk", "POST")
+    .build();
+    Resource affordanceId = RDFS.rdf.createBNode("order milk affordance");
+    Affordance pick = new Affordance.Builder(affordanceId)
+      .addPlan(plan)
+      .build();
+    String name = "order milk signifier";
+    Resource signifierId = RDFS.rdf.createBNode(name);
+    Signifier signifier = new Signifier.Builder(signifierId)
+      .addAffordance(pick)
+      .build();
+    registerSignifier(signifier, new VisibilityConvey2());
+    System.out.println(name+ " added");
+
 
   }
 

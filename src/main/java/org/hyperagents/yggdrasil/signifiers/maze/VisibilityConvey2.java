@@ -20,7 +20,9 @@ public class VisibilityConvey2 implements Visibility {
     int n = countFree(artifactState);
     if (n==0){
       b = true;
+      System.out.println("order milk is visible");
     }
+    System.out.println("order milk is invisible");
     return b;
   }
 
