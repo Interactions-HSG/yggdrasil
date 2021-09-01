@@ -33,7 +33,9 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
     movements = new HashMap<>();
     goals = new HashMap<>();
     System.out.println("first step");
-    MazeInitializer initializer = getInitializer();
+    String mazeUri = this.getArtifactUri();
+    System.out.println("maze uri: "+mazeUri);
+    MazeInitializer initializer = getInitializer(mazeUri);
     System.out.println("initializer");
     this.movements = initializer.getMovements();
     Iterator<SignifierTuple> iterator = initializer.getSignifiers().iterator();
@@ -45,7 +47,7 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
     System.out.println("end init");
   }
 
-  protected MazeInitializer getInitializer(){
+  protected MazeInitializer getInitializer(String mazeUri){
     return new MazeInitializer();
   }
 

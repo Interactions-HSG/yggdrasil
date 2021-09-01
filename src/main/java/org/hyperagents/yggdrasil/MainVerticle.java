@@ -41,6 +41,7 @@ public class MainVerticle extends AbstractVerticle {
       .put("http://example.org/SignifierArtifact", "org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact")
       .put("http://example.org/Maze", "org.hyperagents.yggdrasil.signifiers.maze.GeneralMaze")
       .put("http://example.org/Maze1", "org.hyperagents.yggdrasil.signifiers.maze.Maze1")
+      .put("http://example.org/Maze11", "org.hyperagents.yggdrasil.signifiers.maze.Maze11")
       .put("http://example.org/Maze2", "org.hyperagents.yggdrasil.signifiers.maze.Maze2")
       .put("http://example.org/Maze3", "org.hyperagents.yggdrasil.signifiers.maze.Maze3")
       .put("http://example.org/Maze4", "org.hyperagents.yggdrasil.signifiers.maze.Maze4")

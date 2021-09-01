@@ -157,6 +157,7 @@ public class SignifierRegistry {
       SignifierHypermediaArtifact artifact = t.getArtifact();
       Model state = artifact.getState();
       AgentProfile profile = artifact.getAgentProfile(agentUri);
+      System.out.println("profile used: "+profile);
       Signifier s = new Signifier.Builder(rdf.createIRI(signifierUri))
         .add(contentToModel(signifierContent, signifierUri))
         .build();

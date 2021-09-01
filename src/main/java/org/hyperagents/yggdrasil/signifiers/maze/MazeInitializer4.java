@@ -4,14 +4,14 @@ import org.hyperagents.yggdrasil.signifiers.Visibility;
 
 public class MazeInitializer4 extends MazeInitializer {
 
-  public MazeInitializer4(){
+  public MazeInitializer4(String mazeUri){
     super();
     Visibility v = new VisibilityMaze4();
     for (int i = 1; i<=9; i++){
       for (int j = 1; j<= 9; j++){
         if (i!=j){
           String name = "exit" + i + j;
-          SignifierTuple t = new SignifierTuple(name, Util.createPathSignifier(i,j),v);
+          SignifierTuple t = new SignifierTuple(name, Util.createPathSignifierUri(mazeUri,i,j),v);
           this.signifiers.add(t);
         }
       }

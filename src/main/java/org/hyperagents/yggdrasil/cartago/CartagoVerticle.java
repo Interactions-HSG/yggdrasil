@@ -245,19 +245,22 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private void doActionReply(String agentUri, String workspaceName, String artifactName, String action,
                         Optional<String> payload, OpFeedbackParam<Object> replyObject) throws CartagoException {
+    System.out.println("do action reply");
     CartagoContext agentContext = getAgentContext(agentUri);
 
     WorkspaceId workspaceId = agentContext.joinWorkspace(workspaceName);
 
     Op operation;
-
+  System.out.println("before if");
     if (payload.isPresent()) {
+      System.out.println("payload is present");
       Object[] params = CartagoDataBundle.fromJson(payload.get());
       List<Object> paramList = new ArrayList<>(Arrays.asList(params));
       paramList.add(replyObject);
       params = paramList.toArray();
       operation = new Op(action, params);
     } else {
+      System.out.println("payload is not present");
       Object[] params = new Object[]{replyObject};
       operation = new Op(action, params);
     }

@@ -112,13 +112,15 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
   }
 
   public void createOneSignifier(int i, int j){
+    String artifactUri = this.getArtifactUri();
+    String pickItemUri= artifactUri+"/pick";
     Resource parameterId = RDFS.rdf.createBNode("pick item "+i+" "+j+" parameters");
 
     Resource planId = RDFS.rdf.createBNode("pick item "+i+" "+j+" plan");
 
     Resource affordanceId = RDFS.rdf.createBNode("pick item "+i+" "+j+" affordance");
     String payload = "["+i+","+j+"]";
-    Plan plan = new HypermediaPlan.Builder(planId, "http://example.org/pickItem", "POST")
+    Plan plan = new HypermediaPlan.Builder(planId, pickItemUri, "POST")
       .setPayload(payload)
       .build();
     Affordance pick = new Affordance.Builder(affordanceId)
@@ -135,9 +137,11 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
   }
 
   public void createEmptySignifier(){
+    String artifactUri = this.getArtifactUri();
+    String orderMilkUri= artifactUri+"/order";
     Resource planId = RDFS.rdf.createBNode("order milk plan");
   Plan plan = new Plan.Builder(planId).build();
-  plan = new HypermediaPlan.Builder(planId, "http://example.org/orderMilk", "POST")
+  plan = new HypermediaPlan.Builder(planId, orderMilkUri, "POST")
     .build();
     Resource affordanceId = RDFS.rdf.createBNode("order milk affordance");
     Affordance pick = new Affordance.Builder(affordanceId)

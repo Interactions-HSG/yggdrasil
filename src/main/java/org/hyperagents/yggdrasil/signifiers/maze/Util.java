@@ -200,6 +200,16 @@ public class Util {
     return plan;
   }
 
+  public static Plan getLocalMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int d) {
+    String payload = "[" + d + ",0]";
+    String moveUri = mazeUri+"/move";
+    System.out.println("move uri: "+moveUri);
+    HypermediaPlan plan = new HypermediaPlan.Builder(planId, moveUri, "POST")
+      .setPayload(payload)
+      .build();
+    return plan;
+  }
+
   public static List getLocalMovement(int fromRoomNb, int toRoomNb) {
     List list = new ArrayList();
     int d = getGeneralDirection(fromRoomNb, toRoomNb);
@@ -216,6 +226,21 @@ public class Util {
     State toRoom = states.get(toRoomId - 1);
     Resource planId = rdf.createBNode();
     Plan plan = getLocalMovePlan(planId, fromRoomId, m);
+    Affordance affordance = new Affordance.Builder(affordanceId)
+      .setPrecondition(fromRoom)
+      .setObjective(toRoom)
+      .addPlan(plan)
+      .build();
+    return affordance;
+  }
+
+  public static Affordance getLocalMoveAffordanceUri(String mazeUri, Resource affordanceId, int fromRoomId, int m) {
+    List<State> states = getStates();
+    State fromRoom = states.get(fromRoomId - 1);
+    int toRoomId = nextRoom(fromRoomId, m);
+    State toRoom = states.get(toRoomId - 1);
+    Resource planId = rdf.createBNode();
+    Plan plan = getLocalMovePlanUri(mazeUri, planId, fromRoomId, m);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setObjective(toRoom)
@@ -258,12 +283,60 @@ public class Util {
     return plan;
   }
 
+  public static Plan getMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int toRoomId) {
+    List<State> states = getStates();
+    Plan plan = new Plan.Builder(planId).build();
+    if (fromRoomId == toRoomId) {
+      plan = new Plan.Builder(planId).build();
+    } else {
+      int d = getDirection(fromRoomId, toRoomId);
+      if (d != -1) {
+        plan = getLocalMovePlanUri(mazeUri, planId, fromRoomId, d);
+
+      } else {
+        SequencePlan.Builder builder = new SequencePlan.Builder(planId);
+        List<Affordance> sequence = new ArrayList<>();
+        int i = 0;
+        while (fromRoomId != toRoomId) {
+          i++;
+          List<Integer> list = getLocalMovement(fromRoomId, toRoomId);
+          int newRoom = list.get(0).intValue();
+          int m = list.get(1).intValue();
+          Resource affordanceId = rdf.createBNode("from" + fromRoomId + "to" + newRoom + "affordance");
+          Affordance affordance = getLocalMoveAffordanceUri(mazeUri, affordanceId, fromRoomId, m);
+          fromRoomId = newRoom;
+          sequence.add(affordance);
+
+        }
+        builder.addSequence(sequence);
+        plan = builder.build();
+
+
+      }
+    }
+    return plan;
+  }
+
   public static Affordance getMoveAffordance(Resource affordanceId, int fromRoomNb, int toRoomNb) {
     List<State> states = getStates();
     State fromRoom = states.get(fromRoomNb - 1);
     State toRoom = states.get(toRoomNb - 1);
     Resource planId = rdf.createBNode();
     Plan movePlan = getMovePlan(planId, fromRoomNb, toRoomNb);
+    Affordance affordance = new Affordance.Builder(affordanceId)
+      .setPrecondition(fromRoom)
+      .setObjective(toRoom)
+      .addPlan(movePlan)
+      .build();
+    return affordance;
+  }
+
+  public static Affordance getMoveAffordanceUri(String mazeUri, Resource affordanceId, int fromRoomNb, int toRoomNb) {
+    List<State> states = getStates();
+    State fromRoom = states.get(fromRoomNb - 1);
+    State toRoom = states.get(toRoomNb - 1);
+    Resource planId = rdf.createBNode();
+    Plan movePlan = getMovePlanUri(mazeUri, planId, fromRoomNb, toRoomNb);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setObjective(toRoom)
@@ -279,12 +352,27 @@ public class Util {
     return builder.build();
   }
 
+  public static Signifier createSignifierFromToUri(String mazeUri, Resource signifierId, Resource affordanceId, int fromRoomNb, int toRoomNb) {
+    Signifier.Builder builder = new Signifier.Builder(signifierId);
+    Affordance exit = getMoveAffordanceUri(mazeUri, affordanceId, fromRoomNb, toRoomNb);
+    builder.addAffordance(exit);
+    return builder.build();
+  }
+
   public static Signifier createPathSignifier(int fromRoom, int toRoom) {
     String signifierName = "signifier" + fromRoom + toRoom;
     Resource signifierId = rdf.createBNode(signifierName);
     String affordanceName = "exit" + fromRoom + toRoom;
     Resource affordanceId = rdf.createBNode(affordanceName);
     return createSignifierFromTo(signifierId, affordanceId, fromRoom, toRoom);
+  }
+
+  public static Signifier createPathSignifierUri(String mazeUri, int fromRoom, int toRoom) {
+    String signifierName = "signifier" + fromRoom + toRoom;
+    Resource signifierId = rdf.createBNode(signifierName);
+    String affordanceName = "exit" + fromRoom + toRoom;
+    Resource affordanceId = rdf.createBNode(affordanceName);
+    return createSignifierFromToUri(mazeUri, signifierId, affordanceId, fromRoom, toRoom);
   }
 
   public static void displayModel(Model m) {
