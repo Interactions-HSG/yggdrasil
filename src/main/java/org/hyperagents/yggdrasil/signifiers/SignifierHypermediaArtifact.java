@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.signifiers;
 
+import cartago.ArtifactId;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
@@ -24,6 +25,7 @@ import org.hyperagents.io.SignifierReader;
 import org.hyperagents.signifier.Signifier;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -82,12 +84,29 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     AgentProfile profile = null;
     String profileUrl = agentProfileIRI.toString();
     System.out.println("profile url: "+profileUrl);
+    //String str = retrieveProfileFromArtifact(profileUrl);
+    ArtifactId profileId = getArtifactId(profileUrl);
+    try {
+      OpFeedbackParam<AgentProfile> v = new OpFeedbackParam<>();
+      execLinkedOp(profileId, "retrieveAgentProfile", v);
+      profile = v.get();
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    return profile;
+
+  }
+
+  /*public AgentProfile retrieveAgentProfile(IRI agentProfileIRI){
+    AgentProfile profile = null;
+    String profileUrl = agentProfileIRI.toString();
+    System.out.println("profile url: "+profileUrl);
     String str = retrieveProfileFromArtifact(profileUrl);
     System.out.println("profile retrieved: "+str);
     profile = AgentProfile.parse(str);
     return profile;
 
-  }
+  }*/
 
   /*public AgentProfile retrieveAgentProfile(IRI agentProfileIRI) {
     ValueFactory rdf = SimpleValueFactory.getInstance();
@@ -368,6 +387,12 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
       e.printStackTrace();
     }
     return str;
+  }
+
+  public ArtifactId getArtifactId(String uri){
+    HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+    return registry.getArtifactId(uri);
+
   }
 
 

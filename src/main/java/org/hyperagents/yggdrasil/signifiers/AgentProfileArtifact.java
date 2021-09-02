@@ -54,7 +54,6 @@ public class AgentProfileArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  @LINK
   public void getAgentProfile(OpFeedbackParam<Object> returnParam){
     System.out.println("get agent profile");
     System.out.println("current profile");
@@ -92,6 +91,11 @@ public class AgentProfileArtifact extends HypermediaArtifact {
       this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasCurrentSituation), currentSituationState);
     }*/
 
+  }
+
+  @LINK
+  public void retrieveAgentProfile(OpFeedbackParam<AgentProfile> returnParam){
+    returnParam.set(profile);
   }
 
   @OPERATION

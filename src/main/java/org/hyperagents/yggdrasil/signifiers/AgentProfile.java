@@ -78,6 +78,18 @@ public class AgentProfile {
     return model;
   }
 
+  public Optional<State> getPurpose(){
+    Optional<State> opPurpose = Optional.empty();
+    Optional<Resource> opStateId = Models.objectResource(model.filter(agent,
+      RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), null));
+    if (opStateId.isPresent()){
+      Resource stateId = opStateId.get();
+      State purpose = State.retrieveState(stateId, model);
+      opPurpose = Optional.of(purpose);
+    }
+    return opPurpose;
+  }
+
   public void rewrite(Model m){
     //this.comments = m;
     this.model = m;

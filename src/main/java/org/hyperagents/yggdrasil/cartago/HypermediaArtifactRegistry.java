@@ -1,14 +1,11 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
+import cartago.ArtifactId;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.json.JsonObject;
+
+import java.util.*;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -38,12 +35,15 @@ public class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactAPIKeys;
 
+  private final Map<String, ArtifactId> artifactIds;
+
   private HypermediaArtifactRegistry() {
     workspaceEnvironmentMap = new Hashtable<>();
     artifactSemanticTypes = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
     artifactActionRouter = new Hashtable<>();
     artifactAPIKeys = new Hashtable<>();
+    artifactIds = new Hashtable<>();
   }
 
   public static synchronized HypermediaArtifactRegistry getInstance() {
@@ -71,6 +71,9 @@ public class HypermediaArtifactRegistry {
         });
       }
     }
+    String uri = artifact.getArtifactUri();
+    ArtifactId artifactId = artifact.getArtifactId();
+    artifactIds.put(uri, artifactId);
   }
 
   public void addWorkspace(String envName, String wkspName) {
@@ -148,5 +151,13 @@ public class HypermediaArtifactRegistry {
     }
 
     throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
+  }
+
+  public ArtifactId getArtifactId(String uri){
+    ArtifactId artifactId = null;
+    if (artifactIds.containsKey(uri)){
+      artifactId = artifactIds.get(uri);
+    }
+    return artifactId;
   }
 }
