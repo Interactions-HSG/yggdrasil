@@ -3,7 +3,6 @@ package org.hyperagents.yggdrasil.signifiers.maze;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Value;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.signifier.StructuredSignifier;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.util.ReifiedStatement;
 import org.hyperagents.util.State;
@@ -56,8 +55,7 @@ public class VisibilityMaze4 implements Visibility {
   }
 
   private int getGoalLocation(Signifier signifier){
-    StructuredSignifier structuredSignifier = StructuredSignifier.getAsStructuredSignifier(signifier);
-    ReifiedStatement statement = structuredSignifier.getListAffordances().get(0).getObjective().get().getStatementList().get(0);
+    ReifiedStatement statement = signifier.getAffordanceList().get(0).getPostcondition().get().getStatementList().get(0);
     Value v = statement.getObject();
     int objectiveLocation = getRoomNb(v);
     return objectiveLocation;

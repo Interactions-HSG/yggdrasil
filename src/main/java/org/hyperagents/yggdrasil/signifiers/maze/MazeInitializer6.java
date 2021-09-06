@@ -6,6 +6,7 @@ import org.hyperagents.hypermedia.HypermediaPlan;
 import org.hyperagents.signifier.Signifier;
 import org.hyperagents.util.Plan;
 import org.hyperagents.util.RDFS;
+import org.hyperagents.util.State;
 import org.hyperagents.yggdrasil.signifiers.Visibility;
 import org.hyperagents.yggdrasil.signifiers.VisibilityImpl;
 
@@ -44,9 +45,13 @@ public class MazeInitializer6 extends MazeInitializer {
   }
 
   public static Affordance createAffordance(String mazeUri, int room, int m){
+    List<State> states = Util.getStates();
     Resource affordanceId = RDFS.rdf.createBNode();
     Plan plan = createPlan(mazeUri, room, m);
+    //int toRoom = Util.nextRoom(room);
     Affordance affordance = new Affordance.Builder(affordanceId)
+      //.setPostcondition(states.get(toRoom -1))
+      .addObjective(states.get(8))
       .addPlan(plan)
       .build();
     return affordance;

@@ -11,7 +11,7 @@ public class VisibilityObjective implements Visibility {
   @Override
   public boolean isVisible(Signifier signifier, Model artifactState, AgentProfile profile) {
     boolean b = false;
-    State signifierObjective = signifier.getAffordanceList().get(0).getObjective().get();
+    State signifierObjective = signifier.getAffordanceList().get(0).getObjectiveList().get(0);
     State profileObjective = profile.getPurpose().get();
     Resource agent = profile.getAgent();
     if (equivalent(agent, signifierObjective, profileObjective)){

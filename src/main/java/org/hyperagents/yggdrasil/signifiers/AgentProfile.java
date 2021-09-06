@@ -117,7 +117,7 @@ public class AgentProfile {
   }
 
   public void addState(IRI predicate, State s){
-    Resource stateId = s.getStateId();
+    Resource stateId = s.getId();
     //this.comments.add(agent, predicate, stateId);
     //this.comments.addAll(s.getModel());
     this.model.add(agent, predicate, stateId);

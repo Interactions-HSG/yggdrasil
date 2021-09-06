@@ -28,7 +28,7 @@ public class VisibilityMaze3 implements Visibility {
     System.out.println("length affordance list: "+affordances.size());
     Affordance affordance = affordances.get(0);
     System.out.println("affordance retrieved");
-    ReifiedStatement statement = affordance.getObjective().get().getStatementList().get(0);
+    ReifiedStatement statement = affordance.getPostcondition().get().getStatementList().get(0);
     System.out.println("statement: "+statement);
     System.out.println("statement defined");
     Value v = statement.getObject();

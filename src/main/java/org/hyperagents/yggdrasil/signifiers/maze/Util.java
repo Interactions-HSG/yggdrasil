@@ -228,7 +228,8 @@ public class Util {
     Plan plan = getLocalMovePlan(planId, fromRoomId, m);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
-      .setObjective(toRoom)
+      .setPostcondition(toRoom)
+      .addObjective(toRoom)
       .addPlan(plan)
       .build();
     return affordance;
@@ -243,7 +244,8 @@ public class Util {
     Plan plan = getLocalMovePlanUri(mazeUri, planId, fromRoomId, m);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
-      .setObjective(toRoom)
+      .setPostcondition(toRoom)
+      .addObjective(toRoom)
       .addPlan(plan)
       .build();
     return affordance;
@@ -325,7 +327,8 @@ public class Util {
     Plan movePlan = getMovePlan(planId, fromRoomNb, toRoomNb);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
-      .setObjective(toRoom)
+      .setPostcondition(toRoom)
+      .addObjective(toRoom)
       .addPlan(movePlan)
       .build();
     return affordance;
@@ -339,7 +342,8 @@ public class Util {
     Plan movePlan = getMovePlanUri(mazeUri, planId, fromRoomNb, toRoomNb);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
-      .setObjective(toRoom)
+      .setPostcondition(toRoom)
+      .addObjective(toRoom)
       .addPlan(movePlan)
       .build();
     return affordance;

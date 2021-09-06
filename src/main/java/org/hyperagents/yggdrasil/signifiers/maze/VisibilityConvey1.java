@@ -39,7 +39,7 @@ public class VisibilityConvey1 implements Visibility {
   private int getParameter1(Signifier signifier){
     int parameter1 = 0;
     System.out.println("start getParameter1");
-    System.out.println("signifierId: "+signifier.getSignifierId());
+    System.out.println("signifierId: "+signifier.getId());
     System.out.println(signifier.getAffordanceList());
     Plan plan = signifier.getAffordanceList().get(0).getFirstPlan();
     System.out.println("hasFirstPlan");
