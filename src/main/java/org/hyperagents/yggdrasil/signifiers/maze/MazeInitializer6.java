@@ -13,10 +13,10 @@ import org.hyperagents.yggdrasil.signifiers.VisibilityImpl;
 import java.util.*;
 
 public class MazeInitializer6 extends MazeInitializer {
-// This maze initializer concerns the case where the signifiers are all visible and corresponds to exit signs.
+// This maze initializer concerns the case where the signifiers correspond to exit signs.
   public MazeInitializer6(String mazeUri){
     super();
-    Visibility v = new VisibilityImpl();
+    Visibility v = new VisibilityMaze6();
     for (int room = 1; room<=9; room++){
       for (int m = 0; m<= 3; m++){
         if (isValid(room,m)){
@@ -50,6 +50,7 @@ public class MazeInitializer6 extends MazeInitializer {
     Plan plan = createPlan(mazeUri, room, m);
     //int toRoom = Util.nextRoom(room);
     Affordance affordance = new Affordance.Builder(affordanceId)
+      .setPrecondition(states.get(room-1))
       //.setPostcondition(states.get(toRoom -1))
       .addObjective(states.get(8))
       .addPlan(plan)
@@ -60,7 +61,7 @@ public class MazeInitializer6 extends MazeInitializer {
   public static Plan createPlan(String mazeUri, int room, int m){
     Resource planId = RDFS.rdf.createBNode();
     Plan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
-      .setPayload("["+room+",0]")
+      .setPayload("["+m+",0]")
       .build();
     return plan;
   }
