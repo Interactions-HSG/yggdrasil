@@ -155,7 +155,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  public void registerProfile(String profileUri, int useless){
+  public void registerProfile(String profileUri){
     IRI profileIri = RDFS.rdf.createIRI(profileUri);
     this.agentProfiles.put(this.getCurrentOpAgentId().getAgentName(), profileIri);
     System.out.println(agentProfiles);
@@ -169,7 +169,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  public void addSignifierContent(String content, int useless){
+  public void addSignifierContent(String content){
     Signifier signifier = SignifierReader.readSignifier(content, RDFFormat.TURTLE);
     Visibility visibility = new VisibilityImpl();
     SignifierRegistryTuple t = new SignifierRegistryTuple(signifier, visibility, this);
@@ -402,12 +402,10 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     registerActionAffordance("http://example.org/retrievesignifier", "retrieveSignifier", "/retrievesignifier");
     DataSchema addSchema = new ArraySchema.Builder()
       .addItem(new StringSchema.Builder().build())
-      .addItem(new IntegerSchema.Builder().build())
       .build();
     registerActionAffordance("http://example.org/add", "addSignifierContent", "/addsignifier", addSchema);
     DataSchema profileSchema = new ArraySchema.Builder()
       .addItem(new StringSchema.Builder().build())
-      .addItem(new IntegerSchema.Builder().build())
       .build();
     registerActionAffordance("http://example.org/registerProfile", "registerProfile", "/profile", profileSchema);
   }

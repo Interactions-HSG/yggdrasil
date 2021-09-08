@@ -56,9 +56,12 @@ public class Adder extends SignifierHypermediaArtifact{
       .addItem(new IntegerSchema.Builder().build())
       .addItem(new IntegerSchema.Builder().build())
       .build();
+    DataSchema inputAdd2 = new ArraySchema.Builder()
+      .addItem(new IntegerSchema.Builder().build())
+      .build();
     registerActionAffordance("http://example.org/addReturn","addReturn", "/addreturn", input);
     registerActionAffordance("http://example.org/add","add", "/add", input);
     DataSchema input2 = new IntegerSchema.Builder().build();
-    registerActionAffordance("http://example.org/add2","add2", "/add2", input2);
+    registerActionAffordance("http://example.org/add2","add2", "/add2", inputAdd2);
   }
 }

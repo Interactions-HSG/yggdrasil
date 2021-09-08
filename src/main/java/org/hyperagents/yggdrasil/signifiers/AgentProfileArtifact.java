@@ -1,8 +1,6 @@
 package org.hyperagents.yggdrasil.signifiers;
 
-import cartago.LINK;
-import cartago.OPERATION;
-import cartago.OpFeedbackParam;
+import cartago.*;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
@@ -28,69 +26,23 @@ import java.util.regex.Pattern;
 
 public class AgentProfileArtifact extends HypermediaArtifact {
 
+
+  private String creatorAgent;
+
   private AgentProfile profile;
 
-  //private boolean hasPurpose;
-
-  //private State.Builder purpose;
-
-  //private boolean hasCurrentSituation;
-
-  //private State.Builder currentSituation;
-
-
-
-  /*public void init(Resource agent){
-    profile = new AgentProfile(agent);
-  }*/
 
   public void init(String agentName){
     Resource agent = RDFS.rdf.createIRI(agentName);
     profile = new AgentProfile(agent);
-    //this.hasPurpose = false;
-    //this.hasCurrentSituation = true;
-    //this.purpose = null;
-    //this.currentSituation = null;
+    this.creatorAgent = agentName;
   }
+
 
   @OPERATION
   public void getAgentProfile(OpFeedbackParam<Object> returnParam){
-    System.out.println("get agent profile");
-    System.out.println("current profile");
     String profileString = profile.toString();
-    System.out.println(profileString);
-    System.out.println("end current profile");
     returnParam.set(profileString);
-    System.out.println("return param has been set");
-    System.out.println("profile string remains: "+profileString);
-    //System.out.println("is present purpose: "+ this.hasPurpose);
-    //System.out.println("is present current situation: "+ this.hasCurrentSituation);
-    /*if (this.hasPurpose){
-      System.out.println("purpose is present");
-      State purposeState = purpose.build();
-      System.out.println("purpose created");
-      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), purposeState);
-      System.out.println("purpose added");
-    }
-    if (this.hasCurrentSituation){
-      System.out.println("current situation is present");
-      State currentSituationState = currentSituation.build();
-      System.out.println("situation created");
-      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasCurrentSituation), currentSituationState);
-      System.out.println("situation added");
-    }*/
-    //Resource agent = profile.getAgent();
-    /*if (purpose.isPresent()){
-      System.out.println("purpose is present");
-      State purposeState = purpose.get().build();
-      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), purposeState);
-    }
-    if (currentSituation.isPresent()){
-      System.out.println("current situation is present");
-      State currentSituationState = currentSituation.get().build();
-      this.profile.addState(RDFS.rdf.createIRI(AgentProfileOntology.hasCurrentSituation), currentSituationState);
-    }*/
-
   }
 
   @LINK
@@ -100,13 +52,15 @@ public class AgentProfileArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void write_model_string(String s) {
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    await("isCreatorAgent", agentName);
     Model model = new ModelBuilder().build();
     RDFHandler handler = new StatementCollector(model);
     RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
     parser.setRDFHandler(handler);
     InputStream stream = new ByteArrayInputStream(s.getBytes());
     try {
-      parser.parse(stream, "http://example.com/");
+      parser.parse(stream, "http://example.org/");
       rewrite(model);
     } catch (IOException e) {
       e.printStackTrace();
@@ -115,6 +69,8 @@ public class AgentProfileArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void write_string(String str){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    await("isCreatorAgent", agentName);
     Statement s = getAsStatement(str);
     if (s!=null){
       Model model = new ModelBuilder().add(s.getSubject(), s.getPredicate(),s.getObject()).build();
@@ -123,35 +79,32 @@ public class AgentProfileArtifact extends HypermediaArtifact {
 
   }
 
-  @OPERATION
+
   public void add(Model m){
     this.profile.add(m);
   }
 
-  @OPERATION
+
   public void rewrite(Model m){
     this.profile.rewrite(m);
   }
 
 
   @OPERATION
-  public void addPurpose(String str, int useless){
+  public void addPurpose(String str){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    await("isCreatorAgent", agentName);
     Statement s = getAsStatement(str);
-    System.out.println("purpose: "+s);
     ReifiedStatement rs = getAsReifiedStatement(s);
     Optional<Resource> opStateId = Models.objectResource(profile.getModel().filter(profile.getAgent(),
       RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), null));
     if (s!=null){
-      System.out.println("state exists");
       if (opStateId.isPresent()){
         Resource stateId = opStateId.get();
         this.profile.addToState(stateId, rs);
-        //purpose.addStatement(rs);
       }
       else {
-        //this.hasPurpose = true;
         Resource stateId = RDFS.rdf.createBNode();
-        //purpose = new State.Builder(stateId).addStatement(rs);
         this.profile.add(profile.getAgent(), RDFS.rdf.createIRI(AgentProfileOntology.hasPurpose), stateId);
         this.profile.addToState(stateId, rs);
       }
@@ -159,7 +112,9 @@ public class AgentProfileArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  public void addSituation(String str, int useless){
+  public void addSituation(String str){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    await("isCreatorAgent", agentName);
     Statement s = getAsStatement(str);
     ReifiedStatement rs = getAsReifiedStatement(s);
     Optional<Resource> opStateId = Models.objectResource(profile.getModel().filter(profile.getAgent(),
@@ -168,16 +123,29 @@ public class AgentProfileArtifact extends HypermediaArtifact {
       if (opStateId.isPresent()){
         Resource stateId = opStateId.get();
         this.profile.addToState(stateId, rs);
-        //currentSituation.addStatement(rs);
       }
       else {
-        //this.hasCurrentSituation = true;
         Resource stateId = RDFS.rdf.createBNode();
-        //currentSituation = new State.Builder(stateId).addStatement(rs);
         this.profile.add(profile.getAgent(), RDFS.rdf.createIRI(AgentProfileOntology.hasCurrentSituation), stateId);
         this.profile.addToState(stateId, rs);
       }
     }
+  }
+
+  /*@GUARD
+  public boolean isCreatorAgent(){
+    boolean b = false;
+    AgentId currentAgent = this.getCurrentOpAgentId();
+    AgentId creatorAgent = this.creatorAgent;
+    if (currentAgent.equals(creatorAgent)){
+      b = true;
+    }
+    return b;
+  }*/
+
+  @GUARD
+   boolean isCreatorAgent(String agentName){
+    return agentName.equals(creatorAgent);
   }
 
   private ReifiedStatement getAsReifiedStatement(Statement s) {
@@ -293,7 +261,6 @@ public class AgentProfileArtifact extends HypermediaArtifact {
       registerActionAffordance("http://example.org/writeString", "write_string", "/writestring", new StringSchema.Builder().build());
       DataSchema stateSchema = new ArraySchema.Builder()
         .addItem(new StringSchema.Builder().build())
-        .addItem(new IntegerSchema.Builder().build())
         .build();
       registerActionAffordance("http://example.org/addPurpose", "addPurpose", "/purpose", stateSchema);
       registerActionAffordance("http://example.org/addSituation", "addSituation", "/situation", stateSchema);

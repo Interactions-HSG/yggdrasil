@@ -64,23 +64,16 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
    * @param entrance
    */
   @OPERATION
-  public void register(int entrance, int useless){
+  public void register(int entrance){
     AgentId agent = this.getCurrentOpAgentId();
     this.locations.put(agent, entrance);
     //this.goals.put(agent, 9);
   }
 
-  /*@OPERATION
-  public void register(int entrance, int goal){
-    AgentId agent = this.getCurrentOpAgentId();
-    this.locations.put(agent, entrance);
-    this.goals.put(agent, goal);
-
-  }*/
 
 
   @OPERATION
-  public void move(int m, int useless){
+  public void move(int m){
     AgentId agent = this.getCurrentOpAgentId();
     int room = this.locations.get(agent).intValue();
     int newRoom = nextRoom(room, m);
@@ -141,7 +134,6 @@ public class GeneralMaze extends SignifierHypermediaArtifact {
     registerSignifierAffordances();
     DataSchema intParameter = new IntegerSchema.Builder().build();
     DataSchema arrayParameter = new ArraySchema.Builder()
-      .addItem(new IntegerSchema.Builder().build())
       .addItem(new IntegerSchema.Builder().build())
       .build();
     registerActionAffordance("http://example.org/register", "register", "/register", arrayParameter);

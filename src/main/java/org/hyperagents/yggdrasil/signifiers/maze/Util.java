@@ -201,7 +201,8 @@ public class Util {
   }
 
   public static Plan getLocalMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int d) {
-    String payload = "[" + d + ",0]";
+    //String payload = "[" + d + ",0]";
+    String payload = "[" + d + "]";
     String moveUri = mazeUri+"/move";
     System.out.println("move uri: "+moveUri);
     HypermediaPlan plan = new HypermediaPlan.Builder(planId, moveUri, "POST")

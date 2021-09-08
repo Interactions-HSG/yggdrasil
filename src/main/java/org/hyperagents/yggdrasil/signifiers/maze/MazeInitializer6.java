@@ -61,7 +61,7 @@ public class MazeInitializer6 extends MazeInitializer {
   public static Plan createPlan(String mazeUri, int room, int m){
     Resource planId = RDFS.rdf.createBNode();
     Plan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
-      .setPayload("["+m+",0]")
+      .setPayload("["+m+"]")
       .build();
     return plan;
   }
