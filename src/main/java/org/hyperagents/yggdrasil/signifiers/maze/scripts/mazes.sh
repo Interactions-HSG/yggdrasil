@@ -3,5 +3,6 @@
 ./maze2.sh
 ./maze3.sh
 ./maze4.sh
+./maze5.sh
 ./maze6.sh
 ./maze11.sh

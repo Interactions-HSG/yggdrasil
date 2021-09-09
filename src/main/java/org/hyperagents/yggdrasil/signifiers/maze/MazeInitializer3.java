@@ -6,6 +6,7 @@ public class MazeInitializer3 extends MazeInitializer {
 
   public MazeInitializer3(String mazeUri){
     super();
+    addBasicSignifiers(mazeUri);
     Visibility v = new VisibilityMaze3();
     SignifierTuple t1 = new SignifierTuple("exit1", Util.createPathSignifierUri(mazeUri,1,2),v);
     this.signifiers.add(t1);

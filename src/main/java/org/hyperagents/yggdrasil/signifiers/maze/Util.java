@@ -11,9 +11,11 @@ import org.hyperagents.affordance.Affordance;
 import org.hyperagents.hypermedia.HypermediaPlan;
 import org.hyperagents.ontologies.SignifierOntology;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.Plan;
+import org.hyperagents.plan.Plan;
+import org.hyperagents.plan.DirectPlan;
+import org.hyperagents.plan.SequencePlan;
+import org.hyperagents.plan.AffordancePlan;
 import org.hyperagents.util.ReifiedStatement;
-import org.hyperagents.util.SequencePlan;
 import org.hyperagents.util.State;
 
 import java.io.CharArrayWriter;
@@ -109,7 +111,7 @@ public class Util {
 
   }
 
-  private static int nextRoom(int room, int m) {
+  public static int nextRoom(int room, int m) {
     int newRoom = room;
     Map<Integer, List<Integer>> movements = getStandardMovements();
     if (m >= 0 & m <= 3 & movements.containsKey(room)) {
@@ -192,7 +194,7 @@ public class Util {
 
   }
 
-  public static Plan getLocalMovePlan(Resource planId, int fromRoomId, int d) {
+  public static HypermediaPlan getLocalMovePlan(Resource planId, int fromRoomId, int d) {
     String payload = "[" + d + ",0]";
     HypermediaPlan plan = new HypermediaPlan.Builder(planId, "http://example.org/move", "POST")
       .setPayload(payload)
@@ -200,11 +202,10 @@ public class Util {
     return plan;
   }
 
-  public static Plan getLocalMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int d) {
-    //String payload = "[" + d + ",0]";
+  public static HypermediaPlan getLocalMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int d) {
     String payload = "[" + d + "]";
-    String moveUri = mazeUri+"/move";
-    System.out.println("move uri: "+moveUri);
+    String moveUri = mazeUri + "/move";
+    System.out.println("move uri: " + moveUri);
     HypermediaPlan plan = new HypermediaPlan.Builder(planId, moveUri, "POST")
       .setPayload(payload)
       .build();
@@ -226,7 +227,7 @@ public class Util {
     int toRoomId = nextRoom(fromRoomId, m);
     State toRoom = states.get(toRoomId - 1);
     Resource planId = rdf.createBNode();
-    Plan plan = getLocalMovePlan(planId, fromRoomId, m);
+    HypermediaPlan plan = getLocalMovePlan(planId, fromRoomId, m);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setPostcondition(toRoom)
@@ -242,7 +243,7 @@ public class Util {
     int toRoomId = nextRoom(fromRoomId, m);
     State toRoom = states.get(toRoomId - 1);
     Resource planId = rdf.createBNode();
-    Plan plan = getLocalMovePlanUri(mazeUri, planId, fromRoomId, m);
+    HypermediaPlan plan = getLocalMovePlanUri(mazeUri, planId, fromRoomId, m);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setPostcondition(toRoom)
@@ -252,11 +253,17 @@ public class Util {
     return affordance;
   }
 
-  public static Plan getMovePlan(Resource planId, int fromRoomId, int toRoomId) {
+  public static AffordancePlan createAffordancePlanFromRoomNb(Resource planId, int room) {
+    State objective = createObjectiveFromRoomNb(room);
+    return new AffordancePlan(planId, objective);
+  }
+
+
+  public static DirectPlan getMovePlan(Resource planId, int fromRoomId, int toRoomId) {
     List<State> states = getStates();
-    Plan plan = new Plan.Builder(planId).build();
+    DirectPlan plan = null;
     if (fromRoomId == toRoomId) {
-      plan = new Plan.Builder(planId).build();
+      ;
     } else {
       int d = getDirection(fromRoomId, toRoomId);
       if (d != -1) {
@@ -264,7 +271,7 @@ public class Util {
 
       } else {
         SequencePlan.Builder builder = new SequencePlan.Builder(planId);
-        List<Affordance> sequence = new ArrayList<>();
+        List<Plan> sequence = new ArrayList<>();
         int i = 0;
         while (fromRoomId != toRoomId) {
           i++;
@@ -272,9 +279,11 @@ public class Util {
           int newRoom = list.get(0).intValue();
           int m = list.get(1).intValue();
           Resource affordanceId = rdf.createBNode("from" + fromRoomId + "to" + newRoom + "affordance");
+          Resource affordancePlanId = rdf.createBNode("from" + fromRoomId + "to" + newRoom + "affordancePlan");
           Affordance affordance = getLocalMoveAffordance(affordanceId, fromRoomId, m);
+          Plan affordancePlan = createAffordancePlanFromRoomNb(affordancePlanId, newRoom);
           fromRoomId = newRoom;
-          sequence.add(affordance);
+          sequence.add(affordancePlan);
 
         }
         builder.addSequence(sequence);
@@ -286,11 +295,10 @@ public class Util {
     return plan;
   }
 
-  public static Plan getMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int toRoomId) {
+  public static DirectPlan getMovePlanUri(String mazeUri, Resource planId, int fromRoomId, int toRoomId) {
     List<State> states = getStates();
-    Plan plan = new Plan.Builder(planId).build();
+    DirectPlan plan = null;
     if (fromRoomId == toRoomId) {
-      plan = new Plan.Builder(planId).build();
     } else {
       int d = getDirection(fromRoomId, toRoomId);
       if (d != -1) {
@@ -298,7 +306,7 @@ public class Util {
 
       } else {
         SequencePlan.Builder builder = new SequencePlan.Builder(planId);
-        List<Affordance> sequence = new ArrayList<>();
+        List<Plan> sequence = new ArrayList<>();
         int i = 0;
         while (fromRoomId != toRoomId) {
           i++;
@@ -307,8 +315,10 @@ public class Util {
           int m = list.get(1).intValue();
           Resource affordanceId = rdf.createBNode("from" + fromRoomId + "to" + newRoom + "affordance");
           Affordance affordance = getLocalMoveAffordanceUri(mazeUri, affordanceId, fromRoomId, m);
+          Resource affordancePlanId = rdf.createBNode("from" + fromRoomId + "to" + newRoom + "affordancePlan");
+          Plan affordancePlan = createAffordancePlanFromRoomNb(affordancePlanId, newRoom);
           fromRoomId = newRoom;
-          sequence.add(affordance);
+          sequence.add(affordancePlan);
 
         }
         builder.addSequence(sequence);
@@ -325,7 +335,7 @@ public class Util {
     State fromRoom = states.get(fromRoomNb - 1);
     State toRoom = states.get(toRoomNb - 1);
     Resource planId = rdf.createBNode();
-    Plan movePlan = getMovePlan(planId, fromRoomNb, toRoomNb);
+    DirectPlan movePlan = getMovePlan(planId, fromRoomNb, toRoomNb);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setPostcondition(toRoom)
@@ -340,7 +350,7 @@ public class Util {
     State fromRoom = states.get(fromRoomNb - 1);
     State toRoom = states.get(toRoomNb - 1);
     Resource planId = rdf.createBNode();
-    Plan movePlan = getMovePlanUri(mazeUri, planId, fromRoomNb, toRoomNb);
+    DirectPlan movePlan = getMovePlanUri(mazeUri, planId, fromRoomNb, toRoomNb);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(fromRoom)
       .setPostcondition(toRoom)
@@ -384,5 +394,37 @@ public class Util {
     CharArrayWriter writer = new CharArrayWriter();
     Rio.write(m, writer, RDFFormat.TURTLE);
     System.out.println(writer.toCharArray());
+  }
+
+  public static IRI getIRIFromRoomNb(int room) {
+    IRI roomIRI = rdf.createIRI(EnvironmentOntology.room9);
+    if (room == 1) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room1);
+    } else if (room == 2) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room2);
+    } else if (room == 3) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room3);
+    } else if (room == 4) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room4);
+    } else if (room == 5) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room5);
+    } else if (room == 6) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room6);
+    } else if (room == 7) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room7);
+    } else if (room == 8) {
+      roomIRI = rdf.createIRI(EnvironmentOntology.room8);
+    }
+    return roomIRI;
+  }
+
+  public static State createObjectiveFromRoomNb(int room) {
+    IRI roomIRI = getIRIFromRoomNb(room);
+    ReifiedStatement statement = new ReifiedStatement(rdf.createBNode("goToRoom" + room + "statement"), rdf.createIRI(SignifierOntology.thisAgent), rdf.createIRI(EnvironmentOntology.isIn), roomIRI);
+    Resource stateId = rdf.createBNode("goToRoom" + room);
+    State objective = new State.Builder(stateId)
+      .addStatement(statement)
+      .build();
+    return objective;
   }
 }

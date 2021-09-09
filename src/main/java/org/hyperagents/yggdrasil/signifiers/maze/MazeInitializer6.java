@@ -1,10 +1,12 @@
 package org.hyperagents.yggdrasil.signifiers.maze;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.hyperagents.affordance.Affordance;
 import org.hyperagents.hypermedia.HypermediaPlan;
+import org.hyperagents.plan.DirectPlan;
+import org.hyperagents.plan.Plan;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.Plan;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.util.State;
 import org.hyperagents.yggdrasil.signifiers.Visibility;
@@ -28,12 +30,7 @@ public class MazeInitializer6 extends MazeInitializer {
     }
   }
 
-  public static boolean isValid(int room, int m){
-    boolean b = false;
-    Map<Integer, List<Integer>> map = getExitMovements();
-    b = map.get(room).contains(m);
-    return b;
-  }
+
 
   public static Signifier createSignifier(String mazeUri, int room, int m){
     Resource signifierId = RDFS.rdf.createBNode();
@@ -47,20 +44,22 @@ public class MazeInitializer6 extends MazeInitializer {
   public static Affordance createAffordance(String mazeUri, int room, int m){
     List<State> states = Util.getStates();
     Resource affordanceId = RDFS.rdf.createBNode();
-    Plan plan = createPlan(mazeUri, room, m);
-    //int toRoom = Util.nextRoom(room);
+    DirectPlan plan = createPlan(mazeUri, room, m);
+    int toRoom = Util.nextRoom(room, m);
+    State postcondition = Util.createObjectiveFromRoomNb(toRoom);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(states.get(room-1))
-      //.setPostcondition(states.get(toRoom -1))
+      .setPostcondition(postcondition)
+      .addObjective(postcondition)
       .addObjective(states.get(8))
       .addPlan(plan)
       .build();
     return affordance;
   }
 
-  public static Plan createPlan(String mazeUri, int room, int m){
+  public static DirectPlan createPlan(String mazeUri, int room, int m){
     Resource planId = RDFS.rdf.createBNode();
-    Plan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
+    DirectPlan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
       .setPayload("["+m+"]")
       .build();
     return plan;
