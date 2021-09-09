@@ -4,8 +4,9 @@ import org.eclipse.rdf4j.model.Resource;
 import org.hyperagents.affordance.Affordance;
 import org.hyperagents.hypermedia.HypermediaPlan;
 import org.hyperagents.ontologies.SignifierOntology;
+import org.hyperagents.plan.DirectPlan;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.Plan;
+import org.hyperagents.plan.Plan;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.util.ReifiedStatement;
 import org.hyperagents.util.State;
@@ -48,7 +49,7 @@ public class MazeInitializer7 extends MazeInitializer {
 
   public static Affordance createAffordance(String mazeUri, int room, int m){
     Resource affordanceId = RDFS.rdf.createBNode();
-    Plan plan = createPlan(mazeUri, room, m);
+    DirectPlan plan = createPlan(mazeUri, room, m);
     Affordance.Builder builder = new Affordance.Builder(affordanceId)
       .addPlan(plan);
     Set<State> objectives = getObjectives(room,m);
@@ -59,10 +60,10 @@ public class MazeInitializer7 extends MazeInitializer {
     return affordance;
   }
 
-  public static Plan createPlan(String mazeUri, int room, int m){
+  public static HypermediaPlan createPlan(String mazeUri, int room, int m){
     Resource planId = RDFS.rdf.createBNode();
-    Plan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
-      .setPayload("["+room+",0]")
+    HypermediaPlan plan = new HypermediaPlan.Builder(planId, mazeUri+"/move", "POST")
+      .setPayload("["+room+"]")
       .build();
     return plan;
   }

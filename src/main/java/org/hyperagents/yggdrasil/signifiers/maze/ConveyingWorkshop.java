@@ -10,7 +10,7 @@ import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.affordance.Affordance;
 import org.hyperagents.hypermedia.HypermediaPlan;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.Plan;
+import org.hyperagents.plan.Plan;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact;
 import org.hyperagents.yggdrasil.signifiers.maze.scripts.ConveyOntology;
@@ -120,7 +120,7 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
 
     Resource affordanceId = RDFS.rdf.createBNode("pick item "+i+" "+j+" affordance");
     String payload = "["+i+","+j+"]";
-    Plan plan = new HypermediaPlan.Builder(planId, pickItemUri, "POST")
+    HypermediaPlan plan = new HypermediaPlan.Builder(planId, pickItemUri, "POST")
       .setPayload(payload)
       .build();
     Affordance pick = new Affordance.Builder(affordanceId)
@@ -140,8 +140,7 @@ public class ConveyingWorkshop extends SignifierHypermediaArtifact {
     String artifactUri = this.getArtifactUri();
     String orderMilkUri= artifactUri+"/order";
     Resource planId = RDFS.rdf.createBNode("order milk plan");
-  Plan plan = new Plan.Builder(planId).build();
-  plan = new HypermediaPlan.Builder(planId, orderMilkUri, "POST")
+  HypermediaPlan plan = new HypermediaPlan.Builder(planId, orderMilkUri, "POST")
     .build();
     Resource affordanceId = RDFS.rdf.createBNode("order milk affordance");
     Affordance pick = new Affordance.Builder(affordanceId)

@@ -11,7 +11,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.hypermedia.HypermediaPlan;
 import org.hyperagents.signifier.Signifier;
-import org.hyperagents.util.Plan;
+import org.hyperagents.plan.Plan;
 import org.hyperagents.util.RDFS;
 import org.hyperagents.yggdrasil.signifiers.AgentProfile;
 import org.hyperagents.yggdrasil.signifiers.SignifierHypermediaArtifact;
