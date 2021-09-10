@@ -55,7 +55,7 @@ public class VisibilityMaze4 implements Visibility {
   }
 
   private int getGoalLocation(Signifier signifier){
-    ReifiedStatement statement = signifier.getAffordanceList().get(0).getPostcondition().get().getStatementList().get(0);
+    ReifiedStatement statement = signifier.getAffordanceList().get(0).getObjectiveList().get(0).getStatementList().get(0);
     Value v = statement.getObject();
     int objectiveLocation = getRoomNb(v);
     return objectiveLocation;
