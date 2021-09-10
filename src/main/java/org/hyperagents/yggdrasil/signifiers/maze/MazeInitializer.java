@@ -113,8 +113,24 @@ public class MazeInitializer {
     return b;
   }
 
+  public static boolean isStandard(int room, int m) {
+    boolean b = false;
+    Map<Integer, List<Integer>> map = getStandardMovements();
+    Integer roomInteger = Integer.valueOf(room);
+    System.out.println(roomInteger);
+    List<Integer> list = map.get(roomInteger);
+    if (m>=0 && m<=3){
+      Integer integer = list.get(m);
+      if (integer !=null){
+        b = true;
+      }
+    }
+    return b;
+  }
+
   public static Signifier createBasicSignifier(String mazeUri, int room, int m) {
-    Resource signifierId = RDFS.rdf.createBNode();
+    int toRoom = Util.nextRoom(room, m);
+    Resource signifierId = RDFS.rdf.createBNode("signifier"+room+toRoom);
     Affordance affordance = createBasicAffordance(mazeUri, room, m);
     Signifier signifier = new Signifier.Builder(signifierId)
       .addAffordance(affordance)
@@ -124,23 +140,22 @@ public class MazeInitializer {
 
   public static Affordance createBasicAffordance(String mazeUri, int room, int m) {
     List<State> states = Util.getStates();
-    Resource affordanceId = RDFS.rdf.createBNode();
-    DirectPlan plan = createBasicPlan(mazeUri, room, m);
     int toRoom = Util.nextRoom(room, m);
+    Resource affordanceId = RDFS.rdf.createBNode("affordance"+room+toRoom);
+    HypermediaPlan plan = createBasicPlan(mazeUri, m);
     State postcondition = Util.createObjectiveFromRoomNb(toRoom);
     Affordance affordance = new Affordance.Builder(affordanceId)
       .setPrecondition(states.get(room - 1))
       .setPostcondition(postcondition)
       .addObjective(postcondition)
-      .addObjective(states.get(8))
       .addPlan(plan)
       .build();
     return affordance;
   }
 
-  public static DirectPlan createBasicPlan(String mazeUri, int room, int m) {
-    Resource planId = RDFS.rdf.createBNode();
-    DirectPlan plan = new HypermediaPlan.Builder(planId, mazeUri + "/move", "POST")
+  public static HypermediaPlan createBasicPlan(String mazeUri, int m) {
+    Resource planId = RDFS.rdf.createBNode("movement"+m);
+    HypermediaPlan plan = new HypermediaPlan.Builder(planId, mazeUri + "/move", "POST")
       .setPayload("[" + m + "]")
       .build();
     return plan;
@@ -150,7 +165,7 @@ public class MazeInitializer {
     Set<Signifier> signifiers = new HashSet<>();
     for (int room = 1; room <= 9; room++) {
       for (int m = 0; m < 4; m++) {
-        if (isValid(room, m)) {
+        if (isStandard(room, m)) {
           Signifier signifier = createBasicSignifier(mazeUri, room, m);
           signifiers.add(signifier);
         }
@@ -161,12 +176,16 @@ public class MazeInitializer {
   }
 
   public void addBasicSignifiers(String mazeUri) {
-    Visibility v = new VisibilityImpl();
+    Visibility v = new VisibilityMaze2();
     for (int room = 1; room <= 9; room++) {
       for (int m = 0; m < 4; m++) {
-        if (isValid(room, m)) {
+        if (isStandard(room, m)) {
+          System.out.println("standard");
+          System.out.println("from room: "+room);
+          System.out.println("has movement: "+m);
           Signifier signifier = createBasicSignifier(mazeUri, room, m);
           int newRoom = Util.nextRoom(room, m);
+          System.out.println("to room: "+newRoom);
           String name = "basic signifier to go from room " + room + " to room " + newRoom;
           SignifierTuple t = new SignifierTuple(name, signifier, v);
           this.signifiers.add(t);

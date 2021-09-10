@@ -112,22 +112,15 @@ public class Util {
   }
 
   public static int nextRoom(int room, int m) {
-    int newRoom = room;
     Map<Integer, List<Integer>> movements = getStandardMovements();
-    if (m >= 0 & m <= 3 & movements.containsKey(room)) {
-      List<Integer> rooms = movements.get(room);
-      Integer result = rooms.get(m);
-      if (result != null) {
-        newRoom = result.intValue();
-        return newRoom;
+    Integer roomInteger = Integer.valueOf(room);
+    if (m >= 0 & m <= 3 & movements.containsKey(roomInteger)) {
+      return movements.get(roomInteger).get(m).intValue();
       } else {
         System.out.println("The movement is impossible");
-      }
-    } else {
-      System.out.println("The room does not exist");
     }
 
-    return newRoom;
+    return 0;
   }
 
   /**
