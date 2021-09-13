@@ -12,6 +12,23 @@ import org.hyperagents.yggdrasil.signifiers.Visibility;
 public class VisibilityMaze4 implements Visibility {
 
   @Override
+  public boolean isVisible(Signifier signifier, Model artifactState, AgentProfile profile){
+    boolean b = false;
+    MazeState state = MazeState.createState(artifactState);
+    String agentName = getName(profile);
+    int location = state.getLocation(agentName);
+    if (location == 1){
+      b = true;
+    }
+    return b;
+  }
+
+  private String getName(AgentProfile profile){
+    String name = profile.getAgent().toString();
+    return name;
+  }
+
+ /* @Override
   public boolean isVisible(Signifier signifier, Model artifactState, AgentProfile profile) {
     System.out.println("check is visible 4");
     boolean b = false;
@@ -22,7 +39,7 @@ public class VisibilityMaze4 implements Visibility {
       b = true;
     }
     return b;
-  }
+  }*/
 
   private boolean isVisible1(Signifier signifier, Model artifactState, AgentProfile agent){
     boolean b = false;
@@ -45,6 +62,8 @@ public class VisibilityMaze4 implements Visibility {
     }
     return b;
   }
+
+
 
   private int getPreconditionLocation(Signifier signifier){
     //StructuredSignifier structuredSignifier = StructuredSignifier.getAsStructuredSignifier(signifier);
