@@ -61,6 +61,15 @@ public class HttpEntityHandler {
     this.cartagoHandler = new CartagoEntityHandler(vertx);
   }
 
+  public void handleRedirectWithoutSlash(RoutingContext routingContext) {
+    String requestURI = routingContext.request().absoluteURI();
+
+    routingContext.response().setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY)
+      .headers().add(HttpHeaders.LOCATION, requestURI.substring(0, requestURI.length()-1));
+
+    routingContext.response().end();
+  }
+
   public void handleGetEntity(RoutingContext routingContext) {
     String entityIRI = routingContext.request().absoluteURI();
 
@@ -139,6 +148,12 @@ public class HttpEntityHandler {
 
   // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+
     String entityRepresentation = routingContext.getBodyAsString();
     createEntity(routingContext, entityRepresentation);
   }

@@ -35,17 +35,22 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     HttpEntityHandler handler = new HttpEntityHandler(vertx);
 
+    router.get("/environments/:envid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/environments/:envid").handler(handler::handleGetEntity);
-//    router.post("/environments/").handler(handler::handleCreateEntity);
-    router.post("/environments/").handler(handler::handleCreateEnvironment);
+    router.post("/environments/").handler(handler::handleCreateEntity);
+//    router.post("/environments/").handler(handler::handleCreateEnvironment);
     router.put("/environments/:envid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
 
+    router.get("/environments/:envid/workspaces/:wkspid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/environments/:envid/workspaces/:wkspid").handler(handler::handleGetEntity);
+    router.post("/environments/:envid/workspaces/").consumes("text/turtle")
+        .handler(handler::handleCreateEntity);
     router.post("/environments/:envid/workspaces/").handler(handler::handleCreateWorkspace);
     router.put("/environments/:envid/workspaces/:wkspid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid/workspaces/:wkspid").handler(handler::handleDeleteEntity);
 
+    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
     router.post("/environments/:envid/workspaces/:wkspid/artifacts/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
