@@ -20,7 +20,7 @@ import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 
-public abstract class HypermediaArtifact extends Artifact {
+public abstract class HypermediaArtifact extends Artifact{
   private final Map<String, List<ActionAffordance>> actionAffordances = new HashMap<>();
 
   private SecurityScheme securityScheme = new NoSecurityScheme();

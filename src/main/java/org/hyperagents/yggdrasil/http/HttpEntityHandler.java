@@ -6,10 +6,7 @@ import java.util.stream.Collectors;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
-import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.*;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -236,6 +233,87 @@ public class HttpEntityHandler {
         });
   }
 
+  public void handleBodyAction(RoutingContext context) {
+    String entityRepresentation = context.getBodyAsString();
+    String wkspName = context.pathParam("wkspid");
+    String artifactName = context.pathParam("body");
+
+    HttpServerRequest request = context.request();
+    String agentId = request.getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+
+    //HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    HypermediaAgentBodyArtifactRegistry registry = HypermediaAgentBodyArtifactRegistry.getInstance();
+
+    //String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
+    String artifactIri = registry.getHttpArtifactsPrefix(wkspName) + artifactName;
+    //String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
+    String actionName = registry.getActionName(request.rawMethod(), request.absoluteURI());
+
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+      .addHeader(REQUEST_URI, artifactIri);
+
+    String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
+
+    if (contentType != null) {
+      options.addHeader(CONTENT_TYPE, contentType);
+    }
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
+      if (reply.succeeded()) {
+        String artifactDescription = (String) reply.result().body();
+        ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
+          artifactDescription);
+
+        DeliveryOptions cartagoOptions = new DeliveryOptions()
+          .addHeader(CartagoVerticle.AGENT_ID, agentId)
+          .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
+          .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
+          .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
+          .addHeader(CartagoVerticle.ACTION_NAME, actionName);
+
+        String apiKey = context.request().getHeader("X-API-Key");
+        if (apiKey != null && !apiKey.isEmpty()) {
+          registry.setAPIKeyForArtifact(artifactIri, apiKey);
+        }
+
+        Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
+          action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+          .findFirst();
+
+        String serializedPayload = null;
+
+        if (affordance.isPresent()) {
+          Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
+
+          if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
+            JsonElement payload = JsonParser.parseString(entityRepresentation);
+            List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
+
+            serializedPayload = CartagoDataBundle.toJson(params);
+          }
+        }
+        vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
+          cartagoReply -> {
+            if (cartagoReply.succeeded()) {
+              LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+              context.response().setStatusCode(HttpStatus.SC_OK).end();
+            } else {
+              LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
+                + "; reason: " + cartagoReply.cause().getMessage());
+              context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+                .end();
+            }
+          });
+      }
+    });
+  }
+
+
+
   // TODO: add payload validation
   public void handleUpdateEntity(RoutingContext routingContext) {
     String entityIri = routingContext.request().absoluteURI();
@@ -294,6 +372,56 @@ public class HttpEntityHandler {
     else {
       routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
     }
+  }
+
+
+  public void handleJoinWorkspace(RoutingContext routingContext){
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+    else {
+      String envId = routingContext.pathParam("envid");
+      String wkspId = routingContext.pathParam("wkspid");
+      String representation = "";
+      Promise<String> result = Promise.promise();
+      cartagoHandler.joinWorkspace(agentId, envId, wkspId, representation, result);
+
+    }
+
+  }
+
+  public void handleLeaveWorkspace(RoutingContext routingContext) {
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    } else {
+      String envId = routingContext.pathParam("envid");
+      String wkspId = routingContext.pathParam("wkspid");
+      String representation = "";
+      Promise<String> result = Promise.promise();
+      cartagoHandler.leaveWorkspace(agentId, envId, wkspId, representation, result);
+
+    }
+  }
+
+  public void handleCreateBody(RoutingContext routingContext){
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+    String artifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    } else {
+      String envId = routingContext.pathParam("envid");
+      String wkspId = routingContext.pathParam("wkspid");
+      String representation = "";
+      Promise<String> cartagoPromise = Promise.promise();
+      cartagoHandler.createAgentBody(agentId, envId, wkspId, artifactName, representation, cartagoPromise);
+      cartagoPromise.future().compose(result ->
+        Future.future(promise -> storeEntity(routingContext, artifactName, result, promise)));
+    }
+
   }
 
   private Map<String, List<String>> getHeaders(String entityIRI) {

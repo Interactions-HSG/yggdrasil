@@ -1,23 +1,14 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
+import cartago.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
-import cartago.AgentIdCredential;
-import cartago.ArtifactId;
-import cartago.ArtifactObsProperty;
-import cartago.CartagoContext;
-import cartago.CartagoException;
-import cartago.CartagoService;
-import cartago.Op;
-import cartago.WorkspaceId;
+import cartago.util.agent.CartagoContext;
 import cartago.util.agent.ActionFailedException;
 import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
@@ -42,8 +33,14 @@ public class CartagoVerticle extends AbstractVerticle {
 
   public static final String CREATE_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".createWorkspace";
+  public static final String JOIN_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
+    + ".joinWorkspace";
+  public static final String LEAVE_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
+    + ".leaveWorkspace";
   public static final String CREATE_ARTIFACT = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".instantiateArtifact";
+  public static final String CREATE_BODY = "org.hyperagents.yggdrasil.eventbus.headers.methods"
+    +".createAgentBody";
   public static final String DO_ACTION = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".performAction";
 
@@ -84,10 +81,10 @@ public class CartagoVerticle extends AbstractVerticle {
 
     try {
       LOGGER.info("Starting CArtAgO node...");
-      CartagoService.startNode();
-      new CartagoPerceptFecther().start();
-    } catch (CartagoException e) {
-      LOGGER.error(e.getMessage());
+      CartagoEnvironment.getInstance().init();
+      new CartagoPerceptFetcher().start();
+    } catch (CartagoException exception){
+      exception.printStackTrace();
     }
   }
 
@@ -106,9 +103,15 @@ public class CartagoVerticle extends AbstractVerticle {
       switch (requestMethod) {
         case CREATE_WORKSPACE:
           String envName = message.headers().get(ENV_NAME);
-          String workspaceDescription = instatiateWorkspace(agentUri, envName, workspaceName);
+          String workspaceDescription = instantiateWorkspace(agentUri, envName, workspaceName);
           message.reply(workspaceDescription);
           break;
+        case JOIN_WORKSPACE:
+          envName = message.headers().get(ENV_NAME);
+          joinWorkspace(agentUri, envName, workspaceName);
+        case LEAVE_WORKSPACE:
+          envName = message.headers().get(ENV_NAME);
+          leaveWorkspace(agentUri, envName, workspaceName);
         case CREATE_ARTIFACT:
           String artifactName = message.headers().get(ARTIFACT_NAME);
 
@@ -127,6 +130,13 @@ public class CartagoVerticle extends AbstractVerticle {
           String artifactDescription = HypermediaArtifactRegistry.getInstance()
               .getArtifactDescription(artifactName);
 
+          message.reply(artifactDescription);
+          break;
+        case CREATE_BODY:
+          artifactName = message.headers().get(ARTIFACT_NAME);
+          instantiateHypermediaAgentBody(agentUri, artifactName, workspaceName);
+          artifactDescription = HypermediaAgentBodyArtifactRegistry.getInstance()
+            .getArtifactDescription(artifactName);
           message.reply(artifactDescription);
           break;
         case DO_ACTION:
@@ -149,12 +159,12 @@ public class CartagoVerticle extends AbstractVerticle {
 
   }
 
-  private String instatiateWorkspace(String agentUri, String envName, String workspaceName)
+  private String instantiateWorkspace(String agentUri, String envName, String workspaceName)
       throws ActionFailedException, CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
     LOGGER.info("Creating workspace " + workspaceName);
-    agentContext.doAction(new Op("createWorkspace", workspaceName));
-
+    WorkspaceDescriptor descriptor = CartagoEnvironment.getInstance().getRootWSP().getWorkspace().createWorkspace(workspaceName);
+    WorkspaceRegistry.getInstance().registerWorkspace(descriptor);
     // TODO: handle env IRIs
     String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName)
         + workspaceName;
@@ -178,6 +188,18 @@ public class CartagoVerticle extends AbstractVerticle {
                 .addRequiredProperties("artifactClass", "artifactName")
                 .build())
             .build())
+      //new actions
+        .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/join")
+          .setMethodName("PUT")
+          .build())
+          .addSemanticType("http://example.org/joinWorkspace")
+          .build())
+      .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/leave")
+        .setMethodName("DELETE")
+        .build())
+        .addSemanticType("http://example.org/leaveWorkspace")
+        .build())
+      //end new actions
         .build();
 
     return new TDGraphWriter(td)
@@ -191,54 +213,162 @@ public class CartagoVerticle extends AbstractVerticle {
         .write();
   }
 
+  private String instantiateWorkspace2(String agentUri, String envName, String workspaceName){
+    LOGGER.info("Creating workspace " + workspaceName);
+    try {
+      CartagoEnvironment.getInstance().getRootWSP().getWorkspace().createWorkspace(workspaceName);
+    } catch(CartagoException e){
+      e.printStackTrace();
+    }
+    String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName)
+      + workspaceName;
+    ThingDescription td = new ThingDescription.Builder(workspaceName)
+      .addThingURI(workspaceId)
+      .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
+      .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId + "/artifacts/").build())
+        .addSemanticType("http://w3id.org/eve#MakeArtifact")
+        .addInputSchema(new ObjectSchema.Builder()
+          .addProperty("artifactClass", new StringSchema.Builder()
+            .addSemanticType("http://w3id.org/eve#ArtifactClass")
+            .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+            .build())
+          .addProperty("artifactName", new StringSchema.Builder()
+            .addSemanticType("http://w3id.org/eve#ArtifactName")
+            .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+            .build())
+          .addProperty("initParams", new ArraySchema.Builder()
+            .build())
+          .addRequiredProperties("artifactClass", "artifactName")
+          .build())
+        .build())
+      //new actions
+      .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/join")
+        .setMethodName("PUT")
+        .build())
+        .addSemanticType("http://example.org/joinWorkspace")
+        .build())
+      .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/leave")
+        .setMethodName("DELETE")
+        .build())
+        .addSemanticType("http://example.org/leaveWorkspace")
+        .build())
+      //end new actions
+      .build();
+
+    return new TDGraphWriter(td)
+      .setNamespace("td", "https://www.w3.org/2019/wot/td#")
+      .setNamespace("htv", "http://www.w3.org/2011/http#")
+      .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
+      .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
+      .setNamespace("dct", "http://purl.org/dc/terms/")
+      .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
+      .setNamespace("eve", "http://w3id.org/eve#")
+      .write();
+
+  }
+
+  private void joinWorkspace(String agentUri, String envName, String workspaceName){
+    CartagoContext agentContext = getAgentContext(agentUri);
+    try {
+      CartagoEnvironment environment = CartagoEnvironment.getInstance();
+      Workspace workspace = HypermediaArtifactRegistry.getInstance().getWorkspaceFromName(workspaceName);
+      AgentCredential agentCredential = new AgentIdCredential(agentContext.getName());
+      ICartagoCallback callback = new InterArtifactCallback(new ReentrantLock());
+      workspace.joinWorkspace(agentCredential, callback);
+    } catch(CartagoException e){
+      e.printStackTrace();
+    }
+  }
+
+  private void leaveWorkspace(String agentUri, String envName, String workspaceName){
+    Workspace workspace = HypermediaArtifactRegistry.getInstance().getWorkspaceFromName(workspaceName);
+    CartagoContext agentContext = getAgentContext(agentUri);
+    WorkspaceId workspaceId = workspace.getId();
+    AgentId agent = getAgentId(agentContext, workspaceId);
+    try {
+      workspace.quitAgent(agent);
+    } catch(CartagoException e){
+      e.printStackTrace();
+    }
+  }
+
+
   private void instantiateArtifact(String agentUri, String workspaceName, String artifactClass,
       String artifactName, Optional<Object[]> params) throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
+    try {
+      String envName = HypermediaArtifactRegistry.getInstance().getEnvironmentForWorkspace(workspaceName).get();
+      joinWorkspace(agentContext.getName(), envName, workspaceName);
+      WorkspaceId wkspId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
+      joinWorkspace(agentContext.getName(), envName, workspaceName);
 
-    WorkspaceId wkspId = agentContext.joinWorkspace(workspaceName);
 
-//    CartagoContext agent0 = agentContexts.get("agent-0");
-//    agent0.joinWorkspace(workspaceName);
+      LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
 
-    LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
-
-    if (params.isPresent()) {
-      agentContext.makeArtifact(wkspId, artifactName, artifactClass, params.get());
-      agentContext.doAction(new Op("focusWhenAvailable", artifactName));
-//      agent0.doAction(new Op("focusWhenAvailable", artifactName));
-    } else {
-      LOGGER.info("Creating artifact...");
-      agentContext.makeArtifact(wkspId, artifactName, artifactClass);
-      agentContext.doAction(new Op("focusWhenAvailable", artifactName));
-//      LOGGER.info("Done, focusing agent0 on artifact, first lookup...");
-      ArtifactId artId = agentContext.lookupArtifact(wkspId, artifactName);
-      artId.getId();
-//      LOGGER.info("Found artifact...");
-//      agent0.doAction(new Op("focus", artId));
-      LOGGER.info("Done!");
+      if (params.isPresent()) {
+        LOGGER.info("Creating artifact with params...");
+        Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+        AgentId agentId = getAgentId(agentContext, workspace.getId());
+        workspace.makeArtifact(agentId,artifactName, artifactClass, new ArtifactConfig(params.get()));
+        LOGGER.info("Done!");
+      } else {
+        LOGGER.info("Creating artifact...");
+        Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+        AgentId agentId = getAgentId(agentContext, workspace.getId());
+        workspace.makeArtifact(agentId,artifactName, artifactClass,new ArtifactConfig());
+        ArtifactId artId = agentContext.lookupArtifact(wkspId, artifactName);
+        artId.getId();
+        LOGGER.info("Done!");
+      }
+    } catch(Exception e){
+      e.printStackTrace();
     }
   }
+
+  private void instantiateHypermediaAgentBody(String agentUri, String artifactName, String workspaceName)
+    throws CartagoException {
+    WorkspaceId workspaceId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
+    CartagoContext agentContext = getAgentContext(agentUri);
+    AgentId agentId = getAgentId(agentContext, workspaceId);
+    if (!HypermediaArtifactRegistry.getInstance().hasHypermediaAgentBody(agentId, workspaceId)){
+      Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+      String envName = HypermediaArtifactRegistry.getInstance().getEnvironmentForWorkspace(workspaceName).get();
+      joinWorkspace(agentContext.getName(), envName, workspaceName);
+      String artifactClass = HypermediaAgentBodyArtifact.class.getName();
+      workspace.addArtifactFactory(new HypermediaAgentBodyArtifactFactory());
+      ArtifactConfig config = new ArtifactConfig(new Object[]{agentId, workspace});
+      try {
+        workspace.makeArtifact(agentId, artifactName, artifactClass, config);
+      } catch (CartagoException e){
+        e.printStackTrace();
+      }
+    }
+    LOGGER.info("Done!");
+  }
+
 
   private void doAction(String agentUri, String workspaceName, String artifactName, String action,
       Optional<String> payload) throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
-
-    WorkspaceId workspaceId = agentContext.joinWorkspace(workspaceName);
-
+    String envName = HypermediaArtifactRegistry.getInstance().getEnvironmentForWorkspace(workspaceName).get();
+    WorkspaceId workspaceId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
+    joinWorkspace(agentContext.getName(), envName, workspaceName);
     Op operation;
-
     if (payload.isPresent()) {
       Object[] params = CartagoDataBundle.fromJson(payload.get());
       operation = new Op(action, params);
     } else {
       operation = new Op(action);
     }
-
     LOGGER.info("Performing action " + action + " on artifact " + artifactName
         + " with params: " + Arrays.asList(operation.getParamValues()));
 
-    ArtifactId artifactId = agentContext.lookupArtifact(workspaceId, artifactName);
-    agentContext.doAction(artifactId, operation);
+    Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    AgentId agentId = getAgentId(agentContext, workspaceId);
+    workspace.lookupArtifact(agentId, artifactName);
+    ICartagoCallback callback = new EventManagerCallback(new EventManager());
+    IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
+    workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
   }
 
   private CartagoContext getAgentContext(String agentUri) {
@@ -252,7 +382,13 @@ public class CartagoVerticle extends AbstractVerticle {
     }
   }
 
-  class CartagoPerceptFecther extends Thread {
+  private AgentId getAgentId(CartagoContext agentContext, WorkspaceId workspaceId){
+    AgentIdCredential credential = new AgentIdCredential(agentContext.getName());
+    AgentId agent = new AgentId(credential.getId(), credential.getGlobalId(), 0, credential.getRoleName(), workspaceId);
+    return agent;
+  }
+
+  class CartagoPerceptFetcher extends Thread {
     public void run() {
       try {
         while (true) {
@@ -316,5 +452,9 @@ public class CartagoVerticle extends AbstractVerticle {
 
       return output;
     }
+  }
+
+  private Object[] createParam(Object... objs){
+    return objs;
   }
 }

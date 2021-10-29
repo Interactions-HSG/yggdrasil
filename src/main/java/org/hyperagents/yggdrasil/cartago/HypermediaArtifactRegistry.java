@@ -1,11 +1,8 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
+import cartago.*;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.json.JsonObject;
@@ -38,12 +35,15 @@ public class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactAPIKeys;
 
+  private final Map<WorkspaceId, Set<AgentId>> bodyArtifacts;
+
   private HypermediaArtifactRegistry() {
     workspaceEnvironmentMap = new Hashtable<>();
     artifactSemanticTypes = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
     artifactActionRouter = new Hashtable<>();
     artifactAPIKeys = new Hashtable<>();
+    bodyArtifacts = new Hashtable<>();
   }
 
   public static synchronized HypermediaArtifactRegistry getInstance() {
@@ -71,6 +71,36 @@ public class HypermediaArtifactRegistry {
         });
       }
     }
+  }
+
+  public void registerBodyArtifact(HypermediaAgentBodyArtifact bodyArtifact){
+    //register(bodyArtifact);
+    WorkspaceId workspaceId = bodyArtifact.getArtifactId().getWorkspaceId();
+    AgentId agentId = bodyArtifact.getArtifactId().getCreatorId();
+    if (bodyArtifacts.containsKey(workspaceId)){
+      Set<AgentId> agentIds = bodyArtifacts.get(workspaceId);
+      agentIds.add(agentId);
+      bodyArtifacts.replace(workspaceId, agentIds);
+    }
+    else {
+      Set<AgentId> agentIds = new HashSet<>();
+      agentIds.add(agentId);
+      bodyArtifacts.put(workspaceId, agentIds);
+    }
+  }
+
+  public void registerBodyArtifact(WorkspaceId workspaceId, AgentId agentId){
+    if (bodyArtifacts.containsKey(workspaceId)){
+      Set<AgentId> agentIds = bodyArtifacts.get(workspaceId);
+      agentIds.add(agentId);
+      bodyArtifacts.replace(workspaceId, agentIds);
+    }
+    else {
+      Set<AgentId> agentIds = new HashSet<>();
+      agentIds.add(agentId);
+      bodyArtifacts.put(workspaceId, agentIds);
+    }
+
   }
 
   public void addWorkspace(String envName, String wkspName) {
@@ -148,5 +178,41 @@ public class HypermediaArtifactRegistry {
     }
 
     throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
+  }
+
+  public Workspace getWorkspaceFromName(String wkspName){
+    Workspace mainWorkspace = CartagoEnvironment.getInstance().getRootWSP().getWorkspace();
+    Workspace currentWorkspace = mainWorkspace;
+    List<Workspace> workspaces = getAllSubWorkspaces(mainWorkspace);
+    for (Workspace workspace: workspaces){
+      if (workspace.getId().getName()==wkspName || workspace.getId().getFullName()==wkspName){
+        currentWorkspace = workspace;
+      }
+    }
+    return currentWorkspace;
+  }
+
+  private List<Workspace> getAllSubWorkspaces(Workspace mainWorkspace){
+    List<Workspace> workspaces = new ArrayList<>();
+    workspaces.add(mainWorkspace);
+    Collection<WorkspaceDescriptor> descriptors = mainWorkspace.getChildWSPs();
+    if (descriptors.size()>0){
+      for (WorkspaceDescriptor descriptor: descriptors){
+        Workspace workspace = descriptor.getWorkspace();
+        workspaces.addAll(getAllSubWorkspaces(workspace));
+      }
+    }
+    return workspaces;
+  }
+
+  public boolean hasHypermediaAgentBody(AgentId agentId, WorkspaceId workspaceId){
+    boolean b = false;
+    if (bodyArtifacts.containsKey(workspaceId)){
+      Set<AgentId> agentIds = bodyArtifacts.get(workspaceId);
+      if (agentIds.contains(agentId)){
+        b = true;
+      }
+    }
+    return b;
   }
 }
