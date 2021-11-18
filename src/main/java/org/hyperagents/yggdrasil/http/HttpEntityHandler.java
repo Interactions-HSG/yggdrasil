@@ -424,6 +424,27 @@ public class HttpEntityHandler {
 
   }
 
+  public void handleCreateSubWorkspace(RoutingContext routingContext){
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+    String representation = routingContext.getBodyAsString();
+    JsonObject subWorkspaceInit = (JsonObject) Json.decodeValue(representation);
+    String workspaceName = subWorkspaceInit.getString("name");
+    String currentWorkspaceName = routingContext.pathParam("wkspid");
+    String envName = routingContext.pathParam("envid");
+    if (agentId == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+    Promise<String> cartagoPromise = Promise.promise();
+    cartagoHandler.createSubWorkspace(agentId, envName, currentWorkspaceName, workspaceName, cartagoPromise);
+    System.out.println("workspace to register: "+workspaceName);
+    cartagoPromise.future().compose(result ->  {
+      HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
+      return Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise));
+    });
+  }
+
+
+
   private Map<String, List<String>> getHeaders(String entityIRI) {
 
     Map<String,List<String>> headers = getWebSubHeaders(entityIRI);
@@ -471,6 +492,36 @@ public class HttpEntityHandler {
         promise.fail("Could not store the entity representation.");
       }
     });
+  }
+
+  private void storeSubWorkspace(RoutingContext context, String entityName, String representation,
+                                 Promise<Object> promise){
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
+      .addHeader(REQUEST_URI, getWorkspacePrefix(context))
+      .addHeader(ENTITY_URI_HINT, entityName);
+//        .addHeader(CONTENT_TYPE, context.request().getHeader("Content-Type"));
+
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
+      if (result.succeeded()) {
+        context.response().setStatusCode(HttpStatus.SC_CREATED).end(representation);
+        promise.complete();
+      } else {
+        context.response().setStatusCode(HttpStatus.SC_CREATED).end();
+        promise.fail("Could not store the entity representation.");
+      }
+    });
+  }
+
+  private String getEnvironment(RoutingContext routingContext){
+    String currentEnvironmentName = routingContext.pathParam("envid");
+    return HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix()+currentEnvironmentName;
+
+  }
+
+  private String getWorkspacePrefix(RoutingContext routingContext){
+    String env = getEnvironment(routingContext);
+    return env+"/workspaces/";
   }
 
   // TODO: support different content types

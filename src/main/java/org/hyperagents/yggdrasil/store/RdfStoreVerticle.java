@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
@@ -67,7 +69,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           handleDeleteEntity(requestIRI, message);
           break;
         default:
-        	break;
+          break;
       }
     }
     catch (IOException e) {
@@ -81,7 +83,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private void handleGetEntity(IRI requestIRI, Message<String> message)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
 
     if (result.isPresent() && result.get().size() > 0) {
@@ -99,8 +101,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * @throws IOException
    */
   private void handleCreateEntity(IRI requestIRI, Message<String> message)
-      throws IllegalArgumentException, IOException {
-	// Create IRI for new entity
+    throws IllegalArgumentException, IOException {
+    // Create IRI for new entity
     Graph entityGraph;
 
     String slug = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
@@ -118,8 +120,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
 //      if (contentType != null && contentType.equals("application/ld+json")) {
 //        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
 //      } else {
-        entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
-        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.TURTLE);
+      entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
+      entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.TURTLE);
 //      }
 
       // TODO: seems like legacy integration from Simon Bienz, to be reviewed
@@ -145,10 +147,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private Graph addContainmentTriples(IRI entityIRI, Graph entityGraph)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     LOGGER.info("Looking for containment triples for: " + entityIRI.getIRIString());
     if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-        store.createIRI(("http://w3id.org/eve#Artifact"))) &&  entityIRI.getIRIString().indexOf("/bodies") == -1) {
+      store.createIRI(("http://w3id.org/eve#Artifact"))) &&  entityIRI.getIRIString().indexOf("/bodies") == -1) {
       String artifactIRI = entityIRI.getIRIString();
       IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
 
@@ -166,7 +168,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
       }
     } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-        store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
+      store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
       String workspaceIRI = entityIRI.getIRIString();
       IRI envIRI = store.createIRI(workspaceIRI.substring(0, workspaceIRI.indexOf("/workspaces")));
 
@@ -183,18 +185,48 @@ public class RdfStoreVerticle extends AbstractVerticle {
         String entityGraphStr = store.graphToString(graph, RDFSyntax.TURTLE);
         pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, envIRI, entityGraphStr);
       }
+      Optional<String> opParentUri = WorkspaceRegistry.getInstance().getParentWorkspaceUriFromUri(entityIRI.getIRIString());
+
+      if (opParentUri.isPresent()){
+        IRI parentIRI = store.createIRI(opParentUri.get());
+        entityGraph.add(entityIRI, store.createIRI("http://ns.hyperagents.org/core#isContainedBy"), parentIRI);
+        Optional<Graph> optionalGraph = store.getEntityGraph(parentIRI);
+        if (optionalGraph.isPresent()){
+          Graph graph = optionalGraph.get();
+          graph.add(parentIRI, store.createIRI("http://ns.hyperagents.org/core#contains"), entityIRI);
+        }
+      }
+
+    } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
+      store.createIRI(("http://w3id.org/eve#Artifact"))) &&  entityIRI.getIRIString().indexOf("/artifacts") == -1) {
+      String artifactIRI = entityIRI.getIRIString();
+      IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/bodies")));
+
+      LOGGER.info("Found workspace IRI: " + workspaceIRI);
+
+      Optional<Graph> workspaceGraph = store.getEntityGraph(workspaceIRI);
+      if (workspaceGraph.isPresent()) {
+        Graph wkspGraph = workspaceGraph.get();
+        LOGGER.info("Found workspace graph: " + wkspGraph);
+        wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        // TODO: updateEntityGraph would yield 404, to be investigated
+        store.createEntityGraph(workspaceIRI, wkspGraph);
+
+        String entityGraphStr = store.graphToString(wkspGraph, RDFSyntax.TURTLE);
+        pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
+      }
     }
 
     return entityGraph;
   }
 
   private void handlePatchEntity(IRI requestIRI, Message<String> message)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     // TODO
   }
 
   private void handleUpdateEntity(IRI requestIRI, Message<String> message)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     if (store.containsEntityGraph(requestIRI)) {
       if (message.body() == null || message.body().isEmpty()) {
         replyFailed(message);
@@ -229,7 +261,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private void handleDeleteEntity(IRI requestIRI, Message<String> message)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
 
     if (result.isPresent() && result.get().size() > 0) {
@@ -252,8 +284,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void pushNotification(String notificationType, IRI requestIRI, String entityGraph) {
     DeliveryOptions options = new DeliveryOptions()
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, notificationType)
-        .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
+      .addHeader(HttpEntityHandler.REQUEST_METHOD, notificationType)
+      .addHeader(HttpEntityHandler.REQUEST_URI, requestIRI.getIRIString());
 
     vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, entityGraph, options);
   }
@@ -304,5 +336,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         LOGGER.info("Registered at crawler: " + crawlerUrl);
       });
     }
+
   }
+
 }

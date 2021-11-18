@@ -33,6 +33,8 @@ public class CartagoVerticle extends AbstractVerticle {
 
   public static final String CREATE_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
       + ".createWorkspace";
+  public static final String CREATE_SUB_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
+    + ".createSubWorkspace";
   public static final String JOIN_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
     + ".joinWorkspace";
   public static final String LEAVE_WORKSPACE = "org.hyperagents.yggdrasil.eventbus.headers.methods"
@@ -48,6 +50,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
   public static final String ENV_NAME = "org.hyperagents.yggdrasil.eventbus.headers.envName";
   public static final String WORKSPACE_NAME = "org.hyperagents.yggdrasil.eventbus.headers.workspaceName";
+  public static final String SUB_WORKSPACE_NAME = "org.hyperagents.yggdrasil.eventbus.headers.subWorkspaceName";
   public static final String ARTIFACT_NAME = "org.hyperagents.yggdrasil.eventbus.headers.artifactName";
   public static final String ACTION_NAME = "org.hyperagents.yggdrasil.eventbus.headers.actionName";
 
@@ -106,6 +109,11 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceDescription = instantiateWorkspace(agentUri, envName, workspaceName);
           message.reply(workspaceDescription);
           break;
+        case CREATE_SUB_WORKSPACE:
+          String subWorkspaceName = message.headers().get(SUB_WORKSPACE_NAME);
+          envName = message.headers().get(ENV_NAME);
+          String subWorkspaceDescription = instantiateSubWorkspace(agentUri, envName, workspaceName, subWorkspaceName);
+          message.reply(subWorkspaceDescription);
         case JOIN_WORKSPACE:
           envName = message.headers().get(ENV_NAME);
           joinWorkspace(agentUri, envName, workspaceName);
@@ -164,10 +172,10 @@ public class CartagoVerticle extends AbstractVerticle {
     CartagoContext agentContext = getAgentContext(agentUri);
     LOGGER.info("Creating workspace " + workspaceName);
     WorkspaceDescriptor descriptor = CartagoEnvironment.getInstance().getRootWSP().getWorkspace().createWorkspace(workspaceName);
-    WorkspaceRegistry.getInstance().registerWorkspace(descriptor);
     // TODO: handle env IRIs
     String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName)
         + workspaceName;
+    WorkspaceRegistry.getInstance().registerWorkspace(descriptor, workspaceId);
 
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
@@ -213,7 +221,7 @@ public class CartagoVerticle extends AbstractVerticle {
         .write();
   }
 
-  private String instantiateWorkspace2(String agentUri, String envName, String workspaceName){
+/*  private String instantiateWorkspace2(String agentUri, String envName, String workspaceName){
     LOGGER.info("Creating workspace " + workspaceName);
     try {
       CartagoEnvironment.getInstance().getRootWSP().getWorkspace().createWorkspace(workspaceName);
@@ -265,6 +273,62 @@ public class CartagoVerticle extends AbstractVerticle {
       .setNamespace("eve", "http://w3id.org/eve#")
       .write();
 
+  }*/
+
+  private String instantiateSubWorkspace(String agentUri, String envName, String workspaceName, String subWorkspaceName)
+    throws ActionFailedException, CartagoException {
+    CartagoContext agentContext = getAgentContext(agentUri);
+    LOGGER.info("Creating workspace " + subWorkspaceName);
+    Workspace currentWorkspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    WorkspaceDescriptor descriptor = currentWorkspace.createWorkspace(subWorkspaceName);
+    String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName)
+      + workspaceName;
+    String subWorkspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(envName)
+      + subWorkspaceName;
+    WorkspaceRegistry.getInstance().registerWorkspace(descriptor, subWorkspaceId);
+
+    ThingDescription td = new ThingDescription.Builder(subWorkspaceName)
+      .addThingURI(subWorkspaceId)
+      .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
+      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId + "/artifacts/").build())
+        .addSemanticType("http://w3id.org/eve#MakeArtifact")
+        .addInputSchema(new ObjectSchema.Builder()
+          .addProperty("artifactClass", new StringSchema.Builder()
+            .addSemanticType("http://w3id.org/eve#ArtifactClass")
+            .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+            .build())
+          .addProperty("artifactName", new StringSchema.Builder()
+            .addSemanticType("http://w3id.org/eve#ArtifactName")
+            .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+            .build())
+          .addProperty("initParams", new ArraySchema.Builder()
+            .build())
+          .addRequiredProperties("artifactClass", "artifactName")
+          .build())
+        .build())
+      //new actions
+      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId+"/join")
+        .setMethodName("PUT")
+        .build())
+        .addSemanticType("http://example.org/joinWorkspace")
+        .build())
+      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId+"/leave")
+        .setMethodName("DELETE")
+        .build())
+        .addSemanticType("http://example.org/leaveWorkspace")
+        .build())
+      //end new actions
+      .build();
+
+    return new TDGraphWriter(td)
+      .setNamespace("td", "https://www.w3.org/2019/wot/td#")
+      .setNamespace("htv", "http://www.w3.org/2011/http#")
+      .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
+      .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
+      .setNamespace("dct", "http://purl.org/dc/terms/")
+      .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
+      .setNamespace("eve", "http://w3id.org/eve#")
+      .write();
   }
 
   private void joinWorkspace(String agentUri, String envName, String workspaceName){

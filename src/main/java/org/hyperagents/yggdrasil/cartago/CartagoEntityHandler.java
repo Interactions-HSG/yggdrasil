@@ -33,6 +33,16 @@ public class CartagoEntityHandler {
     sendCartagoMessage(representation, options, result);
   }
 
+  public void createSubWorkspace(String agentId, String envName, String workspaceName,
+                                 String subWorkspaceName, Promise<String> result){
+    DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
+      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_SUB_WORKSPACE)
+      .addHeader(CartagoVerticle.SUB_WORKSPACE_NAME, subWorkspaceName)
+      .addHeader(CartagoVerticle.ENV_NAME, envName);
+
+    sendCartagoMessage("", options, result);
+  }
+
   public void joinWorkspace(String agentId, String envName, String workspaceName,
                             String representation, Promise<String> result){
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
