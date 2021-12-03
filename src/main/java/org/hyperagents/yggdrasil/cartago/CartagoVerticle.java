@@ -162,7 +162,8 @@ public class CartagoVerticle extends AbstractVerticle {
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
         .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
-        .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId + "/artifacts/").build())
+        .addAction(new ActionAffordance.Builder("makeArtifact",
+              new Form.Builder(workspaceId + "/artifacts/").build())
             .addSemanticType("http://w3id.org/eve#MakeArtifact")
             .addInputSchema(new ObjectSchema.Builder()
                 .addProperty("artifactClass", new StringSchema.Builder()

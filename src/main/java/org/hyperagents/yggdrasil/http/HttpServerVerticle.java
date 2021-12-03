@@ -37,8 +37,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/environments/:envid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/environments/:envid").handler(handler::handleGetEntity);
-    router.post("/environments/").handler(handler::handleCreateEntity);
-//    router.post("/environments/").handler(handler::handleCreateEnvironment);
+//    router.post("/environments/").handler(handler::handleCreateEntity);
+    router.post("/environments/").handler(handler::handleCreateEnvironment);
     router.put("/environments/:envid").handler(handler::handleUpdateEntity);
     router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
 

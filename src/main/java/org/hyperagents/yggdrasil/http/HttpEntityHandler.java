@@ -98,7 +98,8 @@ public class HttpEntityHandler {
     ThingDescription td = new ThingDescription.Builder(envName)
         .addThingURI(envURI)
         .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
-        .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
+        .addAction(new ActionAffordance.Builder("makeWorkspace",
+              new Form.Builder(envURI + "/workspaces/").build())
             .addSemanticType("http://w3id.org/eve#MakeWorkspace")
             .build())
         .build();
