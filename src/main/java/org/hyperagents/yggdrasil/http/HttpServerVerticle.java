@@ -35,37 +35,30 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     HttpEntityHandler handler = new HttpEntityHandler(vertx);
 
-    router.get("/environments/:envid/").handler(handler::handleRedirectWithoutSlash);
-    router.get("/environments/:envid").handler(handler::handleGetEntity);
-    router.post("/environments/").handler(handler::handleCreateEntity);
-//    router.post("/environments/").handler(handler::handleCreateEnvironment);
-    router.put("/environments/:envid").handler(handler::handleUpdateEntity);
-    router.delete("/environments/:envid").handler(handler::handleDeleteEntity);
-
-    router.get("/environments/:envid/workspaces/:wkspid/").handler(handler::handleRedirectWithoutSlash);
-    router.get("/environments/:envid/workspaces/:wkspid").handler(handler::handleGetEntity);
-    router.post("/environments/:envid/workspaces/").consumes("text/turtle")
+    router.get("/workspaces/:wkspid/").handler(handler::handleRedirectWithoutSlash);
+    router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
+    router.post("/workspaces/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
-    router.post("/environments/:envid/workspaces/").handler(handler::handleCreateWorkspace);
-    router.put("/environments/:envid/workspaces/:wkspid").handler(handler::handleUpdateEntity);
-    router.delete("/environments/:envid/workspaces/:wkspid").handler(handler::handleDeleteEntity);
+    router.post("/workspaces/").handler(handler::handleCreateWorkspace);
+    router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
+    router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
     //new
-    router.put("/environments/:envid/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
-    router.delete("/environments/:envid/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
-    router.put("/environments/:envid/workspaces/:wkspid/bodies/").handler(handler::handleCreateBody);
-    router.get("/environments/:envid/workspaces/:wkspid/bodies/:body").handler(handler::handleGetEntity);
-    router.route("/environments/:envid/workspaces/:wkspid/bodies/:body/*").handler(handler::handleBodyAction);
-    router.post("/environments/:envid/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
+    router.put("/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
+    router.delete("/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
+    //router.put("/workspaces/:wkspid/bodies/").handler(handler::handleCreateBody);
+    //router.get("/workspaces/:wkspid/bodies/:body").handler(handler::handleGetEntity);
+    //router.route("/environments/:envid/workspaces/:wkspid/bodies/:body/*").handler(handler::handleBodyAction);
+    router.post("/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
     //end new
-    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
-    router.get("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
-    router.post("/environments/:envid/workspaces/:wkspid/artifacts/").consumes("text/turtle")
+    router.get("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
+    router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+    router.post("/workspaces/:wkspid/artifacts/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
-    router.post("/environments/:envid/workspaces/:wkspid/artifacts/").consumes("application/json")
+    router.post("/workspaces/:wkspid/artifacts/").consumes("application/json")
         .handler(handler::handleCreateArtifact);
-    router.put("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
-    router.delete("/environments/:envid/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
-    router.route("/environments/:envid/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
+    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
+    router.delete("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
+    router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
 
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph

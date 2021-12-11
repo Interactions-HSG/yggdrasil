@@ -16,9 +16,6 @@ public class HypermediaArtifactRegistry {
 
   private String httpPrefix = "http://localhost:8080";
 
-  // Maps a workspace name to the name of the hosting environment
-  private final Map<String, String> workspaceEnvironmentMap;
-
   // Maps an artifact type IRI to the canonical names of the corresponding CArtAgO artifact class
   // E.g.: "https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D" ->
   // "org.hyperagents.yggdrasil.cartago.artifacts.PhantomX3D"
@@ -38,7 +35,6 @@ public class HypermediaArtifactRegistry {
   private final Map<WorkspaceId, Set<AgentId>> bodyArtifacts;
 
   private HypermediaArtifactRegistry() {
-    workspaceEnvironmentMap = new Hashtable<>();
     artifactSemanticTypes = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
     artifactActionRouter = new Hashtable<>();
@@ -103,14 +99,7 @@ public class HypermediaArtifactRegistry {
 
   }
 
-  public void addWorkspace(String envName, String wkspName) {
-    workspaceEnvironmentMap.put(wkspName, envName);
-  }
 
-  public Optional<String> getEnvironmentForWorkspace(String wkspName) {
-    String envName = workspaceEnvironmentMap.get(wkspName);
-    return envName == null ? Optional.empty() : Optional.of(envName);
-  }
 
   public void addArtifactTemplates(JsonObject artifactTemplates) {
     if (artifactTemplates != null) {
@@ -166,19 +155,15 @@ public class HypermediaArtifactRegistry {
     return getHttpPrefix() + "/environments/";
   }
 
-  public String getHttpWorkspacesPrefix(String envId) {
-    return getHttpEnvironmentsPrefix() + envId + "/workspaces/";
+  public String getHttpWorkspacesPrefix(){return getHttpPrefix() + "/workspaces/"; }
+
+
+
+  public String getHttpArtifactsPrefix(String wkspName){
+    return getHttpWorkspacesPrefix() + wkspName +"/artifacts/";
   }
 
-  public String getHttpArtifactsPrefix(String wkspName) {
-    Optional<String> envId = this.getEnvironmentForWorkspace(wkspName);
 
-    if (envId.isPresent()) {
-      return getHttpWorkspacesPrefix(envId.get()) + wkspName + "/artifacts/";
-    }
-
-    throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
-  }
 
   public Workspace getWorkspaceFromName(String wkspName){
     Workspace mainWorkspace = CartagoEnvironment.getInstance().getRootWSP().getWorkspace();

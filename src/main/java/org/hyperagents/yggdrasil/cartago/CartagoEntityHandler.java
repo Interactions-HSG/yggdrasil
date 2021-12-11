@@ -24,47 +24,42 @@ public class CartagoEntityHandler {
    * @param representation representation of the workspace to be created
    * @param result a promise with the result of the create workspace operation
    */
-  public void createWorkspace(String agentId, String envName, String workspaceName,
+  public void createWorkspace(String agentId, String workspaceName,
       String representation, Promise<String> result) {
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-        .addHeader(CartagoVerticle.ENV_NAME, envName);
+        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE);
 
     sendCartagoMessage(representation, options, result);
   }
 
-  public void createSubWorkspace(String agentId, String envName, String workspaceName,
+  public void createSubWorkspace(String agentId, String workspaceName,
                                  String subWorkspaceName, Promise<String> result){
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
       .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_SUB_WORKSPACE)
-      .addHeader(CartagoVerticle.SUB_WORKSPACE_NAME, subWorkspaceName)
-      .addHeader(CartagoVerticle.ENV_NAME, envName);
+      .addHeader(CartagoVerticle.SUB_WORKSPACE_NAME, subWorkspaceName);
 
     sendCartagoMessage("", options, result);
   }
 
-  public void joinWorkspace(String agentId, String envName, String workspaceName,
+  public void joinWorkspace(String agentId, String workspaceName,
                             String representation, Promise<String> result){
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.JOIN_WORKSPACE)
-      .addHeader(CartagoVerticle.ENV_NAME, envName);
+      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.JOIN_WORKSPACE);
     sendCartagoMessage(representation, options, result);
   }
 
-  public void leaveWorkspace(String agentId, String envName, String workspaceName,
+  public void leaveWorkspace(String agentId, String workspaceName,
                              String representation, Promise<String> result){
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.LEAVE_WORKSPACE)
-      .addHeader(CartagoVerticle.ENV_NAME, envName);
+      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.LEAVE_WORKSPACE);
     sendCartagoMessage(representation, options, result);
   }
 
-  public void createAgentBody(String agentId, String envName, String workspaceName, String artifactName,
+  public void createAgentBody(String agentId, String workspaceName, String artifactName,
                               String representation, Promise<String> result ){
     DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
       .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_BODY)
-      .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
-      .addHeader(CartagoVerticle.ENV_NAME, envName);
+      .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName);
     sendCartagoMessage(representation, options, result);
   }
 

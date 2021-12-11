@@ -91,7 +91,7 @@ System.out.println("builder created");
   protected String getArtifactUri() {
     String wkspName = getId().getWorkspaceId().getName();
 
-    return HypermediaAgentBodyArtifactRegistry.getInstance().getHttpArtifactsPrefix(wkspName)
+    return HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(wkspName)
       + getArtifactName();
   }
 

@@ -82,30 +82,8 @@ public class HttpEntityHandler {
       handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
   }
 
-  public void handleCreateEnvironment(RoutingContext context) {
-    String envName = context.request().getHeader("Slug");
-    String agentId = context.request().getHeader("X-Agent-WebID");
-
-    if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
-    }
-
-    String envURI = HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix() + envName;
-
-    ThingDescription td = new ThingDescription.Builder(envName)
-        .addThingURI(envURI)
-        .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
-        .addAction(new ActionAffordance.Builder(new Form.Builder(envURI + "/workspaces/").build())
-            .addSemanticType("http://w3id.org/eve#MakeWorkspace")
-            .build())
-        .build();
-
-    createEntity(context, TDGraphWriter.write(td));
-  }
-
   public void handleCreateWorkspace(RoutingContext context) {
     String representation = context.getBodyAsString();
-    String envName = context.pathParam("envid");
     String workspaceName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
 
@@ -114,10 +92,9 @@ public class HttpEntityHandler {
     }
 
     Promise<String> cartagoPromise = Promise.promise();
-    cartagoHandler.createWorkspace(agentId, envName, workspaceName, representation, cartagoPromise);
+    cartagoHandler.createWorkspace(agentId, workspaceName, representation, cartagoPromise);
 
     cartagoPromise.future().compose(result ->  {
-      HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
       return Future.future(promise -> storeEntity(context, workspaceName, result, promise));
     });
   }
@@ -244,13 +221,8 @@ public class HttpEntityHandler {
     if (agentId == null) {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
-
-    //HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
-    HypermediaAgentBodyArtifactRegistry registry = HypermediaAgentBodyArtifactRegistry.getInstance();
-
-    //String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
+    HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
     String artifactIri = registry.getHttpArtifactsPrefix(wkspName) + artifactName;
-    //String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
     String actionName = registry.getActionName(request.rawMethod(), request.absoluteURI());
 
     DeliveryOptions options = new DeliveryOptions()
@@ -382,11 +354,10 @@ public class HttpEntityHandler {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
     else {
-      String envId = routingContext.pathParam("envid");
       String wkspId = routingContext.pathParam("wkspid");
       String representation = "";
       Promise<String> result = Promise.promise();
-      cartagoHandler.joinWorkspace(agentId, envId, wkspId, representation, result);
+      cartagoHandler.joinWorkspace(agentId, wkspId, representation, result);
 
     }
 
@@ -398,11 +369,10 @@ public class HttpEntityHandler {
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     } else {
-      String envId = routingContext.pathParam("envid");
       String wkspId = routingContext.pathParam("wkspid");
       String representation = "";
       Promise<String> result = Promise.promise();
-      cartagoHandler.leaveWorkspace(agentId, envId, wkspId, representation, result);
+      cartagoHandler.leaveWorkspace(agentId, wkspId, representation, result);
 
     }
   }
@@ -413,11 +383,10 @@ public class HttpEntityHandler {
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     } else {
-      String envId = routingContext.pathParam("envid");
       String wkspId = routingContext.pathParam("wkspid");
       String representation = "";
       Promise<String> cartagoPromise = Promise.promise();
-      cartagoHandler.createAgentBody(agentId, envId, wkspId, artifactName, representation, cartagoPromise);
+      cartagoHandler.createAgentBody(agentId, wkspId, artifactName, representation, cartagoPromise);
       cartagoPromise.future().compose(result ->
         Future.future(promise -> storeEntity(routingContext, artifactName, result, promise)));
     }
@@ -430,15 +399,13 @@ public class HttpEntityHandler {
     JsonObject subWorkspaceInit = (JsonObject) Json.decodeValue(representation);
     String workspaceName = subWorkspaceInit.getString("name");
     String currentWorkspaceName = routingContext.pathParam("wkspid");
-    String envName = routingContext.pathParam("envid");
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
     Promise<String> cartagoPromise = Promise.promise();
-    cartagoHandler.createSubWorkspace(agentId, envName, currentWorkspaceName, workspaceName, cartagoPromise);
+    cartagoHandler.createSubWorkspace(agentId, currentWorkspaceName, workspaceName, cartagoPromise);
     System.out.println("workspace to register: "+workspaceName);
     cartagoPromise.future().compose(result ->  {
-      HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
       return Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise));
     });
   }
@@ -498,7 +465,7 @@ public class HttpEntityHandler {
                                  Promise<Object> promise){
     DeliveryOptions options = new DeliveryOptions()
       .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(REQUEST_URI, getWorkspacePrefix(context))
+      .addHeader(REQUEST_URI, getWorkspacePrefix())
       .addHeader(ENTITY_URI_HINT, entityName);
 //        .addHeader(CONTENT_TYPE, context.request().getHeader("Content-Type"));
 
@@ -513,15 +480,10 @@ public class HttpEntityHandler {
     });
   }
 
-  private String getEnvironment(RoutingContext routingContext){
-    String currentEnvironmentName = routingContext.pathParam("envid");
-    return HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix()+currentEnvironmentName;
 
-  }
 
-  private String getWorkspacePrefix(RoutingContext routingContext){
-    String env = getEnvironment(routingContext);
-    return env+"/workspaces/";
+  private String getWorkspacePrefix(){
+    return HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix();
   }
 
   // TODO: support different content types

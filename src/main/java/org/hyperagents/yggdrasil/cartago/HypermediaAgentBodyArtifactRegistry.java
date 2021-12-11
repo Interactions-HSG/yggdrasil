@@ -83,7 +83,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     return getHttpEnvironmentsPrefix() + envId + "/workspaces/";
   }
 
-  public String getHttpArtifactsPrefix(String wkspName) {
+  /*public String getHttpArtifactsPrefix(String wkspName) {
     //Optional<String> envId = this.getEnvironmentForWorkspace(wkspName);
     Optional<String> envId = HypermediaArtifactRegistry.getInstance().getEnvironmentForWorkspace(wkspName);
 
@@ -92,7 +92,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     }
 
     throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
-  }
+  }*/
 
   public String getArtifactDescription(String artifactName) {
     return artifactTemplateDescriptions.get(artifactName);

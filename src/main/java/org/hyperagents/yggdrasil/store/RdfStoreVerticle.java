@@ -189,11 +189,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       if (opParentUri.isPresent()){
         IRI parentIRI = store.createIRI(opParentUri.get());
-        entityGraph.add(entityIRI, store.createIRI("http://ns.hyperagents.org/core#isContainedBy"), parentIRI);
+        entityGraph.add(entityIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas#isContainedBy"), parentIRI);
         Optional<Graph> optionalGraph = store.getEntityGraph(parentIRI);
         if (optionalGraph.isPresent()){
           Graph graph = optionalGraph.get();
-          graph.add(parentIRI, store.createIRI("http://ns.hyperagents.org/core#contains"), entityIRI);
+          graph.add(parentIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas#contains"), entityIRI);
         }
       }
 
