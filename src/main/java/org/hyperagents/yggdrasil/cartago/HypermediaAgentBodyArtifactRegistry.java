@@ -1,7 +1,10 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import cartago.AgentId;
+import cartago.WorkspaceId;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import javafx.util.Pair;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -19,7 +22,9 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   private final Map<String, String> artifactTemplateDescriptions;
 
-  private final Map<String, HypermediaAgentBodyArtifact> bodyArtifacts;
+  private final Map<String, HypermediaBodyArtifact> bodyArtifacts;
+
+  private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
 
   private int n;
 
@@ -28,6 +33,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     this.artifactAPIKeys = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
     bodyArtifacts = new Hashtable<>();
+    agentArtifacts = new Hashtable<>();
     n = 1;
   }
 
@@ -39,7 +45,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     return registry;
   }
 
-  public void register(HypermediaAgentBodyArtifact artifact){
+  public void register(HypermediaBodyArtifact artifact){
     String artifactTemplate = artifact.getArtifactId().getName();
     if (!bodyArtifacts.containsKey(artifactTemplate)) {
       bodyArtifacts.put(artifactTemplate, artifact);
@@ -108,5 +114,23 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   public String getAPIKeyForArtifact(String artifactId) {
     return artifactAPIKeys.get(artifactId);
+  }
+
+  public void setArtifact(AgentId agentId, WorkspaceId workspaceId, String bodyName){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    this.agentArtifacts.put(pair, bodyName);
+  }
+
+  public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    return this.agentArtifacts.get(pair);
+
+  }
+
+  public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    boolean b = this.agentArtifacts.containsKey(pair);
+    return b;
+
   }
 }

@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import cartago.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import cartago.util.agent.CartagoContext;
@@ -59,10 +60,13 @@ public class CartagoVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
+    HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+    registry.addArtifactTemplate("http://example.org/Body", HypermediaAgentBodyArtifact.class.getCanonicalName());
     JsonObject knownArtifacts = config().getJsonObject("known-artifacts");
     if (knownArtifacts != null) {
-      HypermediaArtifactRegistry.getInstance().addArtifactTemplates(knownArtifacts);
+      registry.addArtifactTemplates(knownArtifacts);
     }
+
 
     JsonObject httpConfig = config().getJsonObject("http-config");
     if (httpConfig != null) {
@@ -112,9 +116,14 @@ public class CartagoVerticle extends AbstractVerticle {
           String subWorkspaceDescription = instantiateSubWorkspace(agentUri, workspaceName, subWorkspaceName);
           message.reply(subWorkspaceDescription);
         case JOIN_WORKSPACE:
-          joinWorkspace(agentUri, workspaceName);
+          String bodyName = joinWorkspace(agentUri, workspaceName);
+          String bodyDescription = HypermediaArtifactRegistry.getInstance().getArtifactDescription(bodyName);
+          message.reply(bodyDescription);
+          break;
         case LEAVE_WORKSPACE:
           leaveWorkspace(agentUri, workspaceName);
+          message.reply("agent left workspace successully");
+          break;
         case CREATE_ARTIFACT:
           String artifactName = message.headers().get(ARTIFACT_NAME);
 
@@ -272,28 +281,86 @@ public class CartagoVerticle extends AbstractVerticle {
       .write();
   }
 
-  private void joinWorkspace(String agentUri, String workspaceName){
+  private String joinWorkspace(String agentUri, String workspaceName){
     CartagoContext agentContext = getAgentContext(agentUri);
+    String bodyName = null;
     try {
-      Workspace workspace = HypermediaArtifactRegistry.getInstance().getWorkspaceFromName(workspaceName);
+      Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
       AgentCredential agentCredential = new AgentIdCredential(agentContext.getName());
       ICartagoCallback callback = new InterArtifactCallback(new ReentrantLock());
       workspace.joinWorkspace(agentCredential, callback);
+      AgentId agentId = getAgentId(agentContext, workspace.getId());
+      WorkspaceId workspaceId = workspace.getId();
+      HypermediaAgentBodyArtifactRegistry bodyRegistry = HypermediaAgentBodyArtifactRegistry.getInstance();
+      System.out.println("body registry defined");
+      boolean b = bodyRegistry.hasArtifact(agentId, workspaceId);
+      System.out.println("b: "+b);
+      System.out.println("before if");
+      if (b){
+        bodyName = bodyRegistry.getArtifact(agentId, workspaceId);
+      }
+      else {
+        System.out.println("in if");
+        bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
+        String template = HypermediaAgentBodyArtifact.class.getName();
+        workspace.makeArtifact(agentId, bodyName, template, new ArtifactConfig(new Object[]{workspace}));
+        HypermediaAgentBodyArtifactRegistry.getInstance().setArtifact(agentId, workspace.getId(), bodyName);
+        registerArtifactEntity(workspaceName, bodyName);
+        return bodyName;
+      }
+    } catch(CartagoException e){
+      e.printStackTrace();
+    }
+    return bodyName;
+  }
+
+  private void registerArtifactEntity(String workspaceName, String artifactName){
+    String workspaceUri = HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName);
+    String artifactDescription = HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
+    System.out.println(artifactDescription);
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.CREATE_ENTITY)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", workspaceUri)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifactName);
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, artifactDescription, options, result -> {
+      if (result.succeeded()) {
+        System.out.println("artifact stored");
+      } else {
+        System.out.println("artifact could not be stored");
+      }
+    });
+  }
+
+  private void leaveWorkspace(String agentUri, String workspaceName){
+    Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    CartagoContext agentContext = getAgentContext(agentUri);
+    WorkspaceId workspaceId = workspace.getId();
+    AgentId agent = getAgentId(agentContext, workspaceId);
+    try {
+      String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
+      ArtifactId bodyId = workspace.getArtifact(bodyName);
+      workspace.disposeArtifact(agent, bodyId);
+      deleteArtifactEntity(workspaceName, bodyName);
+      workspace.quitAgent(agent);
     } catch(CartagoException e){
       e.printStackTrace();
     }
   }
 
-  private void leaveWorkspace(String agentUri, String workspaceName){
-    Workspace workspace = HypermediaArtifactRegistry.getInstance().getWorkspaceFromName(workspaceName);
-    CartagoContext agentContext = getAgentContext(agentUri);
-    WorkspaceId workspaceId = workspace.getId();
-    AgentId agent = getAgentId(agentContext, workspaceId);
-    try {
-      workspace.quitAgent(agent);
-    } catch(CartagoException e){
-      e.printStackTrace();
-    }
+  private void deleteArtifactEntity(String workspaceName, String artifactName){
+    String artifactUri = HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)+artifactName;
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.DELETE_ENTITY)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", artifactUri)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifactName);
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, "", options, result -> {
+      if (result.succeeded()) {
+        System.out.println("artifact deleted");
+      } else {
+        System.out.println("artifact could not be deleted");
+      }
+    });
+
   }
 
 
@@ -336,7 +403,7 @@ public class CartagoVerticle extends AbstractVerticle {
     if (!HypermediaArtifactRegistry.getInstance().hasHypermediaAgentBody(agentId, workspaceId)){
       Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
       joinWorkspace(agentContext.getName(), workspaceName);
-      String artifactClass = HypermediaAgentBodyArtifact.class.getName();
+      String artifactClass = HypermediaBodyArtifact.class.getName();
       workspace.addArtifactFactory(new HypermediaAgentBodyArtifactFactory());
       ArtifactConfig config = new ArtifactConfig(new Object[]{agentId, workspace});
       try {

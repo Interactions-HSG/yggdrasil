@@ -69,7 +69,7 @@ public class HypermediaArtifactRegistry {
     }
   }
 
-  public void registerBodyArtifact(HypermediaAgentBodyArtifact bodyArtifact){
+  public void registerBodyArtifact(HypermediaBodyArtifact bodyArtifact){
     //register(bodyArtifact);
     WorkspaceId workspaceId = bodyArtifact.getArtifactId().getWorkspaceId();
     AgentId agentId = bodyArtifact.getArtifactId().getCreatorId();
@@ -97,6 +97,10 @@ public class HypermediaArtifactRegistry {
       bodyArtifacts.put(workspaceId, agentIds);
     }
 
+  }
+
+  public void addArtifactTemplate(String key, String value){
+    artifactSemanticTypes.put(key, value);
   }
 
 

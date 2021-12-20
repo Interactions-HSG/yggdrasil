@@ -265,7 +265,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
     Optional<Graph> result = store.getEntityGraph(requestIRI);
 
     if (result.isPresent() && result.get().size() > 0) {
-      String entityGraphStr = store.graphToString(result.get(), RDFSyntax.TURTLE);
+      Graph res = result.get();
+      String entityGraphStr = store.graphToString(res, RDFSyntax.TURTLE);
+      otherDeletions(requestIRI, res);
       store.deleteEntityGraph(requestIRI);
       replyWithPayload(message, entityGraphStr);
 
@@ -280,6 +282,28 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       replyEntityNotFound(message);
     }
+  }
+
+  private void otherDeletions(IRI entityIRI, Graph entityGraph) throws IOException {
+    String entityGraphStr1 = store.graphToString(entityGraph, RDFSyntax.TURTLE);
+    if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
+      store.createIRI(("http://w3id.org/eve#Artifact")))){
+      String artifactIRI = entityIRI.getIRIString();
+      IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
+      Optional<Graph> workspaceGraph = store.getEntityGraph(workspaceIRI);
+      if (workspaceGraph.isPresent()) {
+        Graph wkspGraph = workspaceGraph.get();
+        //LOGGER.info("Found workspace graph: " + wkspGraph);
+        wkspGraph.remove(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        // TODO: updateEntityGraph would yield 404, to be investigated
+        store.createEntityGraph(workspaceIRI, wkspGraph);
+
+        String entityGraphStr = store.graphToString(wkspGraph, RDFSyntax.TURTLE);
+        pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
+      }
+
+    }
+
   }
 
   private void pushNotification(String notificationType, IRI requestIRI, String entityGraph) {

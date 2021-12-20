@@ -15,7 +15,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import java.util.*;
 
 
-public class HypermediaAgentBodyArtifact extends Artifact {
+public class HypermediaBodyArtifact extends Artifact {
 
   private AgentId agentId;
 
@@ -32,13 +32,13 @@ public class HypermediaAgentBodyArtifact extends Artifact {
 
   //End
 
-  public HypermediaAgentBodyArtifact(){
+  public HypermediaBodyArtifact(){
     this.agentId = null;
     this.workspace = null;
     this.eventManager = new EventManager();
   }
 
-  public HypermediaAgentBodyArtifact(AgentId agentId, Workspace workspace){
+  public HypermediaBodyArtifact(AgentId agentId, Workspace workspace){
     this.agentId = agentId;
     this.workspace = workspace;
     this.eventManager = new EventManager();

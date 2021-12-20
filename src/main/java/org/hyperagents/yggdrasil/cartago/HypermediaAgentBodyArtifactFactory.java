@@ -13,8 +13,8 @@ public class HypermediaAgentBodyArtifactFactory extends ArtifactFactory {
   @Override
   public Artifact createArtifact(String templateName) throws CartagoException {
     try{
-      if (templateName == HypermediaAgentBodyArtifact.class.getName()){
-        HypermediaAgentBodyArtifact artifact = new HypermediaAgentBodyArtifact();
+      if (templateName == HypermediaBodyArtifact.class.getName()){
+        HypermediaBodyArtifact artifact = new HypermediaBodyArtifact();
         return artifact;
       }
       else {

@@ -358,6 +358,7 @@ public class HttpEntityHandler {
       String representation = "";
       Promise<String> result = Promise.promise();
       cartagoHandler.joinWorkspace(agentId, wkspId, representation, result);
+      result.future().compose(r -> Future.future(promise -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r)));
 
     }
 
@@ -373,6 +374,7 @@ public class HttpEntityHandler {
       String representation = "";
       Promise<String> result = Promise.promise();
       cartagoHandler.leaveWorkspace(agentId, wkspId, representation, result);
+      result.future().compose(r -> Future.future(promise -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r)));
 
     }
   }
