@@ -26,6 +26,8 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
 
+  private final Map<String, String> hypermediaNames;
+
   private int n;
 
   private HypermediaAgentBodyArtifactRegistry(){
@@ -34,6 +36,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     artifactTemplateDescriptions = new Hashtable<>();
     bodyArtifacts = new Hashtable<>();
     agentArtifacts = new Hashtable<>();
+    hypermediaNames = new Hashtable<>();
     n = 1;
   }
 
@@ -67,6 +70,14 @@ public class HypermediaAgentBodyArtifactRegistry {
     }
   }
 
+  public void registerName(String bodyName, String hypermediaName){
+    hypermediaNames.put(bodyName, hypermediaName);
+  }
+
+  public String getHypermediaName(String bodyName){
+    return hypermediaNames.get(bodyName);
+  }
+
   public String getName(){
     String s ="hypermedia_body_"+n;
     this.n = n +1;
@@ -85,20 +96,7 @@ public class HypermediaAgentBodyArtifactRegistry {
     return getHttpPrefix() + "/environments/";
   }
 
-  public String getHttpWorkspacesPrefix(String envId) {
-    return getHttpEnvironmentsPrefix() + envId + "/workspaces/";
-  }
 
-  /*public String getHttpArtifactsPrefix(String wkspName) {
-    //Optional<String> envId = this.getEnvironmentForWorkspace(wkspName);
-    Optional<String> envId = HypermediaArtifactRegistry.getInstance().getEnvironmentForWorkspace(wkspName);
-
-    if (envId.isPresent()) {
-      return getHttpWorkspacesPrefix(envId.get()) + wkspName + "/bodies/";
-    }
-
-    throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
-  }*/
 
   public String getArtifactDescription(String artifactName) {
     return artifactTemplateDescriptions.get(artifactName);

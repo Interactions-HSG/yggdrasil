@@ -3,6 +3,8 @@ package org.hyperagents.yggdrasil.http;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import cartago.ArtifactId;
+import cartago.Workspace;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -135,7 +137,16 @@ public class HttpEntityHandler {
   public void handleAction(RoutingContext context) {
     String entityRepresentation = context.getBodyAsString();
     String wkspName = context.pathParam("wkspid");
-    String artifactName = context.pathParam("artid");
+    String hypermediaArtifactName = context.pathParam("artid");
+    final String artifactName;
+    HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+    if (registry.hasOtherName(hypermediaArtifactName)){
+       artifactName = registry.getActualName(hypermediaArtifactName);
+    } else {
+      artifactName = hypermediaArtifactName;
+    }
+    Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(wkspName);
+    ArtifactId id = workspace.getArtifact(artifactName);
 
     HttpServerRequest request = context.request();
     String agentId = request.getHeader("X-Agent-WebID");
@@ -146,9 +157,8 @@ public class HttpEntityHandler {
 
     HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
 
-    String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
+    String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + hypermediaArtifactName;
     String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
-
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
         .addHeader(REQUEST_URI, artifactIri);
@@ -171,7 +181,6 @@ public class HttpEntityHandler {
                   .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
                   .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
                   .addHeader(CartagoVerticle.ACTION_NAME, actionName);
-
               String apiKey = context.request().getHeader("X-API-Key");
               if (apiKey != null && !apiKey.isEmpty()) {
                 artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
@@ -180,7 +189,6 @@ public class HttpEntityHandler {
               Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
                   action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
                   .findFirst();
-
               String serializedPayload = null;
 
               if (affordance.isPresent()) {
@@ -206,7 +214,10 @@ public class HttpEntityHandler {
                           .end();
                     }
                   });
-            }
+            } else {
+            reply.cause().printStackTrace();
+
+          }
         });
   }
 
@@ -406,7 +417,6 @@ public class HttpEntityHandler {
     }
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createSubWorkspace(agentId, currentWorkspaceName, workspaceName, cartagoPromise);
-    System.out.println("workspace to register: "+workspaceName);
     cartagoPromise.future().compose(result ->  {
       return Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise));
     });

@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import cartago.*;
+import cartago.tools.Console;
+import cartago.util.agent.ActionFeedback;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
@@ -61,7 +63,8 @@ public class CartagoVerticle extends AbstractVerticle {
   @Override
   public void start() {
     HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
-    registry.addArtifactTemplate("http://example.org/Body", HypermediaAgentBodyArtifact.class.getCanonicalName());
+    registry.addArtifactTemplate("http://example.org/Body", AgentBodyArtifact.class.getCanonicalName());
+    registry.addArtifactTemplate("http://example.org/Console", Console.class.getCanonicalName());
     JsonObject knownArtifacts = config().getJsonObject("known-artifacts");
     if (knownArtifacts != null) {
       registry.addArtifactTemplates(knownArtifacts);
@@ -147,7 +150,7 @@ public class CartagoVerticle extends AbstractVerticle {
         case CREATE_BODY:
           artifactName = message.headers().get(ARTIFACT_NAME);
           instantiateHypermediaAgentBody(agentUri, artifactName, workspaceName);
-          artifactDescription = HypermediaAgentBodyArtifactRegistry.getInstance()
+          artifactDescription = HypermediaArtifactRegistry.getInstance()
             .getArtifactDescription(artifactName);
           message.reply(artifactDescription);
           break;
@@ -180,6 +183,12 @@ public class CartagoVerticle extends AbstractVerticle {
     String workspaceId = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix()
         + workspaceName;
     WorkspaceRegistry.getInstance().registerWorkspace(descriptor, workspaceId);
+    Workspace workspace = descriptor.getWorkspace();
+    ArtifactDescriptor consoleDescriptor = workspace.getArtifactDescriptor("console");
+    ArtifactId consoleId = workspace.getArtifact("console");
+    //HypermediaInterface consoleInterface = HypermediaInterface.getConsoleInterface(workspace, consoleDescriptor, consoleId);
+    //HypermediaArtifactRegistry.getInstance().register(consoleInterface);
+    //registerArtifactEntity(workspaceName, "console");
 
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
@@ -281,9 +290,8 @@ public class CartagoVerticle extends AbstractVerticle {
       .write();
   }
 
-  private String joinWorkspace(String agentUri, String workspaceName){
+  private String joinWorkspace(String agentUri, String workspaceName) {
     CartagoContext agentContext = getAgentContext(agentUri);
-    String bodyName = null;
     try {
       Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
       AgentCredential agentCredential = new AgentIdCredential(agentContext.getName());
@@ -291,33 +299,33 @@ public class CartagoVerticle extends AbstractVerticle {
       workspace.joinWorkspace(agentCredential, callback);
       AgentId agentId = getAgentId(agentContext, workspace.getId());
       WorkspaceId workspaceId = workspace.getId();
-      HypermediaAgentBodyArtifactRegistry bodyRegistry = HypermediaAgentBodyArtifactRegistry.getInstance();
-      System.out.println("body registry defined");
-      boolean b = bodyRegistry.hasArtifact(agentId, workspaceId);
-      System.out.println("b: "+b);
-      System.out.println("before if");
+      HypermediaAgentBodyArtifactRegistry registry = HypermediaAgentBodyArtifactRegistry.getInstance();
+      boolean b = registry.hasArtifact(agentId, workspaceId);
+      String hypermediaBodyName = "";
       if (b){
-        bodyName = bodyRegistry.getArtifact(agentId, workspaceId);
+        String bodyName = registry.getArtifact(agentId, workspaceId);
+        hypermediaBodyName = registry.getHypermediaName(bodyName);
       }
       else {
-        System.out.println("in if");
-        bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
-        String template = HypermediaAgentBodyArtifact.class.getName();
-        workspace.makeArtifact(agentId, bodyName, template, new ArtifactConfig(new Object[]{workspace}));
-        HypermediaAgentBodyArtifactRegistry.getInstance().setArtifact(agentId, workspace.getId(), bodyName);
-        registerArtifactEntity(workspaceName, bodyName);
-        return bodyName;
+        String bodyName = "body_" + agentUri;
+        ArtifactDescriptor descriptor = workspace.getArtifactDescriptor(bodyName);
+        ArtifactId bodyId = workspace.getArtifact(bodyName);
+        HypermediaInterface hypermediaInterface = HypermediaInterface.getBodyInterface(workspace, descriptor, bodyId);
+        HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
+        hypermediaBodyName = registry.getHypermediaName(bodyName);
+        registry.setArtifact(agentId, workspaceId, bodyName);
+        registerArtifactEntity(workspace.getId().getName(), hypermediaBodyName);
       }
-    } catch(CartagoException e){
+      return hypermediaBodyName;
+    } catch (Exception e) {
       e.printStackTrace();
     }
-    return bodyName;
+    return null;
   }
 
   private void registerArtifactEntity(String workspaceName, String artifactName){
     String workspaceUri = HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName);
     String artifactDescription = HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
-    System.out.println(artifactDescription);
     DeliveryOptions options = new DeliveryOptions()
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.CREATE_ENTITY)
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", workspaceUri)
@@ -337,7 +345,7 @@ public class CartagoVerticle extends AbstractVerticle {
     WorkspaceId workspaceId = workspace.getId();
     AgentId agent = getAgentId(agentContext, workspaceId);
     try {
-      String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
+      String bodyName = HypermediaArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
       ArtifactId bodyId = workspace.getArtifact(bodyName);
       workspace.disposeArtifact(agent, bodyId);
       deleteArtifactEntity(workspaceName, bodyName);
@@ -386,8 +394,6 @@ public class CartagoVerticle extends AbstractVerticle {
         Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
         AgentId agentId = getAgentId(agentContext, workspace.getId());
         workspace.makeArtifact(agentId,artifactName, artifactClass,new ArtifactConfig());
-        ArtifactId artId = agentContext.lookupArtifact(wkspId, artifactName);
-        artId.getId();
         LOGGER.info("Done!");
       }
     } catch(Exception e){
@@ -424,6 +430,10 @@ public class CartagoVerticle extends AbstractVerticle {
     Op operation;
     if (payload.isPresent()) {
       Object[] params = CartagoDataBundle.fromJson(payload.get());
+      if (HypermediaArtifactRegistry.getInstance().hasHypermediaInterface(artifactName)){
+        HypermediaInterface hypermediaInterface = HypermediaArtifactRegistry.getInstance().getHypermediaInterface(artifactName);
+        params = hypermediaInterface.convert(action, params);
+      }
       operation = new Op(action, params);
     } else {
       operation = new Op(action);
@@ -433,7 +443,6 @@ public class CartagoVerticle extends AbstractVerticle {
 
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     AgentId agentId = getAgentId(agentContext, workspaceId);
-    workspace.lookupArtifact(agentId, artifactName);
     ICartagoCallback callback = new EventManagerCallback(new EventManager());
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
@@ -524,5 +533,29 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private Object[] createParam(Object... objs){
     return objs;
+  }
+
+  private String getOpString(Op operation){
+    String s = "";
+    s = s + "operation name: " + operation.getName() +"\n";
+    Object[] params = operation.getParamValues();
+    int n = params.length;
+    for (int i = 0; i<n; i++){
+      Object obj = params[i];
+      Class c = obj.getClass();
+      s = s + "object: " + obj.toString() + ", class: "+ c.toString() + "\n";
+    }
+    return s;
+  }
+
+  private String getParamString(Object[] params) {
+    String s = "";
+    int n = params.length;
+    for (int i = 0; i < n; i++) {
+      Object obj = params[i];
+      Class c = obj.getClass();
+      s = s + "object: " + obj.toString() + ", class: " + c.toString() + "\n";
+    }
+    return s;
   }
 }

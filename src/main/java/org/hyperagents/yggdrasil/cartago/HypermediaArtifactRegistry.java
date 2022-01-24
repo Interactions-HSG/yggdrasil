@@ -6,6 +6,7 @@ import cartago.*;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.json.JsonObject;
+import javafx.util.Pair;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -34,12 +35,27 @@ public class HypermediaArtifactRegistry {
 
   private final Map<WorkspaceId, Set<AgentId>> bodyArtifacts;
 
+  private final Map<String, HypermediaInterface> interfaceMap;
+
+  private final Map<String, String> artifactNames;
+
+  private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
+
+  private final Map<String, String> hypermediaNames;
+
+  private int n;
+
   private HypermediaArtifactRegistry() {
     artifactSemanticTypes = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
     artifactActionRouter = new Hashtable<>();
     artifactAPIKeys = new Hashtable<>();
     bodyArtifacts = new Hashtable<>();
+    interfaceMap = new Hashtable<>();
+    artifactNames = new Hashtable<>();
+    agentArtifacts = new Hashtable<>();
+    hypermediaNames = new Hashtable<>();
+    n = 1;
   }
 
   public static synchronized HypermediaArtifactRegistry getInstance() {
@@ -67,6 +83,36 @@ public class HypermediaArtifactRegistry {
         });
       }
     }
+  }
+
+  public void register(HypermediaInterface hypermediaInterface) {
+    String artifactTemplate = hypermediaInterface.getHypermediaArtifactName();
+    artifactTemplateDescriptions.put(artifactTemplate, hypermediaInterface.getHypermediaDescription());
+
+    Map<String, List<ActionAffordance>> actions = hypermediaInterface.getActions();
+
+    for (String actionName : actions.keySet()) {
+      for (ActionAffordance action : actions.get(actionName)) {
+        Optional<Form> form = action.getFirstForm();
+
+        form.ifPresent(value -> {
+          if (value.getMethodName().isPresent()) {
+            artifactActionRouter.put(value.getMethodName().get() + value.getTarget(), actionName);
+          }
+        });
+      }
+    }
+    String artifactName = hypermediaInterface.getActualArtifactName();
+    this.interfaceMap.put(artifactName, hypermediaInterface);
+    this.artifactNames.put(artifactTemplate, artifactName);
+  }
+
+  public void registerName(String bodyName, String hypermediaName){
+    hypermediaNames.put(bodyName, hypermediaName);
+  }
+
+  public String getHypermediaName(String bodyName){
+    return hypermediaNames.get(bodyName);
   }
 
   public void registerBodyArtifact(HypermediaBodyArtifact bodyArtifact){
@@ -155,10 +201,6 @@ public class HypermediaArtifactRegistry {
     return this.httpPrefix;
   }
 
-  public String getHttpEnvironmentsPrefix() {
-    return getHttpPrefix() + "/environments/";
-  }
-
   public String getHttpWorkspacesPrefix(){return getHttpPrefix() + "/workspaces/"; }
 
 
@@ -203,5 +245,54 @@ public class HypermediaArtifactRegistry {
       }
     }
     return b;
+  }
+
+  public boolean hasHypermediaInterface(String artifactName){
+    return this.interfaceMap.containsKey(artifactName);
+  }
+
+  public HypermediaInterface getHypermediaInterface(String artifactName){
+    return this.interfaceMap.get(artifactName);
+  }
+
+  public boolean hasOtherName(String hypermediaArtifactName){
+    if (artifactNames.containsKey(hypermediaArtifactName)){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public String getArtifactWithHypermediaInterfaces(){
+    Set<String> artifactSet = interfaceMap.keySet();
+    return artifactSet.toString();
+  }
+
+  public String getActualName(String hypermediaArtifactName){
+    return artifactNames.get(hypermediaArtifactName);
+  }
+
+  public void setArtifact(AgentId agentId, WorkspaceId workspaceId, String bodyName){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    this.agentArtifacts.put(pair, bodyName);
+  }
+
+  public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    return this.agentArtifacts.get(pair);
+
+  }
+
+  public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
+    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    boolean b = this.agentArtifacts.containsKey(pair);
+    return b;
+
+  }
+
+  public String getName(){
+    String s ="hypermedia_body_"+n;
+    this.n = n +1;
+    return s;
   }
 }
