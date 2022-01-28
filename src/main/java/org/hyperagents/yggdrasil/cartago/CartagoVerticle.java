@@ -345,7 +345,7 @@ public class CartagoVerticle extends AbstractVerticle {
     WorkspaceId workspaceId = workspace.getId();
     AgentId agent = getAgentId(agentContext, workspaceId);
     try {
-      String bodyName = HypermediaArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
+      String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
       ArtifactId bodyId = workspace.getArtifact(bodyName);
       workspace.disposeArtifact(agent, bodyId);
       deleteArtifactEntity(workspaceName, bodyName);
