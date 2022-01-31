@@ -107,12 +107,11 @@ System.out.println("builder created");
 
   protected final void registerActionAffordance(String actionClass, String actionName,
                                                 String methodName, String relativeUri, DataSchema inputSchema) {
-    ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(
+    ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(actionName,
       new Form.Builder(getArtifactUri() + relativeUri)
         .setMethodName(methodName)
         .build())
       .addSemanticType(actionClass)
-      .addName(actionName)
       .addTitle(actionName);
 
     if (inputSchema != null) {

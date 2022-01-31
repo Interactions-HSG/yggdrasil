@@ -90,21 +90,21 @@ public class HypermediaAgentBodyArtifact extends HypermediaArtifact {
     Form focusForm = new Form.Builder(this.getArtifactUri()+"/focus")
       .setMethodName("PUT")
       .build();
-    ActionAffordance focusAffordance = new ActionAffordance.Builder(focusForm)
+    ActionAffordance focusAffordance = new ActionAffordance.Builder("focus", focusForm)
       .addInputSchema(inputSchema)
       .build();
     registerActionAffordance("http://example.org/focus", focusAffordance);
     Form focusWhenAvailableForm = new Form.Builder(this.getArtifactUri()+"/focusWhenAvailable")
       .setMethodName("PUT")
       .build();
-    ActionAffordance focusWhenAvailableAffordance = new ActionAffordance.Builder(focusWhenAvailableForm)
+    ActionAffordance focusWhenAvailableAffordance = new ActionAffordance.Builder("focusWhenAvailable", focusWhenAvailableForm)
       .addInputSchema(inputSchema)
       .build();
     registerActionAffordance("http://example.org/focusWhenAvailable", focusWhenAvailableAffordance);
     Form stopFocusForm = new Form.Builder(this.getArtifactUri()+"/stopFocus")
       .setMethodName("DELETE")
       .build();
-    ActionAffordance stopFocusAffordance = new ActionAffordance.Builder(stopFocusForm)
+    ActionAffordance stopFocusAffordance = new ActionAffordance.Builder("stopFocus", stopFocusForm)
       .addInputSchema(inputSchema)
       .build();
     registerActionAffordance("http://example.org/stopFocus", stopFocusAffordance);

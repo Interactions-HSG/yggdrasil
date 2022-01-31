@@ -102,7 +102,7 @@ public class HypermediaInterface {
     for (Method action: actions){
       String name = action.getName();
       Form form = new Form.Builder(getArtifactUri()+"/"+name).build();
-      ActionAffordance actionAffordance = new ActionAffordance.Builder(form)
+      ActionAffordance actionAffordance = new ActionAffordance.Builder(name, form)
         .build();
       actionDescriptions.put(name, actionAffordance);
 
@@ -118,12 +118,11 @@ public class HypermediaInterface {
       String relativeUri = description.getRelativeUri();
       String methodName = description.getMethodName();
       DataSchema inputSchema = description.getInputSchema();
-      ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(
+      ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(actionName,
         new Form.Builder(getArtifactUri() + relativeUri)
           .setMethodName(methodName)
           .build())
         .addSemanticType(actionClass)
-        .addName(actionName)
         .addTitle(actionName);
 
       if (inputSchema != null) {

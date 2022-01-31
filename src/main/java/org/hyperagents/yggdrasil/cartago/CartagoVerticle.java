@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import cartago.*;
+import cartago.events.ArtifactObsEvent;
 import cartago.tools.Console;
 import cartago.util.agent.ActionFeedback;
 import org.apache.http.HttpStatus;
@@ -193,7 +194,8 @@ public class CartagoVerticle extends AbstractVerticle {
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
         .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
-        .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId + "/artifacts/").build())
+        .addAction(new ActionAffordance.Builder("makeArtifact",
+          new Form.Builder(workspaceId + "/artifacts/").build())
             .addSemanticType("http://w3id.org/eve#MakeArtifact")
             .addInputSchema(new ObjectSchema.Builder()
                 .addProperty("artifactClass", new StringSchema.Builder()
@@ -210,12 +212,14 @@ public class CartagoVerticle extends AbstractVerticle {
                 .build())
             .build())
       //new actions
-        .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/join")
+        .addAction(new ActionAffordance.Builder("joinWorkspace",
+          new Form.Builder(workspaceId+"/join")
           .setMethodName("PUT")
           .build())
           .addSemanticType("http://example.org/joinWorkspace")
           .build())
-      .addAction(new ActionAffordance.Builder(new Form.Builder(workspaceId+"/leave")
+      .addAction(new ActionAffordance.Builder("leaveWorkspace",
+        new Form.Builder(workspaceId+"/leave")
         .setMethodName("DELETE")
         .build())
         .addSemanticType("http://example.org/leaveWorkspace")
@@ -249,7 +253,8 @@ public class CartagoVerticle extends AbstractVerticle {
     ThingDescription td = new ThingDescription.Builder(subWorkspaceName)
       .addThingURI(subWorkspaceId)
       .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
-      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId + "/artifacts/").build())
+      .addAction(new ActionAffordance.Builder("makeArtifact",
+        new Form.Builder(subWorkspaceId + "/artifacts/").build())
         .addSemanticType("http://w3id.org/eve#MakeArtifact")
         .addInputSchema(new ObjectSchema.Builder()
           .addProperty("artifactClass", new StringSchema.Builder()
@@ -266,12 +271,14 @@ public class CartagoVerticle extends AbstractVerticle {
           .build())
         .build())
       //new actions
-      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId+"/join")
+      .addAction(new ActionAffordance.Builder("joinWorkspace",
+        new Form.Builder(subWorkspaceId+"/join")
         .setMethodName("PUT")
         .build())
         .addSemanticType("http://example.org/joinWorkspace")
         .build())
-      .addAction(new ActionAffordance.Builder(new Form.Builder(subWorkspaceId+"/leave")
+      .addAction(new ActionAffordance.Builder("leaveWorkspace",
+        new Form.Builder(subWorkspaceId+"/leave")
         .setMethodName("DELETE")
         .build())
         .addSemanticType("http://example.org/leaveWorkspace")
@@ -348,7 +355,8 @@ public class CartagoVerticle extends AbstractVerticle {
       String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
       ArtifactId bodyId = workspace.getArtifact(bodyName);
       workspace.disposeArtifact(agent, bodyId);
-      deleteArtifactEntity(workspaceName, bodyName);
+      String hypermediaBodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName);
+      deleteArtifactEntity(workspaceName, hypermediaBodyName);
       workspace.quitAgent(agent);
     } catch(CartagoException e){
       e.printStackTrace();
@@ -356,7 +364,9 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void deleteArtifactEntity(String workspaceName, String artifactName){
+    System.out.println("artifactName: "+artifactName);
     String artifactUri = HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)+artifactName;
+    System.out.println("artifactUri: "+artifactUri);
     DeliveryOptions options = new DeliveryOptions()
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.DELETE_ENTITY)
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", artifactUri)
@@ -469,10 +479,14 @@ public class CartagoVerticle extends AbstractVerticle {
     public void run() {
       try {
         while (true) {
+          System.out.println("new loop");
+          //System.out.println("number of agents: "+agentContexts.keySet().size());
           for (CartagoContext context : agentContexts.values()) {
+            System.out.println("for agent: "+context.getName());
+            System.out.println("artifacts focused: "+getArtifacts(context));
 //            CartagoContext context = agentContexts.get("agent-0");
             Percept percept = context.fetchPercept();
-
+            //System.out.println("agent: "+context.getName()+" has percept: "+percept.toString());
             if (percept != null) {
               LOGGER.info(printPercept(percept) + " for agent " + context.getName() + " from artifact "
                   + percept.getArtifactSource());
@@ -502,6 +516,7 @@ public class CartagoVerticle extends AbstractVerticle {
           sleep(100);
         }
       } catch (InterruptedException e) {
+        System.out.println("percept fetching stopped");
         e.printStackTrace();
       }
     }
@@ -528,6 +543,29 @@ public class CartagoVerticle extends AbstractVerticle {
       }
 
       return output;
+    }
+
+    private List<String> getArtifacts(CartagoContext context){
+      List<String> artifactNames = new ArrayList<>();
+      List<Workspace> workspaces = new ArrayList<>();
+      WorkspaceRegistry registry = WorkspaceRegistry.getInstance();
+      List<String> workspaceNames = registry.getAllWorkspaces();
+      for (String wname: workspaceNames){
+        workspaces.add(registry.getWorkspace(wname));
+      }
+      for (Workspace workspace: workspaces){
+        String[] artNames = workspace.getArtifactList();
+        for (int i = 0; i<artNames.length; i++){
+          ArtifactDescriptor descriptor = workspace.getArtifactDescriptor(artNames[i]);
+          List<ArtifactObserver> observers = descriptor.getObservers();
+          for (ArtifactObserver observer: observers){
+            if (observer.getAgentId().equals(getAgentId(context, workspace.getId()))){
+              artifactNames.add(artNames[i]);
+            }
+          }
+        }
+      }
+      return artifactNames;
     }
   }
 
