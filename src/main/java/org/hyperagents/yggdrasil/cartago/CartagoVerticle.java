@@ -364,9 +364,7 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void deleteArtifactEntity(String workspaceName, String artifactName){
-    System.out.println("artifactName: "+artifactName);
     String artifactUri = HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)+artifactName;
-    System.out.println("artifactUri: "+artifactUri);
     DeliveryOptions options = new DeliveryOptions()
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.DELETE_ENTITY)
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", artifactUri)
@@ -453,7 +451,8 @@ public class CartagoVerticle extends AbstractVerticle {
 
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     AgentId agentId = getAgentId(agentContext, workspaceId);
-    ICartagoCallback callback = new EventManagerCallback(new EventManager());
+    //ICartagoCallback callback = new EventManagerCallback(new EventManager());
+    ICartagoCallback callback = new NotificationCallback(this.vertx);
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
   }
@@ -479,14 +478,8 @@ public class CartagoVerticle extends AbstractVerticle {
     public void run() {
       try {
         while (true) {
-          System.out.println("new loop");
-          //System.out.println("number of agents: "+agentContexts.keySet().size());
           for (CartagoContext context : agentContexts.values()) {
-            System.out.println("for agent: "+context.getName());
-            System.out.println("artifacts focused: "+getArtifacts(context));
-//            CartagoContext context = agentContexts.get("agent-0");
             Percept percept = context.fetchPercept();
-            //System.out.println("agent: "+context.getName()+" has percept: "+percept.toString());
             if (percept != null) {
               LOGGER.info(printPercept(percept) + " for agent " + context.getName() + " from artifact "
                   + percept.getArtifactSource());
@@ -516,7 +509,6 @@ public class CartagoVerticle extends AbstractVerticle {
           sleep(100);
         }
       } catch (InterruptedException e) {
-        System.out.println("percept fetching stopped");
         e.printStackTrace();
       }
     }

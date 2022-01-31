@@ -12,8 +12,10 @@ public class Counter extends HypermediaArtifact {
 
   @OPERATION
   public void inc() {
+    System.out.println("increment count");
     ObsProperty prop = getObsProperty("count");
     prop.updateValue(prop.intValue() + 1);
+    System.out.println("count incremented");
   }
 
   @Override
