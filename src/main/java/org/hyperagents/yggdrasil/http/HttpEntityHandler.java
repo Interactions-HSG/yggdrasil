@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.*;
+import org.hyperagents.yggdrasil.jason.JasonVerticle;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -421,6 +422,28 @@ public class HttpEntityHandler {
       return Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise));
     });
   }
+
+  public void handleInstantiateAgent(RoutingContext routingContext){
+    String agentId = routingContext.request().getHeader("X-Agent-WebID");
+    String agentName = routingContext.request().getHeader("X-Agent-Name");
+    String representation = routingContext.getBodyAsString();
+    if (agentId == null){
+      routingContext.response()
+        .setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, JasonVerticle.INSTANTIATE_AGENT)
+      .addHeader(JasonVerticle.AGENT_NAME, agentName);
+
+    vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, representation, options, reply -> {
+      if (reply.succeeded()) {
+        routingContext.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
+      } else {
+        routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+      }
+    });
+  }
+
 
 
 

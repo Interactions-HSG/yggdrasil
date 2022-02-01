@@ -45,9 +45,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     //new
     router.put("/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
     router.delete("/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
-    //router.put("/workspaces/:wkspid/bodies/").handler(handler::handleCreateBody);
-    //router.get("/workspaces/:wkspid/bodies/:body").handler(handler::handleGetEntity);
-    //router.route("/environments/:envid/workspaces/:wkspid/bodies/:body/*").handler(handler::handleBodyAction);
     router.post("/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
     //end new
     router.get("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
@@ -59,6 +56,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.delete("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
     router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
+
+    //route agent requests
+    router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
 
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph
