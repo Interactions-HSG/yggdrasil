@@ -148,13 +148,6 @@ public class CartagoVerticle extends AbstractVerticle {
 
           message.reply(artifactDescription);
           break;
-        case CREATE_BODY:
-          artifactName = message.headers().get(ARTIFACT_NAME);
-          instantiateHypermediaAgentBody(agentUri, artifactName, workspaceName);
-          artifactDescription = HypermediaArtifactRegistry.getInstance()
-            .getArtifactDescription(artifactName);
-          message.reply(artifactDescription);
-          break;
         case DO_ACTION:
           String artifact = message.headers().get(ARTIFACT_NAME);
           String action = message.headers().get(ACTION_NAME);
@@ -185,11 +178,6 @@ public class CartagoVerticle extends AbstractVerticle {
         + workspaceName;
     WorkspaceRegistry.getInstance().registerWorkspace(descriptor, workspaceId);
     Workspace workspace = descriptor.getWorkspace();
-    ArtifactDescriptor consoleDescriptor = workspace.getArtifactDescriptor("console");
-    ArtifactId consoleId = workspace.getArtifact("console");
-    //HypermediaInterface consoleInterface = HypermediaInterface.getConsoleInterface(workspace, consoleDescriptor, consoleId);
-    //HypermediaArtifactRegistry.getInstance().register(consoleInterface);
-    //registerArtifactEntity(workspaceName, "console");
 
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
@@ -407,26 +395,6 @@ public class CartagoVerticle extends AbstractVerticle {
     } catch(Exception e){
       e.printStackTrace();
     }
-  }
-
-  private void instantiateHypermediaAgentBody(String agentUri, String artifactName, String workspaceName)
-    throws CartagoException {
-    WorkspaceId workspaceId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
-    CartagoContext agentContext = getAgentContext(agentUri);
-    AgentId agentId = getAgentId(agentContext, workspaceId);
-    if (!HypermediaArtifactRegistry.getInstance().hasHypermediaAgentBody(agentId, workspaceId)){
-      Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
-      joinWorkspace(agentContext.getName(), workspaceName);
-      String artifactClass = HypermediaBodyArtifact.class.getName();
-      workspace.addArtifactFactory(new HypermediaAgentBodyArtifactFactory());
-      ArtifactConfig config = new ArtifactConfig(new Object[]{agentId, workspace});
-      try {
-        workspace.makeArtifact(agentId, artifactName, artifactClass, config);
-      } catch (CartagoException e){
-        e.printStackTrace();
-      }
-    }
-    LOGGER.info("Done!");
   }
 
 

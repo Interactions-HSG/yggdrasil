@@ -22,8 +22,6 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   private final Map<String, String> artifactTemplateDescriptions;
 
-  private final Map<String, HypermediaBodyArtifact> bodyArtifacts;
-
   private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
 
   private final Map<String, String> hypermediaNames;
@@ -34,7 +32,6 @@ public class HypermediaAgentBodyArtifactRegistry {
     this.artifactActionRouter = new Hashtable<>();
     this.artifactAPIKeys = new Hashtable<>();
     artifactTemplateDescriptions = new Hashtable<>();
-    bodyArtifacts = new Hashtable<>();
     agentArtifacts = new Hashtable<>();
     hypermediaNames = new Hashtable<>();
     n = 1;
@@ -48,27 +45,6 @@ public class HypermediaAgentBodyArtifactRegistry {
     return registry;
   }
 
-  public void register(HypermediaBodyArtifact artifact){
-    String artifactTemplate = artifact.getArtifactId().getName();
-    if (!bodyArtifacts.containsKey(artifactTemplate)) {
-      bodyArtifacts.put(artifactTemplate, artifact);
-    }
-    String  description = artifact.getHypermediaDescription();
-    artifactTemplateDescriptions.put(artifactTemplate, description);
-
-    Map<String, List<ActionAffordance>> actions = artifact.getActionAffordances();
-    for (String actionName : actions.keySet()) {
-      for (ActionAffordance action : actions.get(actionName)) {
-        Optional<Form> form = action.getFirstForm();
-
-        form.ifPresent(value -> {
-          if (value.getMethodName().isPresent()) {
-            artifactActionRouter.put(value.getMethodName().get() + value.getTarget(), actionName);
-          }
-        });
-      }
-    }
-  }
 
   public void registerName(String bodyName, String hypermediaName){
     hypermediaNames.put(bodyName, hypermediaName);

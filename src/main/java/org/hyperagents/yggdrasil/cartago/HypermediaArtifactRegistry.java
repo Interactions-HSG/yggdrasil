@@ -115,7 +115,7 @@ public class HypermediaArtifactRegistry {
     return hypermediaNames.get(bodyName);
   }
 
-  public void registerBodyArtifact(HypermediaBodyArtifact bodyArtifact){
+ /* public void registerBodyArtifact(HypermediaBodyArtifact bodyArtifact){
     //register(bodyArtifact);
     WorkspaceId workspaceId = bodyArtifact.getArtifactId().getWorkspaceId();
     AgentId agentId = bodyArtifact.getArtifactId().getCreatorId();
@@ -129,9 +129,9 @@ public class HypermediaArtifactRegistry {
       agentIds.add(agentId);
       bodyArtifacts.put(workspaceId, agentIds);
     }
-  }
+  }*/
 
-  public void registerBodyArtifact(WorkspaceId workspaceId, AgentId agentId){
+  /*public void registerBodyArtifact(WorkspaceId workspaceId, AgentId agentId){
     if (bodyArtifacts.containsKey(workspaceId)){
       Set<AgentId> agentIds = bodyArtifacts.get(workspaceId);
       agentIds.add(agentId);
@@ -143,7 +143,7 @@ public class HypermediaArtifactRegistry {
       bodyArtifacts.put(workspaceId, agentIds);
     }
 
-  }
+  }*/
 
   public void addArtifactTemplate(String key, String value){
     artifactSemanticTypes.put(key, value);
