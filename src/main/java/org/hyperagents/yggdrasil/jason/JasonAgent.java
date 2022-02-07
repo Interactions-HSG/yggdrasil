@@ -38,7 +38,10 @@ public class JasonAgent  extends Agent {
 
   public JasonAgent(String agentName, InputStream in, String sourceId) throws JasonException {
     super();
+    System.out.println("is creating Jason agent");
     YggdrasilAgArch arch = new YggdrasilAgArch();
+    arch.insertAgArch(new YAgentArch());
+    System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);
     this.agentArch = arch;
     Settings settings = new Settings();

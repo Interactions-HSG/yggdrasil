@@ -7,7 +7,7 @@ public class AgentRegistry {
 
   private static AgentRegistry registry;
 
-  private String httpPrefix = "http://localhost:8080";
+  private String httpPrefix = "http://localhost:8080/";
 
   private Map<String, String> agents;
 

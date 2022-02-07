@@ -113,6 +113,7 @@ public class CartagoVerticle extends AbstractVerticle {
       switch (requestMethod) {
         case CREATE_WORKSPACE:
           String workspaceDescription = instantiateWorkspace(agentUri, workspaceName);
+          System.out.println("workspace description: "+workspaceDescription);
           message.reply(workspaceDescription);
           break;
         case CREATE_SUB_WORKSPACE:
@@ -335,12 +336,16 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void leaveWorkspace(String agentUri, String workspaceName){
+    System.out.println("start leave workspace");
+    System.out.println("agent uri: "+agentUri);
+    System.out.println("workspace name: "+workspaceName);
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     CartagoContext agentContext = getAgentContext(agentUri);
     WorkspaceId workspaceId = workspace.getId();
     AgentId agent = getAgentId(agentContext, workspaceId);
     try {
       String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
+      System.out.println("body name: "+bodyName);
       ArtifactId bodyId = workspace.getArtifact(bodyName);
       workspace.disposeArtifact(agent, bodyId);
       String hypermediaBodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName);

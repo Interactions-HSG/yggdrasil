@@ -58,6 +58,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           break;
         case RdfStore.CREATE_ENTITY:
           handleCreateEntity(requestIRI, message);
+          System.out.println("entity has been created");
           break;
         case RdfStore.PATCH_ENTITY:
           handlePatchEntity(requestIRI, message);
@@ -116,7 +117,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       // Replace all null relative IRIs with the IRI generated for this entity
       String entityGraphStr = message.body();
-
 //      if (contentType != null && contentType.equals("application/ld+json")) {
 //        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
 //      } else {

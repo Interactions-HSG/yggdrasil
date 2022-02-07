@@ -4,7 +4,7 @@ import cartago.AgentId;
 import cartago.WorkspaceId;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -22,7 +22,7 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   private final Map<String, String> artifactTemplateDescriptions;
 
-  private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
+  private final Map<ImmutablePair<AgentId, WorkspaceId>, String> agentArtifacts;
 
   private final Map<String, String> hypermediaNames;
 
@@ -91,19 +91,23 @@ public class HypermediaAgentBodyArtifactRegistry {
   }
 
   public void setArtifact(AgentId agentId, WorkspaceId workspaceId, String bodyName){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     this.agentArtifacts.put(pair, bodyName);
   }
 
   public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
+    System.out.println("pair retrieved in HypermediaAgentBodyArtifactRegistry");
+    System.out.println(pair);
     return this.agentArtifacts.get(pair);
 
   }
 
   public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     boolean b = this.agentArtifacts.containsKey(pair);
+    System.out.println("test has artifact in HypermediaAgentBodyArtifactRegistry");
+    System.out.println(b);
     return b;
 
   }

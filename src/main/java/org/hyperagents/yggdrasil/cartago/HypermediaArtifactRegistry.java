@@ -6,7 +6,8 @@ import cartago.*;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.json.JsonObject;
-import javafx.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -39,7 +40,7 @@ public class HypermediaArtifactRegistry {
 
   private final Map<String, String> artifactNames;
 
-  private final Map<Pair<AgentId, WorkspaceId>, String> agentArtifacts;
+  private final Map<ImmutablePair<AgentId, WorkspaceId>, String> agentArtifacts;
 
   private final Map<String, String> hypermediaNames;
 
@@ -273,19 +274,23 @@ public class HypermediaArtifactRegistry {
   }
 
   public void setArtifact(AgentId agentId, WorkspaceId workspaceId, String bodyName){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     this.agentArtifacts.put(pair, bodyName);
   }
 
   public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
+    System.out.println("pair retrieved");
+    System.out.println(pair);
     return this.agentArtifacts.get(pair);
 
   }
 
   public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
-    Pair<AgentId, WorkspaceId> pair = new Pair(agentId, workspaceId);
+    ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     boolean b = this.agentArtifacts.containsKey(pair);
+    System.out.println("test hasArtifact");
+    System.out.println(b);
     return b;
 
   }

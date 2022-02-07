@@ -39,6 +39,7 @@ public class JasonVerticle extends AbstractVerticle {
   @Override
   public void start(){
     agentService = new YggdrasilRuntimeServices(new RunYggdrasilMAS());
+    VertxRegistry.getInstance().setVertx(this.vertx);
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
   }
