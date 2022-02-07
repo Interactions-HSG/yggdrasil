@@ -97,8 +97,6 @@ public class HypermediaAgentBodyArtifactRegistry {
 
   public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
     ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
-    System.out.println("pair retrieved in HypermediaAgentBodyArtifactRegistry");
-    System.out.println(pair);
     return this.agentArtifacts.get(pair);
 
   }
@@ -106,8 +104,6 @@ public class HypermediaAgentBodyArtifactRegistry {
   public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
     ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     boolean b = this.agentArtifacts.containsKey(pair);
-    System.out.println("test has artifact in HypermediaAgentBodyArtifactRegistry");
-    System.out.println(b);
     return b;
 
   }

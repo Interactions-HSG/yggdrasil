@@ -280,8 +280,6 @@ public class HypermediaArtifactRegistry {
 
   public String getArtifact(AgentId agentId, WorkspaceId workspaceId){
     ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
-    System.out.println("pair retrieved");
-    System.out.println(pair);
     return this.agentArtifacts.get(pair);
 
   }
@@ -289,8 +287,6 @@ public class HypermediaArtifactRegistry {
   public boolean hasArtifact(AgentId agentId, WorkspaceId workspaceId){
     ImmutablePair<AgentId, WorkspaceId> pair = new ImmutablePair(agentId, workspaceId);
     boolean b = this.agentArtifacts.containsKey(pair);
-    System.out.println("test hasArtifact");
-    System.out.println(b);
     return b;
 
   }

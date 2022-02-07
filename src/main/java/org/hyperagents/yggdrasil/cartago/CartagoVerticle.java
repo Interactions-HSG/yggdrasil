@@ -336,9 +336,6 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void leaveWorkspace(String agentUri, String workspaceName){
-    System.out.println("start leave workspace");
-    System.out.println("agent uri: "+agentUri);
-    System.out.println("workspace name: "+workspaceName);
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     CartagoContext agentContext = getAgentContext(agentUri);
     WorkspaceId workspaceId = workspace.getId();
