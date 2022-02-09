@@ -7,20 +7,18 @@ import cartago.Workspace;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
@@ -30,6 +28,7 @@ import jason.asSyntax.Literal;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Term;
 import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.http.io.entity.StringEntity;
@@ -39,18 +38,11 @@ import org.hyperagents.yggdrasil.cartago.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
-import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
-import java.io.IOException;
-import java.net.Authenticator;
-import java.net.CookieHandler;
-import java.net.ProxySelector;
-import java.time.Duration;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.*;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class YAgentArch extends AgArch {
@@ -78,8 +70,6 @@ public class YAgentArch extends AgArch {
 
     Structure action = actionExec.getActionTerm();
 
-    try {
-      boolean failed = false;
       ListTerm lt = action.getAnnots();
       if (lt != null){
         Iterator<Term> it = lt.iterator();
@@ -115,6 +105,12 @@ public class YAgentArch extends AgArch {
 
       } else if (func.equals("stopFocus")){
 
+      } else if (func.equals("invokeAction")){
+        String tdUri = terms.get(0).toString();
+        String actionName = terms.get(1).toString();
+        Map<String, String> headers = new Hashtable<>();
+        headers.put("X-Agent-WebID", this.getAgName());
+        invokeAction(tdUri, actionName, headers);
       }
       else if (func.equals("sendHttpRequest")){
         String url = terms.get(0).toString();
@@ -130,9 +126,9 @@ public class YAgentArch extends AgArch {
         sendHttpRequest(url, method, headers, body);
       }
 
-    } catch(Exception e){
-      e.printStackTrace();
-    }
+      System.out.println("end method act");
+      actionExec.setResult(true);
+      super.actionExecuted(actionExec);
   }
 
 
@@ -161,143 +157,53 @@ public class YAgentArch extends AgArch {
   //focus(String workspaceName, String artifactname)
   //leaveWorkspace(String workspaceName)
 
+
+
+
   public void createWorkspace1(String workspaceName){
-      DeliveryOptions options = new DeliveryOptions()
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-        .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-        .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-      String uri = "http://localhost:8080/workspaces/";
-      //vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> storeEntity(uri, workspaceName, result.result().body().toString(), promise));
-    //vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> System.out.println("result"));
-    Promise<String> environmentPromise = Promise.promise();
-    EnvironmentHandler environmentHandler = new EnvironmentHandler(vertx);
-    environmentHandler.createWorkspace(this.getAgName(), workspaceName, environmentPromise);
-    System.out.println("workspace created");
-
-    environmentPromise.future().compose(result -> Future.future(promise -> storeEntity0(uri, workspaceName, result, promise)));
-      System.out.println("end create workspace");
-
-  }
-
-  public EventBus createWorkspace2(String workspaceName){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-    String uri = "http://localhost:8080/workspaces/";
-    Promise<Object> promise = Promise.promise();
-    return vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> storeEntity0(uri, workspaceName, result.result().body().toString(), promise));
-
-  }
-
-  public void createWorkspace4(String workspaceName){
-    String uri = "http://localhost:8080/workspaces/";
-    String agentName = this.getAgName();
-    boolean b = false;
-    System.out.println("before thread");
-    Thread t = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        DeliveryOptions options = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-          .addHeader(CartagoVerticle.AGENT_ID, agentName)
-          .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-        vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, reply -> {
-          if (reply.succeeded()){
-            DeliveryOptions rdfOptions = new DeliveryOptions()
-              .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-              .addHeader(HttpEntityHandler.REQUEST_URI, uri)
-              .addHeader(HttpEntityHandler.ENTITY_URI_HINT, workspaceName);
-            vertx.eventBus().request(RdfStore.BUS_ADDRESS, reply.result().body().toString(), rdfOptions, result -> {
-              if (result.succeeded()) {
-                System.out.println("In thread: the entity representation was stored");
-              } else {
-                System.out.println("In thread: Could not store the entity representation.");
-              }
-            });
-          }
-        });
-      }
-    });
-    System.out.println("after thread");
-    ControllableThread ct = new ControllableThread(t, 100);
-    System.out.println("controllable thread created");
-    ct.start();
-    System.out.println("controllable thread launched");
-    System.out.println("end method create workspace");
-
-  }
-
-  public void createWorkspace5(String workspaceName){
-    String uri = "http://localhost:8080/workspaces/";
-    boolean b = false;
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-    Promise<String> result = Promise.promise();
-    sendEnvironmentRequest("", options, result);
-    System.out.println("environment request done");
-    DeliveryOptions rdfOptions = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(HttpEntityHandler.REQUEST_URI, uri)
-      .addHeader(HttpEntityHandler.ENTITY_URI_HINT, workspaceName);
-    result.future().compose(r -> {
-      return Future.future(promise -> storeEntity(rdfOptions, r, promise));
-    });
-    System.out.println("method createWorkspace5 completed");
-
-  }
-
-  public void createWorkspace6(String workspaceName){
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     headers.put("Slug", workspaceName);
     sendHttpRequest("http://localhost:8080/workspaces/", "POST", headers, null);
   }
 
+  public void createWorkspace2(String workspaceName){
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
+      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
+      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
+    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, r -> {
+      if (r.succeeded()){
+        String description = r.result().body().toString();
+        System.out.println("description: "+description);
+        DeliveryOptions rdfOptions = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
+          .addHeader(HttpEntityHandler.REQUEST_URI, "http://localhost:8080/workspaces/")
+          .addHeader(HttpEntityHandler.ENTITY_URI_HINT, workspaceName);
+        vertx.eventBus().request(RdfStore.BUS_ADDRESS, description, rdfOptions, r2 -> {
+          if (r2.succeeded()){
+            System.out.println("workspace registered");
+          } else {
+            System.out.println("workspace could not be registered");
+          }
+        });
+      } else {
+        System.out.println("create workspace failed");
+      }
+    });
+    System.out.println("create workspace 7 finished");
+
+  }
+
 
   public void createWorkspace(String workspaceName){
     System.out.println("is creating workspace");
     System.out.println("agent: "+this.getAgName());
-    createWorkspace6(workspaceName);
+    createWorkspace1(workspaceName);
   }
 
-  public void createSubWorkspace1(String workspaceName, String subWorkspaceName){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName)
-      .addHeader(CartagoVerticle.SUB_WORKSPACE_NAME, subWorkspaceName);
-    String uri = "http://localhost:8080/workspaces/";
-    Promise<Object> promise = Promise.promise();
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> storeEntity0(uri, subWorkspaceName, result.result().body().toString(), promise));
 
-  }
-
-  public void createSubWorkspace2(String workspaceName, String subWorkspaceName){
-    String uri = "http://localhost:8080/workspaces/";
-    boolean b = false;
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_SUB_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName)
-      .addHeader(CartagoVerticle.SUB_WORKSPACE_NAME, subWorkspaceName);
-    Promise<String> result = Promise.promise();
-    sendEnvironmentRequest("", options, result);
-    System.out.println("environment request done");
-    DeliveryOptions rdfOptions = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(HttpEntityHandler.REQUEST_URI, uri)
-      .addHeader(HttpEntityHandler.ENTITY_URI_HINT, workspaceName);
-    result.future().compose(r -> {
-      return Future.future(promise -> storeEntity(rdfOptions, r, promise));
-    });
-    System.out.println("method createSubWorkspace2 completed");
-
-  }
-
-  public void createSubWorkspace3(String workspaceName, String subWorkspaceName){
+  public void createSubWorkspace(String workspaceName, String subWorkspaceName){
     String uri = "http://localhost:8080/workspaces/" + workspaceName +"/sub";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
@@ -310,103 +216,48 @@ public class YAgentArch extends AgArch {
 
   }
 
-  public void createSubWorkspace(String workspaceName, String subWorkspaceName){
-    createSubWorkspace3(workspaceName, subWorkspaceName);
-  }
 
-  public void makeArtifact1(String workspaceName, String artifactName, String artifactInit){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName)
-      .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName);
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, artifactInit, options, result -> System.out.println(result));
 
-  }
 
-  public void makeArtifact2(String workspaceName, String artifactName, String artifactInit){
-    String uri = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/"+artifactName;
+
+  public void makeArtifact(String workspaceName, String artifactName, String artifactClass){
+    String uri = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
+    headers.put("Content-Type", "application/json");
+    artifactName = artifactName.replace("\"", "");
+    artifactClass = artifactClass.replace("\"","");
+    JsonObject object = new JsonObject();
+    object.put("artifactName", artifactName);
+    object.put("artifactClass", artifactClass);
+    String artifactInit = object.encode();
     sendHttpRequest(uri, "POST", headers, artifactInit);
   }
 
-  public void makeArtifact(String workspaceName, String artifactName, String artifactInit){
-    makeArtifact2(workspaceName, artifactName, artifactInit);
-  }
 
-  public void joinWorkspace1(String workspaceName){
-    Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
-    AgentCredential agentCredential = new AgentIdCredential(getAgName());
-    ICartagoCallback callback = new NotificationCallback(vertx);
-    try {
-      workspace.joinWorkspace(agentCredential, callback);
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-  }
 
-  public void joinWorkspace2(String workspaceName){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.JOIN_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> System.out.println(result));
-  }
-
-  public void joinWorkspace3(String workspaceName){
+  public void joinWorkspace(String workspaceName){
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/join";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     sendHttpRequest(uri, "PUT", headers, null);
   }
 
-  public void joinWorkspace(String workspaceName){
-    joinWorkspace3(workspaceName);
-  }
 
-  public void leaveWorkspace1(String workspaceName){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.LEAVE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, result -> System.out.println(result));
 
-  }
 
-  public void leaveWorkspace2(String workspaceName){
+  public void leaveWorkspace(String workspaceName){
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/leave";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     sendHttpRequest(uri, "DELETE", headers, null);
   }
 
-  public void leaveWorkspace(String workspaceName){
-    leaveWorkspace2(workspaceName);
-  }
 
-  public void sendHttpRequest1(String url, String method, Map<String, String> headers, String body){
-    BasicClassicHttpRequest request = new BasicClassicHttpRequest(method, url);
-    for (String name: headers.keySet()){
-      String value = headers.get(name);
-      request.addHeader(name, value);
-    }
-    if (body != null){
-      request.setEntity(new StringEntity(body));
-    }
-    HttpClient client = HttpClients.createDefault();
-    System.out.println("perform "+request.getMethod()+" on url: "+request.getRequestUri()+" with path: "+request.getPath());
-    try {
-      ClassicHttpResponse response = (ClassicHttpResponse) client.execute(request);
-      HttpEntity entity = response.getEntity();
-      System.out.println("response:");
-      System.out.println(entity.getContent());
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-  }
+
 
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers){
+    tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
@@ -421,114 +272,79 @@ public class YAgentArch extends AgArch {
           request.addHeader(key, value);
         }
         TDHttpResponse response = request.execute();
-      }
+      } else {
+          System.out.println("form is not present");
+        }
+      } else {
+        System.out.println("action is not present");
       }
     } catch(Exception e){
       e.printStackTrace();
     }
   }
 
-  public void sendHttpRequest(String url, String method, Map<String, String> headers, String body){
+  public void writeProperty(String tdUrl, String propertyName, Object[] payloadTags, Object[] payload){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
+      if (opProperty.isPresent()){
+        PropertyAffordance property = opProperty.get();
+        Optional<Form> opForm = property.getFirstFormForOperationType(TD.writeProperty);
+        if (opForm.isPresent()){
+          Form form = opForm.get();
+          TDHttpRequest request = createTDHttpRequest(form, TD.writeProperty, payloadTags, payload);
+          request.execute();
+        }
+      }
+
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+
+  }
+
+  private TDHttpRequest createTDHttpRequest(Form form, String operationType, Object[] payloadTags, Object[] payload){
+    TDHttpRequest request = new TDHttpRequest(form, operationType);
+    return request;
+  }
+
+
+  public ClassicHttpResponse sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
     HttpClient client = HttpClients.createDefault();
-    //HttpHost host = new HttpHost(url);
-    ClassicHttpRequest request = new BasicClassicHttpRequest(method, url);
-    for (String name: headers.keySet()){
-      String value = headers.get(name);
-      request.addHeader(name, value);
+    AtomicReference<ClassicHttpResponse> returnValue = new AtomicReference();
+    ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
+    for (String key: headers.keySet()){
+      String value = headers.get(key);
+      request.addHeader(key, value);
     }
     if (body != null){
       request.setEntity(new StringEntity(body));
     }
-    System.out.println("perform "+request.getMethod()+" on url: "+request.getRequestUri()+" with path: "+request.getPath());
     try {
-      ClassicHttpResponse response = (ClassicHttpResponse) client.execute(request);
-      HttpEntity entity = response.getEntity();
-      System.out.println("response:");
-      System.out.println(entity.getContent());
+      client.execute(request, response -> {
+        System.out.println("response received: ");
+        System.out.println(response.toString());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        String line = null;
+        while ((line = reader.readLine())!=null){
+          System.out.println(line);
+        }
+        System.out.println(response.getEntity().getContent().toString());
+        returnValue.set(response);
+        return null;
+      });
     } catch(Exception e){
       e.printStackTrace();
     }
-  }
-
-
-
-  public void sendHttpRequest2(String url, String method, Map<String, String> headers, String body){
-    HttpClientOptions options = new HttpClientOptions();
-    io.vertx.core.http.HttpClient client = vertx.createHttpClient();
-    if (method.equals("GET")) {
-      HttpClientRequest request = client.get(url);
-      for (String key: headers.keySet()){
-        String value = headers.get(key);
-        request.putHeader(key, value);
-      }
-    }
-
+    System.out.println("request done");
+    return returnValue.get();
 
   }
 
 
 
 
-
-  private void storeEntity(DeliveryOptions options, String representation, Promise<Object> promise){
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
-      if (result.succeeded()){
-        promise.complete("entity has been stored");
-      } else {
-        promise.fail("entity could not be stored");
-      }
-    });
-    System.out.println("end storeEntity");
-  }
-
-  private void storeEntity0(String uri, String entityName, String representation, Promise<Object> promise) {
-    System.out.println("uri: "+uri);
-    System.out.println("entity name: "+entityName);
-    System.out.println("representation: "+representation);
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(HttpEntityHandler.REQUEST_URI, uri)
-      .addHeader(HttpEntityHandler.ENTITY_URI_HINT, entityName);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
-      if (result.succeeded()) {
-        System.out.println("the entity representation was stored");
-        promise.complete("the entity representation was stored");
-        //context.response().setStatusCode(org.apache.http.HttpStatus.SC_CREATED).end(representation);
-        //promise.complete();
-      } else {
-        System.out.println("Could not store the entity representation.");
-        promise.fail("Could not store the entity representation.");
-        return;
-        //context.response().setStatusCode(org.apache.http.HttpStatus.SC_CREATED).end();
-        //promise.fail("Could not store the entity representation.");
-      }
-    });
-    System.out.println("end store entity");
-  }
-
-  private void storeEntity1(String uri, String entityName, String representation) {
-    System.out.println("uri: "+uri);
-    System.out.println("entity name: "+entityName);
-    System.out.println("representation: "+representation);
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(HttpEntityHandler.REQUEST_URI, uri)
-      .addHeader(HttpEntityHandler.ENTITY_URI_HINT, entityName);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, reply -> {return;});
-    System.out.println("real end store entity");
-  }
-
-  private void sendEnvironmentRequest(String message, DeliveryOptions options, Promise<String> result){
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, message, options, reply -> {
-      if (reply.succeeded()){
-        result.complete(reply.result().body().toString());
-      } else {
-        result.fail("environment request failed");
-      }
-    });
-  }
 
 
 }

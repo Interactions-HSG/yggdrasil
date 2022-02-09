@@ -5,6 +5,8 @@ import jason.infra.centralised.CentralisedAgArch;
 
 public class YggdrasilAgArch extends CentralisedAgArch {
 
+
+
   @Override
   public void init(){
 

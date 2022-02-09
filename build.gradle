@@ -15,7 +15,7 @@ repositories {
 
 group = "org.hyperagents"
 version = '0.0-SNAPSHOT'
-sourceCompatibility = '1.8'
+sourceCompatibility = "11"
 mainClassName = 'io.vertx.core.Launcher'
 
 def vertxVersion = '3.9.0'
@@ -72,3 +72,4 @@ apply plugin: 'java'
 compileJava {
   options.compilerArgs << '-parameters'
 }
+targetCompatibility = JavaVersion.VERSION_11
