@@ -23,7 +23,7 @@ import io.vertx.ext.web.client.WebClient;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
   public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.dispatcher";
-  
+
   public static final String ENTITY_CREATED = "org.hyperagents.yggdrasil.eventbus.notifications"
       + ".entityCreated";
   public static final String ENTITY_CHANGED = "org.hyperagents.yggdrasil.eventbus.notifications"
@@ -32,37 +32,37 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       + ".entityDeleted";
   public static final String ARTIFACT_OBS_PROP = "org.hyperagents.yggdrasil.eventbus.notifications"
       + ".artifactObsProp";
-  
+
   private final static Logger LOGGER = LoggerFactory.getLogger(
       HttpNotificationVerticle.class.getName());
-  
+
   private String webSubHubIRI = null;
-  
+
   @Override
   public void start() {
     webSubHubIRI = getWebSubHubIRI(config());
-    
+
     vertx.eventBus().consumer(BUS_ADDRESS, message -> {
       if (isNotificationMessage(message)) {
         String entityIRI = message.headers().get(HttpEntityHandler.REQUEST_URI);
-        
+
         if (entityIRI != null && !entityIRI.isEmpty()) {
           String changes = (String) message.body();
           LOGGER.info("Dispatching notifications for: " + entityIRI + ", changes: " + changes);
-          
+
           WebClient client = WebClient.create(vertx);
-          
+
           List<String> linkHeaders = new ArrayList<String>();
           linkHeaders.add("<" + webSubHubIRI + ">; rel=\"hub\"");
           linkHeaders.add("<" + entityIRI + ">; rel=\"self\"");
-          
+
           Set<String> callbacks = NotificationSubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
-          
+
           for (String callbackIRI : callbacks) {
             HttpRequest<Buffer> request = client.postAbs(callbackIRI)
                 .putHeader("Link", linkHeaders.get(0))
                 .putHeader("Link", linkHeaders.get(1));
-            
+
             if (message.headers().get(HttpEntityHandler.REQUEST_METHOD).equals(ENTITY_DELETED)) {
               LOGGER.info("Sending notification to: " + callbackIRI + "; changes: entity deleted");
               request.send(reponseHandler(callbackIRI));
@@ -76,36 +76,36 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       }
     });
   }
-  
+
   private Handler<AsyncResult<HttpResponse<Buffer>>> reponseHandler(String callbackIRI) {
     return ar -> {
       HttpResponse<Buffer> response = ar.result();
-      
+
       if (response == null) {
-        LOGGER.info("Failed to send notification to: " + callbackIRI + ", operation failed: " 
+        LOGGER.info("Failed to send notification to: " + callbackIRI + ", operation failed: "
             + ar.cause().getMessage());
       } else if (response.statusCode() == HttpStatus.SC_OK) {
         LOGGER.info("Notification sent to: " + callbackIRI + ", status code: " + response.statusCode());
       } else {
-        LOGGER.info("Failed to send notification to: " + callbackIRI + ", status code: " 
+        LOGGER.info("Failed to send notification to: " + callbackIRI + ", status code: "
             + response.statusCode());
       }
     };
   }
-  
+
   private boolean isNotificationMessage(Message<Object> message) {
     String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
-    
-    if (requestMethod.equals(ENTITY_CREATED) || requestMethod.equals(ENTITY_CHANGED) 
+
+    if (requestMethod.equals(ENTITY_CREATED) || requestMethod.equals(ENTITY_CHANGED)
         || requestMethod.equals(ENTITY_DELETED) || requestMethod.equals(ARTIFACT_OBS_PROP)) {
       return true;
     }
     return false;
   }
-  
+
   private String getWebSubHubIRI(JsonObject config) {
     JsonObject httpConfig = config.getJsonObject("http-config");
-    
+
     if (httpConfig != null && httpConfig.getString("websub-hub") != null) {
       return httpConfig.getString("websub-hub");
     }

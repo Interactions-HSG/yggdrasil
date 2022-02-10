@@ -11,7 +11,13 @@ import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -19,18 +25,18 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
+import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
-import jason.asSyntax.ListTerm;
-import jason.asSyntax.Literal;
-import jason.asSyntax.Structure;
-import jason.asSyntax.Term;
+import jason.asSyntax.*;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
@@ -38,18 +44,23 @@ import org.hyperagents.yggdrasil.cartago.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
+import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class YAgentArch extends AgArch {
 
   Vertx vertx;
 
   public YAgentArch(Vertx vertx){
+
     this.vertx = vertx;
   }
 
@@ -102,6 +113,11 @@ public class YAgentArch extends AgArch {
         String workspaceName = terms.get(0).toString();
         leaveWorkspace(workspaceName);
       } else if (func.equals("focus")){
+        System.out.println("start focus");
+        String workspaceName = terms.get(0).toString();
+        String artifactName = terms.get(1).toString();
+        focus(workspaceName, artifactName);
+        System.out.println("end focus");
 
       } else if (func.equals("stopFocus")){
 
@@ -110,7 +126,11 @@ public class YAgentArch extends AgArch {
         String actionName = terms.get(1).toString();
         Map<String, String> headers = new Hashtable<>();
         headers.put("X-Agent-WebID", this.getAgName());
-        invokeAction(tdUri, actionName, headers);
+        String body = null;
+        if (terms.size()>2){
+          body = terms.get(2).toString();
+        }
+        invokeAction(tdUri, actionName, headers, body);
       }
       else if (func.equals("sendHttpRequest")){
         String url = terms.get(0).toString();
@@ -134,6 +154,19 @@ public class YAgentArch extends AgArch {
 
   @Override
   public Collection<Literal> perceive(){
+    try {
+      AgentNotificationCallback callback = AgentRegistry.getInstance().getAgentCallback(this.getAgName());
+      if (!callback.isEmpty()){
+        String notification = callback.retrieveNotification();
+        System.out.println("notification received: "+notification);
+        Literal belief = Literal.parseLiteral(notification);
+        this.getTS().getAg().addBel(belief);
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+
+
     return super.perceive();
   }
 
@@ -240,7 +273,19 @@ public class YAgentArch extends AgArch {
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/join";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
-    sendHttpRequest(uri, "PUT", headers, null);
+    String response = sendHttpRequest(uri, "PUT", headers, null);
+    try {
+      System.out.println("body description: "+response);
+      ThingDescription td = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, response);
+      Optional<String> opName = td.getThingURI();
+      if (opName.isPresent()){
+        String bodyName = opName.get();
+        System.out.println("body name: "+bodyName);
+        AgentRegistry.getInstance().addBody(this.getAgName(), workspaceName, bodyName );
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
   }
 
 
@@ -251,12 +296,49 @@ public class YAgentArch extends AgArch {
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     sendHttpRequest(uri, "DELETE", headers, null);
+    AgentRegistry.getInstance().removeBody(this.getAgName(), workspaceName);
+  }
+
+  public void focus(String workspaceName, String artifactName){
+    try {
+      String bodyName = AgentRegistry.getInstance().getBody(this.getAgName(), workspaceName);
+      String focusUri = bodyName+"/focus";
+      System.out.println("body name: "+bodyName);
+      Map<String, String> headers = new Hashtable<>();
+      headers.put("X-Agent-WebID", this.getAgName());
+      headers.put("Content-Type", "application/json");
+      String body = "[\""+artifactName+"\"]";
+      System.out.println("focus body: "+body);
+      sendHttpRequest(focusUri, "PUT", headers, body);
+      String artifactIRI = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/"+artifactName;
+      System.out.println("artifact IRI: "+artifactIRI);
+      NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIRI, this.getAgName());
+
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void stopFocus(String workspaceName, String artifactName){
+    try {
+      String bodyName = AgentRegistry.getInstance().getBody(this.getAgName(), workspaceName);
+      String focusUri = bodyName+"/stopFocus";
+      System.out.println("body name: "+bodyName);
+      Map<String, String> headers = new Hashtable<>();
+      headers.put("X-Agent-WebID", this.getAgName());
+      headers.put("Content-Type", "application/json");
+      String body = "[\""+artifactName+"\"]";
+      System.out.println("focus body: "+body);
+      sendHttpRequest(focusUri, "PUT", headers, body);
+
+    } catch(Exception e){
+      e.printStackTrace();
+    }
   }
 
 
 
-
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers){
+  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
     tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
@@ -271,6 +353,29 @@ public class YAgentArch extends AgArch {
           String value = headers.get(key);
           request.addHeader(key, value);
         }
+        if (body != null){
+          JsonElement element = JsonParser.parseString(body);
+          Optional<DataSchema> opSchema = action.getInputSchema();
+          if (opSchema.isPresent()){
+            DataSchema schema = opSchema.get();
+            if (schema.getDatatype() == "array" && element.isJsonArray()){
+              List<Object> payload = createArrayPayload(element.getAsJsonArray());
+              request.setArrayPayload((ArraySchema) schema, payload);
+            } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+              Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
+              request.setObjectPayload((ObjectSchema) schema, payload );
+            } else if (schema.getDatatype() == "string"){
+              request.setPrimitivePayload(schema, element.getAsString());
+            } else if (schema.getDatatype() == "number"){
+              request.setPrimitivePayload(schema, element.getAsDouble());
+            } else if (schema.getDatatype() == "integer"){
+              request.setPrimitivePayload(schema, element.getAsLong());
+            } else if (schema.getDatatype() == "boolean"){
+              request.setPrimitivePayload(schema, element.getAsBoolean());
+            }
+          }
+
+        }
         TDHttpResponse response = request.execute();
       } else {
           System.out.println("form is not present");
@@ -281,6 +386,24 @@ public class YAgentArch extends AgArch {
     } catch(Exception e){
       e.printStackTrace();
     }
+  }
+
+  private List<Object> createArrayPayload(JsonArray jsonArray){
+    List<Object> payload = new ArrayList<>();
+    for (int i = 0; i<jsonArray.size();i++){
+      JsonElement e = jsonArray.get(i);
+      payload.add(e);
+    }
+    return payload;
+  }
+
+  private Map<String, Object> createObjectPayload(com.google.gson.JsonObject jsonObject){
+    Map<String, Object> payload = new Hashtable<>();
+    for (String key: jsonObject.keySet()){
+      JsonElement value = jsonObject.get(key);
+      payload.put(key, value);
+    }
+    return payload;
   }
 
   public void writeProperty(String tdUrl, String propertyName, Object[] payloadTags, Object[] payload){
@@ -310,9 +433,9 @@ public class YAgentArch extends AgArch {
   }
 
 
-  public ClassicHttpResponse sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
+  public String sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
     HttpClient client = HttpClients.createDefault();
-    AtomicReference<ClassicHttpResponse> returnValue = new AtomicReference();
+    AtomicReference<String> returnValue = new AtomicReference();
     ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
     for (String key: headers.keySet()){
       String value = headers.get(key);
@@ -325,13 +448,17 @@ public class YAgentArch extends AgArch {
       client.execute(request, response -> {
         System.out.println("response received: ");
         System.out.println(response.toString());
-        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        HttpEntity entity = response.getEntity();
+        //String r = EntityUtils.toString(entity);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
         String line = null;
+        String s = "";
         while ((line = reader.readLine())!=null){
+          s = s + line;
           System.out.println(line);
         }
         System.out.println(response.getEntity().getContent().toString());
-        returnValue.set(response);
+        returnValue.set(s);
         return null;
       });
     } catch(Exception e){
