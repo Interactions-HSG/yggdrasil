@@ -132,6 +132,27 @@ public class AgentProfileArtifact extends HypermediaArtifact {
     }
   }
 
+  @OPERATION
+  public void addMaxSignifiers(String str){
+    String agentName = this.getCurrentOpAgentId().getAgentName();
+    await("isCreatorAgent", agentName);
+    Statement s = getAsStatement(str);
+    ReifiedStatement rs = getAsReifiedStatement(s);
+    Optional<Literal> opMax = Models.objectLiteral(profile.getModel().filter(profile.getAgent(),
+      RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
+    if (s!=null){
+      if (opMax.isPresent()){
+        this.profile.getModel().remove(profile.getAgent(), RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), opMax.get());
+        this.profile.add(s);
+
+      } else {
+        this.profile.add(s);
+      }
+
+    }
+
+  }
+
   /*@GUARD
   public boolean isCreatorAgent(){
     boolean b = false;
@@ -265,6 +286,7 @@ public class AgentProfileArtifact extends HypermediaArtifact {
       registerActionAffordance("http://example.org/addPurpose", "addPurpose", "/purpose", stateSchema);
       registerActionAffordance("http://example.org/addSituation", "addSituation", "/situation", stateSchema);
       registerActionAffordance("http://example.org/getAgentProfile", "getAgentProfile", "/profile");
+      registerActionAffordance("http://example.org/maxSignifiers", "addMaxSignifiers","/max", stateSchema);
     }
 
 

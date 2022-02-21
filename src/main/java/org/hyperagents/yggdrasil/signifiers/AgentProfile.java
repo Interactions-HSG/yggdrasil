@@ -90,6 +90,15 @@ public class AgentProfile {
     return opPurpose;
   }
 
+  public Optional<Integer> getMaxSignifiers(){
+    Optional<Integer> maxSignifiers = Optional.empty();
+    Optional<Literal> opMaxSignifiers = Models.objectLiteral(model.filter(agent, RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
+    if (opMaxSignifiers.isPresent()){
+      maxSignifiers = Optional.of(opMaxSignifiers.get().intValue());
+    }
+    return maxSignifiers;
+  }
+
   public void rewrite(Model m){
     //this.comments = m;
     this.model = m;

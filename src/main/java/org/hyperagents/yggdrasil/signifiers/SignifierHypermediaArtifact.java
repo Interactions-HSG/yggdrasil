@@ -208,10 +208,22 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
         visibles.add(signifierId);
       }
     }
-    List<IRI> signifierList = new Vector<>(visibles);
+    List<IRI> signifierList = transform(visibles, agentName);
     String signifiers = signifierList.toString();
     System.out.println(signifiers);
     returnParam.set(signifiers);
+
+  }
+
+  private  List<IRI> transform(Set<IRI> visibles, String agentName){
+    List<IRI> signifiers= new Vector<>(visibles);
+    AgentProfile profile = getAgentProfile(agentName);
+    Optional<Integer> opMaxSignifiers = profile.getMaxSignifiers();
+    if (opMaxSignifiers.isPresent()){
+      int maxSignifiers = opMaxSignifiers.get().intValue();
+      signifiers = signifiers.subList(0, maxSignifiers);
+    }
+    return signifiers;
 
   }
 
