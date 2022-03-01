@@ -133,10 +133,12 @@ public class AgentProfileArtifact extends HypermediaArtifact {
   }
 
   @OPERATION
-  public void addMaxSignifiers(String str){
+  public void addMaxSignifiers(int maxSignifiers){
+    System.out.println("add max signifiers: ");
+    System.out.println(maxSignifiers);
     String agentName = this.getCurrentOpAgentId().getAgentName();
     await("isCreatorAgent", agentName);
-    Statement s = getAsStatement(str);
+    Statement s = RDFS.rdf.createStatement(RDFS.rdf.createIRI(AgentProfileOntology.thisAgent), RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), RDFS.rdf.createLiteral(maxSignifiers));
     ReifiedStatement rs = getAsReifiedStatement(s);
     Optional<Literal> opMax = Models.objectLiteral(profile.getModel().filter(profile.getAgent(),
       RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
@@ -283,10 +285,14 @@ public class AgentProfileArtifact extends HypermediaArtifact {
       DataSchema stateSchema = new ArraySchema.Builder()
         .addItem(new StringSchema.Builder().build())
         .build();
+
       registerActionAffordance("http://example.org/addPurpose", "addPurpose", "/purpose", stateSchema);
       registerActionAffordance("http://example.org/addSituation", "addSituation", "/situation", stateSchema);
       registerActionAffordance("http://example.org/getAgentProfile", "getAgentProfile", "/profile");
-      registerActionAffordance("http://example.org/maxSignifiers", "addMaxSignifiers","/max", stateSchema);
+      DataSchema maxSignifiersSchema = new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .build();
+      registerActionAffordance("http://example.org/maxSignifiers", "addMaxSignifiers","/max", maxSignifiersSchema);
     }
 
 
