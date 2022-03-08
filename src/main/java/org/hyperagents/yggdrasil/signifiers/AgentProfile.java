@@ -21,8 +21,9 @@ import java.util.Optional;
 public class AgentProfile {
 
   private Resource agent;
-  //private Model definition;
-  //private Model comments;
+  private Optional<State> currentSituation;
+  private Optional<State> purpose;
+  private Optional<Integer> maxSignifiers;
 
   private Model model;
 
@@ -31,10 +32,10 @@ public class AgentProfile {
     //this.definition = new ModelBuilder().build();
     //this.comments = new ModelBuilder().build();
     this.model = new ModelBuilder().build();
-    model.add(this.agent, RDF.TYPE, RDFS.rdf.createLiteral(AgentProfileOntology.Agent));
+    model.add(this.agent, RDF.TYPE, RDFS.rdf.createIRI(AgentProfileOntology.Agent));
   }
 
-  public AgentProfile(Resource agent, Model definition,Model comments){
+  /*public AgentProfile(Resource agent, Model definition,Model comments){
     this.agent=agent;
     //this.definition=definition;
     //this.comments=comments;
@@ -42,7 +43,7 @@ public class AgentProfile {
     model.add(this.agent, RDF.TYPE, RDFS.rdf.createLiteral(AgentProfileOntology.Agent));
     this.model.addAll(definition);
     this.model.addAll(comments);
-  }
+  }*/
 
   public AgentProfile(Resource agent, Model model){
     this.agent = agent;
@@ -90,11 +91,29 @@ public class AgentProfile {
     return opPurpose;
   }
 
+  public void setMaxSignifiers(int maxSignifiers){
+    Optional<Literal> opMax = Models.objectLiteral(this.getModel().filter(this.getAgent(),
+      RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
+    if (opMax.isPresent()){
+      System.out.println("max signifiers was present");
+      this.getModel().remove(getAgent(), RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), opMax.get());
+      this.add(agent, RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), RDFS.rdf.createLiteral(maxSignifiers));
+
+    } else {
+      System.out.println("max signifiers was not present");
+      this.add(agent, RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), RDFS.rdf.createLiteral(maxSignifiers));
+    }
+    System.out.println("max signifiers defined: "+ getMaxSignifiers().get().intValue());
+  }
+
   public Optional<Integer> getMaxSignifiers(){
     Optional<Integer> maxSignifiers = Optional.empty();
     Optional<Literal> opMaxSignifiers = Models.objectLiteral(model.filter(agent, RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
     if (opMaxSignifiers.isPresent()){
+      System.out.println("max signifiers is present in profile");
       maxSignifiers = Optional.of(opMaxSignifiers.get().intValue());
+    } else {
+      System.out.println("max signifiers is not present in profile");
     }
     return maxSignifiers;
   }

@@ -155,7 +155,6 @@ public class HttpEntityHandler {
 
     String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
     String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
-
     DeliveryOptions options = new DeliveryOptions()
       .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
       .addHeader(REQUEST_URI, artifactIri);

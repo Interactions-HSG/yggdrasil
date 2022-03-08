@@ -132,7 +132,7 @@ public class AgentProfileArtifact extends HypermediaArtifact {
     }
   }
 
-  @OPERATION
+  /*@OPERATION
   public void addMaxSignifiers(int maxSignifiers){
     System.out.println("add max signifiers: ");
     System.out.println(maxSignifiers);
@@ -143,16 +143,24 @@ public class AgentProfileArtifact extends HypermediaArtifact {
     Optional<Literal> opMax = Models.objectLiteral(profile.getModel().filter(profile.getAgent(),
       RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), null));
     if (s!=null){
+      System.out.println("statement was correctly created");
       if (opMax.isPresent()){
+        System.out.println("max signifiers was present");
         this.profile.getModel().remove(profile.getAgent(), RDFS.rdf.createIRI(AgentProfileOntology.maxSignifiers), opMax.get());
         this.profile.add(s);
 
       } else {
+        System.out.println("max signifiers was not present");
         this.profile.add(s);
       }
 
     }
 
+  }*/
+
+  @OPERATION
+  public void addMaxSignifiers(int maxSignifiers){
+    this.profile.setMaxSignifiers(maxSignifiers);
   }
 
   /*@GUARD

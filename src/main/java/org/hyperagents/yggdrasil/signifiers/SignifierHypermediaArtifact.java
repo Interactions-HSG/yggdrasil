@@ -47,6 +47,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
 
   public AgentProfile getAgentProfile(String agentName) {
+    System.out.println("get agent profile");
     ValueFactory rdf = SimpleValueFactory.getInstance();
     //Resource agentId = rdf.createIRI("http://example.com/thisAgent");
     Resource agentId = rdf.createIRI(agentName);
@@ -56,6 +57,8 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
       IRI agentProfileIRI = agentProfiles.get(agentName);
       profile = retrieveAgentProfile(agentProfileIRI);
 
+    } else {
+      System.out.println("agent profiles does not contain key");
     }
     System.out.println("profile retrieved: "+profile);
     return profile;
@@ -158,7 +161,6 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
   public void registerProfile(String profileUri){
     IRI profileIri = RDFS.rdf.createIRI(profileUri);
     this.agentProfiles.put(this.getCurrentOpAgentId().getAgentName(), profileIri);
-    System.out.println(agentProfiles);
   }
 
   @OPERATION
@@ -199,6 +201,7 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
 
   @OPERATION
   public void retrieveVisibleSignifiers(OpFeedbackParam<Object> returnParam){
+    System.out.println("retrieve visible signifiers");
     String agentName = this.getCurrentOpAgentId().getAgentName();
     System.out.println("agent name: "+agentName);
     Set<IRI> visibles = new HashSet<>();
@@ -220,8 +223,12 @@ public abstract class SignifierHypermediaArtifact extends HypermediaArtifact {
     AgentProfile profile = getAgentProfile(agentName);
     Optional<Integer> opMaxSignifiers = profile.getMaxSignifiers();
     if (opMaxSignifiers.isPresent()){
+      System.out.println("max signifiers is present");
       int maxSignifiers = opMaxSignifiers.get().intValue();
+      System.out.println("max signifiers: "+ maxSignifiers);
       signifiers = signifiers.subList(0, maxSignifiers);
+    } else {
+      System.out.println("max signifiers is not present");
     }
     return signifiers;
 
