@@ -31,6 +31,7 @@ import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
 import jason.asSemantics.Event;
 import jason.asSemantics.Intention;
+import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.fluent.Request;
@@ -58,10 +59,13 @@ import java.util.stream.Collectors;
 public class YAgentArch extends AgArch {
 
   Vertx vertx;
+  JSONLibrary jsonLibrary;
+  int messageId;
 
   public YAgentArch(Vertx vertx){
 
     this.vertx = vertx;
+    this.jsonLibrary = new JSONLibrary();
   }
 
   public YAgentArch(){
@@ -69,6 +73,7 @@ public class YAgentArch extends AgArch {
     this.vertx = VertxRegistry.getInstance().getVertx();
     System.out.println("vertx: "+vertx);
     //this.vertx = new VertxFactoryImpl().vertx();
+    messageId = 0;
   }
 
 
@@ -131,6 +136,24 @@ public class YAgentArch extends AgArch {
           body = terms.get(2).toString();
         }
         invokeAction(tdUri, actionName, headers, body);
+      } else if (func.equals("getMessage")){
+        try {
+          AgentMessageCallback messageCallback = AgentRegistry.getInstance().getAgentMessageCallback(this.getAgName());
+          String message = messageCallback.retrieveMessage();
+          Term messageName = terms.get(0);
+          Unifier un = actionExec.getIntention().peek().getUnif();
+          if (jsonLibrary.isJson(message)){
+            JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
+            //Term jsonTerm = jsonLibrary.getNewJsonId();
+            Term jsonTerm = terms.get(1);
+            jsonLibrary.bindJson(un, jsonTerm, jsonElement);
+            Literal m = new Structure("message_json");
+            m.addTerm(jsonTerm);
+            this.getTS().getAg().addBel(m);
+          }
+        } catch(Exception e){
+          e.printStackTrace();
+        }
       }
       else if (func.equals("sendHttpRequest")){
         String url = terms.get(0).toString();
@@ -161,6 +184,19 @@ public class YAgentArch extends AgArch {
         System.out.println("notification received: "+notification);
         Literal belief = Literal.parseLiteral(notification);
         this.getTS().getAg().addBel(belief);
+        AgentMessageCallback messageCallback = AgentRegistry.getInstance().getAgentMessageCallback(this.getAgName());
+        if (messageCallback.hasNewMessage()) {
+          Literal messageBelief = new Structure("new_message");
+          //Term jsonId = jsonLibrary.getNewJsonId();
+          Term id = getNewMessageId();
+          //jsonLibrary.new_json(un, messageCallback.retrieveMessage(),jsonId);
+          //messageBelief.addTerms(jsonId, id);
+          Term jsonTerm = jsonLibrary.getNewJsonId();
+          messageBelief.addTerm(id);
+          messageBelief.addTerm(jsonTerm);
+          this.getTS().getAg().addBel(messageBelief);
+          messageCallback.noNewMessage();
+        }
       }
     } catch(Exception e){
       e.printStackTrace();
@@ -168,6 +204,12 @@ public class YAgentArch extends AgArch {
 
 
     return super.perceive();
+  }
+
+  private Term getNewMessageId(){
+    Term messageTermId = new NumberTermImpl(this.messageId);
+    this.messageId ++;
+    return messageTermId;
   }
 
 

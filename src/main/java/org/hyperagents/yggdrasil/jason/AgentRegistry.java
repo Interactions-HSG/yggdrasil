@@ -16,11 +16,14 @@ public class AgentRegistry {
 
   private Map<String, AgentNotificationCallback> callbacks;
 
+  private Map<String, AgentMessageCallback> messageCallbackMap;
+
   private Map<ImmutablePair<String, String>, String> bodies;
 
   private AgentRegistry(){
     this.agents = new Hashtable<>();
     this.callbacks = new Hashtable<>();
+    this.messageCallbackMap = new Hashtable<>();
     this.bodies = new Hashtable<>();
   }
 
@@ -56,6 +59,14 @@ public class AgentRegistry {
   public AgentNotificationCallback getAgentCallback(String agentName) throws Exception {
     if (callbacks.containsKey(agentName)){
       return callbacks.get(agentName);
+    } else {
+      throw new Exception("Agent does not exist");
+    }
+  }
+
+  public AgentMessageCallback getAgentMessageCallback(String agentName) throws Exception {
+    if (messageCallbackMap.containsKey(agentName)){
+      return messageCallbackMap.get(agentName);
     } else {
       throw new Exception("Agent does not exist");
     }

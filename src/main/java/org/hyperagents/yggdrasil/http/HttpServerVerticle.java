@@ -60,6 +60,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     //route agent requests
     router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
     router.post("/agents/:agentid").handler(handler::handleReceiveNotification);
+    router.post("/agents/:agentid/message").handler(handler::handleReceiveMessage);
 
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph

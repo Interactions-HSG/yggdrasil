@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.*;
+import org.hyperagents.yggdrasil.jason.AgentMessageCallback;
 import org.hyperagents.yggdrasil.jason.AgentNotificationCallback;
 import org.hyperagents.yggdrasil.jason.AgentRegistry;
 import org.hyperagents.yggdrasil.jason.JasonVerticle;
@@ -453,6 +454,21 @@ public class HttpEntityHandler {
     try {
       AgentNotificationCallback callback = agentRegistry.getAgentCallback(agentName);
       callback.addNotification(body);
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void handleReceiveMessage(RoutingContext context){
+    String uri = context.request().absoluteURI();
+    int n = uri.length();
+    String agentName = uri.substring(0, n-8);
+    System.out.println(agentName);
+    String body = context.getBodyAsString();
+    AgentRegistry agentRegistry = AgentRegistry.getInstance();
+    try {
+      AgentMessageCallback callback = agentRegistry.getAgentMessageCallback(agentName);
+      callback.addMessage(body);
     } catch(Exception e){
       e.printStackTrace();
     }

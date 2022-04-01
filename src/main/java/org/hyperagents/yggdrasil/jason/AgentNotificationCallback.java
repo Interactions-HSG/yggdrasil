@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.jason;
 
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class AgentNotificationCallback {
 
