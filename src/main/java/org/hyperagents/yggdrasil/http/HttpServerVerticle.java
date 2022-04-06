@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.CorsHandler;
 import org.apache.http.HttpStatus;
 
 /**
@@ -27,7 +28,24 @@ public class HttpServerVerticle extends AbstractVerticle {
   private Router createRouter() {
     Router router = Router.router(vertx);
 
+    router.route().handler(CorsHandler.create("*")
+      .maxAgeSeconds(86400)
+      .allowedMethod(io.vertx.core.http.HttpMethod.GET)
+      .allowedMethod(io.vertx.core.http.HttpMethod.POST)
+      .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
+      .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
+      .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+      .allowedHeader("Access-Control-Allow-Headers")
+      .allowedHeader("Authorization")
+      .allowedHeader("Access-Control-Allow-Method")
+      .allowedHeader("Access-Control-Allow-Origin")
+      .allowedHeader("Access-Control-Allow-Credentials")
+      .allowedHeader("Content-Type")
+      .allowedHeader("Expires")
+      .allowedHeader("Origin"));
+
     router.route().handler(BodyHandler.create());
+
 
     router.get("/").handler((routingContext) -> routingContext.response()
       .setStatusCode(HttpStatus.SC_OK)
@@ -61,6 +79,21 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
     router.post("/agents/:agentid").handler(handler::handleReceiveNotification);
     router.post("/agents/:agentid/message").handler(handler::handleReceiveMessage);
+    router.options("/agents/:agentid/message").handler(CorsHandler.create("*")
+      .maxAgeSeconds(86400)
+      .allowedMethod(io.vertx.core.http.HttpMethod.GET)
+      .allowedMethod(io.vertx.core.http.HttpMethod.POST)
+      .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
+      .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
+      .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+      .allowedHeader("Access-Control-Allow-Headers")
+      .allowedHeader("Authorization")
+      .allowedHeader("Access-Control-Allow-Method")
+      .allowedHeader("Access-Control-Allow-Origin")
+      .allowedHeader("Access-Control-Allow-Credentials")
+      .allowedHeader("Content-Type")
+        .allowedHeader("Expires")
+      .allowedHeader("Origin"));
 
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph

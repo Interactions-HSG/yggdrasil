@@ -13,20 +13,30 @@ import java.util.Map;
 
 public class JSONLibrary implements Serializable {
 
+  private static JSONLibrary jsonLibrary;
+
   private HashMap<String, JsonElement> currentJsons;
 
   private HashMap<JsonElement, Atom> currentJsons_inverse;
 
   private long id;
 
-  public JSONLibrary(){
+  private JSONLibrary(){
     this.currentJsons = new HashMap<>();
     this.currentJsons_inverse = new HashMap<>();
     this.id = 0;
   }
 
+  public static JSONLibrary getInstance(){
+    if (jsonLibrary == null){
+      jsonLibrary = new JSONLibrary();
+    }
+    return jsonLibrary;
+  }
+
   public Term getNewJsonId(){
-    Term jsonId = new NumberTermImpl(id);
+    Term jsonId = new StringTermImpl("JsonElement"+0);
+    System.out.println("jsonId: "+jsonId);
     id++;
     return jsonId;
   }
@@ -56,6 +66,12 @@ public class JSONLibrary implements Serializable {
     }  else {
       throw new Exception();
     }
+  }
+
+  public boolean registerJson(Term id, JsonElement jsonElement){
+    this.currentJsons.put(id.toString(), jsonElement);
+    this.currentJsons_inverse.put(jsonElement, new Atom(id.toString()));
+    return true;
   }
 
   public boolean bindJson(Unifier un, Term id, JsonElement jsonElement) {
@@ -146,6 +162,7 @@ public class JSONLibrary implements Serializable {
   public JsonElement get(Unifier un, Term jsonId, String attribute) throws Exception {
     try {
       JsonElement jsonElement = get_json(un, jsonId);
+      System.out.println("jsons: "+ currentJsons.keySet());
       JsonObject object = jsonElement.getAsJsonObject();
       return object.get(attribute);
     } catch (Exception e){
@@ -178,6 +195,16 @@ public class JSONLibrary implements Serializable {
 
   }
     return term;
+  }
+
+  public JsonElement getJSONElementFromTerm(Term jsonId){
+    String jsonIdString = jsonId.toString();
+    JsonElement e = currentJsons.get(jsonIdString);
+    return e;
+  }
+
+  public void printJson(Term jsonId){
+    System.out.println(getJSONElementFromTerm(jsonId));
   }
 
 

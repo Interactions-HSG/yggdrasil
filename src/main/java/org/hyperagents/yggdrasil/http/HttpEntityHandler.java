@@ -440,6 +440,7 @@ public class HttpEntityHandler {
 
     vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, representation, options, reply -> {
       if (reply.succeeded()) {
+        AgentRegistry.getInstance().printAllAgents();
         routingContext.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
       } else {
         routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
@@ -460,19 +461,27 @@ public class HttpEntityHandler {
   }
 
   public void handleReceiveMessage(RoutingContext context){
+    System.out.println("message received");
     String uri = context.request().absoluteURI();
     int n = uri.length();
+    String agentsUri = "http://localhost:8080/agents/";
     String agentName = uri.substring(0, n-8);
     System.out.println(agentName);
     String body = context.getBodyAsString();
+    System.out.println("message received: "+body);
     AgentRegistry agentRegistry = AgentRegistry.getInstance();
     try {
       AgentMessageCallback callback = agentRegistry.getAgentMessageCallback(agentName);
       callback.addMessage(body);
+      System.out.println("message added to message callback");
+      context.response().setStatusCode(HttpStatus.SC_OK).end("message received");
     } catch(Exception e){
+      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
       e.printStackTrace();
     }
   }
+
+
 
 
 

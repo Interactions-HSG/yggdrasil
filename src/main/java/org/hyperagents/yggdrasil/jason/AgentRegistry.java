@@ -35,11 +35,19 @@ public class AgentRegistry {
 
   }
 
+  public void printAllAgents(){
+    for (String agent: agents.keySet()){
+      System.out.println(agent);
+      System.out.println(agents.get(agent));
+    }
+  }
+
   public String addAgent(String agentName) throws Exception {
-    String agentUri = httpPrefix + "/agents/"+agentName;
+    String agentUri = httpPrefix + "agents/"+agentName;
     if (!agents.containsKey(agentName)) {
       this.agents.put(agentName, agentUri);
       this.callbacks.put(agentUri, new AgentNotificationCallback(agentUri));
+      this.messageCallbackMap.put(agentUri, new AgentMessageCallback(agentUri));
 
       return agentUri;
     }

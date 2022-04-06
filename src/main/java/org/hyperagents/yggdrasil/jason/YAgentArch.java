@@ -28,10 +28,7 @@ import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import jason.architecture.AgArch;
-import jason.asSemantics.ActionExec;
-import jason.asSemantics.Event;
-import jason.asSemantics.Intention;
-import jason.asSemantics.Unifier;
+import jason.asSemantics.*;
 import jason.asSyntax.*;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.fluent.Request;
@@ -54,18 +51,17 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class YAgentArch extends AgArch {
 
   Vertx vertx;
-  JSONLibrary jsonLibrary;
   int messageId;
 
   public YAgentArch(Vertx vertx){
 
     this.vertx = vertx;
-    this.jsonLibrary = new JSONLibrary();
   }
 
   public YAgentArch(){
@@ -78,127 +74,119 @@ public class YAgentArch extends AgArch {
 
 
   @Override
-  public void act(ActionExec actionExec){
+  public void act(ActionExec actionExec) {
     System.out.println("act");
     String agentName = getAgName();
-    System.out.println("agent name: "+agentName);
+    System.out.println("agent name: " + agentName);
     Intention currentIntention = getTS().getC().getSelectedIntention();
-
+    Unifier un = currentIntention.peek().getUnif();
+    un = actionExec.getIntention().peek().getUnif();
     Structure action = actionExec.getActionTerm();
 
-      ListTerm lt = action.getAnnots();
-      if (lt != null){
-        Iterator<Term> it = lt.iterator();
-        while (it.hasNext()){
-          Term annot = it.next();
-        }
+    ListTerm lt = action.getAnnots();
+    if (lt != null) {
+      Iterator<Term> it = lt.iterator();
+      while (it.hasNext()) {
+        Term annot = it.next();
       }
-      String func = action.getFunctor();
-      List<Term> terms = action.getTerms();
-      if (func.equals("createWorkspace")){
-        String workspaceName = terms.get(0).toString();
-        createWorkspace(workspaceName);
-        System.out.println("workspace created");
-      } else if (func.equals("createSubWorkspace")){
-        String workspaceName = terms.get(0).toString();
-        String subWorkspaceName = terms.get(1).toString();
-        createSubWorkspace(workspaceName, subWorkspaceName);
-        System.out.println("sub workspace created");
-      } else if (func.equals("makeArtifact")){
-        String workspaceName = terms.get(0).toString();
-        String artifactName = terms.get(1).toString();
-        String artifactInit = terms.get(2).toString();
-        makeArtifact(workspaceName, artifactName, artifactInit);
+    }
+    String func = action.getFunctor();
+    List<Term> terms = action.getTerms();
+    if (func.equals("createWorkspace")) {
+      String workspaceName = terms.get(0).toString();
+      createWorkspace(workspaceName);
+      System.out.println("workspace created");
+    } else if (func.equals("createSubWorkspace")) {
+      String workspaceName = terms.get(0).toString();
+      String subWorkspaceName = terms.get(1).toString();
+      createSubWorkspace(workspaceName, subWorkspaceName);
+      System.out.println("sub workspace created");
+    } else if (func.equals("makeArtifact")) {
+      String workspaceName = terms.get(0).toString();
+      String artifactName = terms.get(1).toString();
+      String artifactInit = terms.get(2).toString();
+      makeArtifact(workspaceName, artifactName, artifactInit);
+    } else if (func.equals("joinWorkspace")) {
+      String workspaceName = terms.get(0).toString();
+      joinWorkspace(workspaceName);
+
+    } else if (func.equals("leaveWorkspace")) {
+      String workspaceName = terms.get(0).toString();
+      leaveWorkspace(workspaceName);
+    } else if (func.equals("focus")) {
+      System.out.println("start focus");
+      String workspaceName = terms.get(0).toString();
+      String artifactName = terms.get(1).toString();
+      focus(workspaceName, artifactName);
+      System.out.println("end focus");
+
+    } else if (func.equals("stopFocus")) {
+
+    } else if (func.equals("invokeAction")) {
+      String tdUri = terms.get(0).toString();
+      String actionName = terms.get(1).toString();
+      Map<String, String> headers = new Hashtable<>();
+      headers.put("X-Agent-WebID", this.getAgName());
+      String body = null;
+      if (terms.size() > 2) {
+        body = terms.get(2).toString();
       }
-      else if (func.equals("joinWorkspace")){
-        String workspaceName = terms.get(0).toString();
-        joinWorkspace(workspaceName);
-
-      } else if (func.equals("leaveWorkspace")){
-        String workspaceName = terms.get(0).toString();
-        leaveWorkspace(workspaceName);
-      } else if (func.equals("focus")){
-        System.out.println("start focus");
-        String workspaceName = terms.get(0).toString();
-        String artifactName = terms.get(1).toString();
-        focus(workspaceName, artifactName);
-        System.out.println("end focus");
-
-      } else if (func.equals("stopFocus")){
-
-      } else if (func.equals("invokeAction")){
-        String tdUri = terms.get(0).toString();
-        String actionName = terms.get(1).toString();
-        Map<String, String> headers = new Hashtable<>();
-        headers.put("X-Agent-WebID", this.getAgName());
-        String body = null;
-        if (terms.size()>2){
-          body = terms.get(2).toString();
-        }
-        invokeAction(tdUri, actionName, headers, body);
-      } else if (func.equals("getMessage")){
-        try {
-          AgentMessageCallback messageCallback = AgentRegistry.getInstance().getAgentMessageCallback(this.getAgName());
-          String message = messageCallback.retrieveMessage();
-          Term messageName = terms.get(0);
-          Unifier un = actionExec.getIntention().peek().getUnif();
-          if (jsonLibrary.isJson(message)){
-            JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
-            //Term jsonTerm = jsonLibrary.getNewJsonId();
-            Term jsonTerm = terms.get(1);
-            jsonLibrary.bindJson(un, jsonTerm, jsonElement);
-            Literal m = new Structure("message_json");
-            m.addTerm(jsonTerm);
-            this.getTS().getAg().addBel(m);
-          }
-        } catch(Exception e){
-          e.printStackTrace();
-        }
+      invokeAction(tdUri, actionName, headers, body);
+    } else if (func.equals("sendHttpRequest")) {
+      String url = terms.get(0).toString();
+      System.out.println("url: " + url);
+      String method = terms.get(1).toString();
+      System.out.println("method: " + method);
+      Map<String, String> headers = new Hashtable<>();
+      headers.put("X-Agent-WebID", this.getAgName());
+      String body = null;
+      if (terms.size() > 2) {
+        body = terms.get(2).toString();
       }
-      else if (func.equals("sendHttpRequest")){
-        String url = terms.get(0).toString();
-        System.out.println("url: "+url);
-        String method = terms.get(1).toString();
-        System.out.println("method: "+method);
-        Map<String, String> headers = new Hashtable<>();
-        headers.put("X-Agent-WebID", this.getAgName());
-        String body = null;
-        if (terms.size()>2){
-          body = terms.get(2).toString();
-        }
-        sendHttpRequest(url, method, headers, body);
+      sendHttpRequest(url, method, headers, body);
+    } else if (func.equals("printJson")) {
+      System.out.println("printJson");
+      Term jsonId = terms.get(0);
+      System.out.println("json id: "+jsonId);
+      printJSON(jsonId);
       }
 
       System.out.println("end method act");
       actionExec.setResult(true);
       super.actionExecuted(actionExec);
-  }
+    }
+
 
 
   @Override
   public Collection<Literal> perceive(){
     try {
-      AgentNotificationCallback callback = AgentRegistry.getInstance().getAgentCallback(this.getAgName());
-      if (!callback.isEmpty()){
+      AgentRegistry registry = AgentRegistry.getInstance();
+      AgentNotificationCallback callback = registry.getAgentCallback(this.getAgName());
+      if (!callback.isEmpty()) {
         String notification = callback.retrieveNotification();
-        System.out.println("notification received: "+notification);
+        System.out.println("notification received: " + notification);
         Literal belief = Literal.parseLiteral(notification);
         this.getTS().getAg().addBel(belief);
-        AgentMessageCallback messageCallback = AgentRegistry.getInstance().getAgentMessageCallback(this.getAgName());
+      }
+
+        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(this.getAgName());
         if (messageCallback.hasNewMessage()) {
-          Literal messageBelief = new Structure("new_message");
-          //Term jsonId = jsonLibrary.getNewJsonId();
+          System.out.println("agent "+ this.getAgName()+ " has new message");
+          String message = messageCallback.retrieveMessage();
+          Literal messageBelief = new LiteralImpl("new_message");
           Term id = getNewMessageId();
-          //jsonLibrary.new_json(un, messageCallback.retrieveMessage(),jsonId);
-          //messageBelief.addTerms(jsonId, id);
+          JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+          JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
           Term jsonTerm = jsonLibrary.getNewJsonId();
+          jsonLibrary.registerJson(jsonTerm, jsonElement);
           messageBelief.addTerm(id);
           messageBelief.addTerm(jsonTerm);
+          System.out.println("message belief: "+messageBelief);
           this.getTS().getAg().addBel(messageBelief);
           messageCallback.noNewMessage();
         }
-      }
-    } catch(Exception e){
+      } catch(Exception e){
       e.printStackTrace();
     }
 
@@ -207,7 +195,7 @@ public class YAgentArch extends AgArch {
   }
 
   private Term getNewMessageId(){
-    Term messageTermId = new NumberTermImpl(this.messageId);
+    Term messageTermId = new StringTermImpl("Message"+this.messageId);
     this.messageId ++;
     return messageTermId;
   }
@@ -509,6 +497,13 @@ public class YAgentArch extends AgArch {
     System.out.println("request done");
     return returnValue.get();
 
+  }
+
+  //JSON methods
+
+  public void printJSON(Term jsonId){
+    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+    jsonLibrary.printJson(jsonId);
   }
 
 
