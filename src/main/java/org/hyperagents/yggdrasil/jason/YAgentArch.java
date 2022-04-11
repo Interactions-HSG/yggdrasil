@@ -1,9 +1,6 @@
 package org.hyperagents.yggdrasil.jason;
 
-import cartago.AgentCredential;
-import cartago.AgentIdCredential;
-import cartago.ICartagoCallback;
-import cartago.Workspace;
+import cartago.*;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -500,6 +497,79 @@ public class YAgentArch extends AgArch {
   }
 
   //JSON methods
+
+  public JsonElement getJsonElement(Term jsonId){
+    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+    return jsonLibrary.getJSONElementFromTerm(jsonId);
+
+
+  }
+
+  public JsonElement getFromJson(Term jsonId, String attribute){
+    JsonElement jsonElement = getJsonElement(jsonId);
+    if (jsonElement.isJsonObject()){
+      com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
+      return jsonObject.get(attribute);
+    }
+    return null;
+  }
+
+  public JsonElement getFromJson(Term jsonId, int index){
+    JsonElement jsonElement = getJsonElement(jsonId);
+    if (jsonElement.isJsonArray()){
+      JsonArray jsonArray = jsonElement.getAsJsonArray();
+      return jsonArray.get(index);
+    }
+    return null;
+  }
+
+  public Term getAsTerm(Term jsonId){
+    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+    return getAsTerm(jsonLibrary.getJSONElementFromTerm(jsonId));
+
+  }
+
+  public Term getAsTerm(JsonElement jsonElement){
+    if (jsonElement.isJsonArray()){
+      return getAsListTerm(jsonElement);
+    } else if (jsonElement.isJsonObject()){
+      return getAsMapTerm(jsonElement);
+    } else if (jsonElement.isJsonPrimitive()){
+      return getAsStringTerm(jsonElement);
+    } else {
+      return null;
+    }
+  }
+
+  public NumberTerm getAsNumberTerm(JsonElement jsonElement){
+      return new NumberTermImpl(jsonElement.getAsDouble());
+  }
+
+  public StringTerm getAsStringTerm(JsonElement jsonElement){
+    return new StringTermImpl(jsonElement.getAsString());
+  }
+
+
+
+  public MapTerm getAsMapTerm(JsonElement jsonElement){
+    com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
+    MapTerm object = new MapTermImpl();
+    for (String key: jsonObject.keySet()){
+      object.put(new StringTermImpl(key), getAsTerm(jsonObject.get(key)));
+    }
+    return object;
+  }
+
+  public ListTerm getAsListTerm(JsonElement jsonElement){
+    JsonArray jsonArray = jsonElement.getAsJsonArray();
+    ListTerm list = new ListTermImpl();
+    for (int i = 0; i<jsonArray.size();i++){
+      list.add(getAsTerm(jsonArray.get(i)));
+    }
+    return list;
+  }
+
+
 
   public void printJSON(Term jsonId){
     JSONLibrary jsonLibrary = JSONLibrary.getInstance();

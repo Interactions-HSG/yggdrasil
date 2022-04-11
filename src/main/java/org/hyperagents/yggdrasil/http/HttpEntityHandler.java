@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import cartago.ArtifactId;
 import cartago.Workspace;
+import com.google.gson.JsonArray;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -86,6 +87,10 @@ public class HttpEntityHandler {
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
       handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+  }
+
+  public void handleGetAllWorkspaces(RoutingContext context){
+    context.response().setStatusCode(HttpStatus.SC_OK).end();
   }
 
   public void handleCreateWorkspace(RoutingContext context) {
@@ -615,6 +620,40 @@ public class HttpEntityHandler {
         } else {
           routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
         }
+
+        /*String storeReply;
+        String accepted = routingContext.request().headers().get("Accept");
+        if(accepted != null && accepted.equals("application/ld+json")) {
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, accepted);
+          String thing = reply.result().body();
+          if(thing != null && ! thing.isEmpty()) {
+            ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, thing);
+            //TODO I have a problem since I'm losing the context here
+            storeReply = new TDJsonWriter(td)
+              .write();
+          } else {
+            storeReply = null;
+          }
+        } else {
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+          storeReply = reply.result().body();
+        }
+
+        if (storeReply != null && !storeReply.isEmpty()) {
+          httpResponse.end(storeReply);
+        } else {
+          httpResponse.end();
+        }
+      } else {
+        ReplyException exception = ((ReplyException) reply.cause());
+
+        LOGGER.info(exception.getMessage());
+
+        if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
+          routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+        } else {
+          routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+        }*/
       }
     };
   }
