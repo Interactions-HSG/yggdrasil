@@ -89,9 +89,6 @@ public class HttpEntityHandler {
       handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
   }
 
-  public void handleGetAllWorkspaces(RoutingContext context){
-    context.response().setStatusCode(HttpStatus.SC_OK).end();
-  }
 
   public void handleCreateWorkspace(RoutingContext context) {
     String representation = context.getBodyAsString();

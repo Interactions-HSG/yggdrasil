@@ -55,10 +55,14 @@ public class YAgentArch extends AgArch {
 
   Vertx vertx;
   int messageId;
+  HttpClient client = HttpClients.createDefault();
+  Map<String, String> headers;
 
   public YAgentArch(Vertx vertx){
 
     this.vertx = vertx;
+    this.headers = new Hashtable<>();
+    headers.put("X-Agent-WebID", this.getAgName());
   }
 
   public YAgentArch(){
@@ -119,7 +123,14 @@ public class YAgentArch extends AgArch {
 
     } else if (func.equals("stopFocus")) {
 
-    } else if (func.equals("invokeAction")) {
+    } else if (func.equals("setValue")){
+      Unifier u = actionExec.getIntention().pop().getUnif();
+      VarTerm v = (VarTerm) terms.get(0);
+      Term t = terms.get(1);
+      u.bind(v,t);
+    }
+
+    else if (func.equals("invokeAction")) {
       String tdUri = terms.get(0).toString();
       String actionName = terms.get(1).toString();
       Map<String, String> headers = new Hashtable<>();
@@ -129,13 +140,21 @@ public class YAgentArch extends AgArch {
         body = terms.get(2).toString();
       }
       invokeAction(tdUri, actionName, headers, body);
-    } else if (func.equals("sendHttpRequest")) {
+    } else if (func.equals("addHeader")){
+      String key = terms.get(0).toString();
+      String value = terms.get(1).toString();
+      headers.put(key, value);
+    }
+    else if (func.equals("removeHeader")){
+      String key = terms.get(0).toString();
+      headers.remove(key);
+    }
+
+    else if (func.equals("sendHttpRequest")) {
       String url = terms.get(0).toString();
       System.out.println("url: " + url);
       String method = terms.get(1).toString();
       System.out.println("method: " + method);
-      Map<String, String> headers = new Hashtable<>();
-      headers.put("X-Agent-WebID", this.getAgName());
       String body = null;
       if (terms.size() > 2) {
         body = terms.get(2).toString();
@@ -365,7 +384,9 @@ public class YAgentArch extends AgArch {
 
 
 
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
+
+
+  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term){
     tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
@@ -404,7 +425,59 @@ public class YAgentArch extends AgArch {
 
         }
         TDHttpResponse response = request.execute();
+       Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+       u.bind(term, new StringTermImpl(response.getPayloadAsString()));
       } else {
+          System.out.println("form is not present");
+        }
+      } else {
+        System.out.println("action is not present");
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      if (opAction.isPresent()) {
+        ActionAffordance action = opAction.get();
+        Optional<Form> opForm = action.getFirstForm();
+        if (opForm.isPresent()) {
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          if (body != null){
+            JsonElement element = JsonParser.parseString(body);
+            Optional<DataSchema> opSchema = action.getInputSchema();
+            if (opSchema.isPresent()){
+              DataSchema schema = opSchema.get();
+              if (schema.getDatatype() == "array" && element.isJsonArray()){
+                List<Object> payload = createArrayPayload(element.getAsJsonArray());
+                request.setArrayPayload((ArraySchema) schema, payload);
+              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
+                request.setObjectPayload((ObjectSchema) schema, payload );
+              } else if (schema.getDatatype() == "string"){
+                request.setPrimitivePayload(schema, element.getAsString());
+              } else if (schema.getDatatype() == "number"){
+                request.setPrimitivePayload(schema, element.getAsDouble());
+              } else if (schema.getDatatype() == "integer"){
+                request.setPrimitivePayload(schema, element.getAsLong());
+              } else if (schema.getDatatype() == "boolean"){
+                request.setPrimitivePayload(schema, element.getAsBoolean());
+              }
+            }
+
+          }
+          TDHttpResponse response = request.execute();
+        } else {
           System.out.println("form is not present");
         }
       } else {
@@ -459,9 +532,16 @@ public class YAgentArch extends AgArch {
     return request;
   }
 
+  public void setHeader(String key, String value){
+    headers.put(key, value);
+  }
+
+  public void removeHeader(String key){
+    headers.remove(key);
+  }
+
 
   public String sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
-    HttpClient client = HttpClients.createDefault();
     AtomicReference<String> returnValue = new AtomicReference();
     ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
     for (String key: headers.keySet()){
@@ -523,6 +603,30 @@ public class YAgentArch extends AgArch {
     return null;
   }
 
+  public String getStringFromJson(Term jsonId, int index){
+    return getFromJson(jsonId, index).getAsString();
+  }
+
+  public String getStringFromJson(Term jsonId, String attribute){
+    return getFromJson(jsonId, attribute).getAsString();
+  }
+
+  public double getNumberFromJson(Term jsonId, int index){
+    return getFromJson(jsonId, index).getAsDouble();
+  }
+
+  public double getNumberFromJson(Term jsonId, String attribute){
+    return getFromJson(jsonId, attribute).getAsDouble();
+  }
+
+  public boolean getBooleanFromJson(Term jsonId, int index){
+    return getFromJson(jsonId, index).getAsBoolean();
+  }
+
+  public boolean getBooleanFromJson(Term jsonId, String attribute){
+    return getFromJson(jsonId, attribute).getAsBoolean();
+  }
+
   public Term getAsTerm(Term jsonId){
     JSONLibrary jsonLibrary = JSONLibrary.getInstance();
     return getAsTerm(jsonLibrary.getJSONElementFromTerm(jsonId));
@@ -567,6 +671,24 @@ public class YAgentArch extends AgArch {
       list.add(getAsTerm(jsonArray.get(i)));
     }
     return list;
+  }
+
+  public void createJsonObject(Unifier un, ListTerm attributeNames, ListTerm attributeValues, VarTerm jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject jsonObject = new com.google.gson.JsonObject();
+    int n1 = attributeNames.size();
+    int n2 = attributeValues.size();
+    if (n1==n2) {
+      for (int i = 0; i < n1; i++) {
+        jsonObject.add(attributeNames.get(i).toString(), getJsonElement(attributeValues.get(i)));
+      }
+      String jsonString = jsonObject.toString();
+      try {
+        library.new_json(un, jsonString, jsonId);
+      } catch (Exception e){
+        e.printStackTrace();
+      }
+    }
   }
 
 

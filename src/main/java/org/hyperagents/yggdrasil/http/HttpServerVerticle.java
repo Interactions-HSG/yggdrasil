@@ -55,7 +55,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/workspaces/:wkspid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
-    router.get("/workspaces").handler(handler::handleGetAllWorkspaces);
     router.post("/workspaces/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
     router.post("/workspaces/").handler(handler::handleCreateWorkspace);
