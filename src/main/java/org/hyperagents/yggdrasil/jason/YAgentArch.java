@@ -165,7 +165,17 @@ public class YAgentArch extends AgArch {
       Term jsonId = terms.get(0);
       System.out.println("json id: "+jsonId);
       printJSON(jsonId);
-      }
+      } else if (func.equals("makeJson")){
+      ListTerm attributeList = (ListTerm) terms.get(0);
+      ListTerm valueList = (ListTerm) terms.get(1);
+      VarTerm jsonId = (VarTerm) terms.get(2);
+      createJsonObject(un, attributeList, valueList, jsonId);
+    } else if (func.equals("getJsonAsString")){
+      VarTerm jsonId = (VarTerm) terms.get(0);
+      StringTerm str = getAsStringTerm(jsonId);
+      un.bind((VarTerm) terms.get(1), str);
+
+    }
 
       System.out.println("end method act");
       actionExec.setResult(true);
@@ -653,7 +663,11 @@ public class YAgentArch extends AgArch {
     return new StringTermImpl(jsonElement.getAsString());
   }
 
-
+public StringTerm getAsStringTerm(VarTerm jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    JsonElement json = library.getJSONElementFromTerm(jsonId);
+    return getAsStringTerm(json);
+}
 
   public MapTerm getAsMapTerm(JsonElement jsonElement){
     com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
