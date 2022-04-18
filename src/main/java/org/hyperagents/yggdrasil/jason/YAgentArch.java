@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil.jason;
 import cartago.*;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.affordances.EventAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
@@ -133,14 +134,21 @@ public class YAgentArch extends AgArch {
     else if (func.equals("invokeAction")) {
       String tdUri = terms.get(0).toString();
       String actionName = terms.get(1).toString();
-      Map<String, String> headers = new Hashtable<>();
-      headers.put("X-Agent-WebID", this.getAgName());
       String body = null;
       if (terms.size() > 2) {
         body = terms.get(2).toString();
       }
       invokeAction(tdUri, actionName, headers, body);
-    } else if (func.equals("addHeader")){
+    } else if (func.equals("subscribeEvent")) {
+      String tdUri = terms.get(0).toString();
+      String eventName = terms.get(1).toString();
+      String body = null;
+      if (terms.size() > 2) {
+        body = terms.get(2).toString();
+      }
+      subscribeEvent(tdUri, eventName, headers, body);
+    }
+    else if (func.equals("addHeader")){
       String key = terms.get(0).toString();
       String value = terms.get(1).toString();
       headers.put(key, value);
@@ -466,6 +474,56 @@ public class YAgentArch extends AgArch {
           if (body != null){
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
+            if (opSchema.isPresent()){
+              DataSchema schema = opSchema.get();
+              if (schema.getDatatype() == "array" && element.isJsonArray()){
+                List<Object> payload = createArrayPayload(element.getAsJsonArray());
+                request.setArrayPayload((ArraySchema) schema, payload);
+              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
+                request.setObjectPayload((ObjectSchema) schema, payload );
+              } else if (schema.getDatatype() == "string"){
+                request.setPrimitivePayload(schema, element.getAsString());
+              } else if (schema.getDatatype() == "number"){
+                request.setPrimitivePayload(schema, element.getAsDouble());
+              } else if (schema.getDatatype() == "integer"){
+                request.setPrimitivePayload(schema, element.getAsLong());
+              } else if (schema.getDatatype() == "boolean"){
+                request.setPrimitivePayload(schema, element.getAsBoolean());
+              }
+            }
+
+          }
+          TDHttpResponse response = request.execute();
+        } else {
+          System.out.println("form is not present");
+        }
+      } else {
+        System.out.println("action is not present");
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public void subscribeEvent(String tdUrl, String affordanceName, Map<String, String> headers, String body){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
+      if (opEvent.isPresent()) {
+        EventAffordance event = opEvent.get();
+        List<Form> forms = event.getForms();
+        if (forms.size()>0) {
+          Form form = forms.get(0);
+          TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          if (body != null){
+            JsonElement element = JsonParser.parseString(body);
+            Optional<DataSchema> opSchema = event.getSubscriptionSchema();
             if (opSchema.isPresent()){
               DataSchema schema = opSchema.get();
               if (schema.getDatatype() == "array" && element.isJsonArray()){
