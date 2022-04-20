@@ -183,6 +183,18 @@ public class YAgentArch extends AgArch {
       StringTerm str = getAsStringTerm(jsonId);
       un.bind((VarTerm) terms.get(1), str);
 
+    } else if (func.equals("getStringFromJson")){
+      VarTerm jsonId = (VarTerm) terms.get(0);
+      String attribute = ((StringTerm) terms.get(1)).getString();
+      StringTerm value = new StringTermImpl(getStringFromJson(jsonId, attribute));
+      un.bind((VarTerm) terms.get(2), value);
+
+    }  else if (func.equals("getNumberFromJson")){
+      VarTerm jsonId = (VarTerm) terms.get(0);
+      String attribute = ((StringTerm) terms.get(1)).getString();
+      NumberTerm value = new NumberTermImpl(getNumberFromJson(jsonId, attribute));
+      un.bind((VarTerm) terms.get(2), value);
+
     }
 
       System.out.println("end method act");
