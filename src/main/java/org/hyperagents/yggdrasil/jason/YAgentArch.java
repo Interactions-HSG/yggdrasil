@@ -138,7 +138,18 @@ public class YAgentArch extends AgArch {
       if (terms.size() > 2) {
         body = terms.get(2).toString();
       }
-      invokeAction(tdUri, actionName, headers, body);
+      if (terms.size() == 4){
+        VarTerm var = (VarTerm) terms.get(3);
+        invokeAction(tdUri, actionName, headers, body, var);
+      }
+      else if (terms.size() == 6){
+        ListTerm uriVariableNames = (ListTerm) terms.get(3);
+        ListTerm uriVariableValues = (ListTerm) terms.get(4);
+        VarTerm var = (VarTerm) terms.get(5);
+        invokeAction(tdUri, actionName, headers, body, uriVariableNames, uriVariableValues, var);
+      } else {
+        invokeAction(tdUri, actionName, headers, body);
+      }
     } else if (func.equals("subscribeEvent")) {
       String tdUri = terms.get(0).toString();
       String eventName = terms.get(1).toString();
@@ -427,6 +438,7 @@ public class YAgentArch extends AgArch {
         if (opForm.isPresent()) {
         Form form = opForm.get();
         TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+
         for (String key: headers.keySet()){
           String value = headers.get(key);
           request.addHeader(key, value);
@@ -458,6 +470,72 @@ public class YAgentArch extends AgArch {
        Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
        u.bind(term, new StringTermImpl(response.getPayloadAsString()));
       } else {
+          System.out.println("form is not present");
+        }
+      } else {
+        System.out.println("action is not present");
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+
+
+  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      if (opAction.isPresent()) {
+        ActionAffordance action = opAction.get();
+        Optional<Form> opForm = action.getFirstForm();
+        if (opForm.isPresent()) {
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          if (action.getUriVariables().isPresent()) {
+            Map<String, Object> values = new Hashtable<>();
+            int n = uriVariableNames.size();
+            int m = uriVariableValues.size();
+            if (n==m){
+              for (int i = 0; i <n; i++){
+                values.put(uriVariableNames.get(i).toString(), uriVariableValues.get(i).toString());
+              }
+            }
+             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
+          }
+
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          if (body != null){
+            JsonElement element = JsonParser.parseString(body);
+            Optional<DataSchema> opSchema = action.getInputSchema();
+            if (opSchema.isPresent()){
+              DataSchema schema = opSchema.get();
+              if (schema.getDatatype() == "array" && element.isJsonArray()){
+                List<Object> payload = createArrayPayload(element.getAsJsonArray());
+                request.setArrayPayload((ArraySchema) schema, payload);
+              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
+                request.setObjectPayload((ObjectSchema) schema, payload );
+              } else if (schema.getDatatype() == "string"){
+                request.setPrimitivePayload(schema, element.getAsString());
+              } else if (schema.getDatatype() == "number"){
+                request.setPrimitivePayload(schema, element.getAsDouble());
+              } else if (schema.getDatatype() == "integer"){
+                request.setPrimitivePayload(schema, element.getAsLong());
+              } else if (schema.getDatatype() == "boolean"){
+                request.setPrimitivePayload(schema, element.getAsBoolean());
+              }
+            }
+
+          }
+          TDHttpResponse response = request.execute();
+          Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+        } else {
           System.out.println("form is not present");
         }
       } else {
