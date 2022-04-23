@@ -9,6 +9,7 @@ import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
@@ -16,6 +17,7 @@ import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -72,6 +74,8 @@ public class YAgentArch extends AgArch {
     System.out.println("vertx: "+vertx);
     //this.vertx = new VertxFactoryImpl().vertx();
     messageId = 0;
+    this.headers = new Hashtable<>();
+    headers.put("X-Agent-WebID", this.getAgName());
   }
 
 
@@ -132,11 +136,14 @@ public class YAgentArch extends AgArch {
     }
 
     else if (func.equals("invokeAction")) {
-      String tdUri = terms.get(0).toString();
-      String actionName = terms.get(1).toString();
+      StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      String tdUri = tdUriTerm.getString();
+      StringTerm actionTerm = (StringTerm) terms.get(1);
+      String actionName = actionTerm.getString();
       String body = null;
       if (terms.size() > 2) {
-        body = terms.get(2).toString();
+        StringTerm st = (StringTerm) terms.get(2);
+        body = st.getString();
       }
       if (terms.size() == 4){
         VarTerm var = (VarTerm) terms.get(3);
@@ -151,11 +158,14 @@ public class YAgentArch extends AgArch {
         invokeAction(tdUri, actionName, headers, body);
       }
     } else if (func.equals("subscribeEvent")) {
-      String tdUri = terms.get(0).toString();
-      String eventName = terms.get(1).toString();
+      StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      String tdUri = tdUriTerm.getString();
+      StringTerm eventTerm = (StringTerm) terms.get(1);
+      String eventName = eventTerm.getString();
       String body = null;
       if (terms.size() > 2) {
-        body = terms.get(2).toString();
+        StringTerm bodyTerm = (StringTerm) terms.get(2);
+        body = bodyTerm.getString();
       }
       subscribeEvent(tdUri, eventName, headers, body);
     }
@@ -170,13 +180,16 @@ public class YAgentArch extends AgArch {
     }
 
     else if (func.equals("sendHttpRequest")) {
-      String url = terms.get(0).toString();
+      StringTerm urlTerm = (StringTerm) terms.get(0);
+      String url = urlTerm.getString();
       System.out.println("url: " + url);
-      String method = terms.get(1).toString();
+      StringTerm methodTerm = (StringTerm) terms.get(1);
+      String method = methodTerm.toString();
       System.out.println("method: " + method);
       String body = null;
       if (terms.size() > 2) {
-        body = terms.get(2).toString();
+        StringTerm bodyTerm = (StringTerm) terms.get(2);
+        body = bodyTerm.getString();
       }
       sendHttpRequest(url, method, headers, body);
     } else if (func.equals("printJson")) {
@@ -190,18 +203,25 @@ public class YAgentArch extends AgArch {
       VarTerm jsonId = (VarTerm) terms.get(2);
       createJsonObject(un, attributeList, valueList, jsonId);
     } else if (func.equals("getJsonAsString")){
-      VarTerm jsonId = (VarTerm) terms.get(0);
+      System.out.println("term 0: "+terms.get(0));
+      Term jsonId = terms.get(0);
+      System.out.println("jsonId: "+jsonId);
       StringTerm str = getAsStringTerm(jsonId);
+      System.out.println("json as string: "+str);
       un.bind((VarTerm) terms.get(1), str);
 
     } else if (func.equals("getStringFromJson")){
-      VarTerm jsonId = (VarTerm) terms.get(0);
+      Term jsonId = terms.get(0);
+      System.out.println("jsonId: "+jsonId);
       String attribute = ((StringTerm) terms.get(1)).getString();
-      StringTerm value = new StringTermImpl(getStringFromJson(jsonId, attribute));
+      System.out.println("attribute: "+attribute);
+      String str = getStringFromJson(jsonId, attribute);
+      System.out.println("string: "+str);
+      StringTerm value = new StringTermImpl(str);
       un.bind((VarTerm) terms.get(2), value);
 
     }  else if (func.equals("getNumberFromJson")){
-      VarTerm jsonId = (VarTerm) terms.get(0);
+      Term jsonId = terms.get(0);
       String attribute = ((StringTerm) terms.get(1)).getString();
       NumberTerm value = new NumberTermImpl(getNumberFromJson(jsonId, attribute));
       un.bind((VarTerm) terms.get(2), value);
@@ -428,9 +448,12 @@ public class YAgentArch extends AgArch {
 
 
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term){
-    tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      System.out.println("td received");
+      System.out.println("td: "+ new TDGraphWriter(td).write());
+      System.out.println("number of actions: "+td.getActions().size());
+      td.getActions().forEach(a -> System.out.println(a));
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
@@ -483,7 +506,6 @@ public class YAgentArch extends AgArch {
 
 
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term){
-    tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
@@ -547,9 +569,18 @@ public class YAgentArch extends AgArch {
   }
 
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
-    tdUrl = tdUrl.replace("\"","");
+  System.out.println("tdUrl: "+tdUrl);
+  System.out.println("affordanceName: "+affordanceName);
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      System.out.println("td received");
+      System.out.println("td: "+ new TDGraphWriter(td).write());
+      System.out.println("number of actions: "+td.getActions().size());
+      List<ActionAffordance> actions = td.getActions();
+      for (ActionAffordance a: actions){
+        System.out.println(a.getName());
+      }
+      System.out.println("affordance name: "+affordanceName);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
@@ -557,11 +588,16 @@ public class YAgentArch extends AgArch {
         if (opForm.isPresent()) {
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          System.out.println("request defined");
+          System.out.println(headers);
+          System.out.println("number of headers: "+headers.size());
           for (String key: headers.keySet()){
+            System.out.println("key: "+key);
             String value = headers.get(key);
             request.addHeader(key, value);
           }
           if (body != null){
+            System.out.println("body: "+body);
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
@@ -597,7 +633,6 @@ public class YAgentArch extends AgArch {
   }
 
   public void subscribeEvent(String tdUrl, String affordanceName, Map<String, String> headers, String body){
-    tdUrl = tdUrl.replace("\"","");
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
@@ -743,6 +778,22 @@ public class YAgentArch extends AgArch {
 
   }
 
+  public JsonElement getAsJsonElement(Term t){
+    JsonElement element = null;
+    if (t.isString()){
+      StringTerm st = (StringTerm) t;
+      element = new JsonPrimitive(st.getString());
+    } else if (t.isNumeric()){
+      NumberTerm nt = (NumberTerm) t;
+      try {
+        element = new JsonPrimitive(nt.solve());
+      } catch(Exception e){
+        e.printStackTrace();
+      }
+    }
+    return element;
+  }
+
   public JsonElement getFromJson(Term jsonId, String attribute){
     JsonElement jsonElement = getJsonElement(jsonId);
     if (jsonElement.isJsonObject()){
@@ -808,12 +859,19 @@ public class YAgentArch extends AgArch {
   }
 
   public StringTerm getAsStringTerm(JsonElement jsonElement){
-    return new StringTermImpl(jsonElement.getAsString());
+    System.out.println(jsonElement);
+    String jsonElementString = jsonElement.toString();
+    StringTerm st =  new StringTermImpl(jsonElementString);
+    System.out.println("string term: "+st);
+    return st;
   }
 
-public StringTerm getAsStringTerm(VarTerm jsonId){
+public StringTerm getAsStringTerm(Term jsonId){
     JSONLibrary library = JSONLibrary.getInstance();
+    System.out.println("library retrieved");
     JsonElement json = library.getJSONElementFromTerm(jsonId);
+    System.out.println("json element retrieved");
+    System.out.println("json element: "+json);
     return getAsStringTerm(json);
 }
 
@@ -842,9 +900,14 @@ public StringTerm getAsStringTerm(VarTerm jsonId){
     int n2 = attributeValues.size();
     if (n1==n2) {
       for (int i = 0; i < n1; i++) {
-        jsonObject.add(attributeNames.get(i).toString(), getJsonElement(attributeValues.get(i)));
+        Term attributeName = attributeNames.get(i);
+        if (attributeName.isString()) {
+          StringTerm attributeNameStringTerm = (StringTerm) attributeName;
+          jsonObject.add(attributeNameStringTerm.getString(), getAsJsonElement(attributeValues.get(i)));
+        }
       }
       String jsonString = jsonObject.toString();
+      System.out.println("json created: "+jsonString);
       try {
         library.new_json(un, jsonString, jsonId);
       } catch (Exception e){
