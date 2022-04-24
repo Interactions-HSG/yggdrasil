@@ -8,11 +8,13 @@ import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
+import ch.unisg.ics.interactions.wot.td.clients.UriTemplate;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -129,9 +131,11 @@ public class YAgentArch extends AgArch {
     } else if (func.equals("stopFocus")) {
 
     } else if (func.equals("setValue")){
-      Unifier u = actionExec.getIntention().pop().getUnif();
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       VarTerm v = (VarTerm) terms.get(0);
+      System.out.println("variable: "+v);
       Term t = terms.get(1);
+      System.out.println("value: "+t);
       u.bind(v,t);
     }
 
@@ -142,8 +146,12 @@ public class YAgentArch extends AgArch {
       String actionName = actionTerm.getString();
       String body = null;
       if (terms.size() > 2) {
-        StringTerm st = (StringTerm) terms.get(2);
-        body = st.getString();
+        Term t = terms.get(2);
+        if (t.isString()) {
+          StringTerm st = (StringTerm) terms.get(2);
+          body =  st.getString();
+          System.out.println("body: "+body);
+        }
       }
       if (terms.size() == 4){
         VarTerm var = (VarTerm) terms.get(3);
@@ -191,7 +199,8 @@ public class YAgentArch extends AgArch {
         StringTerm bodyTerm = (StringTerm) terms.get(2);
         body = bodyTerm.getString();
       }
-      sendHttpRequest(url, method, headers, body);
+      com.google.gson.JsonObject o = sendHttpRequest(url, method, headers, body);
+      System.out.println("return object: "+o);
     } else if (func.equals("printJson")) {
       System.out.println("printJson");
       Term jsonId = terms.get(0);
@@ -202,7 +211,21 @@ public class YAgentArch extends AgArch {
       ListTerm valueList = (ListTerm) terms.get(1);
       VarTerm jsonId = (VarTerm) terms.get(2);
       createJsonObject(un, attributeList, valueList, jsonId);
-    } else if (func.equals("getJsonAsString")){
+    } else if (func.equals("hasAttribute")){
+      Term jsonId = terms.get(0);
+      StringTerm attributeTerm = (StringTerm) terms.get(1);
+      String attribute = attributeTerm.getString();
+      boolean b = hasAttribute(jsonId, attribute);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      VarTerm v = (VarTerm) terms.get(2);
+      Term t = Literal.LFalse;
+      if (b){
+        t = Literal.LTrue;
+      }
+      u.bind(v,t);
+    }
+
+    else if (func.equals("getJsonAsString")){
       System.out.println("term 0: "+terms.get(0));
       Term jsonId = terms.get(0);
       System.out.println("jsonId: "+jsonId);
@@ -226,6 +249,17 @@ public class YAgentArch extends AgArch {
       NumberTerm value = new NumberTermImpl(getNumberFromJson(jsonId, attribute));
       un.bind((VarTerm) terms.get(2), value);
 
+    } else if (func.equals("testUriVariables")){
+      String uriTemplate = "http://example.org/{?a,b}";
+      UriTemplate template = new UriTemplate(uriTemplate);
+      Map<String, DataSchema> uriVariables = new Hashtable<>();
+      uriVariables.put("a", new StringSchema.Builder().build());
+      uriVariables.put("b", new StringSchema.Builder().build());
+      Map<String, Object> values = new Hashtable<>();
+      values.put("a", "abc");
+      values.put("b", "gh");
+      String uri = template.createUri(uriVariables, values);
+      System.out.println(uri);
     }
 
       System.out.println("end method act");
@@ -380,7 +414,7 @@ public class YAgentArch extends AgArch {
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/join";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
-    String response = sendHttpRequest(uri, "PUT", headers, null);
+    String response = sendHttpRequest(uri, "PUT", headers, null).get("body").getAsString();
     try {
       System.out.println("body description: "+response);
       ThingDescription td = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, response);
@@ -447,6 +481,8 @@ public class YAgentArch extends AgArch {
 
 
 
+
+
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
@@ -456,11 +492,14 @@ public class YAgentArch extends AgArch {
       td.getActions().forEach(a -> System.out.println(a));
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
+        System.out.println("action is present");
         ActionAffordance action = opAction.get();
         Optional<Form> opForm = action.getFirstForm();
         if (opForm.isPresent()) {
+          System.out.println("form is present");
         Form form = opForm.get();
         TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+        System.out.println("request target: "+request.getTarget());
 
         for (String key: headers.keySet()){
           String value = headers.get(key);
@@ -470,6 +509,7 @@ public class YAgentArch extends AgArch {
           JsonElement element = JsonParser.parseString(body);
           Optional<DataSchema> opSchema = action.getInputSchema();
           if (opSchema.isPresent()){
+            System.out.println("schema is present");
             DataSchema schema = opSchema.get();
             if (schema.getDatatype() == "array" && element.isJsonArray()){
               List<Object> payload = createArrayPayload(element.getAsJsonArray());
@@ -487,11 +527,14 @@ public class YAgentArch extends AgArch {
               request.setPrimitivePayload(schema, element.getAsBoolean());
             }
           }
+          System.out.println("request body: "+request.getPayloadAsString());
 
         }
         TDHttpResponse response = request.execute();
-       Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-       u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+        com.google.gson.JsonObject responseObject = createResponseObject(response);
+        bindTermToJson(term, responseObject);
+       //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+       //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
       } else {
           System.out.println("form is not present");
         }
@@ -555,8 +598,10 @@ public class YAgentArch extends AgArch {
 
           }
           TDHttpResponse response = request.execute();
+          com.google.gson.JsonObject responseObject = createResponseObject(response);
           Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+          bindTermToJson(term, responseObject);
         } else {
           System.out.println("form is not present");
         }
@@ -734,8 +779,9 @@ public class YAgentArch extends AgArch {
   }
 
 
-  public String sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
+  public com.google.gson.JsonObject sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
     AtomicReference<String> returnValue = new AtomicReference();
+    com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
     ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
     for (String key: headers.keySet()){
       String value = headers.get(key);
@@ -746,6 +792,14 @@ public class YAgentArch extends AgArch {
     }
     try {
       client.execute(request, response -> {
+        returnObject.addProperty("statusCode", response.getCode());
+        Iterator<Header> responseHeaders = response.headerIterator();
+        com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
+        while (responseHeaders.hasNext()){
+          Header h = responseHeaders.next();
+          rHeaders.addProperty(h.getName(), h.getValue());
+        }
+        returnObject.add("headers", rHeaders);
         System.out.println("response received: ");
         System.out.println(response.toString());
         HttpEntity entity = response.getEntity();
@@ -765,8 +819,39 @@ public class YAgentArch extends AgArch {
       e.printStackTrace();
     }
     System.out.println("request done");
-    return returnValue.get();
+    returnObject.addProperty("body", returnValue.get());
+    return returnObject;
 
+  }
+
+  public com.google.gson.JsonObject createResponseObject(TDHttpResponse response){
+    com.google.gson.JsonObject responseObject = new com.google.gson.JsonObject();
+    responseObject.addProperty("statusCode", response.getStatusCode());
+    Map<String,String> responseHeaders = response.getHeaders();
+    com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
+    for (String key: responseHeaders.keySet()){
+      rHeaders.addProperty(key, responseHeaders.get(key));
+    }
+    responseObject.add("headers", rHeaders);
+    Optional<String> payload = response.getPayload();
+    if (payload.isPresent()){
+      responseObject.addProperty("body", payload.get());
+    }
+    return responseObject;
+  }
+
+  public String getBody(com.google.gson.JsonObject o){
+    return o.get("body").getAsString();
+  }
+
+  public String getBody(Term jsonId){
+    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+    JsonElement e = jsonLibrary.getJSONElementFromTerm(jsonId);
+    if (e.isJsonObject()){
+      com.google.gson.JsonObject o = e.getAsJsonObject();
+      return getBody(o);
+    }
+    return null;
   }
 
   //JSON methods
@@ -787,11 +872,40 @@ public class YAgentArch extends AgArch {
       NumberTerm nt = (NumberTerm) t;
       try {
         element = new JsonPrimitive(nt.solve());
-      } catch(Exception e){
+       }
+      catch(Exception e){
         e.printStackTrace();
+      }
+    } else if (t.isList()){
+      ListTerm listTerm = (ListTerm) t;
+      JsonArray array = new JsonArray();
+      for (int i = 0; i<listTerm.size(); i++){
+        array.add(getAsJsonElement(listTerm.get(i)));
+      }
+      element = array;
+    } else if (t.isVar()){
+      element = getJsonElement(t);
+    } else if (t.isLiteral()){
+      Literal l = (Literal) t;
+      String func = l.getFunctor();
+      if (func.equals("true")){
+        element = new JsonPrimitive(true);
+      } else if (func.equals("false")){
+        element = new JsonPrimitive(false);
+      } else {
+        element = getJsonElement(t);
       }
     }
     return element;
+  }
+
+  public boolean hasAttribute(Term jsonId, String attribute){
+    boolean b = false;
+    JsonElement jsonElement = getJsonElement(jsonId);
+    if (jsonElement.isJsonObject()){
+      b = jsonElement.getAsJsonObject().keySet().contains(attribute);
+    }
+    return b;
   }
 
   public JsonElement getFromJson(Term jsonId, String attribute){
@@ -922,6 +1036,26 @@ public StringTerm getAsStringTerm(Term jsonId){
     JSONLibrary jsonLibrary = JSONLibrary.getInstance();
     jsonLibrary.printJson(jsonId);
   }
+
+  public void bindTermToJson(Term jsonId, JsonElement jsonElement){
+    JSONLibrary library = JSONLibrary.getInstance();
+    Unifier un = getTS().getC().getSelectedIntention().peek().getUnif();
+    try {
+      library.new_json(un, jsonElement.toString(), jsonId);
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+  }
+
+  public Map<String, Object> convertJsonObjectToMap(com.google.gson.JsonObject obj){
+    Map<String, Object> map = new Hashtable<>();
+    for (String key: obj.keySet()){
+      map.put(key, obj.get(key));
+    }
+    return map;
+  }
+
+
 
 
 

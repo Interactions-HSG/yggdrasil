@@ -476,7 +476,7 @@ public class HttpEntityHandler {
       AgentMessageCallback callback = agentRegistry.getAgentMessageCallback(agentName);
       callback.addMessage(body);
       System.out.println("message added to message callback");
-      context.response().setStatusCode(HttpStatus.SC_OK).end("message received");
+      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
     } catch(Exception e){
       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
       e.printStackTrace();
