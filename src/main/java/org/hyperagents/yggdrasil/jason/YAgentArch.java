@@ -223,6 +223,16 @@ public class YAgentArch extends AgArch {
         t = Literal.LTrue;
       }
       u.bind(v,t);
+    } else if (func.equals("isValid")){
+      Term jsonId = terms.get(0);
+      VarTerm bVar = (VarTerm) terms.get(1);
+      boolean b = isValid(jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      if (b) {
+        u.bind(bVar, Literal.LTrue);
+      } else {
+        u.bind(bVar, Literal.LFalse);
+      }
     }
 
     else if (func.equals("getJsonAsString")){
@@ -838,6 +848,21 @@ public class YAgentArch extends AgArch {
       responseObject.addProperty("body", payload.get());
     }
     return responseObject;
+  }
+
+  public boolean isValid(com.google.gson.JsonObject responseObject){
+    boolean b = false;
+    int code = responseObject.get("statusCode").getAsInt();
+    if (code < 400 ){
+      b = true;
+    }
+    return b;
+  }
+
+  public boolean isValid(Term jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    return isValid(object);
   }
 
   public String getBody(com.google.gson.JsonObject o){
