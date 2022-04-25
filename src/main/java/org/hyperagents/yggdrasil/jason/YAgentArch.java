@@ -132,11 +132,12 @@ public class YAgentArch extends AgArch {
 
     } else if (func.equals("setValue")){
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      VarTerm v = (VarTerm) terms.get(0);
+      VarTerm v =  (VarTerm) terms.get(0);
       System.out.println("variable: "+v);
       Term t = terms.get(1);
       System.out.println("value: "+t);
       u.bind(v,t);
+
     }
 
     else if (func.equals("invokeAction")) {
@@ -201,6 +202,10 @@ public class YAgentArch extends AgArch {
       }
       com.google.gson.JsonObject o = sendHttpRequest(url, method, headers, body);
       System.out.println("return object: "+o);
+      if (terms.size()>3){
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        bindTermToJson(terms.get(3), o);
+      }
     } else if (func.equals("printJson")) {
       System.out.println("printJson");
       Term jsonId = terms.get(0);
@@ -233,6 +238,46 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
+    } else if (func.equals("isInformation")){
+      Term jsonId = terms.get(0);
+      VarTerm bVar = (VarTerm) terms.get(1);
+      boolean b = isInformation(jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      if (b) {
+        u.bind(bVar, Literal.LTrue);
+      } else {
+        u.bind(bVar, Literal.LFalse);
+      }
+    } else if (func.equals("isRedirection")){
+      Term jsonId = terms.get(0);
+      VarTerm bVar = (VarTerm) terms.get(1);
+      boolean b = isRedirection(jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      if (b) {
+        u.bind(bVar, Literal.LTrue);
+      } else {
+        u.bind(bVar, Literal.LFalse);
+      }
+    } else if (func.equals("isClientError")){
+      Term jsonId = terms.get(0);
+      VarTerm bVar = (VarTerm) terms.get(1);
+      boolean b = isClientError(jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      if (b) {
+        u.bind(bVar, Literal.LTrue);
+      } else {
+        u.bind(bVar, Literal.LFalse);
+      }
+    } else if (func.equals("isServerError")){
+      Term jsonId = terms.get(0);
+      VarTerm bVar = (VarTerm) terms.get(1);
+      boolean b = isServerError(jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      if (b) {
+        u.bind(bVar, Literal.LTrue);
+      } else {
+        u.bind(bVar, Literal.LFalse);
+      }
     }
 
     else if (func.equals("getJsonAsString")){
@@ -243,7 +288,19 @@ public class YAgentArch extends AgArch {
       System.out.println("json as string: "+str);
       un.bind((VarTerm) terms.get(1), str);
 
-    } else if (func.equals("getStringFromJson")){
+    } else if (func.equals("getStringAsJson")){
+      StringTerm st = (StringTerm) terms.get(0);
+      Term jsonId = terms.get(1);
+      JSONLibrary library = JSONLibrary.getInstance();
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      try {
+        library.new_json(u, st.getString(), jsonId);
+      } catch(Exception e){
+        e.printStackTrace();
+      }
+    }
+
+    else if (func.equals("getStringFromJson")){
       Term jsonId = terms.get(0);
       System.out.println("jsonId: "+jsonId);
       String attribute = ((StringTerm) terms.get(1)).getString();
@@ -850,19 +907,81 @@ public class YAgentArch extends AgArch {
     return responseObject;
   }
 
-  public boolean isValid(com.google.gson.JsonObject responseObject){
+  public boolean isInformation(com.google.gson.JsonObject responseObject){
     boolean b = false;
     int code = responseObject.get("statusCode").getAsInt();
-    if (code < 400 ){
+    if (code < 200 ){
       b = true;
     }
     return b;
   }
 
+  public boolean isValid(com.google.gson.JsonObject responseObject){
+    boolean b = false;
+    int code = responseObject.get("statusCode").getAsInt();
+    if (code >=200 && code<300 ){
+      b = true;
+    }
+    return b;
+  }
+
+  public boolean isRedirection(com.google.gson.JsonObject responseObject){
+    boolean b = false;
+    int code = responseObject.get("statusCode").getAsInt();
+    if (code >=300 && code<400 ){
+      b = true;
+    }
+    return b;
+  }
+
+  public boolean isClientError(com.google.gson.JsonObject responseObject){
+    boolean b = false;
+    int code = responseObject.get("statusCode").getAsInt();
+    if (code >=400 && code<500 ){
+      b = true;
+    }
+    return b;
+  }
+
+  public boolean isServerError(com.google.gson.JsonObject responseObject){
+    boolean b = false;
+    int code = responseObject.get("statusCode").getAsInt();
+    if (code >500 ){
+      b = true;
+    }
+    return b;
+  }
+
+
+
   public boolean isValid(Term jsonId){
     JSONLibrary library = JSONLibrary.getInstance();
     com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
     return isValid(object);
+  }
+
+  public boolean isInformation(Term jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    return isInformation(object);
+  }
+
+  public boolean isRedirection(Term jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    return isRedirection(object);
+  }
+
+  public boolean isClientError(Term jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    return isClientError(object);
+  }
+
+  public boolean isServerError(Term jsonId){
+    JSONLibrary library = JSONLibrary.getInstance();
+    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    return isServerError(object);
   }
 
   public String getBody(com.google.gson.JsonObject o){
@@ -1079,6 +1198,8 @@ public StringTerm getAsStringTerm(Term jsonId){
     }
     return map;
   }
+
+
 
 
 
