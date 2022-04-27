@@ -215,7 +215,8 @@ public class YAgentArch extends AgArch {
       ListTerm attributeList = (ListTerm) terms.get(0);
       ListTerm valueList = (ListTerm) terms.get(1);
       VarTerm jsonId = (VarTerm) terms.get(2);
-      createJsonObject(un, attributeList, valueList, jsonId);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      createJsonObject(u, attributeList, valueList, jsonId);
     } else if (func.equals("hasAttribute")){
       Term jsonId = terms.get(0);
       StringTerm attributeTerm = (StringTerm) terms.get(1);
@@ -229,6 +230,7 @@ public class YAgentArch extends AgArch {
       }
       u.bind(v,t);
     } else if (func.equals("isValid")){
+
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isValid(jsonId);
@@ -238,7 +240,7 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
-    } else if (func.equals("isInformation")){
+    }  else if (func.equals("isInformation")){
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isInformation(jsonId);
@@ -327,6 +329,17 @@ public class YAgentArch extends AgArch {
       values.put("b", "gh");
       String uri = template.createUri(uriVariables, values);
       System.out.println(uri);
+      System.out.println("second test uri");
+      Form form = new Form.Builder("http://example.org{?a,b}").build();
+      TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction, uriVariables, values);
+      System.out.println("target uri: "+request.getTarget());
+
+    } else if (func.equals("getBody")){
+      Term jsonId = terms.get(0);
+      String body = getBody(jsonId);
+      VarTerm v = (VarTerm ) terms.get(1);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      u.bind(v, new StringTermImpl(body));
     }
 
       System.out.println("end method act");
@@ -576,6 +589,7 @@ public class YAgentArch extends AgArch {
           JsonElement element = JsonParser.parseString(body);
           Optional<DataSchema> opSchema = action.getInputSchema();
           if (opSchema.isPresent()){
+            request.addHeader("Content-Type", "application/json");
             System.out.println("schema is present");
             DataSchema schema = opSchema.get();
             if (schema.getDatatype() == "array" && element.isJsonArray()){
@@ -619,6 +633,8 @@ public class YAgentArch extends AgArch {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      System.out.println("number of actions: "+td.getActions().size());
+      td.getActions().forEach(a -> System.out.println(a));
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
         Optional<Form> opForm = action.getFirstForm();
@@ -631,10 +647,16 @@ public class YAgentArch extends AgArch {
             int m = uriVariableValues.size();
             if (n==m){
               for (int i = 0; i <n; i++){
-                values.put(uriVariableNames.get(i).toString(), uriVariableValues.get(i).toString());
+                StringTerm name = (StringTerm) uriVariableNames.get(i);
+                System.out.println("name: "+name);
+                StringTerm value = (StringTerm) uriVariableValues.get(i);
+                System.out.println("value: "+value);
+                values.put(name.getString(), value.getString());
               }
             }
+            System.out.println("values: "+values);
              request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
+             System.out.println(request.getTarget());
           }
 
           for (String key: headers.keySet()){
@@ -645,6 +667,7 @@ public class YAgentArch extends AgArch {
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
+              request.addHeader("Content-Type", "application/json");
               DataSchema schema = opSchema.get();
               if (schema.getDatatype() == "array" && element.isJsonArray()){
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
@@ -713,6 +736,7 @@ public class YAgentArch extends AgArch {
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
+              request.addHeader("Content-Type", "application/json");
               DataSchema schema = opSchema.get();
               if (schema.getDatatype() == "array" && element.isJsonArray()){
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
@@ -811,6 +835,73 @@ public class YAgentArch extends AgArch {
     return payload;
   }
 
+  public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, VarTerm term){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
+      if (opProperty.isPresent()){
+        PropertyAffordance property = opProperty.get();
+        Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
+        if (opForm.isPresent()){
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          TDHttpResponse response = request.execute();
+          com.google.gson.JsonObject responseObject = createResponseObject(response);
+          bindTermToJson(term, responseObject);
+        }
+      }
+
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+
+  }
+
+  public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term){
+    tdUrl = tdUrl.replace("\"","");
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
+      if (opProperty.isPresent()){
+        PropertyAffordance property = opProperty.get();
+        Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
+        if (opForm.isPresent()){
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
+          if (property.getUriVariables().isPresent()) {
+            Map<String, Object> values = new Hashtable<>();
+            int n = uriVariableNames.size();
+            int m = uriVariableValues.size();
+            if (n==m){
+              for (int i = 0; i <n; i++){
+                StringTerm name = (StringTerm) uriVariableNames.get(i);
+                StringTerm value = (StringTerm) uriVariableValues.get(i);
+                values.put(name.getString(), value.getString());
+              }
+            }
+            request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), values);
+          }
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          TDHttpResponse response = request.execute();
+          com.google.gson.JsonObject responseObject = createResponseObject(response);
+          bindTermToJson(term, responseObject);
+        }
+      }
+
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+
+  }
+
   public void writeProperty(String tdUrl, String propertyName, Object[] payloadTags, Object[] payload){
     tdUrl = tdUrl.replace("\"","");
     try {
@@ -854,7 +945,12 @@ public class YAgentArch extends AgArch {
       String value = headers.get(key);
       request.addHeader(key, value);
     }
+
     if (body != null){
+      System.out.println("body: "+body);
+      if (isJson(body)){
+        request.addHeader("Content-Type", "application/json");
+      }
       request.setEntity(new StringEntity(body));
     }
     try {
@@ -1015,7 +1111,13 @@ public class YAgentArch extends AgArch {
     } else if (t.isNumeric()){
       NumberTerm nt = (NumberTerm) t;
       try {
-        element = new JsonPrimitive(nt.solve());
+        double num = nt.solve();
+        element = new JsonPrimitive(num);
+        if (num == (int) num){
+          System.out.println("is integer");
+          int n = (int) num;
+          element = new JsonPrimitive(n);
+        }
        }
       catch(Exception e){
         e.printStackTrace();
@@ -1157,6 +1259,7 @@ public StringTerm getAsStringTerm(Term jsonId){
     int n1 = attributeNames.size();
     int n2 = attributeValues.size();
     if (n1==n2) {
+      System.out.println("the sizes are equal");
       for (int i = 0; i < n1; i++) {
         Term attributeName = attributeNames.get(i);
         if (attributeName.isString()) {
@@ -1171,6 +1274,8 @@ public StringTerm getAsStringTerm(Term jsonId){
       } catch (Exception e){
         e.printStackTrace();
       }
+    } else {
+      System.out.println("the sizes are not equal");
     }
   }
 
@@ -1197,6 +1302,10 @@ public StringTerm getAsStringTerm(Term jsonId){
       map.put(key, obj.get(key));
     }
     return map;
+  }
+
+  public boolean isJson(String body){
+    return true;
   }
 
 
