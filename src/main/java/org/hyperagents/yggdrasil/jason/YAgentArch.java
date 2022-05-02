@@ -11,10 +11,7 @@ import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.clients.UriTemplate;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.*;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -167,13 +164,17 @@ public class YAgentArch extends AgArch {
         invokeAction(tdUri, actionName, headers, body);
       }
     } else if (func.equals("subscribeEvent")) {
+      System.out.println(terms.get(0));
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      System.out.println("td term retrieved");
       String tdUri = tdUriTerm.getString();
       StringTerm eventTerm = (StringTerm) terms.get(1);
+      System.out.println("event name retrieved");
       String eventName = eventTerm.getString();
       String body = null;
       if (terms.size() > 2) {
         StringTerm bodyTerm = (StringTerm) terms.get(2);
+        System.out.println("body term retrieved");
         body = bodyTerm.getString();
       }
       subscribeEvent(tdUri, eventName, headers, body);
@@ -642,6 +643,7 @@ public class YAgentArch extends AgArch {
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
           if (action.getUriVariables().isPresent()) {
+            Map<String, DataSchema> uriVariables = action.getUriVariables().get();
             Map<String, Object> values = new Hashtable<>();
             int n = uriVariableNames.size();
             int m = uriVariableValues.size();
@@ -654,6 +656,7 @@ public class YAgentArch extends AgArch {
                 values.put(name.getString(), value.getString());
               }
             }
+            System.out.println("uri variables: "+uriVariables);
             System.out.println("values: "+values);
              request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
              System.out.println(request.getTarget());
@@ -777,7 +780,7 @@ public class YAgentArch extends AgArch {
         List<Form> forms = event.getForms();
         if (forms.size()>0) {
           Form form = forms.get(0);
-          TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
+          /*TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
           for (String key: headers.keySet()){
             String value = headers.get(key);
             request.addHeader(key, value);
@@ -804,13 +807,17 @@ public class YAgentArch extends AgArch {
               }
             }
 
+          }*/
+          String method = "POST";
+          if (form.getMethodName().isPresent()){
+            method = form.getMethodName().get();
           }
-          TDHttpResponse response = request.execute();
+          sendHttpRequest(form.getTarget(), method, headers, body);
         } else {
           System.out.println("form is not present");
         }
       } else {
-        System.out.println("action is not present");
+        System.out.println("event is not present");
       }
     } catch(Exception e){
       e.printStackTrace();
@@ -985,6 +992,84 @@ public class YAgentArch extends AgArch {
     returnObject.addProperty("body", returnValue.get());
     return returnObject;
 
+  }
+
+  public com.google.gson.JsonObject sendHttpRequest(String uriTemplate, String method, Map<String, String> headers, ListTerm uriVariableNames, ListTerm uriVariableValues, String body){
+    AtomicReference<String> returnValue = new AtomicReference();
+    com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
+    int n = uriVariableNames.size();
+    int m = uriVariableValues.size();
+    if (n==m) {
+      Map<String, DataSchema> uriVariables = new Hashtable<>();
+      Map<String, Object> values = new Hashtable<>();
+      for (int i = 0; i < n; i++) {
+        StringTerm st = (StringTerm) uriVariableNames.get(i);
+        String name = st.getString();
+        Term t = uriVariableValues.get(i);
+        if (t.isString()) {
+          StringTerm valueTerm = (StringTerm) t;
+          String value = valueTerm.getString();
+          uriVariables.put(name, new DataSchema.Builder().build());
+          values.put(name, value);
+        } else if (t.isNumeric()) {
+          NumberTerm nt = (NumberTerm) t;
+          try {
+            double value = nt.solve();
+            uriVariables.put(name, new NumberSchema.Builder().build());
+            values.put(name, value);
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
+        String uri = new UriTemplate(uriTemplate).createUri(uriVariables, values);
+
+        ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
+        for (String key : headers.keySet()) {
+          String value = headers.get(key);
+          request.addHeader(key, value);
+        }
+
+        if (body != null) {
+          System.out.println("body: " + body);
+          if (isJson(body)) {
+            request.addHeader("Content-Type", "application/json");
+          }
+          request.setEntity(new StringEntity(body));
+        }
+        try {
+          client.execute(request, response -> {
+            returnObject.addProperty("statusCode", response.getCode());
+            Iterator<Header> responseHeaders = response.headerIterator();
+            com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
+            while (responseHeaders.hasNext()) {
+              Header h = responseHeaders.next();
+              rHeaders.addProperty(h.getName(), h.getValue());
+            }
+            returnObject.add("headers", rHeaders);
+            System.out.println("response received: ");
+            System.out.println(response.toString());
+            HttpEntity entity = response.getEntity();
+            //String r = EntityUtils.toString(entity);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+            String line = null;
+            String s = "";
+            while ((line = reader.readLine()) != null) {
+              s = s + line;
+              System.out.println(line);
+            }
+            System.out.println(response.getEntity().getContent().toString());
+            returnValue.set(s);
+            return null;
+          });
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        System.out.println("request done");
+        returnObject.addProperty("body", returnValue.get());
+        return returnObject;
+      }
+    }
+    return null;
   }
 
   public com.google.gson.JsonObject createResponseObject(TDHttpResponse response){
