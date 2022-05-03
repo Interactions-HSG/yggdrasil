@@ -74,7 +74,7 @@ public class YAgentArch extends AgArch {
     //this.vertx = new VertxFactoryImpl().vertx();
     messageId = 0;
     this.headers = new Hashtable<>();
-    headers.put("X-Agent-WebID", this.getAgName());
+    //headers.put("X-Agent-WebID", this.getAgName());
   }
 
 
@@ -944,6 +944,8 @@ public class YAgentArch extends AgArch {
   }
 
 
+
+
   public com.google.gson.JsonObject sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
     AtomicReference<String> returnValue = new AtomicReference();
     com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
@@ -960,6 +962,7 @@ public class YAgentArch extends AgArch {
       }
       request.setEntity(new StringEntity(body));
     }
+    System.out.println("request:"+getRequestRepresentation(request));
     try {
       client.execute(request, response -> {
         returnObject.addProperty("statusCode", response.getCode());
@@ -1070,6 +1073,25 @@ public class YAgentArch extends AgArch {
       }
     }
     return null;
+  }
+
+  public String getRequestRepresentation(ClassicHttpRequest request){
+    String str = "url: "+request.getRequestUri()+"\n";
+    str = str + "method: "+request.getMethod()+"\n";
+    Header[] headers = request.getHeaders();
+    str = str + "headers: \n";
+    for (int i = 0; i<headers.length; i++){
+      Header h = headers[i];
+      str = str+"key: "+h.getName()+"; value: "+h.getValue()+"\n";
+    }
+    try {
+      InputStream stream = request.getEntity().getContent();
+      String s = new String(stream.readAllBytes());
+      str = str + "body: " + s;
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    return str;
   }
 
   public com.google.gson.JsonObject createResponseObject(TDHttpResponse response){
