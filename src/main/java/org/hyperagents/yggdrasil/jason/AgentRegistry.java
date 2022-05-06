@@ -35,6 +35,8 @@ public class AgentRegistry {
 
   }
 
+
+
   public void printAllAgents(){
     for (String agent: agents.keySet()){
       System.out.println(agent);
@@ -46,10 +48,10 @@ public class AgentRegistry {
     String agentUri = httpPrefix + "agents/"+agentName;
     if (!agents.containsKey(agentName)) {
       this.agents.put(agentName, agentUri);
-      this.callbacks.put(agentUri, new AgentNotificationCallback(agentUri));
-      this.messageCallbackMap.put(agentUri, new AgentMessageCallback(agentUri));
+      this.callbacks.put(agentName, new AgentNotificationCallback(agentUri));
+      this.messageCallbackMap.put(agentName, new AgentMessageCallback(agentName));
 
-      return agentUri;
+      return agentName;
     }
     else {
       throw new Exception("Agent already exists");

@@ -466,9 +466,10 @@ public class HttpEntityHandler {
     System.out.println("message received");
     String uri = context.request().absoluteURI();
     int n = uri.length();
-    String agentsUri = "http://localhost:8080/agents/";
-    String agentName = uri.substring(0, n-8);
-    System.out.println(agentName);
+    String agentUri = uri.substring(0, n-8);
+    int index  = agentUri.indexOf("/agents/");
+    String agentName = agentUri.substring(index + 8);
+    System.out.println("agent name: "+ agentName);
     String body = context.getBodyAsString();
     System.out.println("message received: "+body);
     AgentRegistry agentRegistry = AgentRegistry.getInstance();

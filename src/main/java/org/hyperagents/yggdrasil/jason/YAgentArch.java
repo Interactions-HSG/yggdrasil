@@ -48,6 +48,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -81,6 +83,7 @@ public class YAgentArch extends AgArch {
   @Override
   public void act(ActionExec actionExec) {
     System.out.println("act");
+    System.out.println("perform action: "+actionExec.getActionTerm());
     String agentName = getAgName();
     System.out.println("agent name: " + agentName);
     Intention currentIntention = getTS().getC().getSelectedIntention();
@@ -158,6 +161,7 @@ public class YAgentArch extends AgArch {
       else if (terms.size() == 6){
         ListTerm uriVariableNames = (ListTerm) terms.get(3);
         ListTerm uriVariableValues = (ListTerm) terms.get(4);
+        System.out.println("return term: "+ terms.get(5));
         VarTerm var = (VarTerm) terms.get(5);
         invokeAction(tdUri, actionName, headers, body, uriVariableNames, uriVariableValues, var);
       } else {
@@ -178,6 +182,14 @@ public class YAgentArch extends AgArch {
         body = bodyTerm.getString();
       }
       subscribeEvent(tdUri, eventName, headers, body);
+    } else if (func.equals("readProperty")){
+      StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      String tdUri = tdUriTerm.getString();
+      StringTerm propertyTerm = (StringTerm) terms.get(1);
+      String propertyName =propertyTerm.getString();
+      VarTerm term =  (VarTerm) terms.get(2);
+      readProperty(tdUri, propertyName, headers, term);
+
     }
     else if (func.equals("addHeader")){
       String key = terms.get(0).toString();
@@ -341,6 +353,10 @@ public class YAgentArch extends AgArch {
       VarTerm v = (VarTerm ) terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       u.bind(v, new StringTermImpl(body));
+    } else if (func.equals("getCurrentTime")){
+      VarTerm var = (VarTerm) terms.get(0);
+      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+      u.bind(var, new StringTermImpl(getCurrentTimeStamp()));
     }
 
       System.out.println("end method act");
@@ -361,8 +377,8 @@ public class YAgentArch extends AgArch {
         Literal belief = Literal.parseLiteral(notification);
         this.getTS().getAg().addBel(belief);
       }
-
-        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(this.getAgName());
+        String agentName = this.getAgName();
+        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
         if (messageCallback.hasNewMessage()) {
           System.out.println("agent "+ this.getAgName()+ " has new message");
           String message = messageCallback.retrieveMessage();
@@ -1413,6 +1429,14 @@ public StringTerm getAsStringTerm(Term jsonId){
 
   public boolean isJson(String body){
     return true;
+  }
+
+  //Others
+
+  public String getCurrentTimeStamp(){
+    Timestamp timestamp = Timestamp.from(Instant.now());
+    System.out.println(timestamp);
+    return timestamp.toString();
   }
 
 

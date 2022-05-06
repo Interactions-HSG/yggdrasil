@@ -3,7 +3,12 @@ package org.hyperagents.yggdrasil.jason;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
+import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.http.HttpInterfaceConfig;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -36,12 +41,16 @@ public class JasonVerticle extends AbstractVerticle {
 
   private YggdrasilRuntimeServices agentService;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
+
   @Override
   public void start(){
+    LOGGER.info("start Jason Verticle");
     agentService = new YggdrasilRuntimeServices(new RunYggdrasilMAS());
     VertxRegistry.getInstance().setVertx(this.vertx);
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config());
   }
 
   private void handleAgentRequest(Message<String> message){
