@@ -356,7 +356,9 @@ public class YAgentArch extends AgArch {
     } else if (func.equals("getCurrentTime")){
       VarTerm var = (VarTerm) terms.get(0);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      u.bind(var, new StringTermImpl(getCurrentTimeStamp()));
+      String timeStamp = getCurrentTimeStamp();
+      System.out.println("current time stamp: "+timeStamp);
+      u.bind(var, new StringTermImpl(timeStamp));
     }
 
       System.out.println("end method act");
@@ -1433,10 +1435,18 @@ public StringTerm getAsStringTerm(Term jsonId){
 
   //Others
 
-  public String getCurrentTimeStamp(){
+  public String getCurrentTimeStamp1(){
     Timestamp timestamp = Timestamp.from(Instant.now());
     System.out.println(timestamp);
     return timestamp.toString();
+  }
+
+  public String getCurrentTimeStamp2(){
+    return Double.toString(Instant.now().getEpochSecond());
+  }
+
+  public String getCurrentTimeStamp(){
+    return Instant.now().toString();
   }
 
 
