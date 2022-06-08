@@ -62,12 +62,14 @@ public class YAgentArch extends AgArch {
   HttpClient client = HttpClients.createDefault();
   Map<String, String> headers;
 
-  public YAgentArch(Vertx vertx){
+  private JsonManager jsonManager;
+
+  /*public YAgentArch(Vertx vertx){
 
     this.vertx = vertx;
     this.headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
-  }
+  }*/
 
   public YAgentArch(){
     System.out.println("creating YAgentArch");
@@ -77,6 +79,7 @@ public class YAgentArch extends AgArch {
     messageId = 0;
     this.headers = new Hashtable<>();
     //headers.put("X-Agent-WebID", this.getAgName());
+    this.jsonManager = new JsonManager();
   }
 
 
@@ -420,6 +423,14 @@ public class YAgentArch extends AgArch {
       o.equals("focus")||
       //o.equals("focusWhenAvailable")||
       o.equals("leaveWorkspace");
+  }
+
+  public Map<String, String> getHeaders(){
+    return headers;
+  }
+
+  public JsonManager getJsonManager(){
+    return jsonManager;
   }
 
   //Syntax for the operations
