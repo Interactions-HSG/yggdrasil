@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Atom;
+import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
 
 import java.util.HashMap;
@@ -20,6 +21,11 @@ public class JsonManager {
     this.currentJsons = new HashMap<>();
     this.currentJsons_inverse = new HashMap<>();
     this.id = 0;
+  }
+
+  public JsonElement getJsonElementFromTerm(Term jsonId){
+    StringTerm st = (StringTerm) jsonId;
+    return currentJsons.get(st.getString());
   }
 
   public boolean new_json(Unifier un, String jsonString, Term id) throws Exception {

@@ -44,13 +44,13 @@ public class invokeAction extends WotAction {
       YAgentArch agArch = (YAgentArch) ts.getAgArch();
       headers = agArch.getHeaders();
     }
-    invokeAction(tdUrl, actionName, headers, body, var, un);
+    invokeAction(tdUrl, actionName, headers, body, var, un,ts);
     return null;
 
 
   }
 
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term, Unifier un){
+  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term, Unifier un, TransitionSystem ts){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       System.out.println("td received");
@@ -100,7 +100,7 @@ public class invokeAction extends WotAction {
           }
           TDHttpResponse response = request.execute();
           com.google.gson.JsonObject responseObject = createResponseObject(response);
-          bindTermToJson(term, responseObject, un);
+          bindTermToJson(term, responseObject, un, ts);
           //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
           //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
         } else {
