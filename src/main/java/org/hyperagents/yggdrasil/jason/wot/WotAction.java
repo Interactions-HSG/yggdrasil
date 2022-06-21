@@ -1,8 +1,8 @@
 package org.hyperagents.yggdrasil.jason.wot;
 
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
+import ch.unisg.ics.interactions.wot.td.schemas.*;
+import com.google.gson.*;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
@@ -57,5 +57,68 @@ public class WotAction extends DefaultInternalAction {
       responseObject.addProperty("body", payload.get());
     }
     return responseObject;
+  }
+
+  public JsonElement getAsJsonElement(String str){
+    return JsonParser.parseString(str);
+  }
+
+  public DataSchema getDataSchemaFromJsonElement(JsonElement jsonElement){
+    DataSchema schema = null;
+    if (jsonElement.isJsonObject()){
+      JsonObject jsonObject = jsonElement.getAsJsonObject();
+      schema = getObjectSchemaFromJsonObject(jsonObject);
+    } else if (jsonElement.isJsonArray()){
+      JsonArray jsonArray = jsonElement.getAsJsonArray();
+      schema = getArraySchemaFromJsonArray(jsonArray);
+    } else if (jsonElement.isJsonPrimitive()){
+      schema = getDataSchemaFromJsonPrimitive(jsonElement.getAsJsonPrimitive());
+    }
+    return schema;
+  }
+
+  public ObjectSchema getObjectSchemaFromJsonObject(JsonObject jsonObject){
+    ObjectSchema.Builder builder = new ObjectSchema.Builder();
+    for (String key: jsonObject.keySet()){
+      builder.addProperty(key, getDataSchemaFromJsonElement(jsonObject.get(key)));
+    }
+    return builder.build();
+  }
+
+  public ArraySchema getArraySchemaFromJsonArray(JsonArray jsonArray){
+    ArraySchema.Builder builder = new ArraySchema.Builder();
+    for (int i=0; i<jsonArray.size();i++){
+      JsonElement jsonElement = jsonArray.get(i);
+      builder.addItem(getDataSchemaFromJsonElement(jsonElement));
+    }
+    return builder.build();
+  }
+
+  public DataSchema getDataSchemaFromJsonPrimitive(JsonPrimitive jsonPrimitive){
+    DataSchema schema = null;
+    if (jsonPrimitive.isBoolean()){
+      schema = new BooleanSchema.Builder().build();
+    } else if (jsonPrimitive.isString()){
+      schema = new StringSchema.Builder().build();
+    } else if (jsonPrimitive.isNumber()){
+      schema = new NumberSchema.Builder().build();
+    }
+    return schema;
+  }
+
+  public Map<String, Object> getJsonObjectAsMap(JsonObject jsonObject){
+    Map<String, Object> map = new Hashtable<>();
+    for (String key: jsonObject.keySet()){
+      map.put(key, jsonObject.get(key));
+    }
+    return map;
+  }
+
+  public List<Object> getJsonArrayAsList(JsonArray jsonArray){
+    ArrayList<Object> list = new ArrayList<>();
+    for (int i=0; i<jsonArray.size();i++){
+      list.add(jsonArray.get(i));
+    }
+    return list;
   }
 }

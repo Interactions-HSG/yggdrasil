@@ -150,7 +150,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     throws IllegalArgumentException, IOException {
     LOGGER.info("Looking for containment triples for: " + entityIRI.getIRIString());
     if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-      store.createIRI(("http://w3id.org/eve#Artifact"))) &&  entityIRI.getIRIString().indexOf("/bodies") == -1) {
+      store.createIRI(("http://w3id.org/eve#Artifact")))) {
       String artifactIRI = entityIRI.getIRIString();
       IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
 
@@ -167,7 +167,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         String entityGraphStr = store.graphToString(wkspGraph, RDFSyntax.TURTLE);
         pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
       }
-    } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
+    }  else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
       store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
       String workspaceIRI = entityIRI.getIRIString();
       IRI envIRI = store.createIRI(workspaceIRI.substring(0, workspaceIRI.indexOf("/workspaces")));
