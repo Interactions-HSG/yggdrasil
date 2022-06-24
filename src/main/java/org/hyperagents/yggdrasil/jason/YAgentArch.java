@@ -103,37 +103,37 @@ public class YAgentArch extends AgArch {
     }
     String func = action.getFunctor();
     List<Term> terms = action.getTerms();
-    if (func.equals("createWorkspace")) {
+    if (func.equals("createWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       createWorkspace(workspaceName);
       System.out.println("workspace created");
-    } else if (func.equals("createSubWorkspace")) {
+    } else if (func.equals("createSubWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       String subWorkspaceName = terms.get(1).toString();
       createSubWorkspace(workspaceName, subWorkspaceName);
       System.out.println("sub workspace created");
-    } else if (func.equals("makeArtifact")) {
+    } else if (func.equals("makeArtifact")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       String artifactName = terms.get(1).toString();
       String artifactInit = terms.get(2).toString();
       makeArtifact(workspaceName, artifactName, artifactInit);
-    } else if (func.equals("joinWorkspace")) {
+    } else if (func.equals("joinWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       joinWorkspace(workspaceName);
 
-    } else if (func.equals("leaveWorkspace")) {
+    } else if (func.equals("leaveWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       leaveWorkspace(workspaceName);
-    } else if (func.equals("focus")) {
+    } else if (func.equals("focus")) { //Inside YAgentArch
       System.out.println("start focus");
       String workspaceName = terms.get(0).toString();
       String artifactName = terms.get(1).toString();
       focus(workspaceName, artifactName);
       System.out.println("end focus");
 
-    } else if (func.equals("stopFocus")) {
+    } else if (func.equals("stopFocus")) { //Inside YAgentArch, to develop
 
-    } else if (func.equals("setValue")){
+    } else if (func.equals("setValue")){ //To check
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       VarTerm v =  (VarTerm) terms.get(0);
       System.out.println("variable: "+v);
@@ -143,7 +143,7 @@ public class YAgentArch extends AgArch {
 
     }
 
-    else if (func.equals("invokeAction")) {
+    else if (func.equals("invokeAction")) { //Inside wot library
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
       String tdUri = tdUriTerm.getString();
       StringTerm actionTerm = (StringTerm) terms.get(1);
@@ -170,7 +170,7 @@ public class YAgentArch extends AgArch {
       } else {
         invokeAction(tdUri, actionName, headers, body);
       }
-    } else if (func.equals("subscribeEvent")) {
+    } else if (func.equals("subscribeEvent")) { //Inside wot library
       System.out.println(terms.get(0));
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
       System.out.println("td term retrieved");
@@ -185,7 +185,7 @@ public class YAgentArch extends AgArch {
         body = bodyTerm.getString();
       }
       subscribeEvent(tdUri, eventName, headers, body);
-    } else if (func.equals("readProperty")){
+    } else if (func.equals("readProperty")){ //Inside wot library
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
       String tdUri = tdUriTerm.getString();
       StringTerm propertyTerm = (StringTerm) terms.get(1);
@@ -193,18 +193,19 @@ public class YAgentArch extends AgArch {
       VarTerm term =  (VarTerm) terms.get(2);
       readProperty(tdUri, propertyName, headers, term);
 
-    }
-    else if (func.equals("addHeader")){
+    } else if (func.equals("writeProperty")){ //Inside wot library, to write here
+
+    } else if (func.equals("addHeader")){ //To check
       String key = terms.get(0).toString();
       String value = terms.get(1).toString();
       headers.put(key, value);
     }
-    else if (func.equals("removeHeader")){
+    else if (func.equals("removeHeader")){ //To check
       String key = terms.get(0).toString();
       headers.remove(key);
     }
 
-    else if (func.equals("sendHttpRequest")) {
+    else if (func.equals("sendHttpRequest")) { //to check
       StringTerm urlTerm = (StringTerm) terms.get(0);
       String url = urlTerm.getString();
       System.out.println("url: " + url);
@@ -222,18 +223,18 @@ public class YAgentArch extends AgArch {
         Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
         bindTermToJson(terms.get(3), o);
       }
-    } else if (func.equals("printJson")) {
+    } else if (func.equals("printJson")) { //Inside json library
       System.out.println("printJson");
       Term jsonId = terms.get(0);
       System.out.println("json id: "+jsonId);
       printJSON(jsonId);
-      } else if (func.equals("makeJson")){
+      } else if (func.equals("makeJson")){ //Inside json library
       ListTerm attributeList = (ListTerm) terms.get(0);
       ListTerm valueList = (ListTerm) terms.get(1);
       VarTerm jsonId = (VarTerm) terms.get(2);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       createJsonObject(u, attributeList, valueList, jsonId);
-    } else if (func.equals("hasAttribute")){
+    } else if (func.equals("hasAttribute")){ //Inside json library
       Term jsonId = terms.get(0);
       StringTerm attributeTerm = (StringTerm) terms.get(1);
       String attribute = attributeTerm.getString();
@@ -245,7 +246,7 @@ public class YAgentArch extends AgArch {
         t = Literal.LTrue;
       }
       u.bind(v,t);
-    } else if (func.equals("isValid")){
+    } else if (func.equals("isValid")){ //Inside wot library
 
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
@@ -256,7 +257,7 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
-    }  else if (func.equals("isInformation")){
+    }  else if (func.equals("isInformation")){ //Inside wot library
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isInformation(jsonId);
@@ -266,7 +267,7 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
-    } else if (func.equals("isRedirection")){
+    } else if (func.equals("isRedirection")){ //Inside wot library
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isRedirection(jsonId);
@@ -276,7 +277,7 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
-    } else if (func.equals("isClientError")){
+    } else if (func.equals("isClientError")){ //Inside wot library
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isClientError(jsonId);
@@ -286,7 +287,7 @@ public class YAgentArch extends AgArch {
       } else {
         u.bind(bVar, Literal.LFalse);
       }
-    } else if (func.equals("isServerError")){
+    } else if (func.equals("isServerError")){ //Inside wot library
       Term jsonId = terms.get(0);
       VarTerm bVar = (VarTerm) terms.get(1);
       boolean b = isServerError(jsonId);
@@ -298,7 +299,7 @@ public class YAgentArch extends AgArch {
       }
     }
 
-    else if (func.equals("getJsonAsString")){
+    else if (func.equals("getJsonAsString")){ //Inside json library
       System.out.println("term 0: "+terms.get(0));
       Term jsonId = terms.get(0);
       System.out.println("jsonId: "+jsonId);
@@ -306,7 +307,7 @@ public class YAgentArch extends AgArch {
       System.out.println("json as string: "+str);
       un.bind((VarTerm) terms.get(1), str);
 
-    } else if (func.equals("getStringAsJson")){
+    } else if (func.equals("getStringAsJson")){ //Inside json library
       StringTerm st = (StringTerm) terms.get(0);
       Term jsonId = terms.get(1);
       JSONLibrary library = JSONLibrary.getInstance();
@@ -318,7 +319,7 @@ public class YAgentArch extends AgArch {
       }
     }
 
-    else if (func.equals("getStringFromJson")){
+    else if (func.equals("getStringFromJson")){ //Inside json library
       Term jsonId = terms.get(0);
       System.out.println("jsonId: "+jsonId);
       String attribute = ((StringTerm) terms.get(1)).getString();
@@ -328,13 +329,13 @@ public class YAgentArch extends AgArch {
       StringTerm value = new StringTermImpl(str);
       un.bind((VarTerm) terms.get(2), value);
 
-    }  else if (func.equals("getNumberFromJson")){
+    }  else if (func.equals("getNumberFromJson")){ //Inside json library
       Term jsonId = terms.get(0);
       String attribute = ((StringTerm) terms.get(1)).getString();
       NumberTerm value = new NumberTermImpl(getNumberFromJson(jsonId, attribute));
       un.bind((VarTerm) terms.get(2), value);
 
-    } else if (func.equals("testUriVariables")){
+    } else if (func.equals("testUriVariables")){ //To remove
       String uriTemplate = "http://example.org/{?a,b}";
       UriTemplate template = new UriTemplate(uriTemplate);
       Map<String, DataSchema> uriVariables = new Hashtable<>();
@@ -350,13 +351,13 @@ public class YAgentArch extends AgArch {
       TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction, uriVariables, values);
       System.out.println("target uri: "+request.getTarget());
 
-    } else if (func.equals("getBody")){
+    } else if (func.equals("getBody")){ //Inside wot library
       Term jsonId = terms.get(0);
       String body = getBody(jsonId);
       VarTerm v = (VarTerm ) terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       u.bind(v, new StringTermImpl(body));
-    } else if (func.equals("getCurrentTime")){
+    } else if (func.equals("getCurrentTime")){ //To check
       VarTerm var = (VarTerm) terms.get(0);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       String timeStamp = getCurrentTimeStamp();

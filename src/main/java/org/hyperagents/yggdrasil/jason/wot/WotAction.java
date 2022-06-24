@@ -7,11 +7,21 @@ import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Term;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.hyperagents.yggdrasil.jason.JSONLibrary;
 import org.hyperagents.yggdrasil.jason.JsonManager;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class WotAction extends DefaultInternalAction {
 
@@ -120,5 +130,67 @@ public class WotAction extends DefaultInternalAction {
       list.add(jsonArray.get(i));
     }
     return list;
+  }
+
+  public com.google.gson.JsonObject sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
+    HttpClient client = HttpClients.createDefault();
+    AtomicReference<String> returnValue = new AtomicReference();
+    com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
+    ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
+    for (String key: headers.keySet()){
+      String value = headers.get(key);
+      request.addHeader(key, value);
+    }
+
+    if (body != null){
+      System.out.println("body: "+body);
+      if (isJson(body)){
+        request.addHeader("Content-Type", "application/json");
+      }
+      request.setEntity(new StringEntity(body));
+    }
+    try {
+      client.execute(request, response -> {
+        returnObject.addProperty("statusCode", response.getCode());
+        Iterator<Header> responseHeaders = response.headerIterator();
+        com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
+        while (responseHeaders.hasNext()){
+          Header h = responseHeaders.next();
+          rHeaders.addProperty(h.getName(), h.getValue());
+        }
+        returnObject.add("headers", rHeaders);
+        System.out.println("response received: ");
+        System.out.println(response.toString());
+        HttpEntity entity = response.getEntity();
+        //String r = EntityUtils.toString(entity);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+        String line = null;
+        String s = "";
+        while ((line = reader.readLine())!=null){
+          s = s + line;
+          System.out.println(line);
+        }
+        System.out.println(response.getEntity().getContent().toString());
+        returnValue.set(s);
+        return null;
+      });
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    System.out.println("request done");
+    returnObject.addProperty("body", returnValue.get());
+    return returnObject;
+
+  }
+
+  public boolean isJson(String body){
+    boolean b = true;
+    try {
+      JsonParser.parseString(body);
+    } catch(JsonParseException e){
+      b = false;
+      e.printStackTrace();
+    }
+    return b;
   }
 }
