@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.moise;
 
 import cartago.AgentBodyArtifact;
+import cartago.ArtifactId;
+import cartago.Workspace;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -8,8 +10,11 @@ import ora4mas.nopl.OrgArt;
 import ora4mas.nopl.OrgBoard;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaInterface;
+import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
+import java.util.List;
 
 
 public class MoiseVerticle extends AbstractVerticle {
@@ -50,5 +55,24 @@ public class MoiseVerticle extends AbstractVerticle {
       e.printStackTrace();
     }
 
+  }
+
+  public void createHypermediaInterfaces(){
+    WorkspaceRegistry workspaceRegistry = WorkspaceRegistry.getInstance();
+    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    List<String> workspaceList = workspaceRegistry.getAllWorkspaces();
+    for (String name: workspaceList){
+      Workspace w = workspaceRegistry.getWorkspace(name);
+      String[] artifactNames = w.getArtifactList();
+      for (int i= 0; i< artifactNames.length; i++){
+        ArtifactId artifactId = w.getArtifact(artifactNames[i]);
+        String artifactName = artifactId.getName();
+        String artifactType = artifactId.getArtifactType();
+        if (artifactType == "" && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+          HypermediaInterface hypermediaInterface = null;
+          artifactRegistry.register(hypermediaInterface);
+        }
+      }
+    }
   }
 }
