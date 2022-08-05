@@ -3,11 +3,11 @@ package org.hyperagents.yggdrasil.moise;
 import cartago.AgentBodyArtifact;
 import cartago.ArtifactId;
 import cartago.Workspace;
+import cartago.WorkspaceArtifact;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import ora4mas.nopl.OrgArt;
-import ora4mas.nopl.OrgBoard;
+import ora4mas.nopl.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.cartago.HypermediaInterface;
@@ -31,7 +31,13 @@ public class MoiseVerticle extends AbstractVerticle {
     EventBus eventBus = vertx.eventBus();
     HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
     registry.addArtifactTemplate("http://example.org/OrgBoard", OrgBoard.class.getCanonicalName());
+    registry.addArtifactTemplate("http://example.org/GroupBoard", GroupBoard.class.getCanonicalName());
+    registry.addArtifactTemplate("http://example.org/NormativeBoard", NormativeBoard.class.getCanonicalName());
+    registry.addArtifactTemplate("http://example.org/SchemeBoard", SchemeBoard.class.getCanonicalName());
     eventBus.consumer(BUS_ADDRESS, this::handleMoiseRequest);
+    while (true){
+      createHypermediaInterfaces();
+    }
   }
 
   private void handleMoiseRequest(Message<String> message) {
@@ -68,8 +74,17 @@ public class MoiseVerticle extends AbstractVerticle {
         ArtifactId artifactId = w.getArtifact(artifactNames[i]);
         String artifactName = artifactId.getName();
         String artifactType = artifactId.getArtifactType();
-        if (artifactType == "" && !artifactRegistry.hasHypermediaInterface(artifactName) ){
-          HypermediaInterface hypermediaInterface = null;
+        if (artifactType == OrgBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+          HypermediaInterface hypermediaInterface = MoiseInterfaces.getOrgBoardHypermediaInterface(w,artifactId);
+          artifactRegistry.register(hypermediaInterface);
+        } else if (artifactType == GroupBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+          HypermediaInterface hypermediaInterface = MoiseInterfaces.getGroupBoardHypermediaInterface(w,artifactId);
+          artifactRegistry.register(hypermediaInterface);
+        } else if (artifactType == NormativeBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+          HypermediaInterface hypermediaInterface = MoiseInterfaces.getNormativeBoardHypermediaInterface(w,artifactId);
+          artifactRegistry.register(hypermediaInterface);
+        } else if (artifactType == SchemeBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+          HypermediaInterface hypermediaInterface = MoiseInterfaces.getSchemeBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
         }
       }
