@@ -1,9 +1,6 @@
 package org.hyperagents.yggdrasil.moise;
 
-import cartago.AgentBodyArtifact;
-import cartago.ArtifactId;
-import cartago.Workspace;
-import cartago.WorkspaceArtifact;
+import cartago.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
@@ -11,6 +8,7 @@ import ora4mas.nopl.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.cartago.HypermediaInterface;
+import org.hyperagents.yggdrasil.cartago.HypermediaInterfaceConstructor;
 import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
@@ -34,10 +32,35 @@ public class MoiseVerticle extends AbstractVerticle {
     registry.addArtifactTemplate("http://example.org/GroupBoard", GroupBoard.class.getCanonicalName());
     registry.addArtifactTemplate("http://example.org/NormativeBoard", NormativeBoard.class.getCanonicalName());
     registry.addArtifactTemplate("http://example.org/SchemeBoard", SchemeBoard.class.getCanonicalName());
+    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    artifactRegistry.registerInterfaceConstructor(OrgBoard.class.getCanonicalName(), new HypermediaInterfaceConstructor() {
+      @Override
+      public HypermediaInterface createHypermediaInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId) {
+        return MoiseInterfaces.getOrgBoardHypermediaInterface(workspace, artifactId);
+      }
+    });
+    artifactRegistry.registerInterfaceConstructor(GroupBoard.class.getCanonicalName(), new HypermediaInterfaceConstructor() {
+      @Override
+      public HypermediaInterface createHypermediaInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId) {
+        return MoiseInterfaces.getGroupBoardHypermediaInterface(workspace, artifactId);
+      }
+    });
+    artifactRegistry.registerInterfaceConstructor(NormativeBoard.class.getCanonicalName(), new HypermediaInterfaceConstructor() {
+      @Override
+      public HypermediaInterface createHypermediaInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId) {
+        return MoiseInterfaces.getNormativeBoardHypermediaInterface(workspace, artifactId);
+      }
+    });
+    artifactRegistry.registerInterfaceConstructor(SchemeBoard.class.getCanonicalName(), new HypermediaInterfaceConstructor() {
+      @Override
+      public HypermediaInterface createHypermediaInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId) {
+        return MoiseInterfaces.getSchemeBoardHypermediaInterface(workspace, artifactId);
+      }
+    });
     eventBus.consumer(BUS_ADDRESS, this::handleMoiseRequest);
-    while (true){
+    /*while (true){
       createHypermediaInterfaces();
-    }
+    }*/
   }
 
   private void handleMoiseRequest(Message<String> message) {

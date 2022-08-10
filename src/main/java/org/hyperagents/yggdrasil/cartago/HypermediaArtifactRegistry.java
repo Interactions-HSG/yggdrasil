@@ -38,6 +38,8 @@ public class HypermediaArtifactRegistry {
 
   private final Map<String, HypermediaInterface> interfaceMap;
 
+  private final Map<String, HypermediaInterfaceConstructor> interfaceConstructorMap;
+
   private final Map<String, String> artifactNames;
 
   private final Map<ImmutablePair<AgentId, WorkspaceId>, String> agentArtifacts;
@@ -53,6 +55,7 @@ public class HypermediaArtifactRegistry {
     artifactAPIKeys = new Hashtable<>();
     bodyArtifacts = new Hashtable<>();
     interfaceMap = new Hashtable<>();
+    interfaceConstructorMap = new Hashtable<>();
     artifactNames = new Hashtable<>();
     agentArtifacts = new Hashtable<>();
     hypermediaNames = new Hashtable<>();
@@ -114,6 +117,18 @@ public class HypermediaArtifactRegistry {
 
   public String getHypermediaName(String bodyName){
     return hypermediaNames.get(bodyName);
+  }
+
+  public void registerInterfaceConstructor(String artifactClass, HypermediaInterfaceConstructor interfaceConstructor){
+    this.interfaceConstructorMap.put(artifactClass, interfaceConstructor);
+  }
+
+  public HypermediaInterfaceConstructor getInterfaceConstructor(String artifactClass){
+    return interfaceConstructorMap.get(artifactClass);
+  }
+
+  public boolean hasInterfaceConstructor(String artifactClass){
+    return interfaceConstructorMap.containsKey(artifactClass);
   }
 
  /* public void registerBodyArtifact(HypermediaBodyArtifact bodyArtifact){

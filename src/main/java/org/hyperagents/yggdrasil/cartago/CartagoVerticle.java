@@ -130,6 +130,7 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply("agent left workspace successully");
           break;
         case CREATE_ARTIFACT:
+          System.out.println("Create artifact");
           String artifactName = message.headers().get(ARTIFACT_NAME);
 
           JsonObject artifactInit = (JsonObject) Json.decodeValue(message.body());
@@ -143,7 +144,6 @@ public class CartagoVerticle extends AbstractVerticle {
           }
 
           instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
-
           String artifactDescription = HypermediaArtifactRegistry.getInstance()
               .getArtifactDescription(artifactName);
 
@@ -380,20 +380,30 @@ public class CartagoVerticle extends AbstractVerticle {
 
 
       LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
-
+      Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+      ArtifactId artifactId = null;
+      ArtifactDescriptor descriptor = null;
       if (params.isPresent()) {
         LOGGER.info("Creating artifact with params...");
-        Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
         AgentId agentId = getAgentId(agentContext, workspace.getId());
-        workspace.makeArtifact(agentId,artifactName, artifactClass, new ArtifactConfig(params.get()));
+        artifactId = workspace.makeArtifact(agentId,artifactName, artifactClass, new ArtifactConfig(params.get()));
+        descriptor = workspace.getArtifactDescriptor(artifactName);
         LOGGER.info("Done!");
       } else {
         LOGGER.info("Creating artifact...");
-        Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
         AgentId agentId = getAgentId(agentContext, workspace.getId());
-        workspace.makeArtifact(agentId,artifactName, artifactClass,new ArtifactConfig());
+        artifactId = workspace.makeArtifact(agentId,artifactName, artifactClass,new ArtifactConfig());
+        descriptor = workspace.getArtifactDescriptor(artifactName);
         LOGGER.info("Done!");
       }
+      HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+      if (registry.hasInterfaceConstructor(artifactClass)){
+        HypermediaInterfaceConstructor constructor = registry.getInterfaceConstructor(artifactClass);
+        HypermediaInterface hypermediaInterface = constructor.createHypermediaInterface(workspace, descriptor, artifactId);
+        registry.register(hypermediaInterface);
+
+      }
+
     } catch(Exception e){
       e.printStackTrace();
     }
