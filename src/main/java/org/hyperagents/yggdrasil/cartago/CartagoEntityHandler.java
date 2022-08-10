@@ -98,7 +98,12 @@ public class CartagoEntityHandler {
             result.complete(workspaceDescription);
             LOGGER.info("CArtAgO workspace created: " + workspaceDescription);
           } else {
-            result.fail("CArtAgO operation has failed.");
+           String cause = response.cause().getMessage();
+           if (cause.equals("Agent Not Joined")){
+             result.complete("403");
+           } else {
+             result.fail("CArtAgO operation has failed.");
+           }
           }
         });
   }

@@ -117,9 +117,11 @@ public class HttpEntityHandler {
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createArtifact(agentId, workspaceName, artifactName, representation,
         cartagoPromise);
+    boolean b = cartagoPromise.future().failed();
+    System.out.println("create artifact failed: "+b);
 
-    cartagoPromise.future().compose(result ->
-      Future.future(promise -> storeEntity(context, artifactName, result, promise)));
+      cartagoPromise.future().compose(result ->
+        Future.future(promise -> storeEntity(context, artifactName, result, promise)));
   }
 
   // TODO: add payload validation
@@ -456,6 +458,12 @@ public class HttpEntityHandler {
 
   private void storeEntity(RoutingContext context, String entityName, String representation,
                            Promise<Object> promise) {
+    System.out.println("store entity");
+    System.out.println("representation: "+representation);
+    if (representation.equals("403")){
+      context.response().setStatusCode(HttpStatus.SC_FORBIDDEN).end();
+      return;
+    }
     DeliveryOptions options = new DeliveryOptions()
       .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
       .addHeader(REQUEST_URI, context.request().absoluteURI())
@@ -464,10 +472,14 @@ public class HttpEntityHandler {
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
       if (result.succeeded()) {
+        System.out.println("representation: "+ representation);
+        if (representation.equals("403")){
+          context.response().setStatusCode(403);
+        }
         context.response().setStatusCode(HttpStatus.SC_CREATED).end(representation);
         promise.complete();
       } else {
-        context.response().setStatusCode(HttpStatus.SC_CREATED).end();
+        context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
         promise.fail("Could not store the entity representation.");
       }
     });

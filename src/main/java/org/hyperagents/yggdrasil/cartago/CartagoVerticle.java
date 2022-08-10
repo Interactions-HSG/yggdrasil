@@ -4,9 +4,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 import cartago.*;
-import cartago.events.ArtifactObsEvent;
 import cartago.tools.Console;
-import cartago.util.agent.ActionFeedback;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
@@ -136,17 +134,25 @@ public class CartagoVerticle extends AbstractVerticle {
               .getArtifactTemplate(artifactInit.getString("artifactClass")).get();
           JsonArray initParams = artifactInit.getJsonArray("initParams");
 
+
           Optional<Object[]> params = Optional.empty();
           if (initParams != null) {
             params = Optional.of(initParams.getList().toArray());
           }
 
-          instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
+          boolean b = instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
+          System.out.println("agent joined: "+b);
 
-          String artifactDescription = HypermediaArtifactRegistry.getInstance()
+          if (b) {
+
+            String artifactDescription = HypermediaArtifactRegistry.getInstance()
               .getArtifactDescription(artifactName);
 
-          message.reply(artifactDescription);
+            message.reply(artifactDescription);
+          } else {
+            System.out.println("send message failure");
+            message.fail(403, "Agent Not Joined");
+          }
           break;
         case DO_ACTION:
           String artifact = message.headers().get(ARTIFACT_NAME);
@@ -368,13 +374,21 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
 
-  private void instantiateArtifact(String agentUri, String workspaceName, String artifactClass,
-      String artifactName, Optional<Object[]> params) throws CartagoException {
+  private boolean instantiateArtifact(String agentUri, String workspaceName, String artifactClass,
+                                      String artifactName, Optional<Object[]> params) throws CartagoException {
     CartagoContext agentContext = getAgentContext(agentUri);
+    System.out.println("instantiate artifact");
     try {
-      joinWorkspace(agentContext.getName(), workspaceName);
+      //joinWorkspace(agentContext.getName(), workspaceName);
       WorkspaceId wkspId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
-      joinWorkspace(agentContext.getName(), workspaceName);
+      List<WorkspaceId> joinedWorkspaces = agentContext.getJoinedWorkspaces();
+      if (!joinedWorkspaces.contains(wkspId)){
+        System.out.println("agent not joined");
+        return false;
+      }
+      System.out.println("agent joined");
+      //joinWorkspace(agentContext.getName(), workspaceName);
+
 
 
       LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
@@ -395,6 +409,7 @@ public class CartagoVerticle extends AbstractVerticle {
     } catch(Exception e){
       e.printStackTrace();
     }
+    return true;
   }
 
 
