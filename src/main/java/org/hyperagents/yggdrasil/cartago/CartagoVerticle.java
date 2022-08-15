@@ -8,6 +8,7 @@ import cartago.events.ArtifactObsEvent;
 import cartago.tools.Console;
 import cartago.util.agent.ActionFeedback;
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.PubSubVerticle;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
@@ -404,6 +405,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
       }
 
+
     } catch(Exception e){
       e.printStackTrace();
     }
@@ -435,6 +437,14 @@ public class CartagoVerticle extends AbstractVerticle {
     ICartagoCallback callback = new NotificationCallback(this.vertx);
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
+    DeliveryOptions options = new DeliveryOptions().addHeader(PubSubVerticle.REQUEST_METHOD, PubSubVerticle.PUBLISH)
+      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action");
+    JsonObject jsonMessage = new JsonObject();
+    jsonMessage.put("actionName", action);
+    ArtifactId artifactId = workspace.getArtifact(artifactName);
+    jsonMessage.put("artifactType",artifactId.getArtifactType() );
+    jsonMessage.put("workspace", workspaceName);
+    vertx.eventBus().send(PubSubVerticle.BUS_ADDRESS, jsonMessage.encode(), options);
   }
 
   private CartagoContext getAgentContext(String agentUri) {
