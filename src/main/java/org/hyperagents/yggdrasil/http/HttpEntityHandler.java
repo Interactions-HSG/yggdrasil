@@ -463,6 +463,9 @@ public class HttpEntityHandler {
     if (representation.equals("403")){
       context.response().setStatusCode(HttpStatus.SC_FORBIDDEN).end();
       return;
+    } else if (representation.equals("404")){
+      context.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+      return;
     }
     DeliveryOptions options = new DeliveryOptions()
       .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)

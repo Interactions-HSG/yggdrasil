@@ -100,8 +100,14 @@ public class CartagoEntityHandler {
           } else {
            String cause = response.cause().getMessage();
            if (cause.equals("Agent Not Joined")){
+             System.out.println("Agent Not Joined");
              result.complete("403");
-           } else {
+           } else if (cause.equals("workspace does not exist")){
+             System.out.println("workspace does not exist received");
+             result.complete("404");
+           }
+
+           else {
              result.fail("CArtAgO operation has failed.");
            }
           }

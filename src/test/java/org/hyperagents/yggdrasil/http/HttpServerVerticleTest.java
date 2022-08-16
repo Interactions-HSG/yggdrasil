@@ -105,7 +105,7 @@ public class HttpServerVerticleTest {
   public void testGetEntityNotFound(TestContext tc) {
     Async async = tc.async();
 
-    client.get(TEST_PORT, "localhost", "/environments/bla123")
+    client.get(TEST_PORT, "localhost", "/workspaces/bla123")
       .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
       .send(ar -> {
         HttpResponse<Buffer> getResponse = ar.result();
@@ -122,7 +122,7 @@ public class HttpServerVerticleTest {
       HttpResponse<Buffer> response = createAR.result();
       tc.assertEquals(HttpStatus.SC_CREATED, response.statusCode(), "Status code should be CREATED");
 
-      client.get(TEST_PORT, "localhost", "/environments/test_env")
+      client.get(TEST_PORT, "localhost", "/workspaces/test_env")
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle")
         .send(ar -> {
           HttpResponse<Buffer> getResponse = ar.result();

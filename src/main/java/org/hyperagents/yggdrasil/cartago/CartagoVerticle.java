@@ -127,32 +127,40 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply("agent left workspace successully");
           break;
         case CREATE_ARTIFACT:
+          System.out.println("create artifact request");
           String artifactName = message.headers().get(ARTIFACT_NAME);
+          System.out.println("artifact name: "+artifactName);
 
           JsonObject artifactInit = (JsonObject) Json.decodeValue(message.body());
+          System.out.println("artifactInit: "+ artifactInit);
           String artifactClass = HypermediaArtifactRegistry.getInstance()
               .getArtifactTemplate(artifactInit.getString("artifactClass")).get();
+          System.out.println("artifact class: "+artifactClass);
           JsonArray initParams = artifactInit.getJsonArray("initParams");
+          System.out.println("init params retrieved");
 
 
           Optional<Object[]> params = Optional.empty();
           if (initParams != null) {
             params = Optional.of(initParams.getList().toArray());
           }
-
-          boolean b = instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
-          System.out.println("agent joined: "+b);
-
-          if (b) {
+            try {
+              System.out.println("before instantiate artifact");
+              instantiateArtifact(agentUri, workspaceName, artifactClass, artifactName, params);
+            } catch(CartagoException e){
+              System.out.println("cartago exception: "+e.getMessage());
+              if (e.getMessage().equals("Agent not joined")){
+                message.fail(403, "Agent Not Joined");
+              } else if (e.getMessage().equals("workspace does not exist")){
+                System.out.println("workspace does not exist error");
+                message.fail(404, "workspace does not exist");
+              }
+            }
 
             String artifactDescription = HypermediaArtifactRegistry.getInstance()
               .getArtifactDescription(artifactName);
 
             message.reply(artifactDescription);
-          } else {
-            System.out.println("send message failure");
-            message.fail(403, "Agent Not Joined");
-          }
           break;
         case DO_ACTION:
           String artifact = message.headers().get(ARTIFACT_NAME);
@@ -374,21 +382,32 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
 
-  private boolean instantiateArtifact(String agentUri, String workspaceName, String artifactClass,
+  private void instantiateArtifact(String agentUri, String workspaceName, String artifactClass,
                                       String artifactName, Optional<Object[]> params) throws CartagoException {
-    CartagoContext agentContext = getAgentContext(agentUri);
     System.out.println("instantiate artifact");
+    CartagoContext agentContext = getAgentContext(agentUri);
+    System.out.println("agent context retrieved");
+    WorkspaceId wkspId = null;
     try {
+      wkspId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
       //joinWorkspace(agentContext.getName(), workspaceName);
-      WorkspaceId wkspId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
+    } catch(NullPointerException e){
+      System.out.println("null pointer exception catched");
+      throw new CartagoException("workspace does not exist");
+    }
+
+      if (wkspId == null){
+        throw new CartagoException("workspace does not exist");
+      }
       List<WorkspaceId> joinedWorkspaces = agentContext.getJoinedWorkspaces();
       if (!joinedWorkspaces.contains(wkspId)){
         System.out.println("agent not joined");
-        return false;
+        throw new CartagoException("Agent not joined");
+        //return false;
       }
       System.out.println("agent joined");
       //joinWorkspace(agentContext.getName(), workspaceName);
-
+      try{
 
 
       LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
@@ -409,7 +428,6 @@ public class CartagoVerticle extends AbstractVerticle {
     } catch(Exception e){
       e.printStackTrace();
     }
-    return true;
   }
 
 
