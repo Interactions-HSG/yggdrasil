@@ -4,6 +4,7 @@ import cartago.ArtifactId;
 import cartago.CartagoEvent;
 import cartago.ICartagoCallback;
 import cartago.events.ArtifactObsEvent;
+import cartago.events.CartagoActionEvent;
 import cartago.util.agent.Percept;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;

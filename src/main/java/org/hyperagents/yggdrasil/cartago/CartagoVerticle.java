@@ -157,8 +157,13 @@ public class CartagoVerticle extends AbstractVerticle {
           Optional<String> payload = message.body() == null ? Optional.empty()
               : Optional.of(message.body());
 
-          doAction(agentUri, workspaceName, artifact, action, payload);
-          message.reply(HttpStatus.SC_OK);
+          Optional<Object> returnObject = doAction(agentUri, workspaceName, artifact, action, payload);
+          if (returnObject.isPresent()){
+            System.out.println("object returned: "+returnObject.get());
+            message.reply(returnObject.get());
+          } else {
+            message.reply(HttpStatus.SC_OK);
+          }
           break;
         default:
           // TODO
@@ -412,18 +417,32 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
 
-  private void doAction(String agentUri, String workspaceName, String artifactName, String action,
+  private Optional<Object> doAction(String agentUri, String workspaceName, String artifactName, String action,
       Optional<String> payload) throws CartagoException {
+    Optional<Object> returnObject = Optional.empty();
     CartagoContext agentContext = getAgentContext(agentUri);
     WorkspaceId workspaceId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
     joinWorkspace(agentContext.getName(), workspaceName);
     Op operation;
+    boolean b = false;
     if (payload.isPresent()) {
       Object[] params = CartagoDataBundle.fromJson(payload.get());
-      if (HypermediaArtifactRegistry.getInstance().hasHypermediaInterface(artifactName)){
+      HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+      if (registry.hasHypermediaInterface(artifactName)){
         HypermediaInterface hypermediaInterface = HypermediaArtifactRegistry.getInstance().getHypermediaInterface(artifactName);
         params = hypermediaInterface.convert(action, params);
       }
+      boolean c = registry.hasFeedbackParam(artifactName, action);
+      System.out.println("c: "+c);
+      if (registry.hasFeedbackParam(artifactName, action)){
+        b = true;
+        List<Object> paramList = new ArrayList();
+        paramList.addAll(Arrays.asList(params));
+        OpFeedbackParam<Object> feedbackParam = new OpFeedbackParam<>();
+        paramList.add(feedbackParam);
+        params = paramList.toArray();
+      }
+
       operation = new Op(action, params);
     } else {
       operation = new Op(action);
@@ -437,14 +456,38 @@ public class CartagoVerticle extends AbstractVerticle {
     ICartagoCallback callback = new NotificationCallback(this.vertx);
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
+    if (b){
+      System.out.println("in b loop");
+      Object[] params = operation.getParamValues();
+      if (params.length>0){
+        OpFeedbackParam<Object> fParam = (OpFeedbackParam<Object>) params[params.length-1];
+        while (fParam.get()==null){
+          System.out.println("wait");
+        }
+        Object o = fParam.get();
+        System.out.println("result: "+o);
+        returnObject = Optional.of(o);
+      }
+    }
+    ArtifactId artifactId = workspace.getArtifact(artifactName);
+    //agentContext.joinWorkspace(workspaceName);
+    /*ActionFeedback actionFeedback = agentContext.doActionAsync(artifactId, operation, 1000);
+    Object[] returnParams = actionFeedback.getOp().getParamValues();
+    int n = returnParams.length;
+    if (b && n>0){
+      OpFeedbackParam<Object> feedbackParam = (OpFeedbackParam<Object>) returnParams[n-1];
+      Object o = feedbackParam.get();
+      System.out.println("result: "+o);
+    }*/
     DeliveryOptions options = new DeliveryOptions().addHeader(PubSubVerticle.REQUEST_METHOD, PubSubVerticle.PUBLISH)
       .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action");
     JsonObject jsonMessage = new JsonObject();
     jsonMessage.put("actionName", action);
-    ArtifactId artifactId = workspace.getArtifact(artifactName);
+    //ArtifactId artifactId = workspace.getArtifact(artifactName);
     jsonMessage.put("artifactType",artifactId.getArtifactType() );
     jsonMessage.put("workspace", workspaceName);
     vertx.eventBus().send(PubSubVerticle.BUS_ADDRESS, jsonMessage.encode(), options);
+    return returnObject;
   }
 
   private CartagoContext getAgentContext(String agentUri) {

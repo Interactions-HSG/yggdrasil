@@ -94,7 +94,9 @@ public class CartagoEntityHandler {
     vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, message, options,
         response -> {
           if (response.succeeded()) {
+            System.out.println("response succeded");
             String workspaceDescription = (String) response.result().body();
+            System.out.println("workspace description: "+workspaceDescription);
             result.complete(workspaceDescription);
             LOGGER.info("CArtAgO workspace created: " + workspaceDescription);
           } else {
