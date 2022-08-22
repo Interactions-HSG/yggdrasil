@@ -45,7 +45,11 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty());
+    Set<String> feedbackActions = new HashSet<>();
+    feedbackActions.add("createGroup");
+    feedbackActions.add("createScheme");
+    feedbackActions.add("createNormativeBoard");
+    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions);
     return hypermediaInterface;
   }
 
@@ -101,7 +105,7 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty());
+    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>());
     return hypermediaInterface;
   }
 
@@ -165,7 +169,9 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty());
+    Set<String> feedbackActions = new HashSet<>();
+    feedbackActions.add("getState");
+    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions);
     return hypermediaInterface;
   }
 
@@ -199,7 +205,7 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty());
+    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>());
     return hypermediaInterface;
   }
 }

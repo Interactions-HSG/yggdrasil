@@ -114,6 +114,8 @@ public class HypermediaArtifactRegistry {
     String artifactName = hypermediaInterface.getActualArtifactName();
     this.interfaceMap.put(artifactName, hypermediaInterface);
     this.artifactNames.put(artifactTemplate, artifactName);
+    Set<String> fActions = hypermediaInterface.getFeedbackActions();
+    feedbackActions.put(artifactTemplate, fActions);
   }
 
   public void registerName(String bodyName, String hypermediaName){
