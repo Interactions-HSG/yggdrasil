@@ -43,6 +43,8 @@ public class HypermediaArtifactRegistry {
 
   private final Map<String, String> hypermediaNames;
 
+  private final Map<String, Set<String> > feedbackActions;
+
   private int n;
 
   private HypermediaArtifactRegistry() {
@@ -55,6 +57,7 @@ public class HypermediaArtifactRegistry {
     artifactNames = new Hashtable<>();
     agentArtifacts = new Hashtable<>();
     hypermediaNames = new Hashtable<>();
+    feedbackActions = new Hashtable<>();
     n = 1;
   }
 
@@ -83,6 +86,7 @@ public class HypermediaArtifactRegistry {
         });
       }
     }
+    feedbackActions.put(artifactTemplate, artifact.getFeedbackActions());
   }
 
   public void register(HypermediaInterface hypermediaInterface) {
@@ -101,6 +105,7 @@ public class HypermediaArtifactRegistry {
           }
         });
       }
+      feedbackActions.put(artifactTemplate, hypermediaInterface.feedbackActions);
     }
     String artifactName = hypermediaInterface.getActualArtifactName();
     this.interfaceMap.put(artifactName, hypermediaInterface);
@@ -294,5 +299,9 @@ public class HypermediaArtifactRegistry {
     String s ="hypermedia_body_"+n;
     this.n = n +1;
     return s;
+  }
+
+  public boolean hasFeedbackParam(String artifactName, String action){
+    return  feedbackActions.get(artifactName).contains(action);
   }
 }

@@ -50,31 +50,6 @@ public class CartagoVerticleTest {
   }
 
   @Test
-  public void testCreateArtifactWithoutJoiningWorkspace(TestContext tc) {
-    Async async = tc.async();
-    JsonObject body = new JsonObject();
-    body.put("artifactClass", "http://example.org/Counter");
-    body.put("artifactName", "counter");
-    client.post(TEST_PORT, "localhost", "/workspaces/").putHeader("X-Agent-WebID", "http://example.org/agent")
-        .putHeader("Slug", "102").send(ar -> System.out.println("workspace 102 created"));
-    System.out.println("workspace created");
-    client.post(TEST_PORT, "localhost", "/workspaces/102/artifacts/").putHeader("X-Agent-WebID", "http://example.org/agent")
-      .putHeader("Content-Type", "application/json")
-      .sendJsonObject(body, ar -> {
-        System.out.println("response received");
-        HttpResponse<Buffer> response = ar.result();
-        System.out.println("response: "+response);
-        System.out.println("status code: "+response.statusCode());
-        System.out.println("status message: "+response.statusMessage());
-        System.out.println("body: "+response.bodyAsString());
-
-        tc.assertEquals(HttpStatus.SC_FORBIDDEN, response.statusCode(), "Status code should be 403");
-        async.complete();
-      });
-  }
-
-
-  @Test
   public void testCreationArtifactWithoutWorkspace(TestContext tc) {
     Async async = tc.async();
     JsonObject body = new JsonObject();
@@ -93,4 +68,57 @@ public class CartagoVerticleTest {
         async.complete();
       });
   }
+
+  @Test
+  public void testCreateArtifactWithoutJoiningWorkspace(TestContext tc) {
+    Async async = tc.async();
+    JsonObject body = new JsonObject();
+    body.put("artifactClass", "http://example.org/Counter");
+    body.put("artifactName", "counter");
+    client.post(TEST_PORT, "localhost", "/workspaces/").putHeader("X-Agent-WebID", "http://example.org/agent")
+        .putHeader("Slug", "102").send(ar -> System.out.println("workspace 102 created"));
+    System.out.println("workspace 102 created");
+    client.post(TEST_PORT, "localhost", "/workspaces/102/artifacts/").putHeader("X-Agent-WebID", "http://example.org/agent")
+      .putHeader("Content-Type", "application/json")
+      .sendJsonObject(body, ar -> {
+        System.out.println("response received");
+        HttpResponse<Buffer> response = ar.result();
+        System.out.println("response: "+response);
+        System.out.println("status code: "+response.statusCode());
+        System.out.println("status message: "+response.statusMessage());
+        System.out.println("body: "+response.bodyAsString());
+
+        tc.assertEquals(HttpStatus.SC_FORBIDDEN, response.statusCode(), "Status code should be 403");
+        async.complete();
+      });
+  }
+
+  @Test
+  public void testCreateArtifactWithJoiningWorkspace(TestContext tc) {
+    Async async = tc.async();
+    JsonObject body = new JsonObject();
+    body.put("artifactClass", "http://example.org/Counter");
+    body.put("artifactName", "counter");
+    client.post(TEST_PORT, "localhost", "/workspaces/").putHeader("X-Agent-WebID", "http://example.org/agent")
+      .putHeader("Slug", "102").send(ar -> System.out.println("workspace 102 created"));
+    System.out.println("workspace 102 created");
+    client.post(TEST_PORT, "localhost", "/workspaces/102/join").putHeader("X-Agent-WebID", "http://example.org/agent")
+      .send(ar -> System.out.println("workspace 102 joined"));
+    client.post(TEST_PORT, "localhost", "/workspaces/102/artifacts/").putHeader("X-Agent-WebID", "http://example.org/agent")
+      .putHeader("Content-Type", "application/json")
+      .sendJsonObject(body, ar -> {
+        System.out.println("response received");
+        HttpResponse<Buffer> response = ar.result();
+        System.out.println("response: "+response);
+        System.out.println("status code: "+response.statusCode());
+        System.out.println("status message: "+response.statusMessage());
+        System.out.println("body: "+response.bodyAsString());
+
+        tc.assertEquals(HttpStatus.SC_OK, response.statusCode(), "Status code should be 200");
+        async.complete();
+      });
+  }
+
+
+
 }

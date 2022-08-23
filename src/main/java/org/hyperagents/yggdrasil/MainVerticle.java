@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil;
 
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
+import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
@@ -30,7 +31,8 @@ public class MainVerticle extends AbstractVerticle {
             "org.hyperagents.yggdrasil.cartago.artifacts.PhantomX3D")
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter")
         .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
-            + ".SpatialCalculator2D");
+            + ".SpatialCalculator2D")
+      .put("http://example.org/Adder", Adder.class.getCanonicalName());
 
     JsonObject cartagoConfig = config();
     cartagoConfig.put("known-artifacts", knownArtifacts);

@@ -1,10 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -25,6 +21,8 @@ public abstract class HypermediaArtifact extends Artifact{
 
   private SecurityScheme securityScheme = new NoSecurityScheme();
   private final Model metadata = new LinkedHashModel();
+
+  private Set<String> feedbackActions = new HashSet<>();
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -118,6 +116,14 @@ public abstract class HypermediaArtifact extends Artifact{
 
     actions.add(action);
     actionAffordances.put(actionName, actions);
+  }
+
+  protected final void registerFeedbackParameter(String actionName){
+    feedbackActions.add(actionName);
+  }
+
+  public final Set<String> getFeedbackActions(){
+    return feedbackActions;
   }
 
   protected final void setSecurityScheme(SecurityScheme scheme) {

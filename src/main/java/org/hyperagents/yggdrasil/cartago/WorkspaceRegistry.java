@@ -10,11 +10,15 @@ public class WorkspaceRegistry {
   private static WorkspaceRegistry registry;
 
   private Map<String, WorkspaceDescriptor> workspaceMap;
-  
+
 
   private Hashtable<String, String> nameUriMap;
 
   private Hashtable<String, String> uriNameMap;
+
+  private Hashtable<String, Set<String>> workspaceAgents;
+
+  private Hashtable<String, Set<String>> workspaceArtifacts;
 
 
 
@@ -30,6 +34,8 @@ public class WorkspaceRegistry {
     workspaceMap = new Hashtable<>();
     nameUriMap = new Hashtable<>();
     uriNameMap = new Hashtable<>();
+    workspaceAgents = new Hashtable<>();
+    workspaceArtifacts = new Hashtable<>();
 
   }
 
@@ -82,4 +88,34 @@ public class WorkspaceRegistry {
     return getParentWorkspaceUriFromName(workspaceName);
 
   }
+
+  public boolean hasWorkspace(String workspaceName){
+    return this.workspaceMap.containsKey(workspaceName);
+  }
+
+  public boolean containsArtifact(String workspaceName, String artifactName){
+    boolean b = false;
+    if (workspaceArtifacts.containsKey(workspaceName)){
+      Set<String> artifacts = workspaceArtifacts.get(workspaceName);
+      if (artifacts.contains(artifactName)){
+        b = true;
+      }
+    }
+    return b;
+  }
+
+  public void addArtifact(String workspaceName, String artifactName){
+    if (workspaceArtifacts.containsKey(workspaceName)){
+      Set<String> artifacts = workspaceArtifacts.get(workspaceName);
+      artifacts.add(artifactName);
+      workspaceArtifacts.put(workspaceName, artifacts);
+    } else {
+      Set<String> l = new HashSet<>();
+      l.add(artifactName);
+      workspaceArtifacts.put(workspaceName, l);
+    }
+
+  }
+
+
 }

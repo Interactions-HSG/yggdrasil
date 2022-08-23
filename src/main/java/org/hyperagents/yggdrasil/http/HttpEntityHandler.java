@@ -137,9 +137,20 @@ public class HttpEntityHandler {
   }
 
   public void handleAction(RoutingContext context) {
+    System.out.println("handle action");
     String entityRepresentation = context.getBodyAsString();
+    System.out.println("entity representation: "+entityRepresentation);
     String wkspName = context.pathParam("wkspid");
+    System.out.println("workspace name: "+wkspName);
     String hypermediaArtifactName = context.pathParam("artid");
+    System.out.println("artifact name: "+hypermediaArtifactName);
+    WorkspaceRegistry workspaceRegistry = WorkspaceRegistry.getInstance();
+    if (workspaceRegistry.hasWorkspace(wkspName) || workspaceRegistry.containsArtifact(wkspName, hypermediaArtifactName)){
+      System.out.println("workspace or artifact not defined");
+      context.response().setStatusCode(HttpStatus.SC_NOT_FOUND)
+        .end();
+      return;
+    }
     final String artifactName;
     HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
     if (registry.hasOtherName(hypermediaArtifactName)){
@@ -208,7 +219,13 @@ public class HttpEntityHandler {
                   cartagoReply -> {
                     if (cartagoReply.succeeded()) {
                       LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
-                      context.response().setStatusCode(HttpStatus.SC_OK).end();
+                      if (HypermediaArtifactRegistry.getInstance().hasFeedbackParam(artifactName, actionName)) {
+                        Object returnObject = cartagoReply.result().body();
+                        System.out.println("return object description: "+returnObject);
+                        context.response().setStatusCode(HttpStatus.SC_OK).end(returnObject.toString());
+                      } else {
+                        context.response().setStatusCode(HttpStatus.SC_OK).end();
+                      }
                     } else {
                       LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
                           + "; reason: " + cartagoReply.cause().getMessage());

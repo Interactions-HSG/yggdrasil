@@ -169,8 +169,12 @@ public class CartagoVerticle extends AbstractVerticle {
           Optional<String> payload = message.body() == null ? Optional.empty()
               : Optional.of(message.body());
 
-          doAction(agentUri, workspaceName, artifact, action, payload);
-          message.reply(HttpStatus.SC_OK);
+          Optional<Object> returnObject = doAction(agentUri, workspaceName, artifact, action, payload);
+          if (returnObject.isPresent()){
+            message.reply(returnObject.get());
+          } else {
+            message.reply(HttpStatus.SC_OK);
+          }
           break;
         default:
           // TODO
@@ -306,6 +310,7 @@ public class CartagoVerticle extends AbstractVerticle {
       AgentCredential agentCredential = new AgentIdCredential(agentContext.getName());
       ICartagoCallback callback = new InterArtifactCallback(new ReentrantLock());
       workspace.joinWorkspace(agentCredential, callback);
+      //agentContext.joinWorkspace(workspaceName);
       AgentId agentId = getAgentId(agentContext, workspace.getId());
       WorkspaceId workspaceId = workspace.getId();
       HypermediaAgentBodyArtifactRegistry registry = HypermediaAgentBodyArtifactRegistry.getInstance();
@@ -400,7 +405,10 @@ public class CartagoVerticle extends AbstractVerticle {
         throw new CartagoException("workspace does not exist");
       }
       List<WorkspaceId> joinedWorkspaces = agentContext.getJoinedWorkspaces();
-      if (!joinedWorkspaces.contains(wkspId)){
+      System.out.println("joined workspaces: "+joinedWorkspaces);
+      Workspace workspace1 = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+      ArtifactId aid = workspace1.getAgentBodyArtifact(getAgentId(agentContext, workspace1.getId()));
+      if (aid==null){
         System.out.println("agent not joined");
         throw new CartagoException("Agent not joined");
         //return false;
@@ -425,23 +433,38 @@ public class CartagoVerticle extends AbstractVerticle {
         workspace.makeArtifact(agentId,artifactName, artifactClass,new ArtifactConfig());
         LOGGER.info("Done!");
       }
+      WorkspaceRegistry.getInstance().addArtifact(workspaceName, artifactName);
     } catch(Exception e){
       e.printStackTrace();
     }
   }
 
 
-  private void doAction(String agentUri, String workspaceName, String artifactName, String action,
+  private Optional<Object> doAction(String agentUri, String workspaceName, String artifactName, String action,
       Optional<String> payload) throws CartagoException {
+    System.out.println("do action");
+    Optional<Object> returnObject = Optional.empty();
     CartagoContext agentContext = getAgentContext(agentUri);
     WorkspaceId workspaceId = WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName);
-    joinWorkspace(agentContext.getName(), workspaceName);
+    //joinWorkspace(agentContext.getName(), workspaceName);
     Op operation;
+    HypermediaArtifactRegistry registry = HypermediaArtifactRegistry.getInstance();
+    boolean b = false;
     if (payload.isPresent()) {
       Object[] params = CartagoDataBundle.fromJson(payload.get());
-      if (HypermediaArtifactRegistry.getInstance().hasHypermediaInterface(artifactName)){
+      if (registry.hasHypermediaInterface(artifactName)){
         HypermediaInterface hypermediaInterface = HypermediaArtifactRegistry.getInstance().getHypermediaInterface(artifactName);
         params = hypermediaInterface.convert(action, params);
+      }
+      boolean c = registry.hasFeedbackParam(artifactName, action);
+      System.out.println("c: "+c);
+      if (registry.hasFeedbackParam(artifactName, action)){
+        b = true;
+        List<Object> paramList = new ArrayList();
+        paramList.addAll(Arrays.asList(params));
+        OpFeedbackParam<Object> feedbackParam = new OpFeedbackParam<>();
+        paramList.add(feedbackParam);
+        params = paramList.toArray();
       }
       operation = new Op(action, params);
     } else {
@@ -456,6 +479,19 @@ public class CartagoVerticle extends AbstractVerticle {
     ICartagoCallback callback = new NotificationCallback(this.vertx);
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
+    if (b){
+      Object[] params = operation.getParamValues();
+      if (params.length>0){
+        OpFeedbackParam<Object> fParam = (OpFeedbackParam<Object>) params[params.length-1];
+        while (fParam.get()==null){
+          System.out.println("wait");
+        }
+        Object o = fParam.get();
+        System.out.println("result: "+o);
+        returnObject = Optional.of(o);
+      }
+    }
+    return returnObject;
   }
 
   private CartagoContext getAgentContext(String agentUri) {
