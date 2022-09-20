@@ -42,12 +42,16 @@ public class readProperty extends WotAction{
   public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, VarTerm term, Unifier un, TransitionSystem ts){
     tdUrl = tdUrl.replace("\"","");
     try {
+      System.out.println("try read property");
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      System.out.println("td read");
       Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
       if (opProperty.isPresent()){
+        System.out.println("property is present");
         PropertyAffordance property = opProperty.get();
         Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
         if (opForm.isPresent()){
+          System.out.println("form is present");
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
           for (String key: headers.keySet()){
@@ -56,6 +60,7 @@ public class readProperty extends WotAction{
           }
           TDHttpResponse response = request.execute();
           com.google.gson.JsonObject responseObject = createResponseObject(response);
+          System.out.println("response object: "+responseObject);
           bindTermToJson(term, responseObject, un, ts);
         }
       }

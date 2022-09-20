@@ -24,8 +24,18 @@ public class JsonManager {
   }
 
   public JsonElement getJsonElementFromTerm(Term jsonId){
-    StringTerm st = (StringTerm) jsonId;
-    return currentJsons.get(st.getString());
+    if (jsonId.isString()) {
+      StringTerm st = (StringTerm) jsonId;
+      return currentJsons.get(st.getString());
+    }
+    else if (jsonId.isAtom()){
+      System.out.println("jsonId is atom");
+      String s = jsonId.toString();
+      System.out.println("all jsons: "+currentJsons.keySet());
+      System.out.println("json: "+currentJsons.get(s));
+      return currentJsons.get(s);
+    }
+    return null;
   }
 
   public boolean new_json(Unifier un, String jsonString, Term id) throws Exception {

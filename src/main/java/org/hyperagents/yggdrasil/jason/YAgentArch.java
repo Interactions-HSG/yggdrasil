@@ -155,6 +155,22 @@ public class YAgentArch extends AgArch {
           StringTerm st = (StringTerm) terms.get(2);
           body =  st.getString();
           System.out.println("body: "+body);
+        } else if (t.isVar()){
+          System.out.println("body is var");
+
+        } else if (t.isAtom()){
+          System.out.println("body is atom");
+          JsonElement jsonElement = jsonManager.getJsonElementFromTerm(t);
+          System.out.println("json element: "+jsonElement);
+          body = jsonElement.toString();
+          System.out.println("body: "+body);
+        }
+        else {
+          System.out.println("term not string: "+t);
+          JsonElement jsonElement = jsonManager.getJsonElementFromTerm(t);
+          System.out.println("json element: "+jsonElement);
+          body = jsonElement.toString();
+          System.out.println("body: "+body);
         }
       }
       if (terms.size() == 4){
@@ -234,6 +250,7 @@ public class YAgentArch extends AgArch {
       VarTerm jsonId = (VarTerm) terms.get(2);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       createJsonObject(u, attributeList, valueList, jsonId);
+      System.out.println("jsonId: "+jsonId);
     } else if (func.equals("hasAttribute")){ //Inside json library
       Term jsonId = terms.get(0);
       StringTerm attributeTerm = (StringTerm) terms.get(1);
@@ -1407,7 +1424,7 @@ public StringTerm getAsStringTerm(Term jsonId){
       String jsonString = jsonObject.toString();
       System.out.println("json created: "+jsonString);
       try {
-        library.new_json(un, jsonString, jsonId);
+        jsonManager.new_json(un, jsonString, jsonId);
       } catch (Exception e){
         e.printStackTrace();
       }
