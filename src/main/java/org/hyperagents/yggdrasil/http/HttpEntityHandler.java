@@ -5,10 +5,13 @@ import java.util.stream.Collectors;
 
 import cartago.ArtifactId;
 import cartago.Workspace;
+import ch.unisg.ics.interactions.wot.td.io.TDWriter;
 import com.google.gson.JsonArray;
 import io.vertx.core.http.HttpMethod;
+import org.apache.commons.rdf.api.RDF;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.*;
 import org.hyperagents.yggdrasil.jason.AgentMessageCallback;
 import org.hyperagents.yggdrasil.jason.AgentNotificationCallback;
@@ -435,6 +438,7 @@ public class HttpEntityHandler {
   }
 
   public void handleInstantiateAgent(RoutingContext routingContext){
+    System.out.println("handle instantiate agent");
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
     String agentName = routingContext.request().getHeader("X-Agent-Name");
     String representation = routingContext.getBodyAsString();
@@ -449,8 +453,10 @@ public class HttpEntityHandler {
     vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, representation, options, reply -> {
       if (reply.succeeded()) {
         AgentRegistry.getInstance().printAllAgents();
+        System.out.println("agent creation succeeded");
         routingContext.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
       } else {
+        System.out.println("agent creation failed");
         routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
       }
     });
@@ -600,8 +606,13 @@ public class HttpEntityHandler {
 
         HttpServerResponse httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
+        String mediatype = routingContext.request().getHeader("Accept");
+        if (mediatype.equals("application/ld+json")){
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+        } else {
 
-        httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+        }
 
         // Note: forEach produces duplicate keys. If anyone wants to, please replace this with a Java 8 version ;-)
         for(String headerName : headers.keySet()) {
@@ -609,6 +620,12 @@ public class HttpEntityHandler {
         }
 
         String storeReply = reply.result().body();
+        System.out.println("store reply: "+storeReply);
+        if (mediatype.equals("application/ld+json")){
+          ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, storeReply);
+          storeReply = TDWriter.write(td, RDFFormat.JSONLD);
+        }
+
         if (storeReply != null && !storeReply.isEmpty()) {
           httpResponse.end(storeReply);
         } else {
