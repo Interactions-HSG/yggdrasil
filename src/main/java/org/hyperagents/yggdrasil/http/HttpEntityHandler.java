@@ -423,9 +423,10 @@ public class HttpEntityHandler {
 
   public void handleCreateSubWorkspace(RoutingContext routingContext){
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
-    String representation = routingContext.getBodyAsString();
-    JsonObject subWorkspaceInit = (JsonObject) Json.decodeValue(representation);
-    String workspaceName = subWorkspaceInit.getString("name");
+    //String representation = routingContext.getBodyAsString();
+    //JsonObject subWorkspaceInit = (JsonObject) Json.decodeValue(representation);
+    //String workspaceName = subWorkspaceInit.getString("name");
+    String workspaceName = routingContext.request().getHeader("Slug");
     String currentWorkspaceName = routingContext.pathParam("wkspid");
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
