@@ -579,6 +579,7 @@ public class HttpEntityHandler {
 
   // TODO: support different content types
   private void createEntity(RoutingContext context, String representation) {
+    System.out.println("create entity");
     String entityIri = context.request().absoluteURI();
     String slug = context.request().getHeader("Slug");
 //    String contentType = context.request().getHeader("Content-Type");
@@ -600,6 +601,7 @@ public class HttpEntityHandler {
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
       int succeededStatusCode, Map<String,List<String>> headers) {
+    System.out.println("handle store reply");
 
     return reply -> {
       if (reply.succeeded()) {
@@ -634,7 +636,6 @@ public class HttpEntityHandler {
         }
       } else {
         ReplyException exception = ((ReplyException) reply.cause());
-
         LOGGER.info(exception.getMessage());
 
         if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
