@@ -327,10 +327,9 @@ public class YAgentArch extends AgArch {
     } else if (func.equals("getStringAsJson")){ //Inside json library
       StringTerm st = (StringTerm) terms.get(0);
       Term jsonId = terms.get(1);
-      JSONLibrary library = JSONLibrary.getInstance();
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       try {
-        library.new_json(u, st.getString(), jsonId);
+        jsonManager.new_json(u, st.getString(), jsonId);
       } catch(Exception e){
         e.printStackTrace();
       }
@@ -1205,32 +1204,27 @@ public class YAgentArch extends AgArch {
 
 
   public boolean isValid(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isValid(object);
   }
 
   public boolean isInformation(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isInformation(object);
   }
 
   public boolean isRedirection(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isRedirection(object);
   }
 
   public boolean isClientError(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isClientError(object);
   }
 
   public boolean isServerError(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isServerError(object);
   }
 
@@ -1239,8 +1233,7 @@ public class YAgentArch extends AgArch {
   }
 
   public String getBody(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    JsonElement e = jsonLibrary.getJSONElementFromTerm(jsonId);
+    JsonElement e = jsonManager.getJsonElementFromTerm(jsonId);
     if (e.isJsonObject()){
       com.google.gson.JsonObject o = e.getAsJsonObject();
       return getBody(o);
@@ -1251,8 +1244,7 @@ public class YAgentArch extends AgArch {
   //JSON methods
 
   public JsonElement getJsonElement(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    return jsonLibrary.getJSONElementFromTerm(jsonId);
+    return jsonManager.getJsonElementFromTerm(jsonId);
 
 
   }
@@ -1351,8 +1343,7 @@ public class YAgentArch extends AgArch {
   }
 
   public Term getAsTerm(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    return getAsTerm(jsonLibrary.getJSONElementFromTerm(jsonId));
+    return getAsTerm(jsonManager.getJsonElementFromTerm(jsonId));
 
   }
 
@@ -1381,9 +1372,7 @@ public class YAgentArch extends AgArch {
   }
 
 public StringTerm getAsStringTerm(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    System.out.println("library retrieved");
-    JsonElement json = library.getJSONElementFromTerm(jsonId);
+    JsonElement json = jsonManager.getJsonElementFromTerm(jsonId);
     System.out.println("json element retrieved");
     System.out.println("json element: "+json);
     return getAsStringTerm(json);
@@ -1408,7 +1397,6 @@ public StringTerm getAsStringTerm(Term jsonId){
   }
 
   public void createJsonObject(Unifier un, ListTerm attributeNames, ListTerm attributeValues, VarTerm jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
     com.google.gson.JsonObject jsonObject = new com.google.gson.JsonObject();
     int n1 = attributeNames.size();
     int n2 = attributeValues.size();
@@ -1436,15 +1424,13 @@ public StringTerm getAsStringTerm(Term jsonId){
 
 
   public void printJSON(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    jsonLibrary.printJson(jsonId);
+    System.out.println(getJsonElement(jsonId));
   }
 
   public void bindTermToJson(Term jsonId, JsonElement jsonElement){
-    JSONLibrary library = JSONLibrary.getInstance();
     Unifier un = getTS().getC().getSelectedIntention().peek().getUnif();
     try {
-      library.new_json(un, jsonElement.toString(), jsonId);
+      jsonManager.new_json(un, jsonElement.toString(), jsonId);
     } catch(Exception e){
       e.printStackTrace();
     }
