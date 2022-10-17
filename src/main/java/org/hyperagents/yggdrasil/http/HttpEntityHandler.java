@@ -610,8 +610,11 @@ public class HttpEntityHandler {
         HttpServerResponse httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
         String mediatype = routingContext.request().getHeader("Accept");
+        if (mediatype == null){
+          mediatype = "text/turtle";
+        }
         if (mediatype.equals("application/ld+json")){
-          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/ld+json");
         } else {
 
           httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
@@ -637,6 +640,7 @@ public class HttpEntityHandler {
       } else {
         ReplyException exception = ((ReplyException) reply.cause());
         LOGGER.info(exception.getMessage());
+        System.out.println("failure code: "+exception.failureCode());
 
         if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
           routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
