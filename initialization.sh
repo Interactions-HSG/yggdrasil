@@ -47,7 +47,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai> a td:Thing;
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai> a td:Thing, <http://w3id.org/eve#Artifact>;
   td:title "aiService";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -126,7 +126,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service> a td:Thing;
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service> a td:Thing, <http://w3id.org/eve#Artifact>;
   td:title "hilService";
   td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
       wotsec:in "HEADER";
@@ -564,7 +564,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller> a td:Thing;
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller> a td:Thing, <http://w3id.org/eve#Artifact>;
   td:title "URx Robot Controller";
   td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
       wotsec:in "HEADER";
