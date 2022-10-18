@@ -281,7 +281,7 @@ public class CartagoVerticle extends AbstractVerticle {
       //end new actions
       .build();
 
-    return new TDGraphWriter(td)
+    String swts =  new TDGraphWriter(td)
       .setNamespace("td", "https://www.w3.org/2019/wot/td#")
       .setNamespace("htv", "http://www.w3.org/2011/http#")
       .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
@@ -290,6 +290,8 @@ public class CartagoVerticle extends AbstractVerticle {
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
       .setNamespace("eve", "http://w3id.org/eve#")
       .write();
+    System.out.println("subworkspace td string: "+swts);
+    return swts;
   }
 
   private String joinWorkspace(String agentUri, String workspaceName) {

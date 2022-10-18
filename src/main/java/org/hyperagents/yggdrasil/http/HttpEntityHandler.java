@@ -463,6 +463,19 @@ public class HttpEntityHandler {
     });
   }
 
+  public void handleGetAgentProfile(RoutingContext context){
+    LOGGER.info("handle get agent profile");
+    String agentIRI = context.request().absoluteURI();
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+      .addHeader(REQUEST_URI, agentIRI);
+
+    Map<String,List<String>> headers = getHeaders(agentIRI);
+
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
+      handleStoreReply(context, HttpStatus.SC_OK, headers));
+  }
+
   public void handleReceiveNotification(RoutingContext context){
     String agentName = context.request().absoluteURI();
     String body = context.getBodyAsString();
@@ -608,6 +621,9 @@ public class HttpEntityHandler {
         HttpServerResponse httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
         String mediatype = routingContext.request().getHeader("Accept");
+        if (mediatype == null){
+          mediatype = "text/turtle";
+        }
         if (mediatype.equals("application/ld+json")){
           httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
         } else {

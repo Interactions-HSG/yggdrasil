@@ -93,4 +93,8 @@ public class AgentRegistry {
    void removeBody(String agentName, String workspaceName){
     this.bodies.remove(new ImmutablePair<>(agentName, workspaceName));
   }
+
+  public String getHttpPrefix(){
+    return httpPrefix;
+  }
 }

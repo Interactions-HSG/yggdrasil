@@ -244,7 +244,7 @@ public class YAgentArch extends AgArch {
       Term jsonId = terms.get(0);
       System.out.println("json id: "+jsonId);
       printJSON(jsonId);
-      } else if (func.equals("makeJson")){ //Inside json library
+    } else if (func.equals("makeJson")){ //Inside json library
       ListTerm attributeList = (ListTerm) terms.get(0);
       ListTerm valueList = (ListTerm) terms.get(1);
       VarTerm jsonId = (VarTerm) terms.get(2);
@@ -327,10 +327,9 @@ public class YAgentArch extends AgArch {
     } else if (func.equals("getStringAsJson")){ //Inside json library
       StringTerm st = (StringTerm) terms.get(0);
       Term jsonId = terms.get(1);
-      JSONLibrary library = JSONLibrary.getInstance();
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       try {
-        library.new_json(u, st.getString(), jsonId);
+        jsonManager.new_json(u, st.getString(), jsonId);
       } catch(Exception e){
         e.printStackTrace();
       }
@@ -382,10 +381,10 @@ public class YAgentArch extends AgArch {
       u.bind(var, new StringTermImpl(timeStamp));
     }
 
-      System.out.println("end method act");
-      actionExec.setResult(true);
-      super.actionExecuted(actionExec);
-    }
+    System.out.println("end method act");
+    actionExec.setResult(true);
+    super.actionExecuted(actionExec);
+  }
 
 
 
@@ -400,24 +399,24 @@ public class YAgentArch extends AgArch {
         Literal belief = Literal.parseLiteral(notification);
         this.getTS().getAg().addBel(belief);
       }
-        String agentName = this.getAgName();
-        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
-        if (messageCallback.hasNewMessage()) {
-          System.out.println("agent "+ this.getAgName()+ " has new message");
-          String message = messageCallback.retrieveMessage();
-          Literal messageBelief = new LiteralImpl("new_message");
-          Term id = getNewMessageId();
-          JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-          JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
-          Term jsonTerm = jsonLibrary.getNewJsonId();
-          jsonLibrary.registerJson(jsonTerm, jsonElement);
-          messageBelief.addTerm(id);
-          messageBelief.addTerm(jsonTerm);
-          System.out.println("message belief: "+messageBelief);
-          this.getTS().getAg().addBel(messageBelief);
-          messageCallback.noNewMessage();
-        }
-      } catch(Exception e){
+      String agentName = this.getAgName();
+      AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
+      if (messageCallback.hasNewMessage()) {
+        System.out.println("agent "+ this.getAgName()+ " has new message");
+        String message = messageCallback.retrieveMessage();
+        Literal messageBelief = new LiteralImpl("new_message");
+        Term id = getNewMessageId();
+        JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+        JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
+        Term jsonTerm = jsonLibrary.getNewJsonId();
+        jsonLibrary.registerJson(jsonTerm, jsonElement);
+        messageBelief.addTerm(id);
+        messageBelief.addTerm(jsonTerm);
+        System.out.println("message belief: "+messageBelief);
+        this.getTS().getAg().addBel(messageBelief);
+        messageCallback.noNewMessage();
+      }
+    } catch(Exception e){
       e.printStackTrace();
     }
 
@@ -625,46 +624,46 @@ public class YAgentArch extends AgArch {
         Optional<Form> opForm = action.getFirstForm();
         if (opForm.isPresent()) {
           System.out.println("form is present");
-        Form form = opForm.get();
-        TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-        System.out.println("request target: "+request.getTarget());
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          System.out.println("request target: "+request.getTarget());
 
-        for (String key: headers.keySet()){
-          String value = headers.get(key);
-          request.addHeader(key, value);
-        }
-        if (body != null){
-          JsonElement element = JsonParser.parseString(body);
-          Optional<DataSchema> opSchema = action.getInputSchema();
-          if (opSchema.isPresent()){
-            request.addHeader("Content-Type", "application/json");
-            System.out.println("schema is present");
-            DataSchema schema = opSchema.get();
-            if (schema.getDatatype() == "array" && element.isJsonArray()){
-              List<Object> payload = createArrayPayload(element.getAsJsonArray());
-              request.setArrayPayload((ArraySchema) schema, payload);
-            } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-              Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-              request.setObjectPayload((ObjectSchema) schema, payload );
-            } else if (schema.getDatatype() == "string"){
-              request.setPrimitivePayload(schema, element.getAsString());
-            } else if (schema.getDatatype() == "number"){
-              request.setPrimitivePayload(schema, element.getAsDouble());
-            } else if (schema.getDatatype() == "integer"){
-              request.setPrimitivePayload(schema, element.getAsLong());
-            } else if (schema.getDatatype() == "boolean"){
-              request.setPrimitivePayload(schema, element.getAsBoolean());
-            }
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
           }
-          System.out.println("request body: "+request.getPayloadAsString());
+          if (body != null){
+            JsonElement element = JsonParser.parseString(body);
+            Optional<DataSchema> opSchema = action.getInputSchema();
+            if (opSchema.isPresent()){
+              request.addHeader("Content-Type", "application/json");
+              System.out.println("schema is present");
+              DataSchema schema = opSchema.get();
+              if (schema.getDatatype() == "array" && element.isJsonArray()){
+                List<Object> payload = createArrayPayload(element.getAsJsonArray());
+                request.setArrayPayload((ArraySchema) schema, payload);
+              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
+                request.setObjectPayload((ObjectSchema) schema, payload );
+              } else if (schema.getDatatype() == "string"){
+                request.setPrimitivePayload(schema, element.getAsString());
+              } else if (schema.getDatatype() == "number"){
+                request.setPrimitivePayload(schema, element.getAsDouble());
+              } else if (schema.getDatatype() == "integer"){
+                request.setPrimitivePayload(schema, element.getAsLong());
+              } else if (schema.getDatatype() == "boolean"){
+                request.setPrimitivePayload(schema, element.getAsBoolean());
+              }
+            }
+            System.out.println("request body: "+request.getPayloadAsString());
 
-        }
-        TDHttpResponse response = request.execute();
-        com.google.gson.JsonObject responseObject = createResponseObject(response);
-        bindTermToJson(term, responseObject);
-       //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-       //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-      } else {
+          }
+          TDHttpResponse response = request.execute();
+          com.google.gson.JsonObject responseObject = createResponseObject(response);
+          bindTermToJson(term, responseObject);
+          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+        } else {
           System.out.println("form is not present");
         }
       } else {
@@ -705,8 +704,9 @@ public class YAgentArch extends AgArch {
             }
             System.out.println("uri variables: "+uriVariables);
             System.out.println("values: "+values);
-             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
-             System.out.println(request.getTarget());
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
+            System.out.println(request.getTarget());
           }
 
           for (String key: headers.keySet()){
@@ -754,8 +754,8 @@ public class YAgentArch extends AgArch {
   }
 
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
-  System.out.println("tdUrl: "+tdUrl);
-  System.out.println("affordanceName: "+affordanceName);
+    System.out.println("tdUrl: "+tdUrl);
+    System.out.println("affordanceName: "+affordanceName);
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       System.out.println("td received");
@@ -1205,32 +1205,27 @@ public class YAgentArch extends AgArch {
 
 
   public boolean isValid(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isValid(object);
   }
 
   public boolean isInformation(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isInformation(object);
   }
 
   public boolean isRedirection(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isRedirection(object);
   }
 
   public boolean isClientError(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isClientError(object);
   }
 
   public boolean isServerError(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    com.google.gson.JsonObject object = library.getJSONElementFromTerm(jsonId).getAsJsonObject();
+    com.google.gson.JsonObject object = jsonManager.getJsonElementFromTerm(jsonId).getAsJsonObject();
     return isServerError(object);
   }
 
@@ -1239,8 +1234,7 @@ public class YAgentArch extends AgArch {
   }
 
   public String getBody(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    JsonElement e = jsonLibrary.getJSONElementFromTerm(jsonId);
+    JsonElement e = jsonManager.getJsonElementFromTerm(jsonId);
     if (e.isJsonObject()){
       com.google.gson.JsonObject o = e.getAsJsonObject();
       return getBody(o);
@@ -1251,8 +1245,7 @@ public class YAgentArch extends AgArch {
   //JSON methods
 
   public JsonElement getJsonElement(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    return jsonLibrary.getJSONElementFromTerm(jsonId);
+    return jsonManager.getJsonElementFromTerm(jsonId);
 
 
   }
@@ -1272,7 +1265,7 @@ public class YAgentArch extends AgArch {
           int n = (int) num;
           element = new JsonPrimitive(n);
         }
-       }
+      }
       catch(Exception e){
         e.printStackTrace();
       }
@@ -1351,8 +1344,7 @@ public class YAgentArch extends AgArch {
   }
 
   public Term getAsTerm(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    return getAsTerm(jsonLibrary.getJSONElementFromTerm(jsonId));
+    return getAsTerm(jsonManager.getJsonElementFromTerm(jsonId));
 
   }
 
@@ -1369,7 +1361,7 @@ public class YAgentArch extends AgArch {
   }
 
   public NumberTerm getAsNumberTerm(JsonElement jsonElement){
-      return new NumberTermImpl(jsonElement.getAsDouble());
+    return new NumberTermImpl(jsonElement.getAsDouble());
   }
 
   public StringTerm getAsStringTerm(JsonElement jsonElement){
@@ -1380,14 +1372,12 @@ public class YAgentArch extends AgArch {
     return st;
   }
 
-public StringTerm getAsStringTerm(Term jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
-    System.out.println("library retrieved");
-    JsonElement json = library.getJSONElementFromTerm(jsonId);
+  public StringTerm getAsStringTerm(Term jsonId){
+    JsonElement json = jsonManager.getJsonElementFromTerm(jsonId);
     System.out.println("json element retrieved");
     System.out.println("json element: "+json);
     return getAsStringTerm(json);
-}
+  }
 
   public MapTerm getAsMapTerm(JsonElement jsonElement){
     com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -1408,7 +1398,6 @@ public StringTerm getAsStringTerm(Term jsonId){
   }
 
   public void createJsonObject(Unifier un, ListTerm attributeNames, ListTerm attributeValues, VarTerm jsonId){
-    JSONLibrary library = JSONLibrary.getInstance();
     com.google.gson.JsonObject jsonObject = new com.google.gson.JsonObject();
     int n1 = attributeNames.size();
     int n2 = attributeValues.size();
@@ -1436,15 +1425,13 @@ public StringTerm getAsStringTerm(Term jsonId){
 
 
   public void printJSON(Term jsonId){
-    JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-    jsonLibrary.printJson(jsonId);
+    System.out.println(getJsonElement(jsonId));
   }
 
   public void bindTermToJson(Term jsonId, JsonElement jsonElement){
-    JSONLibrary library = JSONLibrary.getInstance();
     Unifier un = getTS().getC().getSelectedIntention().peek().getUnif();
     try {
-      library.new_json(un, jsonElement.toString(), jsonId);
+      jsonManager.new_json(un, jsonElement.toString(), jsonId);
     } catch(Exception e){
       e.printStackTrace();
     }
