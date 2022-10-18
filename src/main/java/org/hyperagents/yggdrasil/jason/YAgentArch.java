@@ -704,6 +704,7 @@ public class YAgentArch extends AgArch {
             }
             System.out.println("uri variables: "+uriVariables);
             System.out.println("values: "+values);
+            System.out.println("form target: "+form.getTarget());
              request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
              System.out.println(request.getTarget());
           }
