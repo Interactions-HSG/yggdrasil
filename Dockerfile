@@ -5,7 +5,7 @@ EXPOSE 8080
 COPY .  /yggdrasil
 COPY src/main/conf/config.json /usr/verticles/
 
-RUN cd /yggdrasil && ./gradlew build
+RUN cd /yggdrasil && ./gradlew build -x test
 
 RUN cp /yggdrasil/build/libs/yggdrasil-0.0-SNAPSHOT-fat.jar  /usr/verticles/
 
