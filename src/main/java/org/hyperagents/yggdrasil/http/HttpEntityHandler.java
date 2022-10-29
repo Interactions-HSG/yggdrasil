@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.eclipse.rdf4j.common.net.ParsedIRI;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.sem.SignifierExposureMechanism;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -50,6 +52,8 @@ public class HttpEntityHandler {
   public static final String REQUEST_URI = "org.hyperagents.yggdrasil.eventbus.headers.requestUri";
   public static final String ENTITY_URI_HINT = "org.hyperagents.yggdrasil.eventbus.headers.slug";
   public static final String CONTENT_TYPE = "org.hyperagents.yggdrasil.eventbus.headers.contentType";
+  public static final String AGENT_WEB_ID = "org.hyperagents.yggdrasil.eventbus.headers.agentId";
+  public static final String AGENT_ENTITY = "org.hyperagents.yggdrasil.eventbus.headers.agentEntity";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
 
@@ -75,14 +79,35 @@ public class HttpEntityHandler {
 
     LOGGER.info("GET request: " + entityIRI);
 
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, entityIRI);
+    String agentIRI = routingContext.request().getHeader("X-Agent-WebID");
+    LOGGER.info(agentIRI);
 
     Map<String,List<String>> headers = getHeaders(entityIRI);
 
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
-      handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_URI, entityIRI);
+
+    if (agentIRI != null) {
+      //options.addHeader(REQUEST_METHOD, SignifierFilterHmas.ADJUST_ENTITY);
+
+      options.addHeader(AGENT_WEB_ID, getBaseIRI(agentIRI));
+      options.addHeader(REQUEST_METHOD, SignifierExposureMechanism.ADJUST_ENTITY);
+      //vertx.eventBus().request(SignifierFilterHmas.BUS_ADDRESS, null, options,
+      //  handleSemReply(routingContext, HttpStatus.SC_OK, headers));
+      vertx.eventBus().request(SignifierExposureMechanism.BUS_ADDRESS, null, options,
+        handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    } else {
+      options.addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY);
+      vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
+        handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    }
+
+
+  }
+
+  private String getBaseIRI(String resolvedIRI) {
+    ParsedIRI parsedIRI = ParsedIRI.create(resolvedIRI);
+    return resolvedIRI.replace("#"+parsedIRI.getFragment(), "");
   }
 
   public void handleCreateEnvironment(RoutingContext context) {
@@ -362,6 +387,11 @@ public class HttpEntityHandler {
         HttpStatus.SC_CREATED));
   }
 
+  private Handler<AsyncResult<Message<String>>> handleSemReply(RoutingContext routingContext,
+                                                               int succeededStatusCode,
+                                                               Map<String,List<String>> headers) {
+    return handleStoreReply(routingContext, HttpStatus.SC_OK, headers);
+  }
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
       int succeededStatusCode) {
     return handleStoreReply(routingContext, succeededStatusCode, new HashMap<>());
@@ -373,6 +403,11 @@ public class HttpEntityHandler {
     return reply -> {
       if (reply.succeeded()) {
         LOGGER.info("Creating Response");
+
+        String agentEntity = routingContext.request().getHeader(HttpEntityHandler.AGENT_ENTITY);
+        if (agentEntity != null) {
+          LOGGER.info(agentEntity);
+        }
 
         HttpServerResponse httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);

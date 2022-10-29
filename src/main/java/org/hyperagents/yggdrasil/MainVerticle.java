@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil;
 
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
+import org.hyperagents.yggdrasil.sem.SignifierExposureVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
@@ -20,6 +21,10 @@ public class MainVerticle extends AbstractVerticle {
     vertx.deployVerticle(new RdfStoreVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
       );
+
+    vertx.deployVerticle(new SignifierExposureVerticle(),
+      new DeploymentOptions().setWorker(true).setConfig(config())
+    );
 
     vertx.deployVerticle(new HttpNotificationVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
