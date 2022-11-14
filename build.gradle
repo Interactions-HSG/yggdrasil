@@ -23,6 +23,8 @@ def mainVerticleName = 'org.hyperagents.yggdrasil.MainVerticle'
 def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
 
+logging.captureStandardOutput LogLevel.INFO
+
 dependencies {
   compile "io.vertx:vertx-core:$vertxVersion"
   compile "io.vertx:vertx-config:$vertxVersion"

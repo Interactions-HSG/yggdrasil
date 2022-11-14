@@ -150,7 +150,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     throws IllegalArgumentException, IOException {
     LOGGER.info("Looking for containment triples for: " + entityIRI.getIRIString());
     if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-      store.createIRI(("http://w3id.org/eve#Artifact")))) {
+      store.createIRI(("https://ci.mines-stetienne.fr/hmas/core#Artifact")))) {
+      LOGGER.info("entity created is an artifact");
       String artifactIRI = entityIRI.getIRIString();
       IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
 
@@ -160,7 +161,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
       if (workspaceGraph.isPresent()) {
         Graph wkspGraph = workspaceGraph.get();
         LOGGER.info("Found workspace graph: " + wkspGraph);
-        wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        //wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        wkspGraph.add(workspaceIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#directlyContains"), entityIRI);
+        wkspGraph.add(entityIRI, store.createIRI(RDF.TYPE.toString()), store.createIRI("https://ci.mines-stetienne.fr/hmas/core#Artifact"));
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(workspaceIRI, wkspGraph);
 
@@ -168,7 +171,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
       }
     }  else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-      store.createIRI(("http://w3id.org/eve#WorkspaceArtifact")))) {
+      store.createIRI(("https://ci.mines-stetienne.fr/hmas/core#Workspace")))) {
       String workspaceIRI = entityIRI.getIRIString();
       IRI envIRI = store.createIRI(workspaceIRI.substring(0, workspaceIRI.indexOf("/workspaces")));
 
@@ -178,7 +181,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
       if (envGraph.isPresent()) {
         Graph graph = envGraph.get();
         LOGGER.info("Found env graph: " + graph);
-        graph.add(envIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        //graph.add(envIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        graph.add(envIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#directlyContains"), entityIRI);
+        graph.add(entityIRI, store.createIRI(RDF.TYPE.toString()), store.createIRI("https://ci.mines-stetienne.fr/hmas/core#Workspace"));
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(envIRI, graph);
 
@@ -189,16 +194,18 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       if (opParentUri.isPresent()){
         IRI parentIRI = store.createIRI(opParentUri.get());
-        entityGraph.add(entityIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas#isContainedBy"), parentIRI);
+        entityGraph.add(entityIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#isContainedBy"), parentIRI);
         Optional<Graph> optionalGraph = store.getEntityGraph(parentIRI);
         if (optionalGraph.isPresent()){
           Graph graph = optionalGraph.get();
-          graph.add(parentIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas#contains"), entityIRI);
+          graph.add(parentIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#contains"), entityIRI);
+          graph.add(entityIRI, store.createIRI(RDF.TYPE.toString()),  store.createIRI("https://ci.mines-stetienne.fr/hmas/core#Workspace"));
         }
       }
 
     } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-      store.createIRI(("http://w3id.org/eve#Artifact"))) &&  entityIRI.getIRIString().indexOf("/artifacts") == -1) {
+      store.createIRI(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))) &&  entityIRI.getIRIString().indexOf("/artifacts") == -1) {
+      LOGGER.info("entity created is an artifact");
       String artifactIRI = entityIRI.getIRIString();
       IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/bodies")));
 
@@ -208,13 +215,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
       if (workspaceGraph.isPresent()) {
         Graph wkspGraph = workspaceGraph.get();
         LOGGER.info("Found workspace graph: " + wkspGraph);
-        wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        //wkspGraph.add(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        wkspGraph.add(workspaceIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#contains"), entityIRI);
+        wkspGraph.add(entityIRI, store.createIRI(RDF.TYPE.toString()), store.createIRI("https://ci.mines-stetienne.fr/hmas/core#Artifact"));
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(workspaceIRI, wkspGraph);
 
         String entityGraphStr = store.graphToString(wkspGraph, RDFSyntax.TURTLE);
         pushNotification(HttpNotificationVerticle.ENTITY_CHANGED, workspaceIRI, entityGraphStr);
       }
+    } else {
+      LOGGER.info("No containment triples");
     }
 
     return entityGraph;
@@ -295,6 +306,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         Graph wkspGraph = workspaceGraph.get();
         //LOGGER.info("Found workspace graph: " + wkspGraph);
         wkspGraph.remove(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
+        wkspGraph.remove(workspaceIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         store.createEntityGraph(workspaceIRI, wkspGraph);
 

@@ -189,6 +189,7 @@ public class CartagoVerticle extends AbstractVerticle {
     ThingDescription td = new ThingDescription.Builder(workspaceName)
         .addThingURI(workspaceId)
         .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
+      .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Workspace")
         .addAction(new ActionAffordance.Builder("makeArtifact",
           new Form.Builder(workspaceId + "/artifacts/").build())
             .addSemanticType("http://w3id.org/eve#MakeArtifact")
@@ -230,6 +231,7 @@ public class CartagoVerticle extends AbstractVerticle {
         .setNamespace("dct", "http://purl.org/dc/terms/")
         .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
         .setNamespace("eve", "http://w3id.org/eve#")
+      .setNamespace("hmas", "https://ci.mines-stetienne.fr/hmas/core#")
         .write();
   }
 
@@ -248,6 +250,7 @@ public class CartagoVerticle extends AbstractVerticle {
     ThingDescription td = new ThingDescription.Builder(subWorkspaceName)
       .addThingURI(subWorkspaceId)
       .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
+      .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Workspace")
       .addAction(new ActionAffordance.Builder("makeArtifact",
         new Form.Builder(subWorkspaceId + "/artifacts/").build())
         .addSemanticType("http://w3id.org/eve#MakeArtifact")
@@ -289,6 +292,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .setNamespace("dct", "http://purl.org/dc/terms/")
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
       .setNamespace("eve", "http://w3id.org/eve#")
+      .setNamespace("hmas", "https://ci.mines-stetienne.fr/hmas/core#")
       .write();
     System.out.println("subworkspace td string: "+swts);
     return swts;

@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Atom;
 import jason.asSyntax.StringTerm;
+import jason.asSyntax.StringTermImpl;
 import jason.asSyntax.Term;
 
 import java.util.HashMap;
@@ -101,5 +102,27 @@ public class JsonManager {
       currentJsons.put(id.getFunctor(), jsonElement);
       currentJsons_inverse.put(jsonElement, id);
     }
+  }
+
+  public JsonElement getJSONFromString(String jsonString) throws Exception {
+    try {
+      JsonElement jsonElement = JsonParser.parseString(jsonString);
+      return jsonElement;
+    } catch(Exception e){
+      throw new Exception();
+    }
+  }
+
+  public Term getNewJsonId(){
+    Term jsonId = new StringTermImpl("JsonElement"+0);
+    System.out.println("jsonId: "+jsonId);
+    id++;
+    return jsonId;
+  }
+
+  public boolean registerJson(Term id, JsonElement jsonElement){
+    this.currentJsons.put(id.toString(), jsonElement);
+    this.currentJsons_inverse.put(jsonElement, new Atom(id.toString()));
+    return true;
   }
 }

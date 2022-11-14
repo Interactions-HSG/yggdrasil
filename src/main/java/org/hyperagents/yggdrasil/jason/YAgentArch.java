@@ -406,10 +406,12 @@ public class YAgentArch extends AgArch {
         String message = messageCallback.retrieveMessage();
         Literal messageBelief = new LiteralImpl("new_message");
         Term id = getNewMessageId();
-        JSONLibrary jsonLibrary = JSONLibrary.getInstance();
-        JsonElement jsonElement = jsonLibrary.getJSONFromString(message);
-        Term jsonTerm = jsonLibrary.getNewJsonId();
-        jsonLibrary.registerJson(jsonTerm, jsonElement);
+        //JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+
+        JsonElement jsonElement = jsonManager.getJSONFromString(message);//jsonLibrary.getJSONFromString(message);
+
+        Term jsonTerm = jsonManager.getNewJsonId();//jsonLibrary.getNewJsonId();
+        jsonManager.registerJson(jsonTerm, jsonElement);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
         System.out.println("message belief: "+messageBelief);
