@@ -1,10 +1,10 @@
 [submodule "cartago"]
 	path = cartago
-	url = git@github.com:CArtAgO-lang/cartago.git
+	url = https://github.com/CArtAgO-lang/cartago.git
 [submodule "wot-td-java"]
 	path = wot-td-java
-	url = git@github.com:Interactions-HSG/wot-td-java.git
+	url = https://github.com/Interactions-HSG/wot-td-java.git
 	branch = master
 [submodule "moise"]
 	path = moise
-	url = git@github.com:moise-lang/moise.git
+	url = https://github.com/moise-lang/moise.git
