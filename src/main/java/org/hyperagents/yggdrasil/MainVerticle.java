@@ -16,6 +16,10 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
+    org.apache.log4j.Logger httpLogger = org.apache.log4j.Logger.getLogger("org.apache.hc.client5.http");
+    httpLogger.setLevel(org.apache.log4j.Level.INFO);
+    org.apache.log4j.Logger rioLogger = org.apache.log4j.Logger.getLogger("org.eclipse.rdf4j.rio");
+    rioLogger.setLevel(org.apache.log4j.Level.INFO);
     vertx.deployVerticle(new HttpServerVerticle(),
         new DeploymentOptions().setConfig(config())
       );

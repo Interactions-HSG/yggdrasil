@@ -36,6 +36,7 @@ dependencies {
   implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.1'
   implementation 'org.apache.httpcomponents.client5:httpclient5-fluent:5.0.1'
 
+
   compile name: "cartago", version: "3.1-SNAPSHOT"
   compile name: "wot-td-java", version: "0.0.1"
   compile group: "org.jacamo", name: "moise", version: "1.0"
@@ -52,9 +53,14 @@ dependencies {
   compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
   compile 'com.google.code.gson:gson:2.8.6'
 
+  implementation 'ch.qos.logback:logback-classic:1.2.9'
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
+  testImplementation 'ch.qos.loback:logback-classic:1.2.9'
 }
+
+
+
 
 shadowJar {
   classifier = 'fat'

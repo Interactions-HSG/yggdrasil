@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.jason;
 
-import cartago.*;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.EventAffordance;
@@ -17,43 +18,38 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import jason.architecture.AgArch;
-import jason.asSemantics.*;
+import jason.asSemantics.ActionExec;
+import jason.asSemantics.Intention;
+import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.fluent.Request;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.*;
-import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.cartago.NotificationCallback;
-import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
+import java.util.logging.Handler;
+import java.util.logging.LoggingPermission;
+
+import ch.qos.logback.classic.Logger;
 
 public class YAgentArch extends AgArch {
 
@@ -81,6 +77,7 @@ public class YAgentArch extends AgArch {
     //headers.put("X-Agent-WebID", this.getAgName());
     this.jsonManager = new JsonManager();
   }
+
 
 
   @Override
