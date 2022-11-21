@@ -62,6 +62,7 @@ dependencies {
 
 
 
+
 shadowJar {
   classifier = 'fat'
   manifest {

@@ -21,6 +21,8 @@ import com.google.gson.JsonPrimitive;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import jason.architecture.AgArch;
 import jason.asSemantics.ActionExec;
 import jason.asSemantics.Intention;
@@ -37,7 +39,6 @@ import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -49,8 +50,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Handler;
 import java.util.logging.LoggingPermission;
 
-import ch.qos.logback.classic.Logger;
-
 public class YAgentArch extends AgArch {
 
   Vertx vertx;
@@ -60,6 +59,8 @@ public class YAgentArch extends AgArch {
 
   private JsonManager jsonManager;
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(YAgentArch.class.getName());
+
   /*public YAgentArch(Vertx vertx){
 
     this.vertx = vertx;
@@ -68,9 +69,8 @@ public class YAgentArch extends AgArch {
   }*/
 
   public YAgentArch(){
-    System.out.println("creating YAgentArch");
+    LOGGER.info("creating YAgentArch");
     this.vertx = VertxRegistry.getInstance().getVertx();
-    System.out.println("vertx: "+vertx);
     //this.vertx = new VertxFactoryImpl().vertx();
     messageId = 0;
     this.headers = new Hashtable<>();
@@ -82,10 +82,9 @@ public class YAgentArch extends AgArch {
 
   @Override
   public void act(ActionExec actionExec) {
-    System.out.println("act");
-    System.out.println("perform action: "+actionExec.getActionTerm());
+    LOGGER.info("perform action: "+actionExec.getActionTerm());
     String agentName = getAgName();
-    System.out.println("agent name: " + agentName);
+    LOGGER.debug("agent name: " + agentName);
     Intention currentIntention = getTS().getC().getSelectedIntention();
     Unifier un = currentIntention.peek().getUnif();
     un = actionExec.getIntention().peek().getUnif();
@@ -103,12 +102,12 @@ public class YAgentArch extends AgArch {
     if (func.equals("createWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       createWorkspace(workspaceName);
-      System.out.println("workspace created");
+      LOGGER.debug("workspace created");
     } else if (func.equals("createSubWorkspace")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       String subWorkspaceName = terms.get(1).toString();
       createSubWorkspace(workspaceName, subWorkspaceName);
-      System.out.println("sub workspace created");
+      LOGGER.debug("sub workspace created");
     } else if (func.equals("makeArtifact")) { //Inside YAgentArch
       String workspaceName = terms.get(0).toString();
       String artifactName = terms.get(1).toString();
@@ -122,20 +121,16 @@ public class YAgentArch extends AgArch {
       String workspaceName = terms.get(0).toString();
       leaveWorkspace(workspaceName);
     } else if (func.equals("focus")) { //Inside YAgentArch
-      System.out.println("start focus");
       String workspaceName = terms.get(0).toString();
       String artifactName = terms.get(1).toString();
       focus(workspaceName, artifactName);
-      System.out.println("end focus");
 
     } else if (func.equals("stopFocus")) { //Inside YAgentArch, to develop
 
     } else if (func.equals("setValue")){ //To check
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       VarTerm v =  (VarTerm) terms.get(0);
-      System.out.println("variable: "+v);
       Term t = terms.get(1);
-      System.out.println("value: "+t);
       u.bind(v,t);
 
     }
@@ -151,23 +146,15 @@ public class YAgentArch extends AgArch {
         if (t.isString()) {
           StringTerm st = (StringTerm) terms.get(2);
           body =  st.getString();
-          System.out.println("body: "+body);
         } else if (t.isVar()){
-          System.out.println("body is var");
 
         } else if (t.isAtom()){
-          System.out.println("body is atom");
           JsonElement jsonElement = jsonManager.getJsonElementFromTerm(t);
-          System.out.println("json element: "+jsonElement);
           body = jsonElement.toString();
-          System.out.println("body: "+body);
         }
         else {
-          System.out.println("term not string: "+t);
           JsonElement jsonElement = jsonManager.getJsonElementFromTerm(t);
-          System.out.println("json element: "+jsonElement);
           body = jsonElement.toString();
-          System.out.println("body: "+body);
         }
       }
       if (terms.size() == 4){
@@ -177,24 +164,19 @@ public class YAgentArch extends AgArch {
       else if (terms.size() == 6){
         ListTerm uriVariableNames = (ListTerm) terms.get(3);
         ListTerm uriVariableValues = (ListTerm) terms.get(4);
-        System.out.println("return term: "+ terms.get(5));
         VarTerm var = (VarTerm) terms.get(5);
         invokeAction(tdUri, actionName, headers, body, uriVariableNames, uriVariableValues, var);
       } else {
         invokeAction(tdUri, actionName, headers, body);
       }
     } else if (func.equals("subscribeEvent")) { //Inside wot library
-      System.out.println(terms.get(0));
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      System.out.println("td term retrieved");
       String tdUri = tdUriTerm.getString();
       StringTerm eventTerm = (StringTerm) terms.get(1);
-      System.out.println("event name retrieved");
       String eventName = eventTerm.getString();
       String body = null;
       if (terms.size() > 2) {
         StringTerm bodyTerm = (StringTerm) terms.get(2);
-        System.out.println("body term retrieved");
         body = bodyTerm.getString();
       }
       subscribeEvent(tdUri, eventName, headers, body);
@@ -221,25 +203,22 @@ public class YAgentArch extends AgArch {
     else if (func.equals("sendHttpRequest")) { //to check
       StringTerm urlTerm = (StringTerm) terms.get(0);
       String url = urlTerm.getString();
-      System.out.println("url: " + url);
       StringTerm methodTerm = (StringTerm) terms.get(1);
       String method = methodTerm.toString();
-      System.out.println("method: " + method);
       String body = null;
       if (terms.size() > 2) {
         StringTerm bodyTerm = (StringTerm) terms.get(2);
         body = bodyTerm.getString();
       }
       com.google.gson.JsonObject o = sendHttpRequest(url, method, headers, body);
-      System.out.println("return object: "+o);
+      LOGGER.debug("return object: "+o);
       if (terms.size()>3){
         Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
         bindTermToJson(terms.get(3), o);
       }
     } else if (func.equals("printJson")) { //Inside json library
-      System.out.println("printJson");
       Term jsonId = terms.get(0);
-      System.out.println("json id: "+jsonId);
+      LOGGER.debug("json id: "+jsonId);
       printJSON(jsonId);
     } else if (func.equals("makeJson")){ //Inside json library
       ListTerm attributeList = (ListTerm) terms.get(0);
@@ -247,7 +226,7 @@ public class YAgentArch extends AgArch {
       VarTerm jsonId = (VarTerm) terms.get(2);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       createJsonObject(u, attributeList, valueList, jsonId);
-      System.out.println("jsonId: "+jsonId);
+      LOGGER.debug("jsonId: "+jsonId);
     } else if (func.equals("hasAttribute")){ //Inside json library
       Term jsonId = terms.get(0);
       StringTerm attributeTerm = (StringTerm) terms.get(1);
@@ -314,11 +293,8 @@ public class YAgentArch extends AgArch {
     }
 
     else if (func.equals("getJsonAsString")){ //Inside json library
-      System.out.println("term 0: "+terms.get(0));
       Term jsonId = terms.get(0);
-      System.out.println("jsonId: "+jsonId);
       StringTerm str = getAsStringTerm(jsonId);
-      System.out.println("json as string: "+str);
       un.bind((VarTerm) terms.get(1), str);
 
     } else if (func.equals("getStringAsJson")){ //Inside json library
@@ -334,11 +310,8 @@ public class YAgentArch extends AgArch {
 
     else if (func.equals("getStringFromJson")){ //Inside json library
       Term jsonId = terms.get(0);
-      System.out.println("jsonId: "+jsonId);
       String attribute = ((StringTerm) terms.get(1)).getString();
-      System.out.println("attribute: "+attribute);
       String str = getStringFromJson(jsonId, attribute);
-      System.out.println("string: "+str);
       StringTerm value = new StringTermImpl(str);
       un.bind((VarTerm) terms.get(2), value);
 
@@ -358,11 +331,9 @@ public class YAgentArch extends AgArch {
       values.put("a", "abc");
       values.put("b", "gh");
       String uri = template.createUri(uriVariables, values);
-      System.out.println(uri);
-      System.out.println("second test uri");
       Form form = new Form.Builder("http://example.org{?a,b}").build();
       TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction, uriVariables, values);
-      System.out.println("target uri: "+request.getTarget());
+      LOGGER.debug("target uri: "+request.getTarget());
 
     } else if (func.equals("getBody")){ //Inside wot library
       Term jsonId = terms.get(0);
@@ -374,11 +345,11 @@ public class YAgentArch extends AgArch {
       VarTerm var = (VarTerm) terms.get(0);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       String timeStamp = getCurrentTimeStamp();
-      System.out.println("current time stamp: "+timeStamp);
+      LOGGER.debug("current time stamp: "+timeStamp);
       u.bind(var, new StringTermImpl(timeStamp));
     }
 
-    System.out.println("end method act");
+    LOGGER.info("end method act");
     actionExec.setResult(true);
     super.actionExecuted(actionExec);
   }
@@ -392,14 +363,14 @@ public class YAgentArch extends AgArch {
       AgentNotificationCallback callback = registry.getAgentCallback(this.getAgName());
       if (!callback.isEmpty()) {
         String notification = callback.retrieveNotification();
-        System.out.println("notification received: " + notification);
+        LOGGER.info("notification received: " + notification);
         Literal belief = Literal.parseLiteral(notification);
         this.getTS().getAg().addBel(belief);
       }
       String agentName = this.getAgName();
       AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
       if (messageCallback.hasNewMessage()) {
-        System.out.println("agent "+ this.getAgName()+ " has new message");
+        LOGGER.info("agent "+ this.getAgName()+ " has new message");
         String message = messageCallback.retrieveMessage();
         Literal messageBelief = new LiteralImpl("new_message");
         Term id = getNewMessageId();
@@ -411,7 +382,6 @@ public class YAgentArch extends AgArch {
         jsonManager.registerJson(jsonTerm, jsonElement);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
-        System.out.println("message belief: "+messageBelief);
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }

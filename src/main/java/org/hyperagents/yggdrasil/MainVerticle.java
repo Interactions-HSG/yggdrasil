@@ -12,14 +12,24 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonObject;
 
+import java.io.FileInputStream;
+import java.util.Properties;
+
 public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    org.apache.log4j.Logger httpLogger = org.apache.log4j.Logger.getLogger("org.apache.hc.client5.http");
+    Properties p = new Properties();
+    try {
+      p.load(new FileInputStream("./log4j.properties"));
+      org.apache.log4j.PropertyConfigurator.configure(p);
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    /*org.apache.log4j.Logger httpLogger = org.apache.log4j.Logger.getLogger("org.apache.hc.client5.http");
     httpLogger.setLevel(org.apache.log4j.Level.INFO);
     org.apache.log4j.Logger rioLogger = org.apache.log4j.Logger.getLogger("org.eclipse.rdf4j.rio");
-    rioLogger.setLevel(org.apache.log4j.Level.INFO);
+    rioLogger.setLevel(org.apache.log4j.Level.INFO);*/
     vertx.deployVerticle(new HttpServerVerticle(),
         new DeploymentOptions().setConfig(config())
       );
