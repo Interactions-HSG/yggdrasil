@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil;
 
+import io.vertx.core.Launcher;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
@@ -65,4 +66,8 @@ public class MainVerticle extends AbstractVerticle {
       new DeploymentOptions().setConfig(config())
     );
   }
+
+  /*public static void main(String[] args){
+    Launcher.executeCommand("run", MainVerticle.class.getName());
+  }*/
 }

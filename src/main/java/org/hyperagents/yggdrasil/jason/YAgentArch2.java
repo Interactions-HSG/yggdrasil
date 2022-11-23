@@ -13,10 +13,7 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.*;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
@@ -47,7 +44,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class YAgentArch extends AgArch {
+public class YAgentArch2 extends AgArch {
 
   Vertx vertx;
   int messageId;
@@ -65,7 +62,7 @@ public class YAgentArch extends AgArch {
     headers.put("X-Agent-WebID", this.getAgName());
   }*/
 
-  public YAgentArch(){
+  public YAgentArch2(){
     LOGGER.info("creating YAgentArch");
     this.vertx = VertxRegistry.getInstance().getVertx();
     //this.vertx = new VertxFactoryImpl().vertx();
@@ -300,6 +297,9 @@ public class YAgentArch extends AgArch {
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       try {
         jsonManager.new_json(u, st.getString(), jsonId);
+        //JsonElement jsonElement = JsonParser.parseString(st.getString());
+        //Term jsonTerm = getAsJsonTerm(jsonElement);
+        u.bind((VarTerm) jsonId, )
       } catch(Exception e){
         e.printStackTrace();
       }
@@ -1429,6 +1429,102 @@ public class YAgentArch extends AgArch {
 
   public String getCurrentTimeStamp(){
     return Instant.now().toString();
+  }
+
+  //JSON
+
+  public MapTerm createJsonObjectTerm(List<String> keys, List<Term> values){
+    MapTerm jsonTerm = new MapTermImpl();
+    if (keys.size()==values.size()){
+      for (int i=0; i<keys.size(); i++){
+        jsonTerm.put(new StringTermImpl(keys.get(i)), values.get(i));
+      }
+    }
+    return jsonTerm;
+  }
+
+  public ListTerm createJsonArrayTerm(List<Term> values){
+    ListTerm listTerm = new ListTermImpl();
+    for (Term t: values){
+      listTerm.add(t);
+    }
+    return listTerm;
+  }
+
+  public Term getElementFromJson(MapTerm jsonTerm, StringTerm attribute){
+    return jsonTerm.get(attribute);
+  }
+
+  public StringTerm getStringTermFromJson(MapTerm jsonTerm, StringTerm attribute){
+    Term t =  jsonTerm.get(attribute);
+    if (t.isString()){
+      return (StringTerm) t;
+    } else {
+      return new StringTermImpl();
+    }
+  }
+
+  public NumberTerm getNumberTermFromJson(MapTerm jsonTerm, StringTerm attribute){
+    Term t =  jsonTerm.get(attribute);
+    if (t.isNumeric()){
+      return (NumberTerm) t;
+    } else {
+      return new NumberTermImpl();
+    }
+  }
+
+  public MapTerm getObjectTermFromJson(MapTerm jsonTerm, StringTerm attribute){
+    Term t =  jsonTerm.get(attribute);
+    if (t.isMap()){
+      return (MapTerm) t;
+    } else {
+      return new MapTermImpl();
+    }
+  }
+
+  public ListTerm getListTermFromJson(MapTerm jsonTerm, StringTerm attribute){
+    Term t =  jsonTerm.get(attribute);
+    if (t.isList()){
+      return (ListTerm) t;
+    } else {
+      return new ListTermImpl();
+    }
+  }
+
+  public Term getAsJsonTerm(JsonElement jsonElement){
+    Term t = new MapTermImpl();
+    if (jsonElement.isJsonPrimitive()){
+      JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
+      if (jsonPrimitive.isNumber()){
+        t = new NumberTermImpl(jsonPrimitive.getAsDouble());
+      } else if (jsonPrimitive.isString()){
+        t = new StringTermImpl(jsonPrimitive.getAsString());
+      } else if (jsonPrimitive.isBoolean()){
+        boolean b = jsonPrimitive.getAsBoolean();
+        if (b){
+          t = Literal.LTrue;
+        } else {
+          t = Literal.LFalse;
+        }
+      }
+    } else if (jsonElement.isJsonArray()){
+      JsonArray jsonArray = jsonElement.getAsJsonArray();
+      ListTerm l =  new ListTermImpl();
+      for (int i = 0; i<jsonArray.size(); i++){
+        l.add(getAsJsonTerm(jsonArray.get(i)));
+      }
+      t = l;
+    } else if (jsonElement.isJsonObject()){
+      com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
+      MapTerm mapTerm = new MapTermImpl();
+      for (String key : jsonObject.keySet()){
+        mapTerm.put(new StringTermImpl(key), getAsJsonTerm(jsonObject.get(key)));
+      }
+      t= mapTerm;
+    } else if (jsonElement.isJsonNull()){
+      JsonNull jsonNull = jsonElement.getAsJsonNull();
+    }
+    return t;
   }
 
 

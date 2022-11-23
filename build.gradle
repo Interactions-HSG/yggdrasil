@@ -56,7 +56,7 @@ dependencies {
   implementation 'ch.qos.logback:logback-classic:1.2.9'
   testCompile "junit:junit:4.12"
   testCompile "io.vertx:vertx-unit:$vertxVersion"
-  testImplementation 'ch.qos.loback:logback-classic:1.2.9'
+  //testImplementation 'ch.qos.loback:logback-classic:1.2.9'
 }
 
 
@@ -73,9 +73,10 @@ shadowJar {
   }
 }
 
-run {
+run(({
   args = ['run', mainVerticleName, "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"]
-}
+}))
+
 
 apply plugin: 'java'
 
