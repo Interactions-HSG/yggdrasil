@@ -14,5 +14,5 @@ RUN ./gradlew
 # The default http port
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/sh", "-c", "/usr/local/openjdk-11/bin/java -jar ./build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-fat.jar"]
-CMD ["-conf", "./src/main/conf/config.json"]
+ENTRYPOINT ["/bin/sh", "-c", "/usr/local/openjdk-11/bin/java -jar ./build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-fat.jar -conf ./src/main/conf/config.json"]
+#CMD ["-conf", "./src/main/conf/config.json"]
