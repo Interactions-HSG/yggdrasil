@@ -71,8 +71,8 @@ public class HttpEntityHandler {
   }
 
   public void handleGetEntity(RoutingContext routingContext) {
-    String entityIRI = routingContext.request().absoluteURI();
-
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
+    String entityIRI = httpConfig.getBaseUri() + routingContext.request().path();
     LOGGER.info("GET request: " + entityIRI);
 
     DeliveryOptions options = new DeliveryOptions()
@@ -329,11 +329,14 @@ public class HttpEntityHandler {
 
   private void storeEntity(RoutingContext context, String entityName, String representation,
                            Promise<Object> promise) {
+
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
+    String entityIRI = httpConfig.getBaseUri() + context.request().path();
+
     DeliveryOptions options = new DeliveryOptions()
       .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(REQUEST_URI, context.request().absoluteURI())
+      .addHeader(REQUEST_URI, entityIRI)
       .addHeader(ENTITY_URI_HINT, entityName);
-//        .addHeader(CONTENT_TYPE, context.request().getHeader("Content-Type"));
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
       if (result.succeeded()) {
