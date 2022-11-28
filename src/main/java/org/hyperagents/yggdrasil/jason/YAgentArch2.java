@@ -296,10 +296,10 @@ public class YAgentArch2 extends AgArch {
       Term jsonId = terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       try {
-        jsonManager.new_json(u, st.getString(), jsonId);
-        //JsonElement jsonElement = JsonParser.parseString(st.getString());
-        //Term jsonTerm = getAsJsonTerm(jsonElement);
-        u.bind((VarTerm) jsonId, )
+        //jsonManager.new_json(u, st.getString(), jsonId);
+        JsonElement jsonElement = JsonParser.parseString(st.getString());
+        Term jsonTerm = getAsJsonTerm(jsonElement);
+        u.bind((VarTerm) jsonId, jsonTerm);
       } catch(Exception e){
         e.printStackTrace();
       }
@@ -409,8 +409,15 @@ public class YAgentArch2 extends AgArch {
   }
 
   public Map<String, String> getHeaders(){
-    return headers;
+    Map<String, String> h = new Hashtable<>();
+    Literal l1 = new LiteralImpl("yggdrasil_header");
+    Unifier u = this.getTS().getC().getSelectedIntention().peek().getUnif();
+    Literal l = this.getTS().getAg().findBel(l1, u);
+    List list = l.getTerms();
+    h.put(list.get(0).toString(), list.get(1).toString());
+    return h;
   }
+
 
   public JsonManager getJsonManager(){
     return jsonManager;
@@ -949,11 +956,31 @@ public class YAgentArch2 extends AgArch {
   }
 
   public void setHeader(String key, String value){
-    headers.put(key, value);
+    Literal l = new LiteralImpl("yggdrasil_header");
+    l.addTerm(new StringTermImpl(key));
+    l.addTerm(new StringTermImpl(value));
+    try {
+      this.getTS().getAg().addBel(l);
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    //headers.put(key, value);
   }
 
   public void removeHeader(String key){
-    headers.remove(key);
+    Literal l = new LiteralImpl("yggdrasil_header");
+    l.addTerm(new StringTermImpl(key));
+    /*Map<String, String> headers = getHeaders();
+    String value = headers.get(key);
+    Literal l = new LiteralImpl("yggdrasil_header");
+    l.addTerm(new StringTermImpl(key));
+    l.addTerm(new StringTermImpl(value));*/
+    try {
+      this.getTS().getAg().delBel(l);
+    } catch (Exception e){
+      e.printStackTrace();
+    }
+    //headers.remove(key);
   }
 
 
@@ -1338,11 +1365,18 @@ public class YAgentArch2 extends AgArch {
     return st;
   }
 
-  public StringTerm getAsStringTerm(Term jsonId){
+  /*public StringTerm getAsStringTerm(Term jsonId){
     JsonElement json = jsonManager.getJsonElementFromTerm(jsonId);
     System.out.println("json element retrieved");
     System.out.println("json element: "+json);
     return getAsStringTerm(json);
+  }*/
+
+  public StringTerm getAsStringTerm(Term jsonTerm){
+    String str = "";
+    JsonElement e = getAsJsonElement(jsonTerm);
+    str = e.toString();
+    return new StringTermImpl(str);
   }
 
   public MapTerm getAsMapTerm(JsonElement jsonElement){

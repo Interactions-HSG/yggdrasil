@@ -294,7 +294,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .setNamespace("eve", "http://w3id.org/eve#")
       .setNamespace("hmas", "https://ci.mines-stetienne.fr/hmas/core#")
       .write();
-    System.out.println("subworkspace td string: "+swts);
+    //System.out.println("subworkspace td string: "+swts);
     return swts;
   }
 

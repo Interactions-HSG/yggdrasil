@@ -217,7 +217,7 @@ public class HttpEntityHandler {
                       LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
                       if (HypermediaArtifactRegistry.getInstance().hasFeedbackParam(artifactName, actionName)) {
                         Object returnObject = cartagoReply.result().body();
-                        System.out.println("return object description: "+returnObject);
+                        //System.out.println("return object description: "+returnObject);
                         context.response().setStatusCode(HttpStatus.SC_OK).end(returnObject.toString());
                       } else {
                         context.response().setStatusCode(HttpStatus.SC_OK).end();
