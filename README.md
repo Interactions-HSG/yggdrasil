@@ -45,6 +45,19 @@ java -jar build/libs/yggdrasil-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config.j
 The configuration file is optional. Open your browser to
 [http://localhost:8080](http://localhost:8080). You should see an `Yggdrasil v0.0` message.
 
+## Running Yggdrasil as a Docker container
+
+Build the image with the current context and creates the image `yggdrasil`:
+
+```shell
+docker-compose build
+```
+
+Run with docker-compose (by default, it exposes the port `8899` of the host machine):
+
+```shell
+docker-compose up
+```
 
 ## HTTP API Overview
 

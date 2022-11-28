@@ -1,18 +1,18 @@
-FROM openjdk:latest
+FROM openjdk:11
 
-ENV VERTICLE_FILE yggdrasil-0.0-SNAPSHOT-fat.jar
+# Yggdrasil build configuration
+ENV YGGDRASIL_VERSION 0.0
 
-ENV CONFIG_FILE config.json
+# Build environment preparation
+ENV LANG C.UTF-8
 
-ENV VERTICLE_HOME /usr/verticles
+# Build the jar
+WORKDIR /app
+COPY . /app/
+RUN ./gradlew
 
+# The default http port
 EXPOSE 8080
 
-COPY build/libs/$VERTICLE_FILE $VERTICLE_HOME/
-
-COPY src/main/conf/$CONFIG_FILE $VERTICLE_HOME/
-
-# Launch the verticle
-WORKDIR $VERTICLE_HOME
-ENTRYPOINT ["sh", "-c"]
-CMD ["exec java -jar $VERTICLE_FILE -conf $CONFIG_FILE"]
+ENTRYPOINT ["/bin/sh", "-c", "/usr/local/openjdk-11/bin/java -jar ./build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-fat.jar"]
+CMD ["-conf", "./src/main/conf/config.json"]
