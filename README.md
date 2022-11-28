@@ -20,7 +20,7 @@ systems: an artifact-based perspective. Autonomous Agents and Multi-Agent System
 
 ## Prerequisites
 
-* JDK 8+
+* JDK 12+
 * Use `git clone --recursive` to make sure that the project is checked out including its submodules
 
 ## Building the project

@@ -6,9 +6,10 @@ import java.util.Optional;
 
 public class HttpInterfaceConfig {
   private String host = "0.0.0.0";
+  private String baseUri = null;
   private int port = 8080;
 
-  private String webSubHubIRI;
+  private String webSubHubUri;
 
   public HttpInterfaceConfig(JsonObject config) {
     JsonObject httpConfig = config.getJsonObject("http-config");
@@ -16,8 +17,13 @@ public class HttpInterfaceConfig {
     if (httpConfig != null) {
       host = httpConfig.getString("host", "0.0.0.0");
       port = httpConfig.getInteger("port", 8080);
+      webSubHubUri = httpConfig.getString("websub-hub-uri");
 
-      webSubHubIRI = httpConfig.getString("websub-hub");
+      baseUri = httpConfig.getString("base-uri");
+      // Strip away the trailing slash (if any)
+      if (baseUri != null && baseUri.endsWith("/")) {
+        baseUri = baseUri.substring(0, baseUri.length()-1);
+      }
     }
   }
 
@@ -29,7 +35,16 @@ public class HttpInterfaceConfig {
     return this.port;
   }
 
-  public Optional<String> getWebSubHubIRI() {
-    return (webSubHubIRI == null) ? Optional.empty() : Optional.of(webSubHubIRI);
+  public String getBaseUri() {
+    if (baseUri == null) {
+      String hostname = host.equals("0.0.0.0") ? "localhost" : host;
+      return "http://" + hostname + ":" + port;
+    }
+
+    return baseUri;
+  }
+
+  public Optional<String> getWebSubHubUri() {
+    return (webSubHubUri == null) ? Optional.empty() : Optional.of(webSubHubUri);
   }
 }

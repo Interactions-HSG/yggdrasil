@@ -309,7 +309,7 @@ public class HttpEntityHandler {
     Map<String,List<String>> headers = new HashMap<>();
 
     HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
-    Optional<String> webSubHubIRI = httpConfig.getWebSubHubIRI();
+    Optional<String> webSubHubIRI = httpConfig.getWebSubHubUri();
 
     webSubHubIRI.ifPresent(hubIRI -> headers.put("Link", Arrays.asList("<" + hubIRI + ">; rel=\"hub\"",
       "<" + entityIRI + ">; rel=\"self\"")));
@@ -318,7 +318,7 @@ public class HttpEntityHandler {
   }
 
   private Map<String, ? extends List<String>> getCORSHeaders() {
-    Map<String, List<String>> corsHeaders = new HashMap<String, List<String>>();
+    Map<String, List<String>> corsHeaders = new HashMap<>();
 
     corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, Arrays.asList("*"));
     corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, Arrays.asList("true"));
@@ -346,17 +346,16 @@ public class HttpEntityHandler {
     });
   }
 
-  // TODO: support different content types
   private void createEntity(RoutingContext context, String representation) {
-    String entityIri = context.request().absoluteURI();
     String slug = context.request().getHeader("Slug");
-//    String contentType = context.request().getHeader("Content-Type");
+
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
+    String entityIri = httpConfig.getBaseUri() + context.request().path();
 
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
         .addHeader(REQUEST_URI, entityIri)
         .addHeader(ENTITY_URI_HINT, slug);
-//        .addHeader(CONTENT_TYPE, contentType);
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, handleStoreReply(context,
         HttpStatus.SC_CREATED));

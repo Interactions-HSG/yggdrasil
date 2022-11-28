@@ -2,8 +2,7 @@
   "http-config" : {
     "host" : "0.0.0.0",
     "port" : 8080,
-    "virtual-host" : "localhost",
-    "virtual-host-port" : 8080,
-    "websub-hub" : "http://localhost:8080/hub/"
+    "base-uri" : "http://localhost:8080/",
+    "websub-hub-uri" : "http://localhost:8080/hub/"
   }
 }

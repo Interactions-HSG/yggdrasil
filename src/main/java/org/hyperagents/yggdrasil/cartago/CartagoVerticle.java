@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
+import org.hyperagents.yggdrasil.http.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
 import cartago.AgentIdCredential;
@@ -65,17 +66,8 @@ public class CartagoVerticle extends AbstractVerticle {
       HypermediaArtifactRegistry.getInstance().addArtifactTemplates(knownArtifacts);
     }
 
-    JsonObject httpConfig = config().getJsonObject("http-config");
-    if (httpConfig != null) {
-      String host = httpConfig.getString("virtual-host", "localhost");
-      Integer port = httpConfig.getInteger("virtual-host-port");
-
-      if (port == null) {
-        HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host);
-      } else {
-        HypermediaArtifactRegistry.getInstance().setHttpPrefix("http://" + host + ":" + port);
-      }
-    }
+    String baseUri = new HttpInterfaceConfig(config()).getBaseUri();
+    HypermediaArtifactRegistry.getInstance().setHttpPrefix(baseUri);
 
     agentContexts = new Hashtable<>();
 
