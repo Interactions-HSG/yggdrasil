@@ -1,11 +1,15 @@
 package org.hyperagents.yggdrasil.store.impl;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import org.apache.commons.rdf.api.Dataset;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
@@ -29,14 +33,31 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
+import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.hyperagents.yggdrasil.store.RdfStore;
+import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 
 public class Rdf4jStore implements RdfStore {
-  private RDF4J rdfImpl;
-  private Dataset dataset;
-  
-  public Rdf4jStore() {
-    Repository repository = new SailRepository(new MemoryStore());
+  private final static Logger LOGGER = LoggerFactory.getLogger(RdfStore.class.getName());
+
+  private final RDF4J rdfImpl;
+  private final Dataset dataset;
+
+  public Rdf4jStore(JsonObject config) {
+    Repository repository;
+
+    try {
+      if (config != null && !config.getBoolean("in-memory", false)) {
+        String storePath = config.getString("store-path", "data/");
+        File dataDir = new File(storePath);
+        repository = new SailRepository(new NativeStore(dataDir));
+      } else {
+        repository = new SailRepository(new MemoryStore());
+      }
+    } catch (ClassCastException e) {
+      LOGGER.error("Exception raised while reading rdf-store config properties: " + e.getMessage());
+      repository = new SailRepository(new MemoryStore());
+    }
 
     rdfImpl = new RDF4J();
     dataset = rdfImpl.asDataset(repository, RDF4J.Option.handleInitAndShutdown);
@@ -84,7 +105,7 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    
+
     RDFWriter writer;
 
     if (syntax.equals(RDFSyntax.TURTLE)) {
@@ -97,7 +118,7 @@ public class Rdf4jStore implements RdfStore {
     } else {
       throw new IllegalArgumentException("Unsupported RDF serialization format.");
     }
-    
+
     writer.getWriterConfig()
       .set(BasicWriterSettings.PRETTY_PRINT, true)
       .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
@@ -107,7 +128,7 @@ public class Rdf4jStore implements RdfStore {
     if (graph instanceof RDF4JGraph) {
       try {
         writer.startRDF();
-        
+
         writer.handleNamespace("eve", "http://w3id.org/eve#");
         writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
         writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
@@ -116,11 +137,9 @@ public class Rdf4jStore implements RdfStore {
         writer.handleNamespace("dct", "http://purl.org/dc/terms/");
         writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
         writer.handleNamespace("saref", "https://w3id.org/saref#");
-        
+
         try (Stream<RDF4JTriple> stream = ((RDF4JGraph) graph).stream()) {
-          stream.forEach(triple -> {
-            writer.handleStatement(triple.asStatement());
-          });
+          stream.forEach(triple -> writer.handleStatement(triple.asStatement()));
         }
         writer.endRDF();
       }
@@ -166,12 +185,10 @@ public class Rdf4jStore implements RdfStore {
     }
     return rdfImpl.asGraph(model);
   }
-  
+
   public void addEntityGraph(IRI entityIri, Graph entityGraph) {
     try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
-      stream.forEach(triple -> {
-        dataset.add(entityIri, triple.getSubject(), triple.getPredicate(), triple.getObject());
-      });
+      stream.forEach(triple -> dataset.add(entityIri, triple.getSubject(), triple.getPredicate(), triple.getObject()));
     }
   }
 }
