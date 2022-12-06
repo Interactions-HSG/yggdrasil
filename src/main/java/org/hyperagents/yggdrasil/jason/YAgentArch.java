@@ -187,7 +187,7 @@ public class YAgentArch extends AgArch {
 
     } else if (func.equals("writeProperty")){ //Inside wot library, to write here
 
-    } else if (func.equals("addHeader")){ //To check
+    } else if (func.equals("setHeader")){ //To check
       String key = terms.get(0).toString();
       String value = terms.get(1).toString();
       headers.put(key, value);
@@ -579,14 +579,15 @@ public class YAgentArch extends AgArch {
   public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
+      //System.out.println("td received");
+      //System.out.println("td: "+ new TDGraphWriter(td).write());
+      //System.out.println("number of actions: "+td.getActions().size());
+      //td.getActions().forEach(a -> System.out.println(a));
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
         System.out.println("action is present");
         ActionAffordance action = opAction.get();
+        System.out.println("action name: "+action.getName());
         Optional<Form> opForm = action.getFirstForm();
         if (opForm.isPresent()) {
           System.out.println("form is present");
@@ -602,9 +603,16 @@ public class YAgentArch extends AgArch {
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              System.out.println("schema is present");
+              if (headers.containsKey("Content-Type")){
+                request.addHeader("Content-Type", headers.get("Content-Type"));
+              } else {
+                request.addHeader("Content-Type", "application/json");
+              }
+              //System.out.println("schema is present");
               DataSchema schema = opSchema.get();
+              //System.out.println("schema datatype: "+schema.getDatatype());
+              //System.out.println("schema: "+schema);
+              //System.out.println("element: "+element.toString());
               if (schema.getDatatype() == "array" && element.isJsonArray()){
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
                 request.setArrayPayload((ArraySchema) schema, payload);
@@ -621,9 +629,10 @@ public class YAgentArch extends AgArch {
                 request.setPrimitivePayload(schema, element.getAsBoolean());
               }
             }
-            System.out.println("request body: "+request.getPayloadAsString());
+            //System.out.println("request body: "+request.getPayloadAsString());
 
           }
+          printRequest(request);
           TDHttpResponse response = request.execute();
           com.google.gson.JsonObject responseObject = createResponseObject(response);
           bindTermToJson(term, responseObject);
@@ -646,8 +655,8 @@ public class YAgentArch extends AgArch {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
+      //System.out.println("number of actions: "+td.getActions().size());
+      //td.getActions().forEach(a -> System.out.println(a));
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
         Optional<Form> opForm = action.getFirstForm();
@@ -662,17 +671,17 @@ public class YAgentArch extends AgArch {
             if (n==m){
               for (int i = 0; i <n; i++){
                 StringTerm name = (StringTerm) uriVariableNames.get(i);
-                System.out.println("name: "+name);
+                //System.out.println("name: "+name);
                 StringTerm value = (StringTerm) uriVariableValues.get(i);
-                System.out.println("value: "+value);
+                //System.out.println("value: "+value);
                 values.put(name.getString(), value.getString());
               }
             }
-            System.out.println("uri variables: "+uriVariables);
-            System.out.println("values: "+values);
-            System.out.println("form target: "+form.getTarget());
+            //System.out.println("uri variables: "+uriVariables);
+            //System.out.println("values: "+values);
+            //System.out.println("form target: "+form.getTarget());
             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
-            System.out.println(request.getTarget());
+            //System.out.println(request.getTarget());
           }
 
           for (String key: headers.keySet()){
@@ -724,14 +733,14 @@ public class YAgentArch extends AgArch {
     System.out.println("affordanceName: "+affordanceName);
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
+      //System.out.println("td received");
+      //System.out.println("td: "+ new TDGraphWriter(td).write());
+      //System.out.println("number of actions: "+td.getActions().size());
       List<ActionAffordance> actions = td.getActions();
       for (ActionAffordance a: actions){
         System.out.println(a.getName());
       }
-      System.out.println("affordance name: "+affordanceName);
+      //System.out.println("affordance name: "+affordanceName);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
@@ -739,16 +748,16 @@ public class YAgentArch extends AgArch {
         if (opForm.isPresent()) {
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          System.out.println("request defined");
-          System.out.println(headers);
-          System.out.println("number of headers: "+headers.size());
+          //System.out.println("request defined");
+          //System.out.println(headers);
+          //System.out.println("number of headers: "+headers.size());
           for (String key: headers.keySet()){
             System.out.println("key: "+key);
             String value = headers.get(key);
             request.addHeader(key, value);
           }
           if (body != null){
-            System.out.println("body: "+body);
+            //System.out.println("body: "+body);
             JsonElement element = JsonParser.parseString(body);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
@@ -1429,6 +1438,18 @@ public class YAgentArch extends AgArch {
 
   public String getCurrentTimeStamp(){
     return Instant.now().toString();
+  }
+
+  private void printRequest(TDHttpRequest request){
+    JsonObject o = new JsonObject();
+    o.put("url", request.getTarget());
+    try {
+      String payload = request.getPayloadAsString();
+      o.put("payload", payload);
+    } catch (Exception e){
+      e.printStackTrace();
+    }
+    System.out.println("request: "+o);
   }
 
 

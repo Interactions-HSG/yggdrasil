@@ -96,9 +96,8 @@ public class CartagoEntityHandler {
           if (response.succeeded()) {
             System.out.println("response succeded");
             String workspaceDescription = (String) response.result().body();
-            System.out.println("workspace description: "+workspaceDescription);
             result.complete(workspaceDescription);
-            LOGGER.info("CArtAgO workspace created: " + workspaceDescription);
+            //LOGGER.info("CArtAgO workspace created: " + workspaceDescription);
           } else {
             result.fail("CArtAgO operation has failed.");
           }

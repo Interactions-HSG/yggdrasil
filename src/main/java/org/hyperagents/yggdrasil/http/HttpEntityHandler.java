@@ -637,7 +637,6 @@ public class HttpEntityHandler {
         }
 
         String storeReply = reply.result().body();
-        System.out.println("store reply: "+storeReply);
         if (mediatype.equals("application/ld+json")){
           ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, storeReply);
           storeReply = TDWriter.write(td, RDFFormat.JSONLD);

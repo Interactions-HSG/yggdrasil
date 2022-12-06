@@ -184,14 +184,14 @@ public class YAgentArch2 extends AgArch {
 
     } else if (func.equals("writeProperty")){ //Inside wot library, to write here
 
-    } else if (func.equals("addHeader")){ //To check
+    } else if (func.equals("setHeader")){ //To check
       String key = terms.get(0).toString();
       String value = terms.get(1).toString();
-      headers.put(key, value);
+      this.setHeader(key, value);
     }
     else if (func.equals("removeHeader")){ //To check
       String key = terms.get(0).toString();
-      headers.remove(key);
+      this.removeHeader(key);
     }
 
     else if (func.equals("sendHttpRequest")) { //to check

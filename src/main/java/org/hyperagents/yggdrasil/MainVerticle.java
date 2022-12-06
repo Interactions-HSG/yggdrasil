@@ -1,8 +1,11 @@
 package org.hyperagents.yggdrasil;
 
 import io.vertx.core.Launcher;
+import org.apache.log4j.Logger;
+import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
+import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
 import org.hyperagents.yggdrasil.jason.JasonVerticle;
 import org.hyperagents.yggdrasil.moise.MoiseVerticle;
@@ -20,6 +23,7 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
+    System.out.println("start");
     Properties p = new Properties();
     try {
       p.load(new FileInputStream("./log4j.properties"));
@@ -27,10 +31,20 @@ public class MainVerticle extends AbstractVerticle {
     } catch(Exception e){
       e.printStackTrace();
     }
-    /*org.apache.log4j.Logger httpLogger = org.apache.log4j.Logger.getLogger("org.apache.hc.client5.http");
+    org.apache.log4j.Logger httpLogger = org.apache.log4j.Logger.getLogger("org.apache.hc.client5.http");
     httpLogger.setLevel(org.apache.log4j.Level.INFO);
     org.apache.log4j.Logger rioLogger = org.apache.log4j.Logger.getLogger("org.eclipse.rdf4j.rio");
-    rioLogger.setLevel(org.apache.log4j.Level.INFO);*/
+    rioLogger.setLevel(org.apache.log4j.Level.INFO);
+    org.apache.log4j.Logger notificationLogger = org.apache.log4j.Logger.getLogger(HttpNotificationVerticle.class.getCanonicalName());
+    notificationLogger.setLevel(org.apache.log4j.Level.WARN);
+    org.apache.log4j.Logger cartagoLogger = org.apache.log4j.Logger.getLogger(CartagoVerticle.class.getCanonicalName());
+    cartagoLogger.setLevel(org.apache.log4j.Level.WARN);
+    org.apache.log4j.Logger cartagoHandlerLogger = org.apache.log4j.Logger.getLogger(CartagoEntityHandler.class.getCanonicalName());
+    cartagoHandlerLogger.setLevel(org.apache.log4j.Level.WARN);
+    org.apache.log4j.Logger rdfLogger = org.apache.log4j.Logger.getLogger(RdfStoreVerticle.class.getCanonicalName());
+    rdfLogger.setLevel(org.apache.log4j.Level.WARN);
+    org.apache.log4j.Logger httpHandlerLogger = org.apache.log4j.Logger.getLogger(HttpEntityHandler.class.getCanonicalName());
+    httpHandlerLogger.setLevel(org.apache.log4j.Level.WARN);
     vertx.deployVerticle(new HttpServerVerticle(),
         new DeploymentOptions().setConfig(config())
       );

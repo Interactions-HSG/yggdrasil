@@ -114,7 +114,6 @@ public class CartagoVerticle extends AbstractVerticle {
       switch (requestMethod) {
         case CREATE_WORKSPACE:
           String workspaceDescription = instantiateWorkspace(agentUri, workspaceName);
-          System.out.println("workspace description: "+workspaceDescription);
           message.reply(workspaceDescription);
           break;
         case CREATE_SUB_WORKSPACE:
@@ -131,7 +130,6 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply("agent left workspace successully");
           break;
         case CREATE_ARTIFACT:
-          System.out.println("Create artifact");
           String artifactName = message.headers().get(ARTIFACT_NAME);
 
           JsonObject artifactInit = (JsonObject) Json.decodeValue(message.body());
@@ -159,7 +157,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
           Optional<Object> returnObject = doAction(agentUri, workspaceName, artifact, action, payload);
           if (returnObject.isPresent()){
-            System.out.println("object returned: "+returnObject.get());
+           //System.out.println("object returned: "+returnObject.get());
             message.reply(returnObject.get());
           } else {
             message.reply(HttpStatus.SC_OK);
@@ -340,9 +338,9 @@ public class CartagoVerticle extends AbstractVerticle {
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifactName);
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, artifactDescription, options, result -> {
       if (result.succeeded()) {
-        System.out.println("artifact stored");
+        LOGGER.info("artifact stored");
       } else {
-        System.out.println("artifact could not be stored");
+        LOGGER.info("artifact could not be stored");
       }
     });
   }
@@ -354,7 +352,7 @@ public class CartagoVerticle extends AbstractVerticle {
     AgentId agent = getAgentId(agentContext, workspaceId);
     try {
       String bodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getArtifact(agent, workspaceId);
-      System.out.println("body name: "+bodyName);
+      //System.out.println("body name: "+bodyName);
       ArtifactId bodyId = workspace.getArtifact(bodyName);
       workspace.disposeArtifact(agent, bodyId);
       String hypermediaBodyName = HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName);
@@ -373,9 +371,9 @@ public class CartagoVerticle extends AbstractVerticle {
       .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifactName);
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, "", options, result -> {
       if (result.succeeded()) {
-        System.out.println("artifact deleted");
+        LOGGER.info("artifact deleted");
       } else {
-        System.out.println("artifact could not be deleted");
+        LOGGER.info("artifact could not be deleted");
       }
     });
 
@@ -439,7 +437,6 @@ public class CartagoVerticle extends AbstractVerticle {
         params = hypermediaInterface.convert(action, params);
       }
       boolean c = registry.hasFeedbackParam(artifactName, action);
-      System.out.println("c: "+c);
       if (registry.hasFeedbackParam(artifactName, action)){
         b = true;
         List<Object> paramList = new ArrayList();
@@ -463,15 +460,13 @@ public class CartagoVerticle extends AbstractVerticle {
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
     if (b){
-      System.out.println("in b loop");
       Object[] params = operation.getParamValues();
       if (params.length>0){
         OpFeedbackParam<Object> fParam = (OpFeedbackParam<Object>) params[params.length-1];
         while (fParam.get()==null){
-          System.out.println("wait");
         }
         Object o = fParam.get();
-        System.out.println("result: "+o);
+        LOGGER.info("result: "+o);
         returnObject = Optional.of(o);
       }
     }

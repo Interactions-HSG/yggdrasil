@@ -58,7 +58,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
           break;
         case RdfStore.CREATE_ENTITY:
           handleCreateEntity(requestIRI, message);
-          System.out.println("entity has been created");
           break;
         case RdfStore.PATCH_ENTITY:
           handlePatchEntity(requestIRI, message);
@@ -304,7 +303,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       Optional<Graph> workspaceGraph = store.getEntityGraph(workspaceIRI);
       if (workspaceGraph.isPresent()) {
         Graph wkspGraph = workspaceGraph.get();
-        //LOGGER.info("Found workspace graph: " + wkspGraph);
+        LOGGER.info("Found workspace graph: " + wkspGraph);
         wkspGraph.remove(workspaceIRI, store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         wkspGraph.remove(workspaceIRI, store.createIRI("https://ci.mines-stetienne.fr/hmas/core#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
