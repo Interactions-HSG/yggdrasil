@@ -75,7 +75,7 @@ public class HypermediaInterface {
   public String getHypermediaDescription() {
     ThingDescription.Builder tdBuilder = new ThingDescription.Builder(getArtifactName())
       .addSecurityScheme(new NoSecurityScheme())
-      .addSemanticType("http://w3id.org/eve#Artifact")
+      .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
       .addSemanticType(getSemanticType())
       .addThingURI(getArtifactUri())
       .addGraph(new LinkedHashModel());

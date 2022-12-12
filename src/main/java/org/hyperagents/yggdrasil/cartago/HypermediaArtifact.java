@@ -33,7 +33,7 @@ public abstract class HypermediaArtifact extends Artifact{
   public String getHypermediaDescription() {
     ThingDescription.Builder tdBuilder = new ThingDescription.Builder(getArtifactName())
         .addSecurityScheme(securityScheme)
-        .addSemanticType("http://w3id.org/eve#Artifact")
+        .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
         .addSemanticType(getSemanticType())
         .addThingURI(getArtifactUri())
         .addGraph(metadata);

@@ -26,7 +26,7 @@ public class JasonAgent  extends Agent {
 
   public JasonAgent(String asSrc) throws JasonException {
     super();
-    YggdrasilAgArch arch = new YggdrasilAgArch();;
+    YggdrasilAgArch arch = new YggdrasilAgArch();
     this.agentArch = arch;
     Settings settings = new Settings();
     this.ts = new TransitionSystem(this, null, settings, arch);

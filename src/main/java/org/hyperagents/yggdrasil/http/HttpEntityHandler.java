@@ -217,7 +217,7 @@ public class HttpEntityHandler {
                       LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
                       if (HypermediaArtifactRegistry.getInstance().hasFeedbackParam(artifactName, actionName)) {
                         Object returnObject = cartagoReply.result().body();
-                        System.out.println("return object description: "+returnObject);
+                        //System.out.println("return object description: "+returnObject);
                         context.response().setStatusCode(HttpStatus.SC_OK).end(returnObject.toString());
                       } else {
                         context.response().setStatusCode(HttpStatus.SC_OK).end();
@@ -463,6 +463,19 @@ public class HttpEntityHandler {
     });
   }
 
+  public void handleGetAgentProfile(RoutingContext context){
+    LOGGER.info("handle get agent profile");
+    String agentIRI = context.request().absoluteURI();
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
+      .addHeader(REQUEST_URI, agentIRI);
+
+    Map<String,List<String>> headers = getHeaders(agentIRI);
+
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
+      handleStoreReply(context, HttpStatus.SC_OK, headers));
+  }
+
   public void handleReceiveNotification(RoutingContext context){
     String agentName = context.request().absoluteURI();
     String body = context.getBodyAsString();
@@ -579,7 +592,6 @@ public class HttpEntityHandler {
 
   // TODO: support different content types
   private void createEntity(RoutingContext context, String representation) {
-    System.out.println("create entity");
     String entityIri = context.request().absoluteURI();
     String slug = context.request().getHeader("Slug");
 //    String contentType = context.request().getHeader("Content-Type");
@@ -601,7 +613,6 @@ public class HttpEntityHandler {
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
       int succeededStatusCode, Map<String,List<String>> headers) {
-    System.out.println("handle store reply");
 
     return reply -> {
       if (reply.succeeded()) {
@@ -614,7 +625,7 @@ public class HttpEntityHandler {
           mediatype = "text/turtle";
         }
         if (mediatype.equals("application/ld+json")){
-          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/ld+json");
+          httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
         } else {
 
           httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
@@ -626,7 +637,6 @@ public class HttpEntityHandler {
         }
 
         String storeReply = reply.result().body();
-        System.out.println("store reply: "+storeReply);
         if (mediatype.equals("application/ld+json")){
           ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, storeReply);
           storeReply = TDWriter.write(td, RDFFormat.JSONLD);
@@ -639,8 +649,8 @@ public class HttpEntityHandler {
         }
       } else {
         ReplyException exception = ((ReplyException) reply.cause());
+
         LOGGER.info(exception.getMessage());
-        System.out.println("failure code: "+exception.failureCode());
 
         if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
           routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();

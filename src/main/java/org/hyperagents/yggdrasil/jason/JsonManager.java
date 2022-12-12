@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.Atom;
 import jason.asSyntax.StringTerm;
+import jason.asSyntax.StringTermImpl;
 import jason.asSyntax.Term;
 
 import java.util.HashMap;
@@ -25,8 +26,12 @@ public class JsonManager {
 
   public JsonElement getJsonElementFromTerm(Term jsonId){
     if (jsonId.isString()) {
+      System.out.println("jsonId is string");
       StringTerm st = (StringTerm) jsonId;
-      return currentJsons.get(st.getString());
+      System.out.println(currentJsons);
+      JsonElement e =  currentJsons.get(jsonId.toString());
+      System.out.println(e);
+      return e;
     }
     else if (jsonId.isAtom()){
       System.out.println("jsonId is atom");
@@ -34,6 +39,8 @@ public class JsonManager {
       System.out.println("all jsons: "+currentJsons.keySet());
       System.out.println("json: "+currentJsons.get(s));
       return currentJsons.get(s);
+    } else {
+      System.out.println("jsonId is neither string nor atom");
     }
     return null;
   }
@@ -101,5 +108,29 @@ public class JsonManager {
       currentJsons.put(id.getFunctor(), jsonElement);
       currentJsons_inverse.put(jsonElement, id);
     }
+  }
+
+  public JsonElement getJSONFromString(String jsonString) throws Exception {
+    try {
+      JsonElement jsonElement = JsonParser.parseString(jsonString);
+      return jsonElement;
+    } catch(Exception e){
+      throw new Exception();
+    }
+  }
+
+  public Term getNewJsonId(){
+    Term jsonId = new StringTermImpl("JsonElement"+id);
+    System.out.println("jsonId: "+jsonId);
+    id++;
+    return jsonId;
+  }
+
+  public boolean registerJson(Term id, JsonElement jsonElement){
+    System.out.println("id registered: "+id.toString());
+    System.out.println("element registered "+jsonElement.toString());
+    this.currentJsons.put(id.toString(), jsonElement);
+    this.currentJsons_inverse.put(jsonElement, new Atom(id.toString()));
+    return true;
   }
 }
