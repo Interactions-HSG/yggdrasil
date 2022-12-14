@@ -42,6 +42,7 @@ import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.InvalidParameterException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
@@ -182,8 +183,15 @@ public class YAgentArch extends AgArch {
       String tdUri = tdUriTerm.getString();
       StringTerm propertyTerm = (StringTerm) terms.get(1);
       String propertyName =propertyTerm.getString();
-      VarTerm term =  (VarTerm) terms.get(2);
-      readProperty(tdUri, propertyName, headers, term);
+      if (terms.size()<4) {
+        VarTerm term = (VarTerm) terms.get(2);
+        readProperty(tdUri, propertyName, headers, term);
+      } else {
+        ListTerm uriVariableNames = (ListTerm) terms.get(2);
+        ListTerm uriVariableValues = (ListTerm) terms.get(3);
+        VarTerm term = (VarTerm) terms.get(4);
+        readProperty(tdUri, propertyName, headers, uriVariableNames, uriVariableValues, term);
+      }
 
     } else if (func.equals("writeProperty")){ //Inside wot library, to write here
 
@@ -335,7 +343,7 @@ public class YAgentArch extends AgArch {
     } else if (func.equals("getBody")){ //Inside wot library
       Term jsonId = terms.get(0);
       String body = getBody(jsonId);
-      VarTerm v = (VarTerm ) terms.get(1);
+      VarTerm v = (VarTerm) terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
       u.bind(v, new StringTermImpl(body));
     } else if (func.equals("getCurrentTime")){ //To check
@@ -344,6 +352,20 @@ public class YAgentArch extends AgArch {
       String timeStamp = getCurrentTimeStamp();
       LOGGER.debug("current time stamp: "+timeStamp);
       u.bind(var, new StringTermImpl(timeStamp));
+    } else if (func.equals("floor")){
+      NumberTerm term = (NumberTerm) terms.get(0);
+      try {
+        double number = term.solve();
+        double n = Math.floor(number);
+        VarTerm v = (VarTerm) terms.get(1);
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, new NumberTermImpl(n));
+      } catch (Exception e){
+        LOGGER.error("The first parameter is not a number");
+      }
+
+
+
     }
 
     LOGGER.info("end method act");
@@ -374,11 +396,13 @@ public class YAgentArch extends AgArch {
         //JSONLibrary jsonLibrary = JSONLibrary.getInstance();
 
         JsonElement jsonElement = jsonManager.getJSONFromString(message);//jsonLibrary.getJSONFromString(message);
-
+        System.out.println("json received: "+ jsonElement.toString());
         Term jsonTerm = jsonManager.getNewJsonId();//jsonLibrary.getNewJsonId();
+        System.out.println("json term created: "+jsonTerm);
         jsonManager.registerJson(jsonTerm, jsonElement);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
+        System.out.println("message added: "+message);
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }
@@ -712,6 +736,7 @@ public class YAgentArch extends AgArch {
             }
 
           }
+          LOGGER.info("Connect to url: "+request.getTarget());
           TDHttpResponse response = request.execute();
           com.google.gson.JsonObject responseObject = createResponseObject(response);
           Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
@@ -909,7 +934,9 @@ public class YAgentArch extends AgArch {
             if (n==m){
               for (int i = 0; i <n; i++){
                 StringTerm name = (StringTerm) uriVariableNames.get(i);
+                System.out.println("uri variable name: "+ name);
                 StringTerm value = (StringTerm) uriVariableValues.get(i);
+                System.out.println("uri variable value: "+ value);
                 values.put(name.getString(), value.getString());
               }
             }
@@ -1307,7 +1334,11 @@ public class YAgentArch extends AgArch {
   }
 
   public double getNumberFromJson(Term jsonId, String attribute){
-    return getFromJson(jsonId, attribute).getAsDouble();
+    JsonElement e =  getFromJson(jsonId, attribute);
+    if (e!=null && e.isJsonPrimitive()){
+      return e.getAsDouble();
+    }
+    throw new InvalidParameterException("The value is null or not a double");
   }
 
   public boolean getBooleanFromJson(Term jsonId, int index){
@@ -1447,7 +1478,7 @@ public class YAgentArch extends AgArch {
       String payload = request.getPayloadAsString();
       o.put("payload", payload);
     } catch (Exception e){
-      e.printStackTrace();
+      LOGGER.error("No body can be printed");
     }
     System.out.println("request: "+o);
   }

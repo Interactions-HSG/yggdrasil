@@ -27,9 +27,17 @@ public class JsonManager {
   public JsonElement getJsonElementFromTerm(Term jsonId){
     if (jsonId.isString()) {
       System.out.println("jsonId is string");
-      StringTerm st = (StringTerm) jsonId;
       System.out.println(currentJsons);
-      JsonElement e =  currentJsons.get(jsonId.toString());
+      String json = jsonId.toString();
+      System.out.println("json: "+json);
+      JsonElement e;
+      if (currentJsons.containsKey(jsonId)) {
+        e = currentJsons.get(json);
+      } else {
+        StringTerm st = (StringTerm) jsonId;
+        System.out.println(st.getString());
+        e = JsonParser.parseString(st.getString());
+      }
       System.out.println(e);
       return e;
     }
