@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.schemas.*;

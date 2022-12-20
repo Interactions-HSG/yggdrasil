@@ -5,10 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.apache.commons.rdf.api.Graph;
-import org.apache.commons.rdf.api.IRI;
-import org.apache.commons.rdf.api.RDFSyntax;
-import org.apache.commons.rdf.api.Triple;
+import org.apache.commons.rdf.api.*;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -68,6 +65,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
         case RdfStore.DELETE_ENTITY:
           handleDeleteEntity(requestIRI, message);
           break;
+        case RdfStore.ADD_CONTAINMENT_TRIPLES:
+          handleAddContainmentTriples(requestIRI, message);
         default:
           break;
       }
@@ -292,6 +291,26 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       replyEntityNotFound(message);
     }
+  }
+
+  public void handleAddContainmentTriples(IRI requestIRI, Message<String> message){
+    Optional<Graph> opEntityGraph = store.getEntityGraph(requestIRI);
+    if (opEntityGraph.isPresent()){
+      Graph entityGraph = opEntityGraph.get();
+      String subject = message.headers().get("Subject");
+      String predicate = message.headers().get("predicate");
+      String valueString = message.headers().get("Value");
+      String valueType = message.headers().get("ValueType");
+      RDFTerm value;
+      if (valueType == "IRI"){
+        value = store.createIRI(valueString);
+      } else {
+          value = store.createLiteral(valueString);
+      }
+      entityGraph.add(store.createIRI(subject), store.createIRI(predicate), value);
+
+    }
+
   }
 
   private void otherDeletions(IRI entityIRI, Graph entityGraph) throws IOException {

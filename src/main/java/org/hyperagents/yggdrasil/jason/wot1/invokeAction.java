@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
@@ -13,7 +13,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.ListTerm;

@@ -26,15 +26,24 @@ public class JsonManager {
 
   public JsonElement getJsonElementFromTerm(Term jsonId){
     if (jsonId.isString()) {
-      StringTerm st = (StringTerm) jsonId;
-      return currentJsons.get(st.getString());
+      System.out.println(currentJsons);
+      String json = jsonId.toString();
+      JsonElement e;
+      if (currentJsons.containsKey(json)) {
+        e = currentJsons.get(json);
+      } else {
+        StringTerm st = (StringTerm) jsonId;
+        System.out.println(st.getString());
+        e = JsonParser.parseString(st.getString());
+      }
+      System.out.println(e);
+      return e;
     }
     else if (jsonId.isAtom()){
-      System.out.println("jsonId is atom");
       String s = jsonId.toString();
-      System.out.println("all jsons: "+currentJsons.keySet());
-      System.out.println("json: "+currentJsons.get(s));
       return currentJsons.get(s);
+    } else {
+      System.out.println("jsonId is neither string nor atom");
     }
     return null;
   }
@@ -114,13 +123,15 @@ public class JsonManager {
   }
 
   public Term getNewJsonId(){
-    Term jsonId = new StringTermImpl("JsonElement"+0);
+    Term jsonId = new StringTermImpl("JsonElement"+id);
     System.out.println("jsonId: "+jsonId);
     id++;
     return jsonId;
   }
 
   public boolean registerJson(Term id, JsonElement jsonElement){
+    System.out.println("id registered: "+id.toString());
+    System.out.println("element registered "+jsonElement.toString());
     this.currentJsons.put(id.toString(), jsonElement);
     this.currentJsons_inverse.put(jsonElement, new Atom(id.toString()));
     return true;

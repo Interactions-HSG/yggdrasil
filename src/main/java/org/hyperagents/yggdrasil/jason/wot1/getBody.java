@@ -1,14 +1,11 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.Literal;
 import jason.asSyntax.StringTermImpl;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
-import org.hyperagents.yggdrasil.jason.JSONLibrary;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 
 public class getBody extends WotAction{

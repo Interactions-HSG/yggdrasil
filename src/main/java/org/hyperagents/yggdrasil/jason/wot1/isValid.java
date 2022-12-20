@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import com.google.gson.JsonObject;
 import jason.asSemantics.TransitionSystem;
@@ -8,7 +8,7 @@ import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 
-public class isServerError extends  WotAction{
+public class isValid extends WotAction{
 
   @Override
   public Object execute(TransitionSystem ts,
@@ -16,7 +16,7 @@ public class isServerError extends  WotAction{
                         final Term[] arg) throws Exception {
     Term jsonId = arg[0];
     VarTerm bVar = (VarTerm) arg[1];
-    boolean b = isServerError(jsonId, ts);
+    boolean b = isValid(jsonId, ts);
     if (b) {
       un.bind(bVar, Literal.LTrue);
     } else {
@@ -25,18 +25,19 @@ public class isServerError extends  WotAction{
     return null;
   }
 
-  public boolean isServerError(Term jsonId, TransitionSystem ts){
-    YAgentArch agArch = (YAgentArch) ts.getAgArch();
-    JsonObject object = agArch.getJsonManager().getJsonElementFromTerm(jsonId).getAsJsonObject();
-    return isServerError(object);
-  }
-
-  public boolean isServerError(com.google.gson.JsonObject responseObject){
+  public boolean isValid(com.google.gson.JsonObject responseObject){
     boolean b = false;
     int code = responseObject.get("statusCode").getAsInt();
-    if (code >500 ){
+    if (code >=200 && code<300 ){
       b = true;
     }
     return b;
   }
+
+  public boolean isValid(Term jsonId, TransitionSystem ts){
+    YAgentArch agArch = (YAgentArch) ts.getAgArch();
+    JsonObject object = agArch.getJsonManager().getJsonElementFromTerm(jsonId).getAsJsonObject();
+    return isValid(object);
+  }
+
 }

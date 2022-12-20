@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import com.google.gson.JsonObject;
 import jason.asSemantics.TransitionSystem;
@@ -6,10 +6,9 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
-import org.hyperagents.yggdrasil.jason.JSONLibrary;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 
-public class isInformation extends WotAction{
+public class isRedirection extends WotAction{
 
   @Override
   public Object execute(TransitionSystem ts,
@@ -17,7 +16,7 @@ public class isInformation extends WotAction{
                         final Term[] arg) throws Exception {
     Term jsonId = arg[0];
     VarTerm bVar = (VarTerm) arg[1];
-    boolean b = isInformation(jsonId, ts);
+    boolean b = isRedirection(jsonId, ts);
     if (b) {
       un.bind(bVar, Literal.LTrue);
     } else {
@@ -26,18 +25,20 @@ public class isInformation extends WotAction{
     return null;
   }
 
-  public boolean isInformation(Term jsonId, TransitionSystem ts){
+  public boolean isRedirection(Term jsonId, TransitionSystem ts){
     YAgentArch agArch = (YAgentArch) ts.getAgArch();
     JsonObject object = agArch.getJsonManager().getJsonElementFromTerm(jsonId).getAsJsonObject();
-    return isInformation(object);
+    return isRedirection(object);
   }
 
-  public boolean isInformation(com.google.gson.JsonObject responseObject){
+  public boolean isRedirection(com.google.gson.JsonObject responseObject){
     boolean b = false;
     int code = responseObject.get("statusCode").getAsInt();
-    if (code < 200 ){
+    if (code >=300 && code<400 ){
       b = true;
     }
     return b;
   }
+
+
 }

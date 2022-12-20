@@ -107,4 +107,11 @@ public class HypermediaAgentBodyArtifactRegistry {
     return b;
 
   }
+
+  public boolean isBodyArtifact(String artifactName){
+    if (hypermediaNames.containsKey(artifactName)){
+      return true;
+    }
+    return false;
+  }
 }

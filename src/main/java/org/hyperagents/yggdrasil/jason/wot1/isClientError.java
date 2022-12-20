@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import com.google.gson.JsonObject;
 import jason.asSemantics.TransitionSystem;

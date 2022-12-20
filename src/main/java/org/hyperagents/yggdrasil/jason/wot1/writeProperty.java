@@ -1,14 +1,10 @@
-package org.hyperagents.yggdrasil.jason.wot;
+package org.hyperagents.yggdrasil.jason.wot1;
 
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.affordances.PropertyAffordance;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.BooleanSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -19,7 +15,6 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 
 import java.util.Hashtable;

@@ -115,6 +115,7 @@ public class HypermediaArtifactRegistry {
     this.interfaceMap.put(artifactName, hypermediaInterface);
     this.artifactNames.put(artifactTemplate, artifactName);
     Set<String> fActions = hypermediaInterface.getFeedbackActions();
+    System.out.println("artifat  template in register: "+ artifactTemplate);
     feedbackActions.put(artifactTemplate, fActions);
   }
 
@@ -320,8 +321,14 @@ public class HypermediaArtifactRegistry {
   }
 
   public boolean hasFeedbackParam(String artifactName, String action){
-    System.out.println("check has feedback param");
+    System.out.println("check has feedback param for artifact: "+artifactName);
     boolean b = false;
+    HypermediaAgentBodyArtifactRegistry bodyArtifactRegistry = HypermediaAgentBodyArtifactRegistry.getInstance();
+    if (bodyArtifactRegistry.isBodyArtifact(artifactName)){
+      System.out.println("is body artifact");
+      artifactName = bodyArtifactRegistry.getHypermediaName(artifactName);
+    }
+    System.out.println("has artifact name: "+feedbackActions.containsKey(artifactName));
     b = feedbackActions.get(artifactName).contains(action);
     return b;
   }
