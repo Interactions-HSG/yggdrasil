@@ -183,6 +183,7 @@ public class HttpEntityHandler {
               String artifactDescription = (String) reply.result().body();
               ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
                   artifactDescription);
+              System.out.println("agent id: "+agentId);
 
               DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentId)

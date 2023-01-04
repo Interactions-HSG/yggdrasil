@@ -1,13 +1,8 @@
-package org.hyperagents.yggdrasil.jason.json;
+package org.hyperagents.yggdrasil.jason.json1;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
-import org.hyperagents.yggdrasil.jason.JSONLibrary;
 import org.hyperagents.yggdrasil.jason.JsonManager;
 import org.hyperagents.yggdrasil.jason.YAgentArch;
 

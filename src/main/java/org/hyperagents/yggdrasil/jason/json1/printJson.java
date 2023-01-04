@@ -1,9 +1,8 @@
-package org.hyperagents.yggdrasil.jason.json;
+package org.hyperagents.yggdrasil.jason.json1;
 
 import com.google.gson.JsonElement;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ListTerm;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
 import org.hyperagents.yggdrasil.jason.JsonManager;

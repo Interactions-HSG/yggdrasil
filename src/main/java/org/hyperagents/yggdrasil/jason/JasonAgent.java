@@ -40,7 +40,8 @@ public class JasonAgent  extends Agent {
     super();
     System.out.println("is creating Jason agent");
     YggdrasilAgArch arch = new YggdrasilAgArch();
-    arch.insertAgArch(new YAgentArch());
+    //arch.insertAgArch(new YAgentArch());
+    arch.insertAgArch(new YAgentArch2());
     System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);
     this.agentArch = arch;

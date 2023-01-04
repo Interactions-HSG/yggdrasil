@@ -73,21 +73,13 @@ public class YAgentArch2 extends AgArch {
 
   @Override
   public void act(ActionExec actionExec) {
-    LOGGER.info("perform action: "+actionExec.getActionTerm());
+    LOGGER.info("perform action: " + actionExec.getActionTerm());
     String agentName = getAgName();
     LOGGER.debug("agent name: " + agentName);
     //Intention currentIntention = getTS().getC().getSelectedIntention();
     //Unifier un = currentIntention.peek().getUnif();
     Unifier un = actionExec.getIntention().peek().getUnif();
     Structure action = actionExec.getActionTerm();
-
-    ListTerm lt = action.getAnnots();
-    if (lt != null) {
-      Iterator<Term> it = lt.iterator();
-      while (it.hasNext()) {
-        Term annot = it.next();
-      }
-    }
     String func = action.getFunctor();
     List<Term> terms = action.getTerms();
     if (func.equals("createWorkspace")) { //Inside YAgentArch
@@ -121,237 +113,162 @@ public class YAgentArch2 extends AgArch {
       String artifactName = terms.get(1).toString();
       stopFocus(workspaceName, artifactName);
 
-    } else if (func.equals("setValue")){ //To check
+    } else if (func.equals("setValue")) { //To check
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      VarTerm v =  (VarTerm) terms.get(0);
+      VarTerm v = (VarTerm) terms.get(0);
       Term t = terms.get(1);
-      u.bind(v,t);
+      u.bind(v, t);
 
-    }
-
-    else if (func.equals("invokeAction")) { //Inside wot library
+    } else if (func.equals("invokeAction")) { //Inside wot library
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUri = tdUriTerm.getString();
+      String tdUrl = tdUriTerm.getString();
       StringTerm actionTerm = (StringTerm) terms.get(1);
       String actionName = actionTerm.getString();
-      String body = null;
-      if (terms.size() > 2) {
+      String body = "";
+      if (terms.size() > 3) {
         Term t = terms.get(2);
-        body = t.getAsJSON("");
+        body = getAsJson(t);
       }
-      if (terms.size() == 4){
-        VarTerm var = (VarTerm) terms.get(3);
-        Map<String, String> headers = getHeaders();
-        invokeAction(tdUri, actionName, headers, body, var);
+      Map<String, String> headers = new Hashtable<>();
+      if (terms.size() > 4) {
+        MapTerm headersMap = (MapTerm) terms.get(3);
+        for (Term key : headersMap.keys()) {
+          headers.put(key.toString(), headersMap.get(key).toString());
+        }
       }
-      else if (terms.size() == 6){
-        ListTerm uriVariableNames = (ListTerm) terms.get(3);
-        ListTerm uriVariableValues = (ListTerm) terms.get(4);
-        VarTerm var = (VarTerm) terms.get(5);
-        Map<String, String> headers = getHeaders();
-        invokeAction(tdUri, actionName, headers, body, uriVariableNames, uriVariableValues, var);
-      } else {
-        Map<String, String> headers = getHeaders();
-        invokeAction(tdUri, actionName, headers, body);
+      Map<String, Object> uriVariables = new Hashtable<>();
+      if (terms.size() > 5) {
+        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+        for (Term key : uriVariablesMap.keys()) {
+          headers.put(key.toString(), uriVariablesMap.get(key).toString());
+        }
       }
-    } else if (func.equals("subscribeEvent")) { //Inside wot library
+      MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
+      Term lastTerm = terms.get(terms.size() - 1);
+      if (lastTerm.isVar()) {
+        VarTerm v = (VarTerm) lastTerm;
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, result);
+      }
+    } else if (func.equals("readProperty")) { //Inside wot library
       StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUri = tdUriTerm.getString();
+      String tdUrl = tdUriTerm.getString();
+      StringTerm propertyTerm = (StringTerm) terms.get(1);
+      String propertyName = propertyTerm.getString();
+      Map<String, String> headers = new Hashtable<>();
+      Map<String, Object> uriVariables = new Hashtable<>();
+      if (terms.size() > 3) {
+        MapTerm headersMap = (MapTerm) terms.get(2);
+        for (Term key : headersMap.keys()) {
+          headers.put(key.toString(), headersMap.get(key).toString());
+        }
+      }
+      if (terms.size() > 4) {
+        MapTerm uriVariablesMap = (MapTerm) terms.get(3);
+        for (Term key : uriVariablesMap.keys()) {
+          headers.put(key.toString(), uriVariablesMap.get(key).toString());
+        }
+      }
+      MapTerm result = readProperty(tdUrl, propertyName, headers, uriVariables);
+      Term lastTerm = terms.get(terms.size() - 1);
+      if (lastTerm.isVar()) {
+        VarTerm v = (VarTerm) lastTerm;
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, result);
+      }
+    } else if (func.equals("writeProperty")) { //Inside wot library
+      StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      String tdUrl = tdUriTerm.getString();
+      StringTerm propertyTerm = (StringTerm) terms.get(1);
+      String propertyName = propertyTerm.getString();
+      String body = "";
+      if (terms.size() > 3) {
+        Term t = terms.get(2);
+        body = getAsJson(t);
+      }
+      Map<String, String> headers = new Hashtable<>();
+      Map<String, Object> uriVariables = new Hashtable<>();
+      if (terms.size() > 4) {
+        MapTerm headersMap = (MapTerm) terms.get(3);
+        for (Term key : headersMap.keys()) {
+          headers.put(key.toString(), headersMap.get(key).toString());
+        }
+      }
+      if (terms.size() > 5) {
+        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+        for (Term key : uriVariablesMap.keys()) {
+          headers.put(key.toString(), uriVariablesMap.get(key).toString());
+        }
+      }
+      MapTerm result = writeProperty(tdUrl, propertyName, body, headers, uriVariables);
+      Term lastTerm = terms.get(terms.size() - 1);
+      if (lastTerm.isVar()) {
+        VarTerm v = (VarTerm) lastTerm;
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, result);
+      }
+    } else if (func.equals("subscribeEvent")) {
+      StringTerm tdUriTerm = (StringTerm) terms.get(0);
+      String tdUrl = tdUriTerm.getString();
       StringTerm eventTerm = (StringTerm) terms.get(1);
       String eventName = eventTerm.getString();
-      String body = null;
-      if (terms.size() > 2) {
-        StringTerm bodyTerm = (StringTerm) terms.get(2);
-        body = bodyTerm.getString();
+      String body = "";
+      if (terms.size() > 3) {
+        Term t = terms.get(2);
+        body = getAsJson(t);
       }
-      Map<String, String> headers = getHeaders();
-      subscribeEvent(tdUri, eventName, headers, body);
-    } else if (func.equals("readProperty")){ //Inside wot library
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUri = tdUriTerm.getString();
-      StringTerm propertyTerm = (StringTerm) terms.get(1);
-      String propertyName =propertyTerm.getString();
-      VarTerm term =  (VarTerm) terms.get(2);
-      Map<String, String> headers = getHeaders();
-      readProperty(tdUri, propertyName, headers, term);
-
-    } else if (func.equals("writeProperty")){ //Inside wot library, to write here
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUri = tdUriTerm.getString();
-      StringTerm propertyTerm = (StringTerm) terms.get(1);
-      String propertyName =propertyTerm.getString();
-      StringTerm body = (StringTerm) terms.get(2);
-      VarTerm term =  (VarTerm) terms.get(3);
-      Map<String, String> headers = getHeaders();
-      writeProperty(tdUri, propertyName, headers, body.getString(), term);
-
-    } else if (func.equals("setHeader")){ //To check
-      String key = terms.get(0).toString();
-      String value = terms.get(1).toString();
-      this.setHeader(key, value);
-    }
-    else if (func.equals("removeHeader")){ //To check
-      String key = terms.get(0).toString();
-      this.removeHeader(key);
-    }
-
-    else if (func.equals("sendHttpRequest")) { //to check
-      StringTerm urlTerm = (StringTerm) terms.get(0);
-      String url = urlTerm.getString();
-      StringTerm methodTerm = (StringTerm) terms.get(1);
-      String method = methodTerm.toString();
-      String body = null;
-      if (terms.size() > 2) {
-        StringTerm bodyTerm = (StringTerm) terms.get(2);
-        body = bodyTerm.getString();
+      Map<String, String> headers = new Hashtable<>();
+      if (terms.size() > 4) {
+        MapTerm headersMap = (MapTerm) terms.get(3);
+        for (Term key : headersMap.keys()) {
+          headers.put(key.toString(), headersMap.get(key).toString());
+        }
       }
-      Map<String, String> headers = getHeaders();
-      MapTerm o = sendHttpRequest(url, method, headers, body);
-      LOGGER.debug("return object: "+o);
-      if (terms.size()>3){
+      Map<String, Object> uriVariables = new Hashtable<>();
+      if (terms.size() > 5) {
+        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+        for (Term key : uriVariablesMap.keys()) {
+          headers.put(key.toString(), uriVariablesMap.get(key).toString());
+        }
+      }
+      MapTerm result = subscribeEvent(tdUrl, eventName, body, headers, uriVariables);
+      Term lastTerm = terms.get(terms.size() - 1);
+      if (lastTerm.isVar()) {
+        VarTerm v = (VarTerm) lastTerm;
         Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-        u.bind((VarTerm) terms.get(3), o);
+        u.bind(v, result);
       }
-    } else if (func.equals("makeJson")){ //Inside json library
-      ListTerm attributeList = (ListTerm) terms.get(0);
-      ListTerm valueList = (ListTerm) terms.get(1);
-      VarTerm jsonId = (VarTerm) terms.get(2);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      createJsonObject(u, attributeList, valueList, jsonId);
-      LOGGER.debug("jsonId: "+jsonId);
-    } else if (func.equals("hasAttribute")){ //Inside json library
-      Term jsonId = terms.get(0);
-      StringTerm attributeTerm = (StringTerm) terms.get(1);
-      String attribute = attributeTerm.getString();
-      boolean b = hasAttribute(jsonId, attribute);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      VarTerm v = (VarTerm) terms.get(2);
-      Term t = Literal.LFalse;
-      if (b){
-        t = Literal.LTrue;
-      }
-      u.bind(v,t);
-    } else if (func.equals("isValid")){ //Inside wot library
+    } else if (func.equals("sendHttpRequest")) { //TODO: Create
 
-      Term jsonId = terms.get(0);
-      VarTerm bVar = (VarTerm) terms.get(1);
-      boolean b = isValid(jsonId);
+    } else if (func.equals("createTermFromJson")) { //Inside json library
+      Term json = terms.get(0);
+      //String jsonString = json.toString();
+      StringTerm jsonStringTerm = (StringTerm) json;
+      String jsonString = jsonStringTerm.getString();
+      System.out.println("json string: " + jsonString);
+      Term t = createTermFromJson(jsonString);
+      VarTerm v = (VarTerm) terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      if (b) {
-        u.bind(bVar, Literal.LTrue);
-      } else {
-        u.bind(bVar, Literal.LFalse);
-      }
-    }  else if (func.equals("isInformation")){ //Inside wot library
-      Term jsonId = terms.get(0);
-      VarTerm bVar = (VarTerm) terms.get(1);
-      boolean b = isInformation(jsonId);
+      u.bind(v, t);
+    } else if (func.equals("getTermAsJson")) {
+      Term json = terms.get(0);
+      String jsonString = getAsJson(json);
+      StringTerm jsonStringTerm = new StringTermImpl(jsonString);
+      VarTerm v = (VarTerm) terms.get(1);
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      if (b) {
-        u.bind(bVar, Literal.LTrue);
-      } else {
-        u.bind(bVar, Literal.LFalse);
-      }
-    } else if (func.equals("isRedirection")){ //Inside wot library
-      Term jsonId = terms.get(0);
-      VarTerm bVar = (VarTerm) terms.get(1);
-      boolean b = isRedirection(jsonId);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      if (b) {
-        u.bind(bVar, Literal.LTrue);
-      } else {
-        u.bind(bVar, Literal.LFalse);
-      }
-    } else if (func.equals("isClientError")){ //Inside wot library
-      Term jsonId = terms.get(0);
-      VarTerm bVar = (VarTerm) terms.get(1);
-      boolean b = isClientError(jsonId);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      if (b) {
-        u.bind(bVar, Literal.LTrue);
-      } else {
-        u.bind(bVar, Literal.LFalse);
-      }
-    } else if (func.equals("isServerError")){ //Inside wot library
-      Term jsonId = terms.get(0);
-      VarTerm bVar = (VarTerm) terms.get(1);
-      boolean b = isServerError(jsonId);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      if (b) {
-        u.bind(bVar, Literal.LTrue);
-      } else {
-        u.bind(bVar, Literal.LFalse);
-      }
-    }
+      u.bind(v, jsonStringTerm);
 
-    else if (func.equals("getJsonAsString")){ //Inside json library
-      Term jsonId = terms.get(0);
-      StringTerm str = getAsStringTerm(jsonId);
-      un.bind((VarTerm) terms.get(1), str);
-
-    } else if (func.equals("getStringAsJson")){ //Inside json library
-      StringTerm st = (StringTerm) terms.get(0);
-      Term jsonId = terms.get(1);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      try {
-        //jsonManager.new_json(u, st.getString(), jsonId);
-        JsonElement jsonElement = JsonParser.parseString(st.getString());
-        Term jsonTerm = getAsJsonTerm(jsonElement);
-        u.bind((VarTerm) jsonId, jsonTerm);
-      } catch(Exception e){
-        e.printStackTrace();
-      }
-    }
-
-    else if (func.equals("getStringFromJson")){ //Inside json library
-      Term jsonId = terms.get(0);
-      String attribute = ((StringTerm) terms.get(1)).getString();
-      String str = getStringFromJson(jsonId, attribute);
-      StringTerm value = new StringTermImpl(str);
-      un.bind((VarTerm) terms.get(2), value);
-
-    }  else if (func.equals("getNumberFromJson")){ //Inside json library
-      Term jsonId = terms.get(0);
-      String attribute = ((StringTerm) terms.get(1)).getString();
-      NumberTerm value = new NumberTermImpl(getNumberFromJson(jsonId, attribute));
-      un.bind((VarTerm) terms.get(2), value);
-
-    } else if (func.equals("testUriVariables")){ //To remove
-      String uriTemplate = "http://example.org/{?a,b}";
-      UriTemplate template = new UriTemplate(uriTemplate);
-      Map<String, DataSchema> uriVariables = new Hashtable<>();
-      uriVariables.put("a", new StringSchema.Builder().build());
-      uriVariables.put("b", new StringSchema.Builder().build());
-      Map<String, Object> values = new Hashtable<>();
-      values.put("a", "abc");
-      values.put("b", "gh");
-      String uri = template.createUri(uriVariables, values);
-      Form form = new Form.Builder("http://example.org{?a,b}").build();
-      TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction, uriVariables, values);
-      LOGGER.debug("target uri: "+request.getTarget());
-
-    } else if (func.equals("getBody")){ //Inside wot library
-      MapTerm jsonId = (MapTerm) terms.get(0);
-      String body = getBody(jsonId);
-      VarTerm v = (VarTerm ) terms.get(1);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      u.bind(v, new StringTermImpl(body));
-    } else if (func.equals("getCurrentTime")){ //To check
-      VarTerm var = (VarTerm) terms.get(0);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      String timeStamp = getCurrentTimeStamp();
-      LOGGER.debug("current time stamp: "+timeStamp);
-      u.bind(var, new StringTermImpl(timeStamp));
+    } else if (func.equals("createTermFromJson")) {
+      StringTerm jsonStringTerm = (StringTerm) terms.get(0);
+      String jsonString = jsonStringTerm.getString();
+      Term t = createTermFromJson(jsonString);
+      VarTerm v = (VarTerm) terms.get(1);
+      un.bind(v, t);
     }
 
     LOGGER.info("end method act");
     actionExec.setResult(true);
     super.actionExecuted(actionExec);
-  }
-
-  private StringTerm getAsStringTerm(Term jsonId) {
-    String str = jsonId.getAsJSON("");
-    return new StringTermImpl(str); //TODO: Check
   }
 
 
@@ -371,18 +288,16 @@ public class YAgentArch2 extends AgArch {
       if (messageCallback.hasNewMessage()) {
         LOGGER.info("agent "+ this.getAgName()+ " has new message");
         String message = messageCallback.retrieveMessage();
-        Literal messageBelief = new LiteralImpl("new_message");
+        System.out.println("message: "+message);
+        Literal messageBelief = new LiteralImpl("message");
         Term id = getNewMessageId();
-        //JSONLibrary jsonLibrary = JSONLibrary.getInstance();
+        System.out.println("id: "+id);
 
         Term jsonTerm = getJsonFromString(message);
-
-        //JsonElement jsonElement = jsonManager.getJSONFromString(message);//jsonLibrary.getJSONFromString(message);
-
-        //Term jsonTerm = jsonManager.getNewJsonId();//jsonLibrary.getNewJsonId();
-       // jsonManager.registerJson(jsonTerm, jsonElement);
+        System.out.println("json term: "+ jsonTerm);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
+        System.out.println("message belief: "+ messageBelief);
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }
@@ -394,6 +309,16 @@ public class YAgentArch2 extends AgArch {
     return super.perceive();
   }
 
+  public String getAgHypermediaName(){
+    String agentUri = "";
+    try {
+      agentUri = AgentRegistry.getInstance().getAgentUri(this.getAgName());
+      System.out.println("agent uri: "+ agentUri);
+    } catch (Exception e){
+      System.err.println("The agent has no hypermedia name");
+    }
+    return agentUri;
+  }
   private Term getJsonFromString(String message) { //TODO: check
     Term t = null;
     try {
@@ -460,39 +385,7 @@ public class YAgentArch2 extends AgArch {
   }
 
 
-  boolean isEnvironmentOperation(String o){
-    return o.equals("joinWorkspace") ||
-      o.equals("createWorkspace")||
-      o.equals("createSubWorkspace")||
-      //o.equals("lookupArtifact") ||
-      o.equals("makeArtifact")||
-      o.equals("focus")||
-      //o.equals("focusWhenAvailable")||
-      o.equals("leaveWorkspace");
-  }
 
-  public Map<String, String> getHeaders(){
-    Map<String, String> h = new Hashtable<>();
-    Literal l1 = new LiteralImpl("yggdrasil_header");
-    Unifier u = this.getTS().getC().getSelectedIntention().peek().getUnif();
-    Literal l = this.getTS().getAg().findBel(l1, u);
-    List list = l.getTerms();
-    h.put(list.get(0).toString(), list.get(1).toString());
-    return h;
-  }
-
-
-  /*public JsonManager getJsonManager(){
-    return jsonManager;
-  }*/
-
-  //Syntax for the operations
-  //joinWorkspace(String workspaceName)
-  //createWorkspace(String workspaceName)
-  //createSubWorkspace(String workspaceName, String subWorkspaceName)
-  //makeArtifact(String workspaceName, String artifactName)
-  //focus(String workspaceName, String artifactname)
-  //leaveWorkspace(String workspaceName)
 
 
 
@@ -624,24 +517,23 @@ try {
     }
   }
 
-  public void stopFocus(String workspaceName, String artifactName){
+  public void stopFocus(String workspaceName, String artifactName) {
     try {
       String bodyName = AgentRegistry.getInstance().getBody(this.getAgName(), workspaceName);
-      String focusUri = bodyName+"/stopFocus";
-      System.out.println("body name: "+bodyName);
+      String focusUri = bodyName + "/stopFocus";
+      System.out.println("body name: " + bodyName);
       Map<String, String> headers = new Hashtable<>();
       headers.put("X-Agent-WebID", this.getAgName());
       headers.put("Content-Type", "application/json");
-      String body = "[\""+artifactName+"\"]";
-      System.out.println("focus body: "+body);
+      String body = "[\"" + artifactName + "\"]";
+      System.out.println("focus body: " + body);
       sendHttpRequest(focusUri, "PUT", headers, body);
 
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
-
-  public MapTerm general_invoke_action(String tdUrl, String affordanceName, Map<String, String> headers, String body, Map<String, Object> uriVar){
+  public MapTerm invokeAction(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
@@ -652,13 +544,14 @@ try {
         Optional<Form> opForm = action.getFirstForm();
         if (opForm.isPresent()) {
           Form form = opForm.get();
-          TDHttpRequest request;
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
           if (action.getUriVariables().isPresent()) {
-            Map<String, DataSchema> uriVariables = action.getUriVariables().get();
-            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVar);
-          } else {
-            request = new TDHttpRequest(form, TD.invokeAction);
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
           }
+          request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
+
           for (String key: headers.keySet()){
             String value = headers.get(key);
             request.addHeader(key, value);
@@ -692,283 +585,177 @@ try {
           return responseObject;
         } else {
           System.out.println("form is not present");
+          return null;
         }
       } else {
         System.out.println("action is not present");
+        return null;
       }
     } catch(Exception e){
       e.printStackTrace();
     }
     return null;
-
   }
 
-
-
-
-
-
-
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term){
+  public MapTerm readProperty(String tdUrl, String affordanceName, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
-      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      if (opAction.isPresent()) {
-        System.out.println("action is present");
-        ActionAffordance action = opAction.get();
-        Optional<Form> opForm = action.getFirstForm();
-        if (opForm.isPresent()) {
-          System.out.println("form is present");
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          System.out.println("request target: "+request.getTarget());
-
-          for (String key: headers.keySet()){
-            String value = headers.get(key);
-            request.addHeader(key, value);
-          }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              System.out.println("schema is present");
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-            System.out.println("request body: "+request.getPayloadAsString());
-
-          }
-          TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-          u.bind(term, responseObject);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-        } else {
-          System.out.println("form is not present");
-        }
-      } else {
-        System.out.println("action is not present");
-      }
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-  }
-
-
-
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term){
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
-      if (opAction.isPresent()) {
-        ActionAffordance action = opAction.get();
-        Optional<Form> opForm = action.getFirstForm();
-        if (opForm.isPresent()) {
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          if (action.getUriVariables().isPresent()) {
-            Map<String, DataSchema> uriVariables = action.getUriVariables().get();
-            Map<String, Object> values = new Hashtable<>();
-            int n = uriVariableNames.size();
-            int m = uriVariableValues.size();
-            if (n==m){
-              for (int i = 0; i <n; i++){
-                StringTerm name = (StringTerm) uriVariableNames.get(i);
-                System.out.println("name: "+name);
-                StringTerm value = (StringTerm) uriVariableValues.get(i);
-                System.out.println("value: "+value);
-                values.put(name.getString(), value.getString());
-              }
-            }
-            System.out.println("uri variables: "+uriVariables);
-            System.out.println("values: "+values);
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(affordanceName);
+      if (opProperty.isPresent()) {
+        PropertyAffordance property = opProperty.get();
+        List<Form> formList= property.getForms();
+        if (formList.size()>0) {
+          Form form = formList.get(0);
+          TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
+          if (property.getUriVariables().isPresent()) {
             System.out.println("form target: "+form.getTarget());
-            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
+            request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
+          request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
           for (String key: headers.keySet()){
             String value = headers.get(key);
             request.addHeader(key, value);
-          }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-
           }
           TDHttpResponse response = request.execute();
           MapTerm responseObject = createResponseObject(response);
-          Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-          u.bind(term, responseObject);
+          return responseObject;
         } else {
           System.out.println("form is not present");
+          return null;
         }
       } else {
-        System.out.println("action is not present");
+        System.out.println("property is not present");
+        return null;
       }
     } catch(Exception e){
       e.printStackTrace();
     }
+    return null;
   }
 
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body){
-    System.out.println("tdUrl: "+tdUrl);
-    System.out.println("affordanceName: "+affordanceName);
+
+  public MapTerm writeProperty(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      List<ActionAffordance> actions = td.getActions();
-      for (ActionAffordance a: actions){
-        System.out.println(a.getName());
-      }
-      System.out.println("affordance name: "+affordanceName);
-      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      if (opAction.isPresent()) {
-        ActionAffordance action = opAction.get();
-        Optional<Form> opForm = action.getFirstForm();
-        if (opForm.isPresent()) {
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          System.out.println("request defined");
-          System.out.println(headers);
-          System.out.println("number of headers: "+headers.size());
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(affordanceName);
+      if (opProperty.isPresent()) {
+        PropertyAffordance property = opProperty.get();
+        List<Form> formList= property.getForms();
+        if (formList.size()>0) {
+          Form form = formList.get(0);
+          TDHttpRequest request = new TDHttpRequest(form, TD.writeProperty);
+          if (property.getUriVariables().isPresent()) {
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.writeProperty, property.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+          request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
+
           for (String key: headers.keySet()){
-            System.out.println("key: "+key);
             String value = headers.get(key);
             request.addHeader(key, value);
           }
-          if (body != null){
-            System.out.println("body: "+body);
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-
-          }
+          request.setPrimitivePayload(new StringSchema.Builder().build(), body);
           TDHttpResponse response = request.execute();
+          MapTerm responseObject = createResponseObject(response);
+          return responseObject;
         } else {
           System.out.println("form is not present");
+          return null;
         }
       } else {
-        System.out.println("action is not present");
+        System.out.println("property is not present");
+        return null;
       }
     } catch(Exception e){
       e.printStackTrace();
     }
+    return null;
   }
 
-  public void subscribeEvent(String tdUrl, String affordanceName, Map<String, String> headers, String body){
+
+  public MapTerm subscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
       if (opEvent.isPresent()) {
         EventAffordance event = opEvent.get();
-        List<Form> forms = event.getForms();
-        if (forms.size()>0) {
-          Form form = forms.get(0);
-          /*TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
+        List<Form> formList= event.getForms();
+        if (formList.size()>0) {
+          Form form = formList.get(0);
+          TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
+          if (event.getUriVariables().isPresent()) {
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.subscribeEvent, event.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+          request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
+
           for (String key: headers.keySet()){
             String value = headers.get(key);
             request.addHeader(key, value);
           }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = event.getSubscriptionSchema();
-            if (opSchema.isPresent()){
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-
-          }*/
-          String method = "POST";
-          if (form.getMethodName().isPresent()){
-            method = form.getMethodName().get();
-          }
-          sendHttpRequest(form.getTarget(), method, headers, body);
+          request.setPrimitivePayload(new StringSchema.Builder().build(), body); //TODO: change
+          TDHttpResponse response = request.execute();
+          MapTerm responseObject = createResponseObject(response);
+          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+          return responseObject;
         } else {
           System.out.println("form is not present");
+          return null;
         }
       } else {
         System.out.println("event is not present");
+        return null;
       }
     } catch(Exception e){
       e.printStackTrace();
     }
+    return null;
+  }
+
+  public MapTerm unsubscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+    try {
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
+      if (opEvent.isPresent()) {
+        EventAffordance event = opEvent.get();
+        List<Form> formList= event.getForms();
+        if (formList.size()>0) {
+          Form form = formList.get(0);
+          TDHttpRequest request = new TDHttpRequest(form, TD.unsubscribeEvent);
+          if (event.getUriVariables().isPresent()) {
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.unsubscribeEvent, event.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+          request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
+
+          for (String key: headers.keySet()){
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+          request.setPrimitivePayload(new StringSchema.Builder().build(), body); //TODO: change
+          TDHttpResponse response = request.execute();
+          MapTerm responseObject = createResponseObject(response);
+          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
+          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+          return responseObject;
+        } else {
+          System.out.println("form is not present");
+          return null;
+        }
+      } else {
+        System.out.println("event is not present");
+        return null;
+      }
+    } catch(Exception e){
+      e.printStackTrace();
+    }
+    return null;
   }
 
   private List<Object> createArrayPayload(JsonArray jsonArray){
@@ -989,137 +776,13 @@ try {
     return payload;
   }
 
-  public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, VarTerm term){
-    tdUrl = tdUrl.replace("\"","");
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
-      if (opProperty.isPresent()){
-        PropertyAffordance property = opProperty.get();
-        Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
-        if (opForm.isPresent()){
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
-          for (String key: headers.keySet()){
-            String value = headers.get(key);
-            request.addHeader(key, value);
-          }
-          TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-          u.bind(term, responseObject);
-        }
-      }
 
-    } catch(Exception e){
-      e.printStackTrace();
-    }
 
-  }
-
-  public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term){
-    tdUrl = tdUrl.replace("\"","");
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
-      if (opProperty.isPresent()){
-        PropertyAffordance property = opProperty.get();
-        Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
-        if (opForm.isPresent()){
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
-          if (property.getUriVariables().isPresent()) {
-            Map<String, Object> values = new Hashtable<>();
-            int n = uriVariableNames.size();
-            int m = uriVariableValues.size();
-            if (n==m){
-              for (int i = 0; i <n; i++){
-                StringTerm name = (StringTerm) uriVariableNames.get(i);
-                StringTerm value = (StringTerm) uriVariableValues.get(i);
-                values.put(name.getString(), value.getString());
-              }
-            }
-            request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), values);
-          }
-          for (String key: headers.keySet()){
-            String value = headers.get(key);
-            request.addHeader(key, value);
-          }
-          TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-          u.bind(term, responseObject);
-        }
-      }
-
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-
-  }
-
-  public void writeProperty(String tdUrl, String propertyName, Map<String, String> headers, String body, VarTerm v) {
-    tdUrl = tdUrl.replace("\"", "");
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
-      if (opProperty.isPresent()) {
-        PropertyAffordance property = opProperty.get();
-        Optional<Form> opForm = property.getFirstFormForOperationType(TD.writeProperty);
-        DataSchema schema = property.getDataSchema();
-        if (opForm.isPresent()) {
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.writeProperty);
-          for (String key : headers.keySet()) {
-            request.addHeader(key, headers.get(key));
-          }
-          request.setPrimitivePayload(new StringSchema.Builder().build(), body);
-          try {
-            request.execute();
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-
-        }
-      }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-  }
 
   private TDHttpRequest createTDHttpRequest(Form form, String operationType, Object[] payloadTags, Object[] payload){
     TDHttpRequest request = new TDHttpRequest(form, operationType);
     return request;
   }
-
-  public void setHeader(String key, String value){
-    Literal l = new LiteralImpl("yggdrasil_header");
-    l.addTerm(new StringTermImpl(key));
-    l.addTerm(new StringTermImpl(value));
-    try {
-      this.getTS().getAg().addBel(l);
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-    //headers.put(key, value);
-  }
-
-  public void removeHeader(String key){
-    Literal l = new LiteralImpl("yggdrasil_header");
-    l.addTerm(new StringTermImpl(key));
-    /*Map<String, String> headers = getHeaders();
-    String value = headers.get(key);
-    Literal l = new LiteralImpl("yggdrasil_header");
-    l.addTerm(new StringTermImpl(key));
-    l.addTerm(new StringTermImpl(value));*/
-    try {
-      this.getTS().getAg().delBel(l);
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    //headers.remove(key);
-  }
-
 
 
 
@@ -1454,64 +1117,9 @@ try {
     return 0; //TODO: check
   }
 
-  public boolean getBooleanFromJson(Term jsonId, int index){
-    Term t = getFromJson(jsonId, index);
-    Literal l = (Literal) t;
-    if (l.equals(Literal.LTrue)) {
-      return true;
-    } else {
-      return false; //TODO: check
-    }
-  }
-
-  public boolean getBooleanFromJson(Term jsonId, String attribute){
-    Term t = getFromJson(jsonId, attribute);
-    Literal l = (Literal) t;
-    if (l.equals(Literal.LTrue)) {
-      return true;
-    } else {
-      return false; //TODO: check
-    }
-  }
 
 
 
-
-
-
-
-  /*public StringTerm getAsStringTerm(Term jsonId){
-    JsonElement json = jsonManager.getJsonElementFromTerm(jsonId);
-    System.out.println("json element retrieved");
-    System.out.println("json element: "+json);
-    return getAsStringTerm(json);
-  }*/
-
-
-
-
-
-
-
-  public void createJsonObject(Unifier un, ListTerm attributeNames, ListTerm attributeValues, VarTerm jsonId){
-    //com.google.gson.JsonObject jsonObject = new com.google.gson.JsonObject();
-    MapTerm jsonObject = new MapTermImpl();
-    int n1 = attributeNames.size();
-    int n2 = attributeValues.size();
-    if (n1==n2) {
-      System.out.println("the sizes are equal");
-      for (int i = 0; i < n1; i++) {
-        Term attributeName = attributeNames.get(i);
-        if (attributeName.isString()) {
-          jsonObject.put(attributeName, attributeValues.get(i));
-          //jsonObject.add(attributeNameStringTerm.getString(), getAsJsonElement(attributeValues.get(i)));
-        }
-      }
-      un.bind(jsonId, jsonObject);
-    } else {
-      System.out.println("the sizes are not equal");
-    }
-  }
 
 
 
@@ -1598,23 +1206,7 @@ try {
     }
   }
 
-  public MapTerm getObjectTermFromJson(MapTerm jsonTerm, StringTerm attribute){
-    Term t =  jsonTerm.get(attribute);
-    if (t.isMap()){
-      return (MapTerm) t;
-    } else {
-      return new MapTermImpl();
-    }
-  }
 
-  public ListTerm getListTermFromJson(MapTerm jsonTerm, StringTerm attribute){
-    Term t =  jsonTerm.get(attribute);
-    if (t.isList()){
-      return (ListTerm) t;
-    } else {
-      return new ListTermImpl();
-    }
-  }
 
   public Term getAsJsonTerm(JsonElement jsonElement){
     Term t = new MapTermImpl();
@@ -1625,11 +1217,14 @@ try {
       } else if (jsonPrimitive.isString()){
         t = new StringTermImpl(jsonPrimitive.getAsString());
       } else if (jsonPrimitive.isBoolean()){
+        System.out.println("has boolean");
         boolean b = jsonPrimitive.getAsBoolean();
         if (b){
           t = Literal.LTrue;
+          System.out.println("boolean: "+t);
         } else {
           t = Literal.LFalse;
+          System.out.println("boolean: "+t);
         }
       }
     } else if (jsonElement.isJsonArray()){
@@ -1643,7 +1238,7 @@ try {
       com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
       MapTerm mapTerm = new MapTermImpl();
       for (String key : jsonObject.keySet()){
-        mapTerm.put(new StringTermImpl(key), getAsJsonTerm(jsonObject.get(key)));
+        mapTerm.put(new StringTermImpl(key), getAsJsonTerm(jsonObject.get(key))); //TODO: check
       }
       t= mapTerm;
     } else if (jsonElement.isJsonNull()){
@@ -1651,6 +1246,65 @@ try {
     }
     return t;
   }
+
+  public Term createTermFromJson(String jsonString){
+    JsonElement jsonElement = JsonParser.parseString(jsonString);
+    return getAsJsonTerm(jsonElement);
+  }
+
+  public String getAsJson1(Term t){
+    String s = t.getAsJSON(""); //TODO: does not work for boolean
+    System.out.println("json string: "+s);
+    JsonElement jsonElement = JsonParser.parseString(s); //TODO: make it work
+    s = jsonElement.toString();
+    System.out.println("json element: "+ s);
+    return s;
+  }
+
+  public String getAsJson(Term t){
+    String s = "";
+    if (t.isMap()){
+      MapTerm mt = (MapTerm) t;
+      s = "{";
+      for (Term key: mt.keys()){
+        String keyString = key.toString();
+        String valueString = getAsJson(mt.get(key));
+        s = s + keyString + ":" + valueString+ ";";
+      }
+      s = s.substring(0, s.length()-1);
+      s = s + "}";
+
+    } else if (t.isList()){
+      s = "[";
+      ListTerm lt = (ListTerm) t;
+      for (Term term: lt){
+        s = s + getAsJson(term) + ",";
+      }
+      s = s.substring(0 , s.length()-1);
+      s = s + "]";
+    } else if (t.isString()){
+      StringTerm st = (StringTerm) t;
+      s = t.toString();
+    } else if (t.isNumeric()){
+      NumberTerm nt = (NumberTerm) t;
+      try {
+        double d = nt.solve();
+        long r = Math.round(d);
+        if (d == (double)r) {
+          s = String.valueOf(r);
+        } else {
+          s = String.valueOf(d);
+        }
+      } catch (Exception e){
+        System.err.println("The number is not valid");
+      }
+    } else if (t.isLiteral()){
+      s = t.toString();
+      System.out.println("literal is : "+ s);
+    }
+    return s;
+  }
+
 
 
 

@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.jason.json;
+package org.hyperagents.yggdrasil.jason.json1;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
