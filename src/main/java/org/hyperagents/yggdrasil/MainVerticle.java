@@ -61,6 +61,7 @@ public class MainVerticle extends AbstractVerticle {
         .put("https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D",
             "org.hyperagents.yggdrasil.cartago.artifacts.PhantomX3D")
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter")
+      .put("http://example.org/TestArtifact", "org.hyperagents.yggdrasil.cartago.artifacts.TestArtifact")
       .put("http://example.org/Adder", Adder.class.getCanonicalName())
         .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
             + ".SpatialCalculator2D");

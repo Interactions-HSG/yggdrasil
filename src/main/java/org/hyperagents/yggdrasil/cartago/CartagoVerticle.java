@@ -467,7 +467,12 @@ public class CartagoVerticle extends AbstractVerticle {
         }
         Object o = fParam.get();
         LOGGER.info("result: " + o);
-        returnObject = Optional.of(o);
+        if (o!=null) {
+          System.out.println("return object is present");
+          returnObject = Optional.of(o.toString());
+        } else {
+          System.out.println("return object is null");
+        }
       }
     }
     ArtifactId artifactId = workspace.getArtifact(artifactName);
