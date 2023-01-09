@@ -10,12 +10,10 @@ import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.clients.UriTemplate;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.*;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.*;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -30,16 +28,9 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
-import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.http.HttpEntityHandler;
-import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-
 import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -74,196 +65,278 @@ public class YAgentArch2 extends AgArch {
   @Override
   public void act(ActionExec actionExec) {
     LOGGER.info("perform action: " + actionExec.getActionTerm());
-    String agentName = getAgName();
-    LOGGER.debug("agent name: " + agentName);
-    //Intention currentIntention = getTS().getC().getSelectedIntention();
-    //Unifier un = currentIntention.peek().getUnif();
-    Unifier un = actionExec.getIntention().peek().getUnif();
     Structure action = actionExec.getActionTerm();
     String func = action.getFunctor();
     List<Term> terms = action.getTerms();
-    if (func.equals("createWorkspace")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      createWorkspace(workspaceName);
-      LOGGER.debug("workspace created");
-    } else if (func.equals("createSubWorkspace")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      String subWorkspaceName = terms.get(1).toString();
-      createSubWorkspace(workspaceName, subWorkspaceName);
-      LOGGER.debug("sub workspace created");
-    } else if (func.equals("makeArtifact")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      String artifactName = terms.get(1).toString();
-      String artifactInit = terms.get(2).toString();
-      makeArtifact(workspaceName, artifactName, artifactInit);
-    } else if (func.equals("joinWorkspace")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      joinWorkspace(workspaceName);
-
-    } else if (func.equals("leaveWorkspace")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      leaveWorkspace(workspaceName);
-    } else if (func.equals("focus")) { //Inside YAgentArch
-      String workspaceName = terms.get(0).toString();
-      String artifactName = terms.get(1).toString();
-      focus(workspaceName, artifactName);
-
-    } else if (func.equals("stopFocus")) { //Inside YAgentArch, to develop
-      String workspaceName = terms.get(0).toString();
-      String artifactName = terms.get(1).toString();
-      stopFocus(workspaceName, artifactName);
-
-    } else if (func.equals("setValue")) { //To check
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      VarTerm v = (VarTerm) terms.get(0);
-      Term t = terms.get(1);
-      u.bind(v, t);
-
-    } else if (func.equals("invokeAction")) { //Inside wot library
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUrl = tdUriTerm.getString();
-      StringTerm actionTerm = (StringTerm) terms.get(1);
-      String actionName = actionTerm.getString();
-      String body = "";
-      if (terms.size() > 3) {
-        Term t = terms.get(2);
-        body = getAsJson(t);
+    switch (func) {
+      case "createWorkspace": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        createWorkspace(workspaceName);
+        LOGGER.debug("workspace created");
+        break;
       }
-      Map<String, String> headers = new Hashtable<>();
-      if (terms.size() > 4) {
-        MapTerm headersMap = (MapTerm) terms.get(3);
-        for (Term key : headersMap.keys()) {
-          headers.put(key.toString(), headersMap.get(key).toString());
-        }
+      case "createSubWorkspace": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        String subWorkspaceName = terms.get(1).toString();
+        createSubWorkspace(workspaceName, subWorkspaceName);
+        LOGGER.debug("sub workspace created");
+        break;
       }
-      Map<String, Object> uriVariables = new Hashtable<>();
-      if (terms.size() > 5) {
-        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
-        for (Term key : uriVariablesMap.keys()) {
-          headers.put(key.toString(), uriVariablesMap.get(key).toString());
-        }
+      case "makeArtifact": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        String artifactName = terms.get(1).toString();
+        String artifactInit = terms.get(2).toString();
+        makeArtifact(workspaceName, artifactName, artifactInit);
+        break;
       }
-      MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
-      Term lastTerm = terms.get(terms.size() - 1);
-      if (lastTerm.isVar()) {
-        VarTerm v = (VarTerm) lastTerm;
+      case "joinWorkspace": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        joinWorkspace(workspaceName);
+
+        break;
+      }
+      case "leaveWorkspace": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        leaveWorkspace(workspaceName);
+        break;
+      }
+      case "focus": { //Inside YAgentArch
+        String workspaceName = terms.get(0).toString();
+        String artifactName = terms.get(1).toString();
+        focus(workspaceName, artifactName);
+
+        break;
+      }
+      case "stopFocus": { //Inside YAgentArch, to develop
+        String workspaceName = terms.get(0).toString();
+        String artifactName = terms.get(1).toString();
+        stopFocus(workspaceName, artifactName);
+
+        break;
+      }
+      case "setValue": { //To check
         Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-        u.bind(v, result);
-      }
-    } else if (func.equals("readProperty")) { //Inside wot library
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUrl = tdUriTerm.getString();
-      StringTerm propertyTerm = (StringTerm) terms.get(1);
-      String propertyName = propertyTerm.getString();
-      Map<String, String> headers = new Hashtable<>();
-      Map<String, Object> uriVariables = new Hashtable<>();
-      if (terms.size() > 3) {
-        MapTerm headersMap = (MapTerm) terms.get(2);
-        for (Term key : headersMap.keys()) {
-          headers.put(key.toString(), headersMap.get(key).toString());
-        }
-      }
-      if (terms.size() > 4) {
-        MapTerm uriVariablesMap = (MapTerm) terms.get(3);
-        for (Term key : uriVariablesMap.keys()) {
-          headers.put(key.toString(), uriVariablesMap.get(key).toString());
-        }
-      }
-      MapTerm result = readProperty(tdUrl, propertyName, headers, uriVariables);
-      Term lastTerm = terms.get(terms.size() - 1);
-      if (lastTerm.isVar()) {
-        VarTerm v = (VarTerm) lastTerm;
-        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-        u.bind(v, result);
-      }
-    } else if (func.equals("writeProperty")) { //Inside wot library
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUrl = tdUriTerm.getString();
-      StringTerm propertyTerm = (StringTerm) terms.get(1);
-      String propertyName = propertyTerm.getString();
-      String body = "";
-      if (terms.size() > 3) {
-        Term t = terms.get(2);
-        body = getAsJson(t);
-      }
-      Map<String, String> headers = new Hashtable<>();
-      Map<String, Object> uriVariables = new Hashtable<>();
-      if (terms.size() > 4) {
-        MapTerm headersMap = (MapTerm) terms.get(3);
-        for (Term key : headersMap.keys()) {
-          headers.put(key.toString(), headersMap.get(key).toString());
-        }
-      }
-      if (terms.size() > 5) {
-        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
-        for (Term key : uriVariablesMap.keys()) {
-          headers.put(key.toString(), uriVariablesMap.get(key).toString());
-        }
-      }
-      MapTerm result = writeProperty(tdUrl, propertyName, body, headers, uriVariables);
-      Term lastTerm = terms.get(terms.size() - 1);
-      if (lastTerm.isVar()) {
-        VarTerm v = (VarTerm) lastTerm;
-        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-        u.bind(v, result);
-      }
-    } else if (func.equals("subscribeEvent")) {
-      StringTerm tdUriTerm = (StringTerm) terms.get(0);
-      String tdUrl = tdUriTerm.getString();
-      StringTerm eventTerm = (StringTerm) terms.get(1);
-      String eventName = eventTerm.getString();
-      String body = "";
-      if (terms.size() > 3) {
-        Term t = terms.get(2);
-        body = getAsJson(t);
-      }
-      Map<String, String> headers = new Hashtable<>();
-      if (terms.size() > 4) {
-        MapTerm headersMap = (MapTerm) terms.get(3);
-        for (Term key : headersMap.keys()) {
-          headers.put(key.toString(), headersMap.get(key).toString());
-        }
-      }
-      Map<String, Object> uriVariables = new Hashtable<>();
-      if (terms.size() > 5) {
-        MapTerm uriVariablesMap = (MapTerm) terms.get(4);
-        for (Term key : uriVariablesMap.keys()) {
-          headers.put(key.toString(), uriVariablesMap.get(key).toString());
-        }
-      }
-      MapTerm result = subscribeEvent(tdUrl, eventName, body, headers, uriVariables);
-      Term lastTerm = terms.get(terms.size() - 1);
-      if (lastTerm.isVar()) {
-        VarTerm v = (VarTerm) lastTerm;
-        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-        u.bind(v, result);
-      }
-    } else if (func.equals("sendHttpRequest")) { //TODO: Create
+        VarTerm v = (VarTerm) terms.get(0);
+        Term t = terms.get(1);
+        u.bind(v, t);
 
-    } else if (func.equals("createTermFromJson")) { //Inside json library
-      Term json = terms.get(0);
-      //String jsonString = json.toString();
-      StringTerm jsonStringTerm = (StringTerm) json;
-      String jsonString = jsonStringTerm.getString();
-      System.out.println("json string: " + jsonString);
-      Term t = createTermFromJson(jsonString);
-      VarTerm v = (VarTerm) terms.get(1);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      u.bind(v, t);
-    } else if (func.equals("getTermAsJson")) {
-      Term json = terms.get(0);
-      String jsonString = getAsJson(json);
-      StringTerm jsonStringTerm = new StringTermImpl(jsonString);
-      VarTerm v = (VarTerm) terms.get(1);
-      Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
-      u.bind(v, jsonStringTerm);
+        break;
+      }
+      case "invokeAction": { //Inside wot library
+        StringTerm tdUriTerm = (StringTerm) terms.get(0);
+        String tdUrl = tdUriTerm.getString();
+        StringTerm actionTerm = (StringTerm) terms.get(1);
+        String actionName = actionTerm.getString();
+        String body = "";
+        if (terms.size() > 3) {
+          Term t = terms.get(2);
+          body = getAsJson(t);
+        }
+        Map<String, String> headers = new Hashtable<>();
+        if (terms.size() > 4) {
+          MapTerm headersMap = (MapTerm) terms.get(3);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 5) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+        break;
+      }
+      case "readProperty": { //Inside wot library
+        StringTerm tdUriTerm = (StringTerm) terms.get(0);
+        String tdUrl = tdUriTerm.getString();
+        StringTerm propertyTerm = (StringTerm) terms.get(1);
+        String propertyName = propertyTerm.getString();
+        Map<String, String> headers = new Hashtable<>();
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 3) {
+          MapTerm headersMap = (MapTerm) terms.get(2);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        if (terms.size() > 4) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(3);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = readProperty(tdUrl, propertyName, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+        break;
+      }
+      case "writeProperty": { //Inside wot library
+        StringTerm tdUriTerm = (StringTerm) terms.get(0);
+        String tdUrl = tdUriTerm.getString();
+        StringTerm propertyTerm = (StringTerm) terms.get(1);
+        String propertyName = propertyTerm.getString();
+        String body = "";
+        if (terms.size() > 3) {
+          Term t = terms.get(2);
+          body = getAsJson(t);
+        }
+        Map<String, String> headers = new Hashtable<>();
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 4) {
+          MapTerm headersMap = (MapTerm) terms.get(3);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        if (terms.size() > 5) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = writeProperty(tdUrl, propertyName, body, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+        break;
+      }
+      case "subscribeEvent": {
+        StringTerm tdUriTerm = (StringTerm) terms.get(0);
+        String tdUrl = tdUriTerm.getString();
+        StringTerm eventTerm = (StringTerm) terms.get(1);
+        String eventName = eventTerm.getString();
+        String body = "";
+        if (terms.size() > 3) {
+          Term t = terms.get(2);
+          body = getAsJson(t);
+        }
+        Map<String, String> headers = new Hashtable<>();
+        if (terms.size() > 4) {
+          MapTerm headersMap = (MapTerm) terms.get(3);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 5) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = subscribeEvent(tdUrl, eventName, body, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+        break;
+      }
+      case "unsubscribeEvent": {
+        StringTerm tdUriTerm = (StringTerm) terms.get(0);
+        String tdUrl = tdUriTerm.getString();
+        StringTerm eventTerm = (StringTerm) terms.get(1);
+        String eventName = eventTerm.getString();
+        String body = "";
+        if (terms.size() > 3) {
+          Term t = terms.get(2);
+          body = getAsJson(t);
+        }
+        Map<String, String> headers = new Hashtable<>();
+        if (terms.size() > 4) {
+          MapTerm headersMap = (MapTerm) terms.get(3);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 5) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = unsubscribeEvent(tdUrl, eventName, body, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+        break;
+      }
 
-    } else if (func.equals("createTermFromJson")) {
-      StringTerm jsonStringTerm = (StringTerm) terms.get(0);
-      String jsonString = jsonStringTerm.getString();
-      Term t = createTermFromJson(jsonString);
-      VarTerm v = (VarTerm) terms.get(1);
-      un.bind(v, t);
+      case "sendHttpRequest": {//TODO: Create
+        StringTerm urlTerm = (StringTerm) terms.get(0);
+        String url = urlTerm.getString();
+        StringTerm methodTerm = (StringTerm) terms.get(1);
+        String method = methodTerm.getString();
+        String body = null;
+        if (terms.size() > 3) {
+          Term t = terms.get(2);
+          body = getAsJson(t);
+        }
+        Map<String, String> headers = new Hashtable<>();
+        if (terms.size() > 4) {
+          MapTerm headersMap = (MapTerm) terms.get(3);
+          for (Term key : headersMap.keys()) {
+            headers.put(key.toString(), headersMap.get(key).toString());
+          }
+        }
+        Map<String, Object> uriVariables = new Hashtable<>();
+        if (terms.size() > 5) {
+          MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          for (Term key : uriVariablesMap.keys()) {
+            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+          }
+        }
+        MapTerm result = sendHttpRequest(url, method, body, headers, uriVariables);
+        Term lastTerm = terms.get(terms.size() - 1);
+        if (lastTerm.isVar()) {
+          VarTerm v = (VarTerm) lastTerm;
+          Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+          u.bind(v, result);
+        }
+
+        break;
+      }
+      case "createTermFromJson": { //Inside json library
+        Term json = terms.get(0);
+        StringTerm jsonStringTerm = (StringTerm) json;
+        String jsonString = jsonStringTerm.getString();
+        Term t = createTermFromJson(jsonString);
+        VarTerm v = (VarTerm) terms.get(1);
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, t);
+        break;
+      }
+      case "getTermAsJson": {
+        Term json = terms.get(0);
+        String jsonString = getAsJson(json);
+        StringTerm jsonStringTerm = new StringTermImpl(jsonString);
+        VarTerm v = (VarTerm) terms.get(1);
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, jsonStringTerm);
+
+        break;
+      }
     }
 
     LOGGER.info("end method act");
@@ -384,52 +457,13 @@ public class YAgentArch2 extends AgArch {
     return messageTermId;
   }
 
-
-
-
-
-
-
-  public void createWorkspace1(String workspaceName){
-    Map<String, String> headers = new Hashtable<>();
-    headers.put("X-Agent-WebID", this.getAgName());
-    headers.put("Slug", workspaceName);
-    sendHttpRequest("http://localhost:8080/workspaces/", "POST", headers, null);
-  }
-
-  public void createWorkspace2(String workspaceName){
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-      .addHeader(CartagoVerticle.AGENT_ID, this.getAgName())
-      .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, "", options, r -> {
-      if (r.succeeded()){
-        String description = r.result().body().toString();
-        System.out.println("description: "+description);
-        DeliveryOptions rdfOptions = new DeliveryOptions()
-          .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-          .addHeader(HttpEntityHandler.REQUEST_URI, "http://localhost:8080/workspaces/")
-          .addHeader(HttpEntityHandler.ENTITY_URI_HINT, workspaceName);
-        vertx.eventBus().request(RdfStore.BUS_ADDRESS, description, rdfOptions, r2 -> {
-          if (r2.succeeded()){
-            System.out.println("workspace registered");
-          } else {
-            System.out.println("workspace could not be registered");
-          }
-        });
-      } else {
-        System.out.println("create workspace failed");
-      }
-    });
-    System.out.println("create workspace 7 finished");
-
-  }
-
-
   public void createWorkspace(String workspaceName){
     System.out.println("is creating workspace");
     System.out.println("agent: "+this.getAgName());
-    createWorkspace1(workspaceName);
+    Map<String, String> headers = new Hashtable<>();
+    headers.put("X-Agent-WebID", this.getAgName());
+    headers.put("Slug", workspaceName);
+    sendHttpRequest("http://localhost:8080/workspaces/", "POST", null,  headers);
   }
 
 
@@ -442,7 +476,7 @@ public class YAgentArch2 extends AgArch {
     String body = object.encode();
     System.out.println("body: "+body);
 
-    sendHttpRequest(uri, "POST", headers, body);
+    sendHttpRequest(uri, "POST", body, headers);
 
   }
 
@@ -461,7 +495,7 @@ public class YAgentArch2 extends AgArch {
     object.put("artifactName", artifactName);
     object.put("artifactClass", artifactClass);
     String artifactInit = object.encode();
-    sendHttpRequest(uri, "POST", headers, artifactInit);
+    sendHttpRequest(uri, "POST", artifactInit, headers);
   }
 
 
@@ -470,7 +504,7 @@ public class YAgentArch2 extends AgArch {
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/join";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
-    MapTerm httpResponse = sendHttpRequest(uri, "PUT", headers, null);
+    MapTerm httpResponse = sendHttpRequest(uri, "PUT", null, headers);
     String response = ((StringTerm) httpResponse.get(new StringTermImpl("body"))).getString();
 try {
       System.out.println("body description: "+response);
@@ -493,7 +527,7 @@ try {
     String uri = "http://localhost:8080/workspaces/"+workspaceName+"/leave";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
-    sendHttpRequest(uri, "DELETE", headers, null);
+    sendHttpRequest(uri, "DELETE", null, headers);
     AgentRegistry.getInstance().removeBody(this.getAgName(), workspaceName);
   }
 
@@ -507,7 +541,7 @@ try {
       headers.put("Content-Type", "application/json");
       String body = "[\""+artifactName+"\"]";
       System.out.println("focus body: "+body);
-      sendHttpRequest(focusUri, "PUT", headers, body);
+      sendHttpRequest(focusUri, "PUT", body, headers);
       String artifactIRI = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/"+artifactName;
       System.out.println("artifact IRI: "+artifactIRI);
       NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIRI, this.getAgName());
@@ -527,7 +561,7 @@ try {
       headers.put("Content-Type", "application/json");
       String body = "[\"" + artifactName + "\"]";
       System.out.println("focus body: " + body);
-      sendHttpRequest(focusUri, "PUT", headers, body);
+      sendHttpRequest(focusUri, "PUT", body, headers);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -537,8 +571,6 @@ try {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
       if (opAction.isPresent()) {
         ActionAffordance action = opAction.get();
         Optional<Form> opForm = action.getFirstForm();
@@ -562,27 +594,26 @@ try {
             if (opSchema.isPresent()){
               request.addHeader("Content-Type", "application/json");
               DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
+              if (Objects.equals(schema.getDatatype(), "array") && element.isJsonArray()){
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
                 request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+              } else if (Objects.equals(schema.getDatatype(), "object") && element.isJsonObject()){
                 Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
                 request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
+              } else if (Objects.equals(schema.getDatatype(), "string")){
                 request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
+              } else if (Objects.equals(schema.getDatatype(), "number")){
                 request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
+              } else if (Objects.equals(schema.getDatatype(), "integer")){
                 request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
+              } else if (Objects.equals(schema.getDatatype(), "boolean")){
                 request.setPrimitivePayload(schema, element.getAsBoolean());
               }
             }
 
           }
           TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          return responseObject;
+          return createResponseObject(response);
         } else {
           System.out.println("form is not present");
           return null;
@@ -619,8 +650,7 @@ try {
             request.addHeader(key, value);
           }
           TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          return responseObject;
+          return createResponseObject(response);
         } else {
           System.out.println("form is not present");
           return null;
@@ -659,8 +689,7 @@ try {
           }
           request.setPrimitivePayload(new StringSchema.Builder().build(), body);
           TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          return responseObject;
+          return createResponseObject(response);
         } else {
           System.out.println("form is not present");
           return null;
@@ -699,10 +728,7 @@ try {
           }
           request.setPrimitivePayload(new StringSchema.Builder().build(), body); //TODO: change
           TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-          return responseObject;
+          return createResponseObject(response);
         } else {
           System.out.println("form is not present");
           return null;
@@ -740,10 +766,7 @@ try {
           }
           request.setPrimitivePayload(new StringSchema.Builder().build(), body); //TODO: change
           TDHttpResponse response = request.execute();
-          MapTerm responseObject = createResponseObject(response);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-          return responseObject;
+          return createResponseObject(response);
         } else {
           System.out.println("form is not present");
           return null;
@@ -778,76 +801,18 @@ try {
 
 
 
-
-  private TDHttpRequest createTDHttpRequest(Form form, String operationType, Object[] payloadTags, Object[] payload){
-    TDHttpRequest request = new TDHttpRequest(form, operationType);
-    return request;
+  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers){
+    return sendHttpRequest(uri, method,body, headers, new Hashtable<>());
   }
 
-
-
-  public MapTerm sendHttpRequest(String uri, String method, Map<String, String> headers, String body){
-    AtomicReference<String> returnValue = new AtomicReference();
-    //com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
-    MapTerm returnObject = new MapTermImpl();
-    ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
-    for (String key: headers.keySet()){
-      String value = headers.get(key);
-      request.addHeader(key, value);
-    }
-
-    if (body != null){
-      System.out.println("body: "+body);
-      if (isJson(body)){
-        request.addHeader("Content-Type", "application/json");
-      }
-      request.setEntity(new StringEntity(body));
-    }
-    System.out.println("request:"+getRequestRepresentation(request));
-    try {
-      client.execute(request, response -> {
-        returnObject.put(new StringTermImpl("status"), new NumberTermImpl(response.getCode()));
-        Iterator<Header> responseHeaders = response.headerIterator();
-        //com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
-        MapTerm rHeaders = new MapTermImpl();
-        while (responseHeaders.hasNext()){
-          Header h = responseHeaders.next();
-          rHeaders.put(new StringTermImpl(h.getName()), new StringTermImpl(h.getValue()));
-        }
-        returnObject.put(new StringTermImpl("headers"), rHeaders);
-        System.out.println("response received: ");
-        System.out.println(response.toString());
-        HttpEntity entity = response.getEntity();
-        //String r = EntityUtils.toString(entity);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
-        String line = null;
-        String s = "";
-        while ((line = reader.readLine())!=null){
-          s = s + line;
-          System.out.println(line);
-        }
-        System.out.println(response.getEntity().getContent().toString());
-        returnValue.set(s);
-        return null;
-      });
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-    System.out.println("request done");
-    returnObject.put(new StringTermImpl("body"), new StringTermImpl(returnValue.get()));
-    return returnObject;
-
-  }
-
-  public com.google.gson.JsonObject sendHttpRequest(String uriTemplate, String method, Map<String, String> headers, ListTerm uriVariableNames, ListTerm uriVariableValues, String body){
-    AtomicReference<String> returnValue = new AtomicReference();
+  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+    AtomicReference<String> returnValue = new AtomicReference<>();
     com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
-    int n = uriVariableNames.size();
-    int m = uriVariableValues.size();
-    if (n==m) {
-      Map<String, DataSchema> uriVariables = new Hashtable<>();
-      Map<String, Object> values = new Hashtable<>();
-      for (int i = 0; i < n; i++) {
+      Map<String, DataSchema> uriVariablesSchemas = new Hashtable<>();
+      for (String key: uriVariables.keySet()){
+        uriVariablesSchemas.put(key, new StringSchema.Builder().build());
+      }
+      /*for (int i = 0; i < n; i++) {
         StringTerm st = (StringTerm) uriVariableNames.get(i);
         String name = st.getString();
         Term t = uriVariableValues.get(i);
@@ -865,8 +830,11 @@ try {
           } catch (Exception e) {
             e.printStackTrace();
           }
+        }*/
+        if (!uriVariables.isEmpty()) {
+
+           uri = new UriTemplate(uri).createUri(uriVariablesSchemas, uriVariables);
         }
-        String uri = new UriTemplate(uriTemplate).createUri(uriVariables, values);
 
         ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
         for (String key : headers.keySet()) {
@@ -892,18 +860,18 @@ try {
             }
             returnObject.add("headers", rHeaders);
             System.out.println("response received: ");
-            System.out.println(response.toString());
+            System.out.println(response);
             HttpEntity entity = response.getEntity();
             //String r = EntityUtils.toString(entity);
             BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
-            String line = null;
-            String s = "";
+            String line;
+            StringBuilder s = new StringBuilder();
             while ((line = reader.readLine()) != null) {
-              s = s + line;
+              s.append(line);
               System.out.println(line);
             }
             System.out.println(response.getEntity().getContent().toString());
-            returnValue.set(s);
+            returnValue.set(s.toString());
             return null;
           });
         } catch (Exception e) {
@@ -911,30 +879,8 @@ try {
         }
         System.out.println("request done");
         returnObject.addProperty("body", returnValue.get());
-        return returnObject;
-      }
+        return (MapTerm) getAsJsonTerm(returnObject);
     }
-    return null;
-  }
-
-  public String getRequestRepresentation(ClassicHttpRequest request){
-    String str = "url: "+request.getRequestUri()+"\n";
-    str = str + "method: "+request.getMethod()+"\n";
-    Header[] headers = request.getHeaders();
-    str = str + "headers: \n";
-    for (int i = 0; i<headers.length; i++){
-      Header h = headers[i];
-      str = str+"key: "+h.getName()+"; value: "+h.getValue()+"\n";
-    }
-    try {
-      InputStream stream = request.getEntity().getContent();
-      String s = new String(stream.readAllBytes());
-      str = str + "body: " + s;
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-    return str;
-  }
 
   public MapTerm createResponseObject(TDHttpResponse response){
     MapTerm responseObject = new MapTermImpl();
@@ -946,197 +892,13 @@ try {
     }
     responseObject.put(new StringTermImpl("headers"), rHeaders);
     Optional<String> payload = response.getPayload();
-    if (payload.isPresent()){
-      responseObject.put(new StringTermImpl("body"), new StringTermImpl(payload.get()));
-    }
+    payload.ifPresent(s -> responseObject.put(new StringTermImpl("body"), new StringTermImpl(s)));
     return responseObject;
   }
-
-
-
-
-  public boolean isValid(Term jsonId){
-    boolean b = false;
-    MapTerm jsonObject = (MapTerm) jsonId;
-    NumberTerm n = (NumberTerm) jsonObject.get(new StringTermImpl("statusCode"));
-    try {
-      double v = n.solve();
-      if (v>=200 && v<300){
-        b = true;
-      }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    return b;
-  }
-
-  public boolean isInformation(Term jsonId){
-    boolean b = false;
-    MapTerm jsonObject = (MapTerm) jsonId;
-    NumberTerm n = (NumberTerm) jsonObject.get(new StringTermImpl("statusCode"));
-    try {
-      double v = n.solve();
-      if (v<200){
-        b = true;
-      }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    return b;
-  }
-
-  public boolean isRedirection(Term jsonId){
-    boolean b = false;
-    MapTerm jsonObject = (MapTerm) jsonId;
-    NumberTerm n = (NumberTerm) jsonObject.get(new StringTermImpl("statusCode"));
-    try {
-      double v = n.solve();
-      if (v>=300 && v<400){
-        b = true;
-      }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    return b;
-
-  }
-
-  public boolean isClientError(Term jsonId){
-    boolean b = false;
-    MapTerm jsonObject = (MapTerm) jsonId;
-    NumberTerm n = (NumberTerm) jsonObject.get(new StringTermImpl("statusCode"));
-    try {
-      double v = n.solve();
-      if (v>=400 && v<500){
-        b = true;
-      }
-    } catch (Exception e){
-      e.printStackTrace();
-    }
-    return b;
-  }
-
-  public boolean isServerError(Term jsonId){
-  boolean b = false;
-  MapTerm jsonObject = (MapTerm) jsonId;
-  NumberTerm n = (NumberTerm) jsonObject.get(new StringTermImpl("statusCode"));
-  try {
-  double v = n.solve();
-  if (v>=500){
-  b = true;
-  }
-  } catch (Exception e){
-  e.printStackTrace();
-  }
-  return b;
-}
-
-  public String getBody(MapTerm jsonObject){
-  return jsonObject.get(new StringTermImpl("body")).toString();
-  }
-
-
 
   //JSON methods
 
 
-
-
-
-  public boolean hasAttribute(Term jsonId, String attribute){
-    boolean b = false;
-    if (jsonId.isMap()) {
-      MapTerm jsonObject = (MapTerm) jsonId;
-      if (jsonObject.get(new StringTermImpl("attribute")) != null) {
-        b = true;
-      }
-    }
-    return b;
-  }
-
-  public Term getFromJson(Term jsonId, String attribute){
-    Term t = null;
-    if (jsonId.isMap()) {
-      MapTerm jsonObject = (MapTerm) jsonId;
-      if (jsonObject.get(new StringTermImpl("attribute")) != null) {
-        t = jsonObject.get(new StringTermImpl(attribute));
-      }
-    }
-    return t;
-  }
-
-  public Term getFromJson(Term jsonId, int index){
-    if (jsonId.isList()){
-      ListTerm listTerm = (ListTerm) jsonId;
-      return listTerm.get(index);
-    }
-    return null;
-  }
-
-  public String getStringFromJson(Term jsonId, int index){
-    Term t = getFromJson(jsonId, index);
-    if (t.isString()){
-      StringTerm st = (StringTerm) t;
-      return st.getString();
-    }
-    return null;
-  }
-
-  public String getStringFromJson(Term jsonId, String attribute){
-    Term t = getFromJson(jsonId, attribute);
-    if (t.isString()){
-      StringTerm st = (StringTerm) t;
-      return st.getString();
-    }
-    return null;
-  }
-
-  public double getNumberFromJson(Term jsonId, int index){
-    Term t = getFromJson(jsonId, index);
-    if (t.isNumeric()){
-      NumberTerm nt = (NumberTerm) t;
-      try {
-        return nt.solve();
-      } catch (Exception e){
-        e.printStackTrace();
-      }
-    }
-    return 0; //TODO: check
-  }
-
-  public double getNumberFromJson(Term jsonId, String attribute){
-    Term t = getFromJson(jsonId, attribute);
-    if (t.isNumeric()){
-      NumberTerm nt = (NumberTerm) t;
-      try {
-        return nt.solve();
-      } catch (Exception e){
-        e.printStackTrace();
-      }
-    }
-    return 0; //TODO: check
-  }
-
-
-
-
-
-
-
-
-
-
-
-  public Map<String, Object> convertJsonObjectToMap(MapTerm obj){
-    Map<String, Object> map = new Hashtable<>();
-    for (Term t: obj.keys()) {
-      if (t.isString()) {
-        StringTerm st = (StringTerm) t;
-        map.put(st.getString(), obj.get(t));
-      }
-    }
-    return map;
-  }
 
   public boolean isJson(String str){ //TODO: check
     boolean b = true;
@@ -1148,24 +910,8 @@ try {
     return b;
   }
 
-  //Others
-
-  public String getCurrentTimeStamp1(){
-    Timestamp timestamp = Timestamp.from(Instant.now());
-    System.out.println(timestamp);
-    return timestamp.toString();
-  }
-
-  public String getCurrentTimeStamp2(){
-    return Double.toString(Instant.now().getEpochSecond());
-  }
-
-  public String getCurrentTimeStamp(){
-    return Instant.now().toString();
-  }
-
   //JSON
-
+/*
   public MapTerm createJsonObjectTerm(List<String> keys, List<Term> values){
     MapTerm jsonTerm = new MapTermImpl();
     if (keys.size()==values.size()){
@@ -1204,9 +950,7 @@ try {
     } else {
       return new NumberTermImpl();
     }
-  }
-
-
+  }*/
 
   public Term getAsJsonTerm(JsonElement jsonElement){
     Term t = new MapTermImpl();
@@ -1242,7 +986,7 @@ try {
       }
       t= mapTerm;
     } else if (jsonElement.isJsonNull()){
-      JsonNull jsonNull = jsonElement.getAsJsonNull();
+      t = null;
     }
     return t;
   }
@@ -1252,68 +996,49 @@ try {
     return getAsJsonTerm(jsonElement);
   }
 
-  public String getAsJson1(Term t){
-    String s = t.getAsJSON(""); //TODO: does not work for boolean
-    System.out.println("json string: "+s);
-    JsonElement jsonElement = JsonParser.parseString(s); //TODO: make it work
-    s = jsonElement.toString();
-    System.out.println("json element: "+ s);
-    return s;
-  }
 
   public String getAsJson(Term t){
-    String s = "";
+    StringBuilder s = new StringBuilder();
     if (t.isMap()){
       MapTerm mt = (MapTerm) t;
-      s = "{";
+      s = new StringBuilder("{");
       for (Term key: mt.keys()){
         String keyString = key.toString();
         String valueString = getAsJson(mt.get(key));
-        s = s + keyString + ":" + valueString+ ";";
+        s.append(keyString).append(":").append(valueString).append(";");
       }
-      s = s.substring(0, s.length()-1);
-      s = s + "}";
+      s = new StringBuilder(s.substring(0, s.length() - 1));
+      s.append("}");
 
     } else if (t.isList()){
-      s = "[";
+      s = new StringBuilder("[");
       ListTerm lt = (ListTerm) t;
       for (Term term: lt){
-        s = s + getAsJson(term) + ",";
+        s.append(getAsJson(term)).append(",");
       }
-      s = s.substring(0 , s.length()-1);
-      s = s + "]";
+      s = new StringBuilder(s.substring(0, s.length() - 1));
+      s.append("]");
     } else if (t.isString()){
-      StringTerm st = (StringTerm) t;
-      s = t.toString();
+      s = new StringBuilder(t.toString());
     } else if (t.isNumeric()){
       NumberTerm nt = (NumberTerm) t;
       try {
         double d = nt.solve();
         long r = Math.round(d);
         if (d == (double)r) {
-          s = String.valueOf(r);
+          s = new StringBuilder(String.valueOf(r));
         } else {
-          s = String.valueOf(d);
+          s = new StringBuilder(String.valueOf(d));
         }
       } catch (Exception e){
         System.err.println("The number is not valid");
       }
     } else if (t.isLiteral()){
-      s = t.toString();
+      s = new StringBuilder(t.toString());
       System.out.println("literal is : "+ s);
     }
-    return s;
+    return s.toString();
   }
-
-
-
-
-
-
-
-
-
-
 
 }
 
