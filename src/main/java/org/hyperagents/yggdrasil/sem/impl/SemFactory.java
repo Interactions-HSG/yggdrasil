@@ -5,7 +5,7 @@ import org.hyperagents.yggdrasil.sem.SignifierExposureMechanism;
 public class SemFactory {
 
   public static SignifierExposureMechanism createSem(String semIdentifier) {
-    return new SignifierExposureMechanismSh();
+    return new AbilityBasedSem();
   }
 
 }

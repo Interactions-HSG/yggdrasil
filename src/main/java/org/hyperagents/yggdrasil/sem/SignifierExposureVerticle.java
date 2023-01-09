@@ -3,8 +3,13 @@ package org.hyperagents.yggdrasil.sem;
 import ch.unisg.ics.interactions.hmas.core.hostables.ResourceProfile;
 import ch.unisg.ics.interactions.hmas.core.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.core.io.ResourceProfileGraphWriter;
-import ch.unisg.ics.interactions.hmas.core.vocabularies.HMAS;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.vocabularies.INTERACTION;
+import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
+import ch.unisg.ics.interactions.hmas.interaction.io.AgentProfileGraphReader;
+import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphReader;
+import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphWriter;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.AgentProfile;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ArtifactProfile;
+import ch.unisg.ics.interactions.hmas.interaction.vocabularies.INTERACTION;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -46,8 +51,10 @@ public class SignifierExposureVerticle extends AbstractVerticle {
       String requestMethod = message.headers().get(HttpEntityHandler.REQUEST_METHOD);
 
       if (SignifierExposureMechanism.ADJUST_ENTITY.equals(requestMethod)) {
+
         String requestIRIString = message.headers().get(HttpEntityHandler.REQUEST_URI);
         String agentIRIString = message.headers().get(HttpEntityHandler.AGENT_WEB_ID);
+
         DeliveryOptions options = new DeliveryOptions()
           .addHeader(HttpEntityHandler.REQUEST_URI, requestIRIString)
           .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.GET_ENTITY_FOR_AGENT)
@@ -81,18 +88,18 @@ public class SignifierExposureVerticle extends AbstractVerticle {
         if (artifactProfileStr != null && !artifactProfileStr.isEmpty()) {
 
           LOGGER.info("Profile of entity found");
-          ResourceProfile artifactProfile = ResourceProfileGraphReader.readFromString(artifactProfileStr);
+          ArtifactProfile artifactProfile = ArtifactProfileGraphReader.readFromString(artifactProfileStr);
           LOGGER.info(artifactProfile.getResource().getTypeAsString());
 
           if (agentProfileStr != null && !agentProfileStr.isEmpty()) {
             LOGGER.info("Profile of requesting agent found");
-            ResourceProfile agentProfile = ResourceProfileGraphReader.readFromString(agentProfileStr);
+            AgentProfile agentProfile = AgentProfileGraphReader.readFromString(agentProfileStr);
             LOGGER.info(agentProfile.getResource().getTypeAsString());
 
-            ResourceProfile adjustedProfile = sem.getComplementaryProfile(artifactProfile, agentProfile);
-            String adjustedProfileStr = new ResourceProfileGraphWriter(adjustedProfile)
-              .setNamespace("hmas", HMAS.PREFIX.toString())
-              .setNamespace("hmas-int", INTERACTION.PREFIX.toString())
+            ArtifactProfile adjustedProfile = sem.getComplementaryProfile(artifactProfile, agentProfile);
+            String adjustedProfileStr = new ArtifactProfileGraphWriter(adjustedProfile)
+              .setNamespace(CORE.PREFIX, CORE.NAMESPACE)
+              .setNamespace(INTERACTION.PREFIX, INTERACTION.NAMESPACE)
               .write();
             replyWithPayload(message, adjustedProfileStr);
           } else {

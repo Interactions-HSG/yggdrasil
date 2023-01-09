@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.sem;
 
 import ch.unisg.ics.interactions.hmas.core.hostables.ResourceProfile;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.AgentProfile;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ArtifactProfile;
 
 public interface SignifierExposureMechanism {
 
@@ -8,5 +10,5 @@ public interface SignifierExposureMechanism {
 
   public static final String ADJUST_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.getAdjustedEntity";
 
-  ResourceProfile getComplementaryProfile(ResourceProfile artifactProfile, ResourceProfile agentProfile);
+  ArtifactProfile getComplementaryProfile(ArtifactProfile artifactProfile, AgentProfile agentProfile);
 }

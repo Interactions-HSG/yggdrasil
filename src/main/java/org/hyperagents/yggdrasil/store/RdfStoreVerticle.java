@@ -4,16 +4,15 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
 import ch.unisg.ics.interactions.hmas.core.vocabularies.HMAS;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.vocabularies.INTERACTION;
+import ch.unisg.ics.interactions.hmas.interaction.vocabularies.INTERACTION;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.api.Triple;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
@@ -235,7 +234,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       return Optional.of(entityIRI);
     }
     Triple tr = entityGraph.stream()
-      .filter(t -> HMAS.IS_PROFILE_OF.toString().equals(t.getPredicate().toString())
+      .filter(t -> CORE.IS_PROFILE_OF.toString().equals(t.getPredicate().toString())
         && entityIRI.getIRIString().equals(t.getSubject().toString()))
       .findFirst()
       .orElse(null);
@@ -244,7 +243,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       IRI objectIRI = store.createIRI(tr.getObject().toString());
       // If this the profile of an artifact, then the artifact is contained
       if (entityGraph.contains(objectIRI, store.createIRI(RDF.TYPE.stringValue()),
-        store.createIRI(HMAS.ARTIFACT.toString()))) {
+        store.createIRI(CORE.ARTIFACT.toString()))) {
         return Optional.of(objectIRI);
       }
 
