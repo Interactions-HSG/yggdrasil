@@ -5,8 +5,12 @@ import java.util.*;
 import cartago.*;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.hyperagents.yggdrasil.store.RdfStore;
+import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 
 
 /**
@@ -48,6 +52,8 @@ public class HypermediaArtifactRegistry {
 
   private final Map<String, Set<String> > feedbackActions;
 
+  private final Map<String, Map<String, ResponseConverter> > feedbackResponseConverters;
+
   private int n;
 
   private HypermediaArtifactRegistry() {
@@ -62,6 +68,7 @@ public class HypermediaArtifactRegistry {
     agentArtifacts = new Hashtable<>();
     hypermediaNames = new Hashtable<>();
     feedbackActions = new Hashtable<>();
+    feedbackResponseConverters = new Hashtable<>();
     n = 1;
   }
 
@@ -92,10 +99,32 @@ public class HypermediaArtifactRegistry {
     }
     Set<String> fActions = artifact.getFeedbackActions();
     feedbackActions.put(artifactTemplate, fActions);
+    feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
+    System.out.println("artifact " + artifactTemplate + " has been registered");
+    WorkspaceId workspaceId = artifact.getArtifactId().getWorkspaceId();
+    String workspaceName = workspaceId.getName();
+    System.out.println("workspace name: "+ workspaceName);
+    String workspaceUri = WorkspaceRegistry.getInstance().getUri(workspaceName);
+    System.out.println("workspace uri: "+workspaceUri);
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.CREATE_ENTITY)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", workspaceUri + "/artifacts")
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifact.getArtifactName());
+    Vertx vertx = Vertx.currentContext().owner();
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, artifact.getHypermediaDescription(), options, result -> {
+      System.out.println("reply: "+ result.result().body());
+      if (result.succeeded()) {
+        System.out.println("artifact stored");
+      } else {
+        System.out.println("artifact could not be stored");
+      }
+    });
+
   }
 
   public void register(HypermediaInterface hypermediaInterface) {
     String artifactTemplate = hypermediaInterface.getHypermediaArtifactName();
+    System.out.println("hypermedia interface description: "+ hypermediaInterface.getHypermediaDescription());
     artifactTemplateDescriptions.put(artifactTemplate, hypermediaInterface.getHypermediaDescription());
 
     Map<String, List<ActionAffordance>> actions = hypermediaInterface.getActions();
@@ -115,8 +144,28 @@ public class HypermediaArtifactRegistry {
     this.interfaceMap.put(artifactName, hypermediaInterface);
     this.artifactNames.put(artifactTemplate, artifactName);
     Set<String> fActions = hypermediaInterface.getFeedbackActions();
-    System.out.println("artifat  template in register: "+ artifactTemplate);
+    System.out.println("artifact template in register: "+ artifactTemplate);
     feedbackActions.put(artifactTemplate, fActions);
+    feedbackResponseConverters.put(artifactTemplate, hypermediaInterface.getResponseConverterMap());
+    System.out.println("artifact " + artifactTemplate + " has been registered");
+    WorkspaceId workspaceId = hypermediaInterface.getArtifactId().getWorkspaceId();
+    String workspaceName = workspaceId.getName();
+    System.out.println("workspace name: "+ workspaceName);
+    String workspaceUri = WorkspaceRegistry.getInstance().getUri(workspaceName);
+    System.out.println("workspace uri: "+workspaceUri);
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestMethod", RdfStore.CREATE_ENTITY)
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.requestUri", workspaceUri + "/artifacts")
+      .addHeader("org.hyperagents.yggdrasil.eventbus.headers.slug", artifactName);
+    Vertx vertx = Vertx.currentContext().owner();
+    vertx.eventBus().request(RdfStore.BUS_ADDRESS, hypermediaInterface.getHypermediaDescription(), options, result -> {
+      System.out.println("reply: "+ result.result().body());
+      if (result.succeeded()) {
+        System.out.println("artifact stored");
+      } else {
+        System.out.println("artifact could not be stored");
+      }
+    });
   }
 
   public void registerName(String bodyName, String hypermediaName){
@@ -332,4 +381,30 @@ public class HypermediaArtifactRegistry {
     b = feedbackActions.get(artifactName).contains(action);
     return b;
   }
+
+  public boolean hasFeedbackResponseConverter(String artifactName, String action){
+    System.out.println("check has feedback param for artifact: "+artifactName);
+    boolean b = false;
+    HypermediaAgentBodyArtifactRegistry bodyArtifactRegistry = HypermediaAgentBodyArtifactRegistry.getInstance();
+    if (bodyArtifactRegistry.isBodyArtifact(artifactName)){
+      System.out.println("is body artifact");
+      artifactName = bodyArtifactRegistry.getHypermediaName(artifactName);
+    }
+    System.out.println("has artifact name: "+feedbackActions.containsKey(artifactName));
+    b = feedbackResponseConverters.get(artifactName).keySet().contains(action);
+    return b;
+  }
+
+  public ResponseConverter getFeedbackResponseConverter(String artifactName, String action){
+    HypermediaAgentBodyArtifactRegistry bodyArtifactRegistry = HypermediaAgentBodyArtifactRegistry.getInstance();
+    if (bodyArtifactRegistry.isBodyArtifact(artifactName)){
+      System.out.println("is body artifact");
+      artifactName = bodyArtifactRegistry.getHypermediaName(artifactName);
+    }
+    System.out.println("has artifact name: "+feedbackActions.containsKey(artifactName));
+    ResponseConverter responseConverter = feedbackResponseConverters.get(artifactName).get(action);
+    return responseConverter;
+  }
+
+
 }

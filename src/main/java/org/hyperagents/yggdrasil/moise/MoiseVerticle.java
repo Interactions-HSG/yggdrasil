@@ -11,13 +11,11 @@ import io.vertx.core.parsetools.JsonParser;
 import ora4mas.nopl.*;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.PubSubVerticle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
-import org.hyperagents.yggdrasil.cartago.HypermediaInterface;
-import org.hyperagents.yggdrasil.cartago.HypermediaInterfaceConstructor;
-import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
+import org.hyperagents.yggdrasil.cartago.*;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 
 import java.util.List;
+import java.util.Objects;
 
 
 public class MoiseVerticle extends AbstractVerticle {
@@ -63,7 +61,7 @@ public class MoiseVerticle extends AbstractVerticle {
       }
     });
     eventBus.send(PubSubVerticle.BUS_ADDRESS, "", new DeliveryOptions().addHeader(PubSubVerticle.REQUEST_METHOD, PubSubVerticle.SUBSCRIBE)
-      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action"));
+      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action").addHeader(PubSubVerticle.SENDER, MoiseVerticle.BUS_ADDRESS));
     eventBus.consumer(BUS_ADDRESS, this::handleMoiseRequest);
     /*while (true){
       createHypermediaInterfaces();
@@ -71,15 +69,25 @@ public class MoiseVerticle extends AbstractVerticle {
   }
 
   private void handleMoiseRequest(Message<String> message) {
-    if (message.replyAddress().equals(PubSubVerticle.BUS_ADDRESS) ){
+    String sender = message.headers().get(PubSubVerticle.SENDER);
+    if (sender == null){
+      sender = "";
+    }
+    System.out.println("sender: "+ sender);
+    if (sender.equals(PubSubVerticle.BUS_ADDRESS) ){
+      System.out.println("sender is pub sub verticle");
 
       JsonObject jsonObject = (JsonObject) Json.decodeValue(message.body());
+      System.out.println("json object: "+ jsonObject);
       String artifactType = jsonObject.getString("artifactType");
       String workspaceName = jsonObject.getString("workspace");
       if (artifactType.equals(OrgBoard.class.getCanonicalName()) && workspaceName != null) {
+        System.out.println("create hypermedia interfaces");
         createHypermediaInterfaces(workspaceName);
       }
 
+    } else {
+      System.out.println("the sender is not the pub sub verticle");
     }
 
     String agentUri = message.headers().get(AGENT_ID);
@@ -115,10 +123,10 @@ public class MoiseVerticle extends AbstractVerticle {
         ArtifactId artifactId = w.getArtifact(artifactNames[i]);
         String artifactName = artifactId.getName();
         String artifactType = artifactId.getArtifactType();
-        if (artifactType == OrgBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        if (Objects.equals(artifactType, OrgBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getOrgBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
-        } else if (artifactType == GroupBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        } else if (Objects.equals(artifactType, GroupBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getGroupBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
         } else if (artifactType == NormativeBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
@@ -141,16 +149,16 @@ public class MoiseVerticle extends AbstractVerticle {
         ArtifactId artifactId = w.getArtifact(artifactNames[i]);
         String artifactName = artifactId.getName();
         String artifactType = artifactId.getArtifactType();
-        if (artifactType == OrgBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        if (Objects.equals(artifactType, OrgBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getOrgBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
-        } else if (artifactType == GroupBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        } else if (Objects.equals(artifactType, GroupBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getGroupBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
-        } else if (artifactType == NormativeBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        } else if (Objects.equals(artifactType, NormativeBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getNormativeBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
-        } else if (artifactType == SchemeBoard.class.getCanonicalName() && !artifactRegistry.hasHypermediaInterface(artifactName) ){
+        } else if (Objects.equals(artifactType, SchemeBoard.class.getCanonicalName()) && !artifactRegistry.hasHypermediaInterface(artifactName) ){
           HypermediaInterface hypermediaInterface = MoiseInterfaces.getSchemeBoardHypermediaInterface(w,artifactId);
           artifactRegistry.register(hypermediaInterface);
         }

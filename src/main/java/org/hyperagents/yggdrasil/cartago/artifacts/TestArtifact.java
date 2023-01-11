@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
+import cartago.ArtifactConfig;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
@@ -19,6 +20,7 @@ public class TestArtifact extends HypermediaArtifact {
     list.add(y);
     feedbackParam.set(list);
   }
+
   @Override
   protected void registerInteractionAffordances() {
     ArraySchema inputSchema = new ArraySchema.Builder()
@@ -26,7 +28,7 @@ public class TestArtifact extends HypermediaArtifact {
       .addItem(new IntegerSchema.Builder().build())
       .build();
 
-    registerActionAffordance("http://example.org/test", "testOpFeedbackParam", "/test", inputSchema);
+    registerActionAffordance("http://example.org/testOpFeedbackParam", "testOpFeedbackParam", "/testOpFeedbackParam", inputSchema);
     registerFeedbackParameter("testOpFeedbackParam");
 
   }

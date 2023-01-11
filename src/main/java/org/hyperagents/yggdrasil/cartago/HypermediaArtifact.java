@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil.cartago;
 
 import java.util.*;
 
+import cartago.WorkspaceId;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 
@@ -23,6 +24,8 @@ public abstract class HypermediaArtifact extends Artifact{
   private final Model metadata = new LinkedHashModel();
 
   private Set<String> feedbackActions = new HashSet<>();
+
+  private Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -85,6 +88,10 @@ public abstract class HypermediaArtifact extends Artifact{
         + getArtifactName();
   }
 
+  protected WorkspaceId getWorkspaceId(){
+    return this.getArtifactId().getWorkspaceId();
+  }
+
   protected final void registerActionAffordance(String actionClass, String actionName,
       String relativeUri) {
     registerActionAffordance(actionClass, actionName, relativeUri, null);
@@ -120,6 +127,16 @@ public abstract class HypermediaArtifact extends Artifact{
 
   protected final void registerFeedbackParameter(String actionName){
     feedbackActions.add(actionName);
+  }
+
+  protected final void registerFeedbackParameter(String actionName, ResponseConverter responseConverter){
+    feedbackActions.add(actionName);
+    responseConverterMap.put(actionName, responseConverter);
+
+  }
+
+  public Map<String, ResponseConverter> getResponseConverterMap(){
+    return responseConverterMap;
   }
 
   public Set<String> getFeedbackActions(){

@@ -10,7 +10,7 @@ public class WorkspaceRegistry {
   private static WorkspaceRegistry registry;
 
   private Map<String, WorkspaceDescriptor> workspaceMap;
-  
+
 
   private Hashtable<String, String> nameUriMap;
 
@@ -81,5 +81,17 @@ public class WorkspaceRegistry {
     String workspaceName = uriNameMap.get(workspaceUri);
     return getParentWorkspaceUriFromName(workspaceName);
 
+  }
+
+  public WorkspaceId getWorkspaceId(Workspace workspace){
+    WorkspaceId workspaceId = null;
+    for (String key: workspaceMap.keySet()){
+      WorkspaceDescriptor workspaceDescriptor = workspaceMap.get(key);
+      Workspace w = workspaceDescriptor.getWorkspace();
+      if (w.equals(workspace)){
+        workspaceId = workspaceDescriptor.getId();
+      }
+    }
+    return workspaceId;
   }
 }

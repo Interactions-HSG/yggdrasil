@@ -34,7 +34,9 @@ public class HypermediaInterface {
 
   private Set<String> feedbackActions = new HashSet<>();
 
-  public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions){
+  private Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+
+  public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions, Map<String, ResponseConverter> responseConverterMap){
     this.aClass = aClass;
     this.workspace = workspace;
     this.artifactId = artifactId;
@@ -43,6 +45,11 @@ public class HypermediaInterface {
     this.name = name;
     this.hypermediaName = hypermediaName;
     this.feedbackActions = feedbackActions;
+    this.responseConverterMap = responseConverterMap;
+  }
+
+  public ArtifactId getArtifactId(){
+    return artifactId;
   }
 
 
@@ -151,6 +158,10 @@ public class HypermediaInterface {
     return feedbackActions;
   }
 
+  public Map<String, ResponseConverter> getResponseConverterMap(){
+    return responseConverterMap;
+  }
+
   private String getSemanticType() {
     Optional<String> semType = HypermediaArtifactRegistry.getInstance().getArtifactSemanticType(
       this.aClass.getCanonicalName());
@@ -222,7 +233,7 @@ public class HypermediaInterface {
     String hypermediaArtifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
     String artifactName = artifactId.getName();
     HypermediaAgentBodyArtifactRegistry.getInstance().registerName(artifactId.getName(), hypermediaArtifactName);
-    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.of(artifactName), Optional.of(hypermediaArtifactName), new HashSet<>());
+    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.of(artifactName), Optional.of(hypermediaArtifactName), new HashSet<>(), new Hashtable<>());
   }
 
   public static HypermediaInterface getConsoleInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId){
@@ -242,7 +253,7 @@ public class HypermediaInterface {
     descriptions.add(printWithAgNameDescription);
     descriptions.add(printlnWithAgNameDescription);
     Map<String, ArgumentConverter> converters = new Hashtable<>();
-    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.empty(), Optional.empty(), new HashSet<>());
+    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.empty(), Optional.empty(), new HashSet<>(), new Hashtable<>());
   }
 
 }

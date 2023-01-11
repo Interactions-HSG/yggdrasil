@@ -469,6 +469,10 @@ public class CartagoVerticle extends AbstractVerticle {
         LOGGER.info("result: " + o);
         if (o!=null) {
           System.out.println("return object is present");
+          if (HypermediaArtifactRegistry.getInstance().hasFeedbackResponseConverter(artifactName, action)){
+            ResponseConverter responseConverter = HypermediaArtifactRegistry.getInstance().getFeedbackResponseConverter(artifactName, action);
+            o = responseConverter.convert(o);
+          }
           returnObject = Optional.of(o.toString());
         } else {
           System.out.println("return object is null");
@@ -486,13 +490,16 @@ public class CartagoVerticle extends AbstractVerticle {
       System.out.println("result: "+o);
     }*/
     DeliveryOptions options = new DeliveryOptions().addHeader(PubSubVerticle.REQUEST_METHOD, PubSubVerticle.PUBLISH)
-      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action");
+      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action")
+      .addHeader(PubSubVerticle.SENDER, CartagoVerticle.BUS_ADDRESS);
     JsonObject jsonMessage = new JsonObject();
     jsonMessage.put("actionName", action);
     //ArtifactId artifactId = workspace.getArtifact(artifactName);
     jsonMessage.put("artifactType", artifactId.getArtifactType());
     jsonMessage.put("workspace", workspaceName);
+    System.out.println("message to send: "+ jsonMessage);
     vertx.eventBus().send(PubSubVerticle.BUS_ADDRESS, jsonMessage.encode(), options);
+    System.out.println("message sent");
     return returnObject;
   }
 

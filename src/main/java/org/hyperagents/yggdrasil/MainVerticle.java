@@ -49,6 +49,10 @@ public class MainVerticle extends AbstractVerticle {
         new DeploymentOptions().setConfig(config())
       );
 
+    vertx.deployVerticle(new PubSubVerticle(),
+      new DeploymentOptions().setConfig(config())
+    );
+
     vertx.deployVerticle(new RdfStoreVerticle(),
         new DeploymentOptions().setWorker(true).setConfig(config())
       );
@@ -80,9 +84,14 @@ public class MainVerticle extends AbstractVerticle {
     vertx.deployVerticle(new JasonVerticle(),
       new DeploymentOptions().setConfig(config())
     );
+
+
   }
+
+
+}
 
   /*public static void main(String[] args){
     Launcher.executeCommand("run", MainVerticle.class.getName());
   }*/
-}
+

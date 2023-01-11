@@ -101,12 +101,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
    */
   private void handleCreateEntity(IRI requestIRI, Message<String> message)
     throws IllegalArgumentException, IOException {
+    System.out.println("handle create entity");
     // Create IRI for new entity
     Graph entityGraph;
 
     String slug = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
 //    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
     String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
+    System.out.println("entity IRI: "+entityIRIString);
 
     IRI entityIRI = store.createIRI(entityIRIString);
 
@@ -131,6 +133,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
       entityGraph = addContainmentTriples(entityIRI, entityGraph);
       store.createEntityGraph(entityIRI, entityGraph);
+      System.out.println("entity added to the store");
       replyWithPayload(message, entityGraphStr);
 
 //      DeliveryOptions options = new DeliveryOptions()
