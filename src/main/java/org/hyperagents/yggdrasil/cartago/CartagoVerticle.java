@@ -297,6 +297,7 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String joinWorkspace(String agentUri, String workspaceName) {
+    System.out.println(agentUri + "joins workspace "+ workspaceName);
     CartagoContext agentContext = getAgentContext(agentUri);
     try {
       Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
@@ -312,10 +313,11 @@ public class CartagoVerticle extends AbstractVerticle {
         String bodyName = registry.getArtifact(agentId, workspaceId);
         hypermediaBodyName = registry.getHypermediaName(bodyName);
       } else {
+        System.out.println("create body for agent: "+agentUri);
         String bodyName = "body_" + agentUri;
         ArtifactDescriptor descriptor = workspace.getArtifactDescriptor(bodyName);
         ArtifactId bodyId = workspace.getArtifact(bodyName);
-        HypermediaInterface hypermediaInterface = HypermediaInterface.getBodyInterface(workspace, descriptor, bodyId);
+        HypermediaInterface hypermediaInterface = HypermediaInterface.getBodyInterface(workspace, descriptor, bodyId, agentUri);
         HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
         hypermediaBodyName = registry.getHypermediaName(bodyName);
         registry.setArtifact(agentId, workspaceId, bodyName);
