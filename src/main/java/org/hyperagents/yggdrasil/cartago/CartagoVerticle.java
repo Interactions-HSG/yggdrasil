@@ -506,13 +506,25 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private CartagoContext getAgentContext(String agentUri) {
+    printAgentContexts();
+    System.out.println("agent uri: "+ agentUri);
     if (!agentContexts.containsKey(agentUri)) {
       CartagoContext context = new CartagoContext(new AgentIdCredential(agentUri));
-      agentContexts.put(agentUri, context);
+      System.out.println("context name: "+context.getName());
+      //agentContexts.put(agentUri, context); //TODO: reuse agentContexts
+      printAgentContexts();
 
       return context;
     } else {
+      printAgentContexts();
       return agentContexts.get(agentUri);
+    }
+  }
+
+  private void printAgentContexts(){
+    System.out.println("print agent contexts");
+    for (String key: agentContexts.keySet()){
+      System.out.println("agent: "+ key+ " has context: "+ agentContexts.get(key).getName());
     }
   }
 

@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
+import org.hyperagents.yggdrasil.cartago.artifacts.IntellIoTArtifact;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
 import org.hyperagents.yggdrasil.jason.JasonVerticle;
@@ -67,6 +68,7 @@ public class MainVerticle extends AbstractVerticle {
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter")
       .put("http://example.org/TestArtifact", "org.hyperagents.yggdrasil.cartago.artifacts.TestArtifact")
       .put("http://example.org/Adder", Adder.class.getCanonicalName())
+      .put("http://example.org/IntellIoT", IntellIoTArtifact.class.getCanonicalName())
         .put("http://example.org/SpatialCalculator2D", "org.hyperagents.yggdrasil.cartago"
             + ".SpatialCalculator2D");
 
