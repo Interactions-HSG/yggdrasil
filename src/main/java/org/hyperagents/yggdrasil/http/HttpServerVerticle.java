@@ -64,6 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
     router.delete("/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
     router.post("/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
+    router.post("/workspaces/:wkspid/focus").handler(handler::handleFocus);
     //end new
     router.get("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);

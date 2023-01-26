@@ -15,14 +15,14 @@ public class YggdrasilRuntimeServices extends CentralisedRuntimeServices {
   }
 
   @Override
-  public String createAgent(String agName, String agSource, String agClass, Collection<String> archClasses, ClassParameters bbPars, Settings stts, Agent father) throws Exception {
+  public String createAgent(String agName, String agSource, String agClass, Collection<String> archClasses, ClassParameters bbPars, Settings stts, Agent father) {
     Agent agent = father;
     YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch();
     masRunner.addAg(agArch);
     return agName;
   }
 
-  public String createAgent(String agentName, String aslFile){
+  /*public String createAgent(String agentName, String aslFile){
     try {
       JasonAgent agent = new JasonAgent(aslFile);
       YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch().getNextAgArch();
@@ -33,7 +33,7 @@ public class YggdrasilRuntimeServices extends CentralisedRuntimeServices {
     }
     return null;
 
-  }
+  }*/
 
   public String createAgent(String agentName, InputStream in, String sourceId){
     try {

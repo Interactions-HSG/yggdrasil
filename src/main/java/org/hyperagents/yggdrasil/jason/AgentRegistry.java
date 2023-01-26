@@ -10,7 +10,7 @@ public class AgentRegistry {
 
   private static AgentRegistry registry;
 
-  private String httpPrefix = "http://localhost:8080/";
+  private String httpPrefix = "http://localhost:8080/"; //TODO: check
 
   private Map<String, String> agents;
 
@@ -46,6 +46,7 @@ public class AgentRegistry {
 
   public String addAgent(String agentName) throws Exception {
     String agentUri = httpPrefix + "agents/"+agentName;
+    System.out.println("agent uri: "+ agentUri);
     if (!agents.containsKey(agentName)) {
       this.agents.put(agentName, agentUri);
       this.callbacks.put(agentName, new AgentNotificationCallback(agentUri));

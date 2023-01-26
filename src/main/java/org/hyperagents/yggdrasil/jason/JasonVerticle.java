@@ -1,22 +1,17 @@
 package org.hyperagents.yggdrasil.jason;
 
-import cartago.util.agent.Agent;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFWriterFactory;
-import org.eclipse.rdf4j.rio.RDFWriterRegistry;
 import org.eclipse.rdf4j.rio.Rio;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.http.HttpInterfaceConfig;
 import io.vertx.core.logging.Logger;
@@ -58,7 +53,7 @@ public class JasonVerticle extends AbstractVerticle {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
-  private static ValueFactory rdf = SimpleValueFactory.getInstance();
+  private final static ValueFactory rdf = SimpleValueFactory.getInstance();
 
   @Override
   public void start(){
@@ -67,7 +62,7 @@ public class JasonVerticle extends AbstractVerticle {
     VertxRegistry.getInstance().setVertx(this.vertx);
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
-    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config());
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config()); //TODO: see if needed, maybe for URIs
   }
 
   private void handleAgentRequest(Message<String> message){

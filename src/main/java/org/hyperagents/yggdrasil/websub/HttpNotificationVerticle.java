@@ -57,7 +57,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
           linkHeaders.add("<" + entityIRI + ">; rel=\"self\"");
 
           Set<String> callbacks = NotificationSubscriberRegistry.getInstance().getCallbackIRIs(entityIRI);
-
+          System.out.println("callbacks: "+ callbacks);
           for (String callbackIRI : callbacks) {
             HttpRequest<Buffer> request = client.postAbs(callbackIRI)
                 .putHeader("Link", linkHeaders.get(0))
@@ -66,6 +66,11 @@ public class HttpNotificationVerticle extends AbstractVerticle {
             if (message.headers().get(HttpEntityHandler.REQUEST_METHOD).equals(ENTITY_DELETED)) {
               LOGGER.info("Sending notification to: " + callbackIRI + "; changes: entity deleted");
               request.send(reponseHandler(callbackIRI));
+            }
+              else if (message.headers().get(HttpEntityHandler.REQUEST_METHOD).equals(ARTIFACT_OBS_PROP)){
+              LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
+              request.putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
+                .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
             } else if (changes != null && !changes.isEmpty()) {
               LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
               request.putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())

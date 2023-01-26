@@ -24,14 +24,16 @@ public class NotificationCallback implements ICartagoCallback {
 
   @Override
   public void notifyCartagoEvent(CartagoEvent ev) {
+    System.out.println("notify cartago event");
+    System.out.println("event type: "+ ev.getClass().getCanonicalName());
     if (ev instanceof ArtifactObsEvent) {
+      System.out.println("event is artifact obs event");
       ArtifactObsEvent obsEvent = (ArtifactObsEvent) ev;
       Percept percept = new Percept(obsEvent);
       ArtifactId source = percept.getArtifactSource();
       String artifactIri = HypermediaArtifactRegistry.getInstance()
         .getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
       LOGGER.info("artifactIri: " + artifactIri + ", percept: " + percept.getPropChanged()[0].toString());
-
       DeliveryOptions options = new DeliveryOptions()
         .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
         .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);

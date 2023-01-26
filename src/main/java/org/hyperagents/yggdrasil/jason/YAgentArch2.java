@@ -131,6 +131,10 @@ public class YAgentArch2 extends AgArch {
         if (terms.size() > 3) {
           Term t = terms.get(2);
           body = getAsJson(t);
+          if (body.startsWith("\"") && body.endsWith("\"")){
+            body = body.substring(1, body.length()-1);
+            System.out.println("current body: "+ body);
+          }
         }
         Map<String, String> headers = new Hashtable<>();
         if (terms.size() > 4) {
@@ -142,10 +146,20 @@ public class YAgentArch2 extends AgArch {
         Map<String, Object> uriVariables = new Hashtable<>();
         if (terms.size() > 5) {
           MapTerm uriVariablesMap = (MapTerm) terms.get(4);
+          System.out.println("uri variable map term: "+ uriVariablesMap);
           for (Term key : uriVariablesMap.keys()) {
-            headers.put(key.toString(), uriVariablesMap.get(key).toString());
+            StringTerm keyStringTerm = (StringTerm) key;
+            String keyString = keyStringTerm.getString();
+            System.out.println("key String: "+ keyString);
+            Term valueTerm = uriVariablesMap.get(key);
+            String valueString = valueTerm.toString();
+            if (valueTerm instanceof StringTerm){
+              valueString =  ((StringTerm) valueTerm).getString();
+            }
+            uriVariables.put(keyString, valueString);
           }
         }
+        System.out.println("uri variables: "+ uriVariables);
         MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
         Term lastTerm = terms.get(terms.size() - 1);
         if (lastTerm.isVar()) {
@@ -569,6 +583,7 @@ try {
   }
   public MapTerm invokeAction(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
+      System.out.println("invoke action has body: "+ body);
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
@@ -579,6 +594,7 @@ try {
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
           if (action.getUriVariables().isPresent()) {
             System.out.println("form target: "+form.getTarget());
+            System.out.println("uri variables: "+ uriVariables);
             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
@@ -590,6 +606,7 @@ try {
           }
           if (body != null){
             JsonElement element = JsonParser.parseString(body);
+            System.out.println("json element: "+ element);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
               request.addHeader("Content-Type", "application/json");
