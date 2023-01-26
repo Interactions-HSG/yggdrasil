@@ -1,10 +1,13 @@
 [submodule "cartago"]
 	path = cartago
 	url = git@github.com:CArtAgO-lang/cartago.git
+	ignore = dirty
 [submodule "wot-td-java"]
 	path = wot-td-java
 	url = git@github.com:Interactions-HSG/wot-td-java.git
 	branch = master
+	ignore = dirty
 [submodule "moise"]
 	path = moise
 	url = git@github.com:moise-lang/moise.git
+	ignore = dirty
