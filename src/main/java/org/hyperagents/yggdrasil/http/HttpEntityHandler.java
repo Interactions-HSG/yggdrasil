@@ -507,7 +507,9 @@ public class HttpEntityHandler {
     try {
       AgentNotificationCallback callback = agentRegistry.getAgentCallback(agentName);
       callback.addNotification(body);
+      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("notification received");
     } catch(Exception e){
+      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("notification not received");
       e.printStackTrace();
     }
   }

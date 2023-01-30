@@ -28,11 +28,13 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
+import org.eclipse.rdf4j.query.algebra.In;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 public class YAgentArch2 extends AgArch {
 
@@ -131,9 +133,11 @@ public class YAgentArch2 extends AgArch {
         if (terms.size() > 3) {
           Term t = terms.get(2);
           body = getAsJson(t);
-          if (body.startsWith("\"") && body.endsWith("\"")){
+          boolean b = body.startsWith("\"") && body.endsWith("\"");
+          while (b){ //TODO: to check
             body = body.substring(1, body.length()-1);
             System.out.println("current body: "+ body);
+            b = body.startsWith("\"") && body.endsWith("\"");
           }
         }
         Map<String, String> headers = new Hashtable<>();
@@ -331,7 +335,16 @@ public class YAgentArch2 extends AgArch {
 
         break;
       }
-      case "createTermFromJson": { //Inside json library
+      case "createMapTerm": { //TODO: Inside json library
+        ListTerm attributes = (ListTerm) terms.get(0);
+        ListTerm values = (ListTerm) terms.get(1);
+        MapTerm mt = createMapTerm(attributes, values);
+        System.out.println("map term created: "+mt);
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind((VarTerm) terms.get(2), mt);
+        break;
+      }
+      case "createTermFromJson": { //TODO: Inside json library
         Term json = terms.get(0);
         StringTerm jsonStringTerm = (StringTerm) json;
         String jsonString = jsonStringTerm.getString();
@@ -341,7 +354,7 @@ public class YAgentArch2 extends AgArch {
         u.bind(v, t);
         break;
       }
-      case "getTermAsJson": {
+      case "getTermAsJson": { //TODO: Inside json library
         Term json = terms.get(0);
         String jsonString = getAsJson(json);
         StringTerm jsonStringTerm = new StringTermImpl(jsonString);
@@ -367,11 +380,14 @@ public class YAgentArch2 extends AgArch {
       if (!callback.isEmpty()) {
         String notification = callback.retrieveNotification();
         LOGGER.info("notification received: " + notification);
+        notification = transformNotification(notification);
+        System.out.println("new notification: "+ notification);
         Literal belief = Literal.parseLiteral(notification);
+        System.out.println("belief: "+ belief);
         this.getTS().getAg().addBel(belief);
       }
-      String agentName = this.getAgName();
-      AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
+        String agentName = this.getAgName();
+        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
       if (messageCallback.hasNewMessage()) {
         LOGGER.info("agent "+ this.getAgName()+ " has new message");
         String message = messageCallback.retrieveMessage();
@@ -1013,8 +1029,23 @@ try {
     return getAsJsonTerm(jsonElement);
   }
 
+  public MapTerm createMapTerm(ListTerm attributes, ListTerm values){
+    MapTerm mt = new MapTermImpl();
+    int n1 = attributes.size();
+    int n2 = values.size();
+    if (n1 == n2){
+      for (int i=0; i<n1;i++){
+        Term a = attributes.get(i);
+        Term v = values.get(i);
+        mt.put(a, v);
+      }
 
-  public String getAsJson(Term t){
+    }
+    return mt;
+  }
+
+
+  /*public String getAsJson(Term t){
     StringBuilder s = new StringBuilder();
     if (t.isMap()){
       MapTerm mt = (MapTerm) t;
@@ -1055,7 +1086,155 @@ try {
       System.out.println("literal is : "+ s);
     }
     return s.toString();
+  }*/
+
+  public String getAsJson(Term t){
+    StringBuilder s = new StringBuilder();
+    if (t.isMap()){
+      MapTerm mt = (MapTerm) t;
+      s = new StringBuilder("{");
+      for (Term key: mt.keys()){
+        String keyString = key.toString();
+        String valueString = getAsJson(mt.get(key));
+        s.append(keyString).append(":").append(valueString).append(",");
+      }
+      s = new StringBuilder(s.substring(0, s.length() - 1));
+      s.append("}");
+
+    } else if (t.isList()){
+      s = new StringBuilder("[");
+      ListTerm lt = (ListTerm) t;
+      for (Term term: lt){
+        s.append(getAsJson(term)).append(",");
+      }
+      s = new StringBuilder(s.substring(0, s.length() - 1));
+      s.append("]");
+    } else if (t.isString()){
+      s = new StringBuilder(t.toString());
+    } else if (t.isNumeric()){
+      NumberTerm nt = (NumberTerm) t;
+      try {
+        double d = nt.solve();
+        long r = Math.round(d);
+        if (d == (double)r) {
+          s = new StringBuilder(String.valueOf(r));
+        } else {
+          s = new StringBuilder(String.valueOf(d));
+        }
+      } catch (Exception e){
+        System.err.println("The number is not valid");
+      }
+    } else if (t.isLiteral()){
+      s = new StringBuilder(t.toString());
+      System.out.println("literal is : "+ s);
+    }
+    return s.toString();
   }
+
+  public boolean containsFromIndex(String notification, int index, String pattern){
+    boolean b = false;
+    String newNotification = notification.substring(index);
+    b = newNotification.contains(pattern);
+    return b;
+  }
+
+  public int getIndexFrom(String notification, int index, String pattern){
+    int newIndex;
+    String newNotification = notification.substring(index);
+    newIndex = newNotification.indexOf(pattern);
+    return index + newIndex;
+  }
+
+  public String getUriFromIndex(String notification, int index){
+    int endIndex = index;
+    boolean b = true;
+    int i = index;
+    while (b && i<notification.length()){
+      if (notification.charAt(i) == ',' || notification.charAt(i)==')' ||notification.charAt(i)== ' '){
+        b = false;
+        endIndex = i;
+      } else {
+        i++;
+      }
+    }
+    return notification.substring(index, endIndex);
+  }
+
+  public Set<String> getUrisFromNotification(String notification){
+    Set<String> uris = new HashSet<>();
+    int index = 0;
+    boolean b = containsFromIndex(notification, index, "http://");
+    while (b){
+      index = getIndexFrom(notification, index, "http://");
+      String uri = getUriFromIndex(notification, index);
+      uris.add(uri);
+      index = index + uri.length();
+      b = containsFromIndex(notification, index, "http://");
+
+    }
+    return uris;
+  }
+
+  public Set<Integer> allIndexes(String notification, String uri){
+    int n = uri.length();
+    Set<Integer> allIndexes = new HashSet<>();
+    for (int i=0; i<notification.length();i++ ){
+      if (notification.substring(i, i+n).equals(uri)){
+        allIndexes.add(i);
+      }
+    }
+    return allIndexes;
+  }
+
+  public String replace(String notification, String uri, int index){
+    String newNotification = notification.substring(0, index);
+    newNotification = newNotification + "\"" + uri + "\"" + notification.substring(index + uri.length());
+    return newNotification;
+  }
+
+  public String replace(String notification, String uri){
+    String newNotifaction = notification;
+    String returnNotification = notification;
+    boolean b = true;
+    while (b){
+      int index = newNotifaction.lastIndexOf(uri);
+      if (index<0){
+        b = false;
+      } else if (index > 0 && newNotifaction.charAt(index-1)== '\"') {
+        newNotifaction = notification.substring(0, index-1);
+      } else {
+        newNotifaction = notification.substring(0, index-1);
+        returnNotification = replace(returnNotification, uri, index);
+
+      }
+    }
+    return returnNotification;
+  }
+
+
+  public String transformNotification(String notification){
+    String newNotification = notification;
+    Set<String> uris = getUrisFromNotification(notification);
+    Iterator<String> uriIterator= uris.stream().sorted((o1, o2) -> {
+      int n1 = o1.length();
+      int n2 = o2.length();
+      int r = 0;
+      if (n1>n2){
+        r = -1;
+      }
+      if (n1<n2){
+        r = 1;
+      }
+      return r;
+    }).distinct().iterator();
+    for (Iterator<String> it = uriIterator; it.hasNext(); ) {
+      String uri = it.next();
+      newNotification = replace(newNotification, uri);
+    }
+    return newNotification;
+  }
+
+
 
 }
 
