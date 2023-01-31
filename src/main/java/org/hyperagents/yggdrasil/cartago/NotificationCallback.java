@@ -30,7 +30,9 @@ public class NotificationCallback implements ICartagoCallback {
       System.out.println("event is artifact obs event");
       ArtifactObsEvent obsEvent = (ArtifactObsEvent) ev;
       Percept percept = new Percept(obsEvent);
+      System.out.println("percept: "+ percept);
       ArtifactId source = percept.getArtifactSource();
+      System.out.println("artifact source: "+source);
       String artifactIri = HypermediaArtifactRegistry.getInstance()
         .getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
       LOGGER.info("artifactIri: " + artifactIri + ", percept: " + percept.getPropChanged()[0].toString());
