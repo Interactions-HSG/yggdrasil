@@ -1,7 +1,7 @@
 [submodule "cartago"]
 	path = cartago
-	url = git@github.com:CArtAgO-lang/cartago.git
-	ignore = dirty
+	url = git@github.com:Interactions-HSG/cartago.git
+	branch = cartago3_yggdrasil
 [submodule "wot-td-java"]
 	path = wot-td-java
 	url = git@github.com:Interactions-HSG/wot-td-java.git
