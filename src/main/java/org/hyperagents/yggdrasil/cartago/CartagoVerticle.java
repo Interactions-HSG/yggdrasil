@@ -660,12 +660,9 @@ public class CartagoVerticle extends AbstractVerticle {
               Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(w);
               String[] artifacts = workspace.getArtifactList();
               for (String a : artifacts) {
-                //System.out.println("check artifact: " + a);
-                ArtifactId artifactId = workspace.getArtifact(a);
                 String artifactIri = HypermediaArtifactRegistry.getInstance()
                   .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
-                ObsPropMap map = workspace.getArtifactDescriptor(a).getArtifact().obsPropertyMap; //TODO: check.
-                ArrayList<ArtifactObsProperty> properties = map.readAll();
+                ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(a).getArtifact().readAllProperties(); //TODO: check
                 /*ArtifactObsProperty[] added = map.getPropsAdded();
                 ArtifactObsProperty[] removed = map.getPropsRemoved();
                 ArtifactObsProperty[] changed = map.getPropsChanged();

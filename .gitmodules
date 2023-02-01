@@ -5,9 +5,8 @@
 [submodule "wot-td-java"]
 	path = wot-td-java
 	url = git@github.com:Interactions-HSG/wot-td-java.git
-	branch = master
-	ignore = dirty
+	branch = feature/json-ld2
 [submodule "moise"]
 	path = moise
 	url = git@github.com:moise-lang/moise.git
-	ignore = dirty
+  branch = master
