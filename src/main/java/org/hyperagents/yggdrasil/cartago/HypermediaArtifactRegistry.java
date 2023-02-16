@@ -406,5 +406,9 @@ public class HypermediaArtifactRegistry {
     return responseConverter;
   }
 
+  public String getArtifactUri(String workspaceName, String artifactName){
+    return this.httpPrefix + "/workspaces/"+workspaceName+"/artifacts/"+artifactName;
+  }
+
 
 }

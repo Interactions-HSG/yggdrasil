@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.cartago;
 
 import cartago.ArtifactId;
+import cartago.ArtifactObsProperty;
 import cartago.CartagoEvent;
 import cartago.ICartagoCallback;
 import cartago.events.ArtifactObsEvent;
@@ -18,8 +19,15 @@ public class NotificationCallback implements ICartagoCallback {
 
   private Vertx vertx;
 
-  public NotificationCallback(Vertx vertx){
+  private String callbackUri;
+
+  public NotificationCallback(Vertx vertx, String callbackUri){
     this.vertx = vertx;
+    this.callbackUri = callbackUri;
+  }
+
+  public String getCallbackUri(){
+    return callbackUri;
   }
 
   @Override
@@ -35,15 +43,32 @@ public class NotificationCallback implements ICartagoCallback {
       System.out.println("artifact source: "+source);
       String artifactIri = HypermediaArtifactRegistry.getInstance()
         .getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
-      LOGGER.info("artifactIri: " + artifactIri + ", percept: " + percept.getPropChanged()[0].toString());
-      DeliveryOptions options = new DeliveryOptions()
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
-        .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
+      for ( int i = 0; i< percept.getPropChanged().length;i++) {
+        ArtifactObsProperty p = percept.getPropChanged()[i];
 
-      vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, percept.getPropChanged()[0].toString(),
-        options);
+        LOGGER.info("artifactIri: " + artifactIri + ", percept: " + p.toString());
+        DeliveryOptions options = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
+          .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
 
-      LOGGER.info("message sent to notification verticle");
+        vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, p.toString(),
+          options);
+
+        LOGGER.info("message sent to notification verticle");
+      }
+      for ( int i = 0; i< percept.getAddedProperties().length;i++) {
+        ArtifactObsProperty p = percept.getAddedProperties()[i];
+
+        LOGGER.info("artifactIri: " + artifactIri + ", percept: " + p.toString());
+        DeliveryOptions options = new DeliveryOptions()
+          .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
+          .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
+
+        vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, p.toString(),
+          options);
+
+        LOGGER.info("message sent to notification verticle");
+      }
     }
 
   }

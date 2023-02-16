@@ -18,7 +18,7 @@ public class createTermFromJson extends DefaultInternalAction {
     VarTerm v = (VarTerm) arg[1];
     un.bind(v, t);
 
-    return null;
+    return true;
   }
 
   public Term createTermFromJson(String jsonString){

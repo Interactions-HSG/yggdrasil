@@ -364,6 +364,13 @@ public class YAgentArch2 extends AgArch {
 
         break;
       }
+      case "getAgHypermediaName": {
+        VarTerm v = (VarTerm) terms.get(0);
+        String name = this.getAgHypermediaName();
+        Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
+        u.bind(v, new StringTermImpl(name));
+
+      }
     }
 
     LOGGER.info("end method act");
@@ -380,8 +387,8 @@ public class YAgentArch2 extends AgArch {
       if (!callback.isEmpty()) {
         String notification = callback.retrieveNotification();
         LOGGER.info("notification received: " + notification);
-        notification = transformNotification(notification);
-        System.out.println("new notification: "+ notification);
+        //notification = transformNotification(notification);
+        //System.out.println("new notification: "+ notification);
         Literal belief = Literal.parseLiteral(notification);
         System.out.println("belief: "+ belief);
         this.getTS().getAg().addBel(belief);

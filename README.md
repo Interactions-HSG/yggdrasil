@@ -50,28 +50,16 @@ The configuration file is optional. Open your browser to
 
 The HTTP API implements CRUD operations for 3 types of resources:
 
-* environments (URI template: `/environments/<env_id>`)
 * workspaces (URI template: `/workspaces/<wksp_id>`)
 * artifacts (URI template: `/artifacts/<art_id>`)
+* agents (URI template `/agents/<agent_id>`)
 
-`POST` and `PUT` requests use [Turtle](http://www.w3.org/TR/2014/REC-turtle-20140225/) payloads
+`POST` and `PUT` requests use [Turtle](http://www.w3.org/TR/2014/REC-turtle-20140225/) payloads for artifacts
 and the current implementation only validates the payload's syntax.
 
 `POST` requests can use the `Slug` header (see [RFC 5023](https://tools.ietf.org/html/rfc5023#section-9.7))
 to hint at a preferred IRI for a resource to be created. If the IRI is not already in use, it will
 be minted to the created resource.
-
-When creating a resource via `POST`, the resource to be created is identified in the Turtle payload
-via a null relative IRI:
-
-```shell
-curl -i -X POST \
-  http://localhost:8080/environments/ \
-  -H 'content-type: text/turtle' \
-  -H 'slug: env1' \
-  -d '<> a <http://w3id.org/eve#Environment> ;
-<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .'
-```
 
 When retrieving the representation of a resource from Yggdrasil, the HTTP response contains 2 `Link`
 header fields that advertise a WebSub hub that clients can subscribe to in order to receive

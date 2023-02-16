@@ -12,7 +12,6 @@ import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 
-import cartago.util.agent.Percept;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -96,8 +95,10 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoEnvironment.getInstance().init();
-      new CartagoPerceptFetcher().start();
-    } catch (CartagoException exception) {
+      CartagoEnvironment.getInstance().installInfrastructureLayer("web");
+      CartagoEnvironment.getInstance().startInfrastructureService("web");
+      //new CartagoPerceptFetcher().start();
+    } catch (Exception exception) {
       exception.printStackTrace();
     }
   }
@@ -156,12 +157,11 @@ public class CartagoVerticle extends AbstractVerticle {
           System.out.println("start focus");
           artifactName = message.headers().get(ARTIFACT_NAME);
           JsonObject body = (JsonObject) Json.decodeValue(message.body());
-          String artifactIri = body.getString("artifactIri");
           String callbackIri = body.getString("callbackIri");
           System.out.println("agent uri: "+agentUri);
           System.out.println("workspace: "+workspaceName);
           System.out.println("artifactName: "+artifactName);
-          focus(agentUri, workspaceName, artifactName, artifactIri, callbackIri);
+          focus(agentUri, workspaceName, artifactName, callbackIri);
           message.reply(HttpStatus.SC_OK);
           break;
         case DO_ACTION:
@@ -350,18 +350,68 @@ public class CartagoVerticle extends AbstractVerticle {
     return null;
   }
 
-  public void focus(String agentUri, String workspaceName, String artifactName, String artifactIri, String callbackIri){
+
+  private String joinWorkspace2(String agentUri, String workspaceName) {
+    System.out.println(agentUri + "joins workspace " + workspaceName);
+    //CartagoContext agentContext = getAgentContext(agentUri);
+    try {
+      Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+      AgentCredential agentCredential = getAgentCredential(agentUri);
+      ICartagoCallback callback = new InterArtifactCallback(new ReentrantLock());
+      workspace.joinWorkspace(agentCredential, HypermediaAgentBodyArtifact.class.getCanonicalName(), callback);
+      AgentId agentId = getAgentId(agentCredential, workspace.getId());
+      WorkspaceId workspaceId = workspace.getId();
+      HypermediaAgentBodyArtifactRegistry registry = HypermediaAgentBodyArtifactRegistry.getInstance();
+      boolean b = registry.hasArtifact(agentId, workspaceId);
+      String hypermediaBodyName;
+      if (b) {
+        String bodyName = registry.getArtifact(agentId, workspaceId);
+        hypermediaBodyName = registry.getHypermediaName(bodyName);
+      } else {
+        System.out.println("create body for agent: " + agentUri);
+        String bodyName = "body_" + agentUri;
+        ArtifactDescriptor descriptor = workspace.getArtifactDescriptor(bodyName);
+        ArtifactId bodyId = workspace.getArtifact(bodyName);
+        HypermediaInterface hypermediaInterface = HypermediaInterface.getBodyInterface(workspace, descriptor, bodyId, agentUri);
+        HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
+        hypermediaBodyName = registry.getHypermediaName(bodyName);
+        registry.setArtifact(agentId, workspaceId, bodyName);
+        registerArtifactEntity(workspace.getId().getName(), hypermediaBodyName);
+      }
+      return hypermediaBodyName;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public void focus(String agentUri, String workspaceName, String artifactName, String callbackIri){
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     AgentId agentId = getAgentId(new AgentIdCredential(agentUri), workspace.getId());
     IEventFilter filter = p -> true;
-    ICartagoCallback callback = new NotificationCallback(this.vertx);
+    ICartagoCallback callback = new NotificationCallback(this.vertx, callbackIri);
     ArtifactId artifactId = workspace.getArtifact(artifactName);
     try {
+      String artifactIri = HypermediaArtifactRegistry.getInstance().getArtifactUri(workspaceName, artifactName);
       workspace.focus(agentId, filter, callback, artifactId);
       workspace.getArtifactDescriptor(artifactName).addObserver(agentId, filter, callback);
       System.out.println("artifact IRI: "+ artifactIri);
       System.out.println("callback IRI: "+ callbackIri);
       NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIri, callbackIri);
+      ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(artifactName).getArtifact().readAllProperties();
+      if (properties.size()>0){
+        for (int i = 0; i<properties.size();i++){
+          ArtifactObsProperty p = properties.get(i);
+          DeliveryOptions options = new DeliveryOptions()
+            .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
+            .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
+
+          vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, p.toString(),
+            options);
+
+          LOGGER.info("message sent to notification verticle");
+        }
+      }
     } catch (Exception e){
       e.printStackTrace();
     }
@@ -505,7 +555,7 @@ public class CartagoVerticle extends AbstractVerticle {
     Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
     AgentId agentId = getAgentId(agentCredential, workspaceId);
     //ICartagoCallback callback = new EventManagerCallback(new EventManager());
-    ICartagoCallback callback = new NotificationCallback(this.vertx);
+    ICartagoCallback callback = new NotificationCallback(this.vertx, agentUri); //TODO: check agentUri as callbackIri
     IAlignmentTest alignmentTest = new BasicAlignmentTest(new HashMap<>());
     workspace.execOp(100, agentId, callback, artifactName, operation, 1000, alignmentTest);
     if (b) {
@@ -660,29 +710,45 @@ public class CartagoVerticle extends AbstractVerticle {
               Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(w);
               String[] artifacts = workspace.getArtifactList();
               for (String a : artifacts) {
+                ArtifactId artifactId = workspace.getArtifact(a);
                 String artifactIri = HypermediaArtifactRegistry.getInstance()
                   .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
-                ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(a).getArtifact().readAllProperties(); //TODO: check
-                /*ArtifactObsProperty[] added = map.getPropsAdded();
-                ArtifactObsProperty[] removed = map.getPropsRemoved();
-                ArtifactObsProperty[] changed = map.getPropsChanged();
-                if ((added != null && added.length > 0) || (changed != null && changed.length > 0) || (removed != null && removed.length > 0)) {
-                  //System.out.println("send notification");
-                  String artifactIri = HypermediaArtifactRegistry.getInstance()
-                    .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
+                ArtifactObsProperty[] added = workspace.getArtifactDescriptor(a).getArtifact().getPropsAdded();
+                ArtifactObsProperty[] removed = workspace.getArtifactDescriptor(a).getArtifact().getPropsRemoved();
+                ArtifactObsProperty[] changed = workspace.getArtifactDescriptor(a).getArtifact().getPropsChanged();
+                if (added.length>0 || removed.length>0 || changed.length>0){
+                  System.out.println("prepare notification");
                   ArtifactObsEvent e = new ArtifactObsEvent(0, artifactId, null, changed, added, removed);
-                  Percept percept = new Percept(e);
-                  LOGGER.info("artifactIri: " + artifactIri + ", precept: " + percept.getPropChanged()[0].toString()); //TODO: check
-
                   DeliveryOptions options = new DeliveryOptions()
                     .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
                     .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
+                  vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, e.toString(), options);
+                  workspace.getArtifactDescriptor(a).getArtifact().commitChanges();
+                }
 
-                  vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, percept.getPropChanged()[0].toString(),
-                    options);
-                } else {
-                  //System.out.println("send no notification");
-                }*/
+              }
+            }
+
+            sleep(2000); //TODO: change
+
+          } catch (InterruptedException e){
+            e.printStackTrace();
+          }
+        }
+    }
+
+    /*public void run(){
+      while (true) {
+        try {
+          List<String> workspaces = WorkspaceRegistry.getInstance().getAllWorkspaces();
+          for (String w : workspaces) {
+            Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(w);
+            String[] artifacts = workspace.getArtifactList();
+            for (String a : artifacts) {
+              ArtifactId artifactId = workspace.getArtifact(a);
+              String artifactIri = HypermediaArtifactRegistry.getInstance()
+                .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
+              ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(a).getArtifact().readAllProperties(); //TODO: check
                 if (properties !=null && properties.size()>0) {
                   //System.out.println("send notifications");
                   for (ArtifactObsProperty p : properties) {
@@ -698,16 +764,17 @@ public class CartagoVerticle extends AbstractVerticle {
                 }
 
               }
+
             }
 
-            sleep(2000); //TODO: change
+          sleep(2000); //TODO: change
 
-          } catch (Exception e) {
-            System.out.println("exception caught");
-            e.printStackTrace();
-          }
+        } catch (Exception e) {
+          System.out.println("exception caught");
+          e.printStackTrace();
         }
-    }
+      }
+    }*/
 
     /*public void run() {
       try {

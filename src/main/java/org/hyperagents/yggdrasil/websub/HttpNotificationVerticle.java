@@ -70,7 +70,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
               else if (message.headers().get(HttpEntityHandler.REQUEST_METHOD).equals(ARTIFACT_OBS_PROP)){
               LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
               request.putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
-                .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
+                .sendBuffer(Buffer.buffer(NotificationProcessor.transformNotification(changes)), reponseHandler(callbackIRI));
             } else if (changes != null && !changes.isEmpty()) {
               LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
               request.putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
