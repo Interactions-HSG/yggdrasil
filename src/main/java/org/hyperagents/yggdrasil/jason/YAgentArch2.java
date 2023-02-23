@@ -10,7 +10,10 @@ import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.clients.UriTemplate;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.*;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.*;
 import io.vertx.core.Vertx;
@@ -28,13 +31,12 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
-import org.eclipse.rdf4j.query.algebra.In;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 public class YAgentArch2 extends AgArch {
 
@@ -45,6 +47,7 @@ public class YAgentArch2 extends AgArch {
   //private JsonManager jsonManager;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(YAgentArch.class.getName());
+  private StringTerm keyStringTerm;
 
   /*public YAgentArch(Vertx vertx){
 
@@ -129,16 +132,15 @@ public class YAgentArch2 extends AgArch {
         String tdUrl = tdUriTerm.getString();
         StringTerm actionTerm = (StringTerm) terms.get(1);
         String actionName = actionTerm.getString();
-        String body = "";
+        Object[] body = new Object[0];
         if (terms.size() > 3) {
-          Term t = terms.get(2);
-          body = getAsJson(t);
-          boolean b = body.startsWith("\"") && body.endsWith("\"");
-          while (b){ //TODO: to check
-            body = body.substring(1, body.length()-1);
-            System.out.println("current body: "+ body);
-            b = body.startsWith("\"") && body.endsWith("\"");
+          if(!terms.get(2).isList()){
+            LOGGER.error("The payload of the 'invokeAction' must be an array!");
+            break;
           }
+          ListTerm t = (ListTerm) terms.get(2);
+          body = t.toArray();
+          System.out.println("Received payload: " + Arrays.toString(body));
         }
         Map<String, String> headers = new Hashtable<>();
         if (terms.size() > 4) {
@@ -161,6 +163,7 @@ public class YAgentArch2 extends AgArch {
               valueString =  ((StringTerm) valueTerm).getString();
             }
             uriVariables.put(keyString, valueString);
+
           }
         }
         System.out.println("uri variables: "+ uriVariables);
@@ -597,9 +600,9 @@ try {
       e.printStackTrace();
     }
   }
-  public MapTerm invokeAction(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm invokeAction(String tdUrl, String affordanceName, Object[] payload, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
-      System.out.println("invoke action has body: "+ body);
+      System.out.println("invoke action has payload: " + Arrays.toString(payload));
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
@@ -620,31 +623,12 @@ try {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            System.out.println("json element: "+ element);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              DataSchema schema = opSchema.get();
-              if (Objects.equals(schema.getDatatype(), "array") && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (Objects.equals(schema.getDatatype(), "object") && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (Objects.equals(schema.getDatatype(), "string")){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (Objects.equals(schema.getDatatype(), "number")){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (Objects.equals(schema.getDatatype(), "integer")){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (Objects.equals(schema.getDatatype(), "boolean")){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
 
-          }
+          Optional<DataSchema> opSchema = action.getInputSchema();
+
+          // Set the payload depending on the data type of the input data
+          setRequestPayload(payload, request, opSchema);
+
           TDHttpResponse response = request.execute();
           return createResponseObject(response);
         } else {
@@ -659,6 +643,43 @@ try {
       e.printStackTrace();
     }
     return null;
+  }
+
+  private void setRequestPayload(Object[] payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+    // OPTION 1: There is only one request payload
+    if(payload.length == 1) {
+      Object body = payload[0];
+      String bodyString = String.valueOf(body);
+      JsonElement element = JsonParser.parseString(bodyString);
+
+      // 1a. The payload's data type can be a PRIMITIVE
+      if (element.isJsonPrimitive()) { // TODO: extend with other data types (not just string)
+        DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+        request.setPrimitivePayload(schema, body.toString());
+
+      // 1b. The payload's data type can be an OBJECT
+      } else if (element.isJsonObject()) {
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+
+      // 1c. The payload's data type can be an ARRAY (i.e. an array in an array)
+      } else if(element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      }
+
+    // OPTION 2: There is an array of request payloads (e.g. an array of Integers)
+    } else if (payload.length > 1) {
+      String arrayString = Arrays.toString(payload);
+      DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+      JsonElement element = JsonParser.parseString(arrayString);
+      List<Object> body = createArrayPayload(element.getAsJsonArray());
+      request.setArrayPayload((ArraySchema) schema, body);
+    } else {
+      LOGGER.warn("Payload is empty!");
+    }
   }
 
   public MapTerm readProperty(String tdUrl, String affordanceName, Map<String, String> headers, Map<String, Object> uriVariables){
