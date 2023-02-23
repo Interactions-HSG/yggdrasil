@@ -10,7 +10,10 @@ import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.clients.UriTemplate;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.*;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.*;
 import io.vertx.core.Vertx;
@@ -28,13 +31,12 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
-import org.eclipse.rdf4j.query.algebra.In;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 public class YAgentArch2 extends AgArch {
 
@@ -45,6 +47,7 @@ public class YAgentArch2 extends AgArch {
   //private JsonManager jsonManager;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(YAgentArch.class.getName());
+  private StringTerm keyStringTerm;
 
   /*public YAgentArch(Vertx vertx){
 
@@ -53,7 +56,7 @@ public class YAgentArch2 extends AgArch {
     headers.put("X-Agent-WebID", this.getAgName());
   }*/
 
-  public YAgentArch2(){
+  public YAgentArch2() {
     LOGGER.info("creating YAgentArch");
     this.vertx = VertxRegistry.getInstance().getVertx();
     //this.vertx = new VertxFactoryImpl().vertx();
@@ -61,7 +64,6 @@ public class YAgentArch2 extends AgArch {
     //headers.put("X-Agent-WebID", this.getAgName());
     //this.jsonManager = new JsonManager();
   }
-
 
 
   @Override
@@ -129,16 +131,15 @@ public class YAgentArch2 extends AgArch {
         String tdUrl = tdUriTerm.getString();
         StringTerm actionTerm = (StringTerm) terms.get(1);
         String actionName = actionTerm.getString();
-        String body = "";
+        Object[] body = new Object[0];
         if (terms.size() > 3) {
-          Term t = terms.get(2);
-          body = getAsJson(t);
-          boolean b = body.startsWith("\"") && body.endsWith("\"");
-          while (b){ //TODO: to check
-            body = body.substring(1, body.length()-1);
-            System.out.println("current body: "+ body);
-            b = body.startsWith("\"") && body.endsWith("\"");
+          if (!terms.get(2).isList()) {
+            LOGGER.error("The payload of the 'invokeAction' must be an array!");
+            break;
           }
+          ListTerm t = (ListTerm) terms.get(2);
+          body = t.toArray();
+          System.out.println("Received payload: " + Arrays.toString(body));
         }
         Map<String, String> headers = new Hashtable<>();
         if (terms.size() > 4) {
@@ -150,20 +151,21 @@ public class YAgentArch2 extends AgArch {
         Map<String, Object> uriVariables = new Hashtable<>();
         if (terms.size() > 5) {
           MapTerm uriVariablesMap = (MapTerm) terms.get(4);
-          System.out.println("uri variable map term: "+ uriVariablesMap);
+          System.out.println("uri variable map term: " + uriVariablesMap);
           for (Term key : uriVariablesMap.keys()) {
             StringTerm keyStringTerm = (StringTerm) key;
             String keyString = keyStringTerm.getString();
-            System.out.println("key String: "+ keyString);
+            System.out.println("key String: " + keyString);
             Term valueTerm = uriVariablesMap.get(key);
             String valueString = valueTerm.toString();
-            if (valueTerm instanceof StringTerm){
-              valueString =  ((StringTerm) valueTerm).getString();
+            if (valueTerm instanceof StringTerm) {
+              valueString = ((StringTerm) valueTerm).getString();
             }
             uriVariables.put(keyString, valueString);
+
           }
         }
-        System.out.println("uri variables: "+ uriVariables);
+        System.out.println("uri variables: " + uriVariables);
         MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
         Term lastTerm = terms.get(terms.size() - 1);
         if (lastTerm.isVar()) {
@@ -339,7 +341,7 @@ public class YAgentArch2 extends AgArch {
         ListTerm attributes = (ListTerm) terms.get(0);
         ListTerm values = (ListTerm) terms.get(1);
         MapTerm mt = createMapTerm(attributes, values);
-        System.out.println("map term created: "+mt);
+        System.out.println("map term created: " + mt);
         Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
         u.bind((VarTerm) terms.get(2), mt);
         break;
@@ -373,7 +375,7 @@ public class YAgentArch2 extends AgArch {
 
 
   @Override
-  public Collection<Literal> perceive(){
+  public Collection<Literal> perceive() {
     try {
       AgentRegistry registry = AgentRegistry.getInstance();
       AgentNotificationCallback callback = registry.getAgentCallback(this.getAgName());
@@ -381,30 +383,30 @@ public class YAgentArch2 extends AgArch {
         String notification = callback.retrieveNotification();
         LOGGER.info("notification received: " + notification);
         notification = transformNotification(notification);
-        System.out.println("new notification: "+ notification);
+        System.out.println("new notification: " + notification);
         Literal belief = Literal.parseLiteral(notification);
-        System.out.println("belief: "+ belief);
+        System.out.println("belief: " + belief);
         this.getTS().getAg().addBel(belief);
       }
-        String agentName = this.getAgName();
-        AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
+      String agentName = this.getAgName();
+      AgentMessageCallback messageCallback = registry.getAgentMessageCallback(agentName);
       if (messageCallback.hasNewMessage()) {
-        LOGGER.info("agent "+ this.getAgName()+ " has new message");
+        LOGGER.info("agent " + this.getAgName() + " has new message");
         String message = messageCallback.retrieveMessage();
-        System.out.println("message: "+message);
+        System.out.println("message: " + message);
         Literal messageBelief = new LiteralImpl("message");
         Term id = getNewMessageId();
-        System.out.println("id: "+id);
+        System.out.println("id: " + id);
 
         Term jsonTerm = getJsonFromString(message);
-        System.out.println("json term: "+ jsonTerm);
+        System.out.println("json term: " + jsonTerm);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
-        System.out.println("message belief: "+ messageBelief);
+        System.out.println("message belief: " + messageBelief);
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
 
@@ -412,49 +414,50 @@ public class YAgentArch2 extends AgArch {
     return super.perceive();
   }
 
-  public String getAgHypermediaName(){
+  public String getAgHypermediaName() {
     String agentUri = "";
     try {
       agentUri = AgentRegistry.getInstance().getAgentUri(this.getAgName());
-      System.out.println("agent uri: "+ agentUri);
-    } catch (Exception e){
+      System.out.println("agent uri: " + agentUri);
+    } catch (Exception e) {
       System.err.println("The agent has no hypermedia name");
     }
     return agentUri;
   }
+
   private Term getJsonFromString(String message) { //TODO: check
     Term t = null;
     try {
       JsonElement jsonElement = JsonParser.parseString(message);
-      t =  getAsJsonTerm(jsonElement);
+      t = getAsJsonTerm(jsonElement);
 
-    } catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return t;
   }
 
-  public Term getAsTerm(JsonElement jsonElement){
-    if (jsonElement.isJsonArray()){
+  public Term getAsTerm(JsonElement jsonElement) {
+    if (jsonElement.isJsonArray()) {
       return getAsListTerm(jsonElement);
-    } else if (jsonElement.isJsonObject()){
+    } else if (jsonElement.isJsonObject()) {
       return getAsMapTerm(jsonElement);
-    } else if (jsonElement.isJsonPrimitive()){
+    } else if (jsonElement.isJsonPrimitive()) {
       return getAsPrimitiveTerm(jsonElement);
     } else {
       return null;
     }
   }
 
-  public Term getAsPrimitiveTerm(JsonElement jsonElement){
+  public Term getAsPrimitiveTerm(JsonElement jsonElement) {
     JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
-    if (jsonPrimitive.isString()){
+    if (jsonPrimitive.isString()) {
       return new StringTermImpl(jsonPrimitive.getAsString());
-    } else if (jsonPrimitive.isNumber()){
+    } else if (jsonPrimitive.isNumber()) {
       return new NumberTermImpl(jsonPrimitive.getAsDouble());
-    } else if (jsonPrimitive.isBoolean()){
+    } else if (jsonPrimitive.isBoolean()) {
       boolean b = jsonPrimitive.getAsBoolean();
-      if (b){
+      if (b) {
         return Literal.LTrue;
       } else {
         return Literal.LFalse;
@@ -463,64 +466,61 @@ public class YAgentArch2 extends AgArch {
     return null; //TODO: check
   }
 
-  public ListTerm getAsListTerm(JsonElement jsonElement){
+  public ListTerm getAsListTerm(JsonElement jsonElement) {
     JsonArray jsonArray = jsonElement.getAsJsonArray();
     ListTerm list = new ListTermImpl();
-    for (int i = 0; i<jsonArray.size();i++){
+    for (int i = 0; i < jsonArray.size(); i++) {
       list.add(getAsTerm(jsonArray.get(i)));
     }
     return list;
   }
 
-  public MapTerm getAsMapTerm(JsonElement jsonElement){
+  public MapTerm getAsMapTerm(JsonElement jsonElement) {
     com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
     MapTerm object = new MapTermImpl();
-    for (String key: jsonObject.keySet()){
+    for (String key : jsonObject.keySet()) {
       object.put(new StringTermImpl(key), getAsTerm(jsonObject.get(key)));
     }
     return object;
   }
 
-  private Term getNewMessageId(){
-    Term messageTermId = new StringTermImpl("Message"+this.messageId);
-    this.messageId ++;
+  private Term getNewMessageId() {
+    Term messageTermId = new StringTermImpl("Message" + this.messageId);
+    this.messageId++;
     return messageTermId;
   }
 
-  public void createWorkspace(String workspaceName){
+  public void createWorkspace(String workspaceName) {
     System.out.println("is creating workspace");
-    System.out.println("agent: "+this.getAgName());
+    System.out.println("agent: " + this.getAgName());
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     headers.put("Slug", workspaceName);
-    sendHttpRequest("http://localhost:8080/workspaces/", "POST", null,  headers);
+    sendHttpRequest("http://localhost:8080/workspaces/", "POST", null, headers);
   }
 
 
-  public void createSubWorkspace(String workspaceName, String subWorkspaceName){
-    String uri = "http://localhost:8080/workspaces/" + workspaceName +"/sub";
+  public void createSubWorkspace(String workspaceName, String subWorkspaceName) {
+    String uri = "http://localhost:8080/workspaces/" + workspaceName + "/sub";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     JsonObject object = new JsonObject();
     object.put("name", subWorkspaceName);
     String body = object.encode();
-    System.out.println("body: "+body);
+    System.out.println("body: " + body);
 
     sendHttpRequest(uri, "POST", body, headers);
 
   }
 
 
-
-
-
-  public void makeArtifact(String workspaceName, String artifactName, String artifactClass){
-    String uri = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/";
+  public void makeArtifact(String workspaceName, String artifactName, String artifactClass) {
+    String uri = "http://localhost:8080/workspaces/" + workspaceName + "/artifacts/";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     headers.put("Content-Type", "application/json");
     artifactName = artifactName.replace("\"", "");
-    artifactClass = artifactClass.replace("\"","");
+    artifactClass = artifactClass.replace("\"", "");
     JsonObject object = new JsonObject();
     object.put("artifactName", artifactName);
     object.put("artifactClass", artifactClass);
@@ -529,54 +529,51 @@ public class YAgentArch2 extends AgArch {
   }
 
 
-
-  public void joinWorkspace(String workspaceName){
-    String uri = "http://localhost:8080/workspaces/"+workspaceName+"/join";
+  public void joinWorkspace(String workspaceName) {
+    String uri = "http://localhost:8080/workspaces/" + workspaceName + "/join";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     MapTerm httpResponse = sendHttpRequest(uri, "PUT", null, headers);
     String response = ((StringTerm) httpResponse.get(new StringTermImpl("body"))).getString();
-try {
-      System.out.println("body description: "+response);
+    try {
+      System.out.println("body description: " + response);
       ThingDescription td = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, response);
       Optional<String> opName = td.getThingURI();
-      if (opName.isPresent()){
+      if (opName.isPresent()) {
         String bodyName = opName.get();
-        System.out.println("body name: "+bodyName);
-        AgentRegistry.getInstance().addBody(this.getAgName(), workspaceName, bodyName );
+        System.out.println("body name: " + bodyName);
+        AgentRegistry.getInstance().addBody(this.getAgName(), workspaceName, bodyName);
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
 
-
-
-  public void leaveWorkspace(String workspaceName){
-    String uri = "http://localhost:8080/workspaces/"+workspaceName+"/leave";
+  public void leaveWorkspace(String workspaceName) {
+    String uri = "http://localhost:8080/workspaces/" + workspaceName + "/leave";
     Map<String, String> headers = new Hashtable<>();
     headers.put("X-Agent-WebID", this.getAgName());
     sendHttpRequest(uri, "DELETE", null, headers);
     AgentRegistry.getInstance().removeBody(this.getAgName(), workspaceName);
   }
 
-  public void focus(String workspaceName, String artifactName){
+  public void focus(String workspaceName, String artifactName) {
     try {
       String bodyName = AgentRegistry.getInstance().getBody(this.getAgName(), workspaceName);
-      String focusUri = bodyName+"/focus";
-      System.out.println("body name: "+bodyName);
+      String focusUri = bodyName + "/focus";
+      System.out.println("body name: " + bodyName);
       Map<String, String> headers = new Hashtable<>();
       headers.put("X-Agent-WebID", this.getAgName());
       headers.put("Content-Type", "application/json");
-      String body = "[\""+artifactName+"\"]";
-      System.out.println("focus body: "+body);
+      String body = "[\"" + artifactName + "\"]";
+      System.out.println("focus body: " + body);
       sendHttpRequest(focusUri, "PUT", body, headers);
-      String artifactIRI = "http://localhost:8080/workspaces/"+workspaceName+"/artifacts/"+artifactName;
-      System.out.println("artifact IRI: "+artifactIRI);
+      String artifactIRI = "http://localhost:8080/workspaces/" + workspaceName + "/artifacts/" + artifactName;
+      System.out.println("artifact IRI: " + artifactIRI);
       NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIRI, this.getAgName());
 
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
   }
@@ -597,9 +594,10 @@ try {
       e.printStackTrace();
     }
   }
-  public MapTerm invokeAction(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+
+  public MapTerm invokeAction(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
-      System.out.println("invoke action has body: "+ body);
+      System.out.println("invoke action has payload: " + payload);
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
@@ -609,42 +607,23 @@ try {
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
           if (action.getUriVariables().isPresent()) {
-            System.out.println("form target: "+form.getTarget());
-            System.out.println("uri variables: "+ uriVariables);
+            System.out.println("form target: " + form.getTarget());
+            System.out.println("uri variables: " + uriVariables);
             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
           request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
-          for (String key: headers.keySet()){
+          for (String key : headers.keySet()) {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            System.out.println("json element: "+ element);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              DataSchema schema = opSchema.get();
-              if (Objects.equals(schema.getDatatype(), "array") && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (Objects.equals(schema.getDatatype(), "object") && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (Objects.equals(schema.getDatatype(), "string")){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (Objects.equals(schema.getDatatype(), "number")){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (Objects.equals(schema.getDatatype(), "integer")){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (Objects.equals(schema.getDatatype(), "boolean")){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
 
-          }
+          Optional<DataSchema> opSchema = action.getInputSchema();
+
+          // Set the payload depending on the data type of the input data
+          setRequestPayload(payload, request, opSchema);
+
           TDHttpResponse response = request.execute();
           return createResponseObject(response);
         } else {
@@ -655,30 +634,52 @@ try {
         System.out.println("action is not present");
         return null;
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public MapTerm readProperty(String tdUrl, String affordanceName, Map<String, String> headers, Map<String, Object> uriVariables){
+  private void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+    // OPTION 1: There is only one request payload
+    if (!isJson(payload.toString())) {
+      // 1a. The payload's data type can be a PRIMITIVE
+      DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+      request.setPrimitivePayload(schema, payload.toString());
+    } else {
+      JsonElement element = JsonParser.parseString(payload.toString());
+      // 1b. The payload's data type can be an OBJECT
+      if (element.isJsonObject()) {
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+        // 1c. The payload's data type can be an ARRAY (i.e. an array in an array)
+      } else if (element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      }
+    }
+  }
+
+  public MapTerm readProperty(String tdUrl, String affordanceName, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<PropertyAffordance> opProperty = td.getPropertyByName(affordanceName);
       if (opProperty.isPresent()) {
         PropertyAffordance property = opProperty.get();
-        List<Form> formList= property.getForms();
-        if (formList.size()>0) {
+        List<Form> formList = property.getForms();
+        if (formList.size() > 0) {
           Form form = formList.get(0);
           TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
           if (property.getUriVariables().isPresent()) {
-            System.out.println("form target: "+form.getTarget());
+            System.out.println("form target: " + form.getTarget());
             request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
           request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
-          for (String key: headers.keySet()){
+          for (String key : headers.keySet()) {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
@@ -692,31 +693,31 @@ try {
         System.out.println("property is not present");
         return null;
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
 
-  public MapTerm writeProperty(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm writeProperty(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<PropertyAffordance> opProperty = td.getPropertyByName(affordanceName);
       if (opProperty.isPresent()) {
         PropertyAffordance property = opProperty.get();
-        List<Form> formList= property.getForms();
-        if (formList.size()>0) {
+        List<Form> formList = property.getForms();
+        if (formList.size() > 0) {
           Form form = formList.get(0);
           TDHttpRequest request = new TDHttpRequest(form, TD.writeProperty);
           if (property.getUriVariables().isPresent()) {
-            System.out.println("form target: "+form.getTarget());
+            System.out.println("form target: " + form.getTarget());
             request = new TDHttpRequest(form, TD.writeProperty, property.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
           request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
-          for (String key: headers.keySet()){
+          for (String key : headers.keySet()) {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
@@ -731,31 +732,31 @@ try {
         System.out.println("property is not present");
         return null;
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
 
-  public MapTerm subscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm subscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
       if (opEvent.isPresent()) {
         EventAffordance event = opEvent.get();
-        List<Form> formList= event.getForms();
-        if (formList.size()>0) {
+        List<Form> formList = event.getForms();
+        if (formList.size() > 0) {
           Form form = formList.get(0);
           TDHttpRequest request = new TDHttpRequest(form, TD.subscribeEvent);
           if (event.getUriVariables().isPresent()) {
-            System.out.println("form target: "+form.getTarget());
+            System.out.println("form target: " + form.getTarget());
             request = new TDHttpRequest(form, TD.subscribeEvent, event.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
           request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
-          for (String key: headers.keySet()){
+          for (String key : headers.keySet()) {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
@@ -770,30 +771,30 @@ try {
         System.out.println("event is not present");
         return null;
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public MapTerm unsubscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm unsubscribeEvent(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
       Optional<EventAffordance> opEvent = td.getEventByName(affordanceName);
       if (opEvent.isPresent()) {
         EventAffordance event = opEvent.get();
-        List<Form> formList= event.getForms();
-        if (formList.size()>0) {
+        List<Form> formList = event.getForms();
+        if (formList.size() > 0) {
           Form form = formList.get(0);
           TDHttpRequest request = new TDHttpRequest(form, TD.unsubscribeEvent);
           if (event.getUriVariables().isPresent()) {
-            System.out.println("form target: "+form.getTarget());
+            System.out.println("form target: " + form.getTarget());
             request = new TDHttpRequest(form, TD.unsubscribeEvent, event.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
           request.addHeader("X-Agent-WebID", this.getAgHypermediaName());
 
-          for (String key: headers.keySet()){
+          for (String key : headers.keySet()) {
             String value = headers.get(key);
             request.addHeader(key, value);
           }
@@ -808,24 +809,24 @@ try {
         System.out.println("event is not present");
         return null;
       }
-    } catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  private List<Object> createArrayPayload(JsonArray jsonArray){
+  private List<Object> createArrayPayload(JsonArray jsonArray) {
     List<Object> payload = new ArrayList<>();
-    for (int i = 0; i<jsonArray.size();i++){
+    for (int i = 0; i < jsonArray.size(); i++) {
       JsonElement e = jsonArray.get(i);
       payload.add(e);
     }
     return payload;
   }
 
-  private Map<String, Object> createObjectPayload(com.google.gson.JsonObject jsonObject){
+  private Map<String, Object> createObjectPayload(com.google.gson.JsonObject jsonObject) {
     Map<String, Object> payload = new Hashtable<>();
-    for (String key: jsonObject.keySet()){
+    for (String key : jsonObject.keySet()) {
       JsonElement value = jsonObject.get(key);
       payload.put(key, value);
     }
@@ -833,18 +834,17 @@ try {
   }
 
 
-
-  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers){
-    return sendHttpRequest(uri, method,body, headers, new Hashtable<>());
+  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers) {
+    return sendHttpRequest(uri, method, body, headers, new Hashtable<>());
   }
 
-  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm sendHttpRequest(String uri, String method, String body, Map<String, String> headers, Map<String, Object> uriVariables) {
     AtomicReference<String> returnValue = new AtomicReference<>();
     com.google.gson.JsonObject returnObject = new com.google.gson.JsonObject();
-      Map<String, DataSchema> uriVariablesSchemas = new Hashtable<>();
-      for (String key: uriVariables.keySet()){
-        uriVariablesSchemas.put(key, new StringSchema.Builder().build());
-      }
+    Map<String, DataSchema> uriVariablesSchemas = new Hashtable<>();
+    for (String key : uriVariables.keySet()) {
+      uriVariablesSchemas.put(key, new StringSchema.Builder().build());
+    }
       /*for (int i = 0; i < n; i++) {
         StringTerm st = (StringTerm) uriVariableNames.get(i);
         String name = st.getString();
@@ -864,63 +864,63 @@ try {
             e.printStackTrace();
           }
         }*/
-        if (!uriVariables.isEmpty()) {
+    if (!uriVariables.isEmpty()) {
 
-           uri = new UriTemplate(uri).createUri(uriVariablesSchemas, uriVariables);
-        }
-
-        ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
-        for (String key : headers.keySet()) {
-          String value = headers.get(key);
-          request.addHeader(key, value);
-        }
-
-        if (body != null) {
-          System.out.println("body: " + body);
-          if (isJson(body)) {
-            request.addHeader("Content-Type", "application/json");
-          }
-          request.setEntity(new StringEntity(body));
-        }
-        try {
-          client.execute(request, response -> {
-            returnObject.addProperty("statusCode", response.getCode());
-            Iterator<Header> responseHeaders = response.headerIterator();
-            com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
-            while (responseHeaders.hasNext()) {
-              Header h = responseHeaders.next();
-              rHeaders.addProperty(h.getName(), h.getValue());
-            }
-            returnObject.add("headers", rHeaders);
-            System.out.println("response received: ");
-            System.out.println(response);
-            HttpEntity entity = response.getEntity();
-            //String r = EntityUtils.toString(entity);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
-            String line;
-            StringBuilder s = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-              s.append(line);
-              System.out.println(line);
-            }
-            System.out.println(response.getEntity().getContent().toString());
-            returnValue.set(s.toString());
-            return null;
-          });
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-        System.out.println("request done");
-        returnObject.addProperty("body", returnValue.get());
-        return (MapTerm) getAsJsonTerm(returnObject);
+      uri = new UriTemplate(uri).createUri(uriVariablesSchemas, uriVariables);
     }
 
-  public MapTerm createResponseObject(TDHttpResponse response){
+    ClassicHttpRequest request = new BasicClassicHttpRequest(method, uri);
+    for (String key : headers.keySet()) {
+      String value = headers.get(key);
+      request.addHeader(key, value);
+    }
+
+    if (body != null) {
+      System.out.println("body: " + body);
+      if (isJson(body)) {
+        request.addHeader("Content-Type", "application/json");
+      }
+      request.setEntity(new StringEntity(body));
+    }
+    try {
+      client.execute(request, response -> {
+        returnObject.addProperty("statusCode", response.getCode());
+        Iterator<Header> responseHeaders = response.headerIterator();
+        com.google.gson.JsonObject rHeaders = new com.google.gson.JsonObject();
+        while (responseHeaders.hasNext()) {
+          Header h = responseHeaders.next();
+          rHeaders.addProperty(h.getName(), h.getValue());
+        }
+        returnObject.add("headers", rHeaders);
+        System.out.println("response received: ");
+        System.out.println(response);
+        HttpEntity entity = response.getEntity();
+        //String r = EntityUtils.toString(entity);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(entity.getContent()));
+        String line;
+        StringBuilder s = new StringBuilder();
+        while ((line = reader.readLine()) != null) {
+          s.append(line);
+          System.out.println(line);
+        }
+        System.out.println(response.getEntity().getContent().toString());
+        returnValue.set(s.toString());
+        return null;
+      });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    System.out.println("request done");
+    returnObject.addProperty("body", returnValue.get());
+    return (MapTerm) getAsJsonTerm(returnObject);
+  }
+
+  public MapTerm createResponseObject(TDHttpResponse response) {
     MapTerm responseObject = new MapTermImpl();
     responseObject.put(new StringTermImpl("statusCode"), new NumberTermImpl(response.getStatusCode()));
-    Map<String,String> responseHeaders = response.getHeaders();
+    Map<String, String> responseHeaders = response.getHeaders();
     MapTerm rHeaders = new MapTermImpl();
-    for (String key: responseHeaders.keySet()){
+    for (String key : responseHeaders.keySet()) {
       rHeaders.put(new StringTermImpl(key), new StringTermImpl(responseHeaders.get(key)));
     }
     responseObject.put(new StringTermImpl("headers"), rHeaders);
@@ -932,12 +932,11 @@ try {
   //JSON methods
 
 
-
-  public boolean isJson(String str){ //TODO: check
+  public boolean isJson(String str) { //TODO: check
     boolean b = true;
     try {
       JsonParser.parseString(str);
-    } catch (Exception e){
+    } catch (Exception e) {
       b = false;
     }
     return b;
@@ -985,56 +984,56 @@ try {
     }
   }*/
 
-  public Term getAsJsonTerm(JsonElement jsonElement){
+  public Term getAsJsonTerm(JsonElement jsonElement) {
     Term t = new MapTermImpl();
-    if (jsonElement.isJsonPrimitive()){
+    if (jsonElement.isJsonPrimitive()) {
       JsonPrimitive jsonPrimitive = jsonElement.getAsJsonPrimitive();
-      if (jsonPrimitive.isNumber()){
+      if (jsonPrimitive.isNumber()) {
         t = new NumberTermImpl(jsonPrimitive.getAsDouble());
-      } else if (jsonPrimitive.isString()){
+      } else if (jsonPrimitive.isString()) {
         t = new StringTermImpl(jsonPrimitive.getAsString());
-      } else if (jsonPrimitive.isBoolean()){
+      } else if (jsonPrimitive.isBoolean()) {
         System.out.println("has boolean");
         boolean b = jsonPrimitive.getAsBoolean();
-        if (b){
+        if (b) {
           t = Literal.LTrue;
-          System.out.println("boolean: "+t);
+          System.out.println("boolean: " + t);
         } else {
           t = Literal.LFalse;
-          System.out.println("boolean: "+t);
+          System.out.println("boolean: " + t);
         }
       }
-    } else if (jsonElement.isJsonArray()){
+    } else if (jsonElement.isJsonArray()) {
       JsonArray jsonArray = jsonElement.getAsJsonArray();
-      ListTerm l =  new ListTermImpl();
-      for (int i = 0; i<jsonArray.size(); i++){
+      ListTerm l = new ListTermImpl();
+      for (int i = 0; i < jsonArray.size(); i++) {
         l.add(getAsJsonTerm(jsonArray.get(i)));
       }
       t = l;
-    } else if (jsonElement.isJsonObject()){
+    } else if (jsonElement.isJsonObject()) {
       com.google.gson.JsonObject jsonObject = jsonElement.getAsJsonObject();
       MapTerm mapTerm = new MapTermImpl();
-      for (String key : jsonObject.keySet()){
+      for (String key : jsonObject.keySet()) {
         mapTerm.put(new StringTermImpl(key), getAsJsonTerm(jsonObject.get(key))); //TODO: check
       }
-      t= mapTerm;
-    } else if (jsonElement.isJsonNull()){
+      t = mapTerm;
+    } else if (jsonElement.isJsonNull()) {
       t = null;
     }
     return t;
   }
 
-  public Term createTermFromJson(String jsonString){
+  public Term createTermFromJson(String jsonString) {
     JsonElement jsonElement = JsonParser.parseString(jsonString);
     return getAsJsonTerm(jsonElement);
   }
 
-  public MapTerm createMapTerm(ListTerm attributes, ListTerm values){
+  public MapTerm createMapTerm(ListTerm attributes, ListTerm values) {
     MapTerm mt = new MapTermImpl();
     int n1 = attributes.size();
     int n2 = values.size();
-    if (n1 == n2){
-      for (int i=0; i<n1;i++){
+    if (n1 == n2) {
+      for (int i = 0; i < n1; i++) {
         Term a = attributes.get(i);
         Term v = values.get(i);
         mt.put(a, v);
@@ -1088,12 +1087,12 @@ try {
     return s.toString();
   }*/
 
-  public String getAsJson(Term t){
+  public String getAsJson(Term t) {
     StringBuilder s = new StringBuilder();
-    if (t.isMap()){
+    if (t.isMap()) {
       MapTerm mt = (MapTerm) t;
       s = new StringBuilder("{");
-      for (Term key: mt.keys()){
+      for (Term key : mt.keys()) {
         String keyString = key.toString();
         String valueString = getAsJson(mt.get(key));
         s.append(keyString).append(":").append(valueString).append(",");
@@ -1101,56 +1100,56 @@ try {
       s = new StringBuilder(s.substring(0, s.length() - 1));
       s.append("}");
 
-    } else if (t.isList()){
+    } else if (t.isList()) {
       s = new StringBuilder("[");
       ListTerm lt = (ListTerm) t;
-      for (Term term: lt){
+      for (Term term : lt) {
         s.append(getAsJson(term)).append(",");
       }
       s = new StringBuilder(s.substring(0, s.length() - 1));
       s.append("]");
-    } else if (t.isString()){
+    } else if (t.isString()) {
       s = new StringBuilder(t.toString());
-    } else if (t.isNumeric()){
+    } else if (t.isNumeric()) {
       NumberTerm nt = (NumberTerm) t;
       try {
         double d = nt.solve();
         long r = Math.round(d);
-        if (d == (double)r) {
+        if (d == (double) r) {
           s = new StringBuilder(String.valueOf(r));
         } else {
           s = new StringBuilder(String.valueOf(d));
         }
-      } catch (Exception e){
+      } catch (Exception e) {
         System.err.println("The number is not valid");
       }
-    } else if (t.isLiteral()){
+    } else if (t.isLiteral()) {
       s = new StringBuilder(t.toString());
-      System.out.println("literal is : "+ s);
+      System.out.println("literal is : " + s);
     }
     return s.toString();
   }
 
-  public boolean containsFromIndex(String notification, int index, String pattern){
+  public boolean containsFromIndex(String notification, int index, String pattern) {
     boolean b = false;
     String newNotification = notification.substring(index);
     b = newNotification.contains(pattern);
     return b;
   }
 
-  public int getIndexFrom(String notification, int index, String pattern){
+  public int getIndexFrom(String notification, int index, String pattern) {
     int newIndex;
     String newNotification = notification.substring(index);
     newIndex = newNotification.indexOf(pattern);
     return index + newIndex;
   }
 
-  public String getUriFromIndex(String notification, int index){
+  public String getUriFromIndex(String notification, int index) {
     int endIndex = index;
     boolean b = true;
     int i = index;
-    while (b && i<notification.length()){
-      if (notification.charAt(i) == ',' || notification.charAt(i)==')' ||notification.charAt(i)== ' '){
+    while (b && i < notification.length()) {
+      if (notification.charAt(i) == ',' || notification.charAt(i) == ')' || notification.charAt(i) == ' ') {
         b = false;
         endIndex = i;
       } else {
@@ -1160,11 +1159,11 @@ try {
     return notification.substring(index, endIndex);
   }
 
-  public Set<String> getUrisFromNotification(String notification){
+  public Set<String> getUrisFromNotification(String notification) {
     Set<String> uris = new HashSet<>();
     int index = 0;
     boolean b = containsFromIndex(notification, index, "http://");
-    while (b){
+    while (b) {
       index = getIndexFrom(notification, index, "http://");
       String uri = getUriFromIndex(notification, index);
       uris.add(uri);
@@ -1175,35 +1174,35 @@ try {
     return uris;
   }
 
-  public Set<Integer> allIndexes(String notification, String uri){
+  public Set<Integer> allIndexes(String notification, String uri) {
     int n = uri.length();
     Set<Integer> allIndexes = new HashSet<>();
-    for (int i=0; i<notification.length();i++ ){
-      if (notification.substring(i, i+n).equals(uri)){
+    for (int i = 0; i < notification.length(); i++) {
+      if (notification.substring(i, i + n).equals(uri)) {
         allIndexes.add(i);
       }
     }
     return allIndexes;
   }
 
-  public String replace(String notification, String uri, int index){
+  public String replace(String notification, String uri, int index) {
     String newNotification = notification.substring(0, index);
     newNotification = newNotification + "\"" + uri + "\"" + notification.substring(index + uri.length());
     return newNotification;
   }
 
-  public String replace(String notification, String uri){
+  public String replace(String notification, String uri) {
     String newNotifaction = notification;
     String returnNotification = notification;
     boolean b = true;
-    while (b){
+    while (b) {
       int index = newNotifaction.lastIndexOf(uri);
-      if (index<0){
+      if (index < 0) {
         b = false;
-      } else if (index > 0 && newNotifaction.charAt(index-1)== '\"') {
-        newNotifaction = notification.substring(0, index-1);
+      } else if (index > 0 && newNotifaction.charAt(index - 1) == '\"') {
+        newNotifaction = notification.substring(0, index - 1);
       } else {
-        newNotifaction = notification.substring(0, index-1);
+        newNotifaction = notification.substring(0, index - 1);
         returnNotification = replace(returnNotification, uri, index);
 
       }
@@ -1212,17 +1211,17 @@ try {
   }
 
 
-  public String transformNotification(String notification){
+  public String transformNotification(String notification) {
     String newNotification = notification;
     Set<String> uris = getUrisFromNotification(notification);
-    Iterator<String> uriIterator= uris.stream().sorted((o1, o2) -> {
+    Iterator<String> uriIterator = uris.stream().sorted((o1, o2) -> {
       int n1 = o1.length();
       int n2 = o2.length();
       int r = 0;
-      if (n1>n2){
+      if (n1 > n2) {
         r = -1;
       }
-      if (n1<n2){
+      if (n1 < n2) {
         r = 1;
       }
       return r;
@@ -1233,7 +1232,6 @@ try {
     }
     return newNotification;
   }
-
 
 
 }
