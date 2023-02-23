@@ -35,12 +35,12 @@ public class invokeAction extends WoTAction{
     if (arg.length > 3) {
       Term t = arg[2];
       body = getAsJson(t);
-      boolean b = body.startsWith("\"") && body.endsWith("\"");
+      /*boolean b = body.startsWith("\"") && body.endsWith("\"");
       while (b){ //TODO: to check
         body = body.substring(1, body.length()-1);
         System.out.println("current body: "+ body);
         b = body.startsWith("\"") && body.endsWith("\"");
-      }
+      }*/
     }
     System.out.println("body: "+body);
     Map<String, String> headers = new Hashtable<>();
@@ -105,8 +105,8 @@ public class invokeAction extends WoTAction{
             request.addHeader(key, value);
           }
           if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            System.out.println("json element: "+ element);
+            //JsonElement element = JsonParser.parseString(body);
+            //System.out.println("json element: "+ element);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
               System.out.println("schema is present");
@@ -114,19 +114,30 @@ public class invokeAction extends WoTAction{
                 request.addHeader("Content-Type", "application/json");
               }
               DataSchema schema = opSchema.get();
-              if (Objects.equals(schema.getDatatype(), "array") && element.isJsonArray()){
+              if (Objects.equals(schema.getDatatype(), DataSchema.ARRAY)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
                 request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (Objects.equals(schema.getDatatype(), "object") && element.isJsonObject()){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.OBJECT)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
                 request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (Objects.equals(schema.getDatatype(), "string")){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.STRING)){
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsString());
-              } else if (Objects.equals(schema.getDatatype(), "number")){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.NUMBER)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (Objects.equals(schema.getDatatype(), "integer")){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.INTEGER)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (Objects.equals(schema.getDatatype(), "boolean")){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.BOOLEAN)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsBoolean());
               }
             } else {
@@ -155,6 +166,16 @@ public class invokeAction extends WoTAction{
       e.printStackTrace();
     }
     return null;
+  }
+
+  public String removeQuotes(String body){
+    boolean b = body.startsWith("\"") && body.endsWith("\"");
+    while (b){ //TODO: to check
+      body = body.substring(1, body.length()-1);
+      System.out.println("current body: "+ body);
+      b = body.startsWith("\"") && body.endsWith("\"");
+    }
+    return body;
   }
 
 

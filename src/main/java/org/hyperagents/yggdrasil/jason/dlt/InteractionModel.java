@@ -21,11 +21,30 @@ import java.util.Optional;
 public class InteractionModel {
     private MapTerm modelTerm;
 
+
+    private Optional<String> tdUrl;
+
+    private Optional<String> affordanceName;
+
+    private Optional<String> agentUri;
+
     private static ValueFactory rdf = SimpleValueFactory.getInstance();
 
     public InteractionModel(MapTerm modelTerm){
       this.modelTerm = modelTerm;
+      this.tdUrl = Optional.empty();
+      this.affordanceName = Optional.empty();
+      this.agentUri = Optional.empty();
     }
+
+    public void setTDInfo(String tdUrl, String affordanceName){
+      this.tdUrl = Optional.of(tdUrl);
+      this.affordanceName = Optional.of(affordanceName);
+    }
+
+  public void setAgentInfo(String agentUri){
+    this.agentUri = Optional.of(agentUri);
+  }
 
   public JsonElement getAsJson(Term t){
       JsonElement e = null;
@@ -83,40 +102,52 @@ public class InteractionModel {
       com.google.gson.JsonObject modelObject = getJsonObjectFromMapTerm(modelTerm);
     ModelBuilder modelBuilder = new ModelBuilder();
     Resource interactionIdentifier = rdf.createBNode("interaction");
+    if (agentUri.isPresent()){
+      modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/hasAgent"), rdf.createIRI(agentUri.get()));
+    }
+    if (tdUrl.isPresent() && affordanceName.isPresent()){
+      Resource tdAffordance = rdf.createBNode("tdAffordance");
+      modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/useTDAffordance"), tdAffordance);
+      modelBuilder.add(tdAffordance,  rdf.createIRI("http://example.org/interaction/hasTDUrl"), rdf.createIRI(tdUrl.get()));
+      modelBuilder.add(tdAffordance, rdf.createIRI("http://example.org/interaction/hasAffordanceName"), rdf.createLiteral(affordanceName.get()));
+
+    }
     Resource requestIdentifier = rdf.createBNode("request");
-    modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/hasRequest"),requestIdentifier );
+    modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/hasRequest"),requestIdentifier );
     String target = modelObject.get("request").getAsJsonObject().get("url").getAsString();
-    modelBuilder.add(requestIdentifier, rdf.  createIRI("http://example.org/hasTarget"), rdf.createIRI(target));
+    modelBuilder.add(requestIdentifier, rdf.  createIRI("https://www.w3.org/2011/http#requestURI"), rdf.createIRI(target));
     String method =modelObject.get("request").getAsJsonObject().get("method").getAsString();
-    modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/hasMethod"), rdf.createLiteral(method));
+    modelBuilder.add(requestIdentifier, rdf.createIRI("https://www.w3.org/2011/http#methodName"), rdf.createLiteral(method));
     Map<String, String> requestHeaders = getHeaders( modelObject.get("request").getAsJsonObject().get("headers").getAsJsonObject());;
     for (String key: requestHeaders.keySet()){
       Resource headerIdentifier = rdf.createBNode("request header: "+key);
       String value = requestHeaders.get(key);
-      modelBuilder.add(headerIdentifier, rdf.createIRI("http://example.org/hasKey"), rdf.createLiteral(key));
-      modelBuilder.add(headerIdentifier, rdf.createIRI("http://example.org/hasValue"), rdf.createLiteral(value));
-      modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/hasHeader"), headerIdentifier);
+      modelBuilder.add(headerIdentifier, rdf.createIRI("https://www.w3.org/2011/http#fieldName"), rdf.createLiteral(key));
+      modelBuilder.add(headerIdentifier, rdf.createIRI("https://www.w3.org/2011/http#fieldValue"), rdf.createLiteral(value));
+      modelBuilder.add(requestIdentifier, rdf.createIRI("https://www.w3.org/2011/http#headers"), headerIdentifier);
     }
     JsonElement body = modelObject.get("request").getAsJsonObject().get("body");
     if (body != null) {
-      modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/hasBody"), rdf.createLiteral(body.getAsString()));
+      modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/interaction/hasBody"), rdf.createLiteral(body.getAsString()));
     }
     Resource responseIdentifier = rdf.createBNode("response");
     int statusCode = modelObject.get("response").getAsJsonObject().get("statusCode").getAsInt();
-    modelBuilder.add(responseIdentifier, rdf.createIRI("http://example.org/hasStatusCode"), rdf.createLiteral(statusCode));
+    Resource statusCodeId = rdf.createBNode("statusCode");
+    modelBuilder.add(responseIdentifier, rdf.createIRI("https://www.w3.org/2011/http#sc"), statusCodeId);
+    modelBuilder.add(statusCodeId, rdf.createIRI("https://www.w3.org/2011/http#statusCodeNumber"), rdf.createLiteral(statusCode));
     Map<String, String> responseHeaders = getHeaders(modelObject.get("response").getAsJsonObject().get("headers").getAsJsonObject());
     for (String key: responseHeaders.keySet()){
       Resource headerIdentifier = rdf.createBNode("response header: "+key);
       String value = responseHeaders.get(key);
-      modelBuilder.add(headerIdentifier, rdf.createIRI("http://example.org/hasKey"), rdf.createLiteral(key));
-      modelBuilder.add(headerIdentifier, rdf.createIRI("http://example.org/hasValue"), rdf.createLiteral(value));
-      modelBuilder.add(responseIdentifier, rdf.createIRI("http://example.org/hasHeader"), headerIdentifier);
+      modelBuilder.add(headerIdentifier, rdf.createIRI("https://www.w3.org/2011/http#fieldName"), rdf.createLiteral(key));
+      modelBuilder.add(headerIdentifier, rdf.createIRI("https://www.w3.org/2011/http#fieldValue"), rdf.createLiteral(value));
+      modelBuilder.add(responseIdentifier, rdf.createIRI("https://www.w3.org/2011/http#headers"), headerIdentifier);
     }
     JsonElement payload= modelObject.get("request").getAsJsonObject().get("body");
     if (payload != null) {
-      modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/hasBody"), rdf.createLiteral(payload.getAsString()));
+      modelBuilder.add(requestIdentifier, rdf.createIRI("http://example.org/interaction/hasBody"), rdf.createLiteral(payload.getAsString()));
     }
-    modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/hasReponse"),responseIdentifier );
+    modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/hasReponse"),responseIdentifier );
 
 
 
