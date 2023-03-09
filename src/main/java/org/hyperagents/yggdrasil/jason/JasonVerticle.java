@@ -71,8 +71,8 @@ public class JasonVerticle extends AbstractVerticle {
     switch(requestMethod){
       case INSTANTIATE_AGENT:
         String aslFile = message.body();
-        instantiateAgent(agentName, aslFile);
-        message.reply("agent created");
+        String agentURI = instantiateAgent(agentName, aslFile);
+        message.reply(agentURI);
         break;
 
 
@@ -80,7 +80,7 @@ public class JasonVerticle extends AbstractVerticle {
 
   }
 
-  private void instantiateAgent(String agentName, String aslFile){
+  private String instantiateAgent(String agentName, String aslFile){
     try {
       String hypermediaAgentName = AgentRegistry.getInstance().addAgent(agentName);
       InputStream stream = new ByteArrayInputStream(aslFile.getBytes());
@@ -91,9 +91,11 @@ public class JasonVerticle extends AbstractVerticle {
       IRI agentIRI = rdf.createIRI(hypermediaAgentName);
       System.out.println("agent IRI: "+agentIRI);
       registerAgent(agentName, agentIRI);
+      return hypermediaAgentName;
     } catch(Exception e){
       e.printStackTrace();
     }
+    return null;
   }
 
   private void registerAgent(String agentName, IRI agentIRI){

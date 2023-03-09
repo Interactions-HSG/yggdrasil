@@ -1,7 +1,8 @@
 package org.hyperagents.yggdrasil;
 
-import io.vertx.core.Launcher;
-import org.apache.log4j.Logger;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.json.JsonObject;
 import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
@@ -12,10 +13,6 @@ import org.hyperagents.yggdrasil.jason.JasonVerticle;
 import org.hyperagents.yggdrasil.moise.MoiseVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
-
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.json.JsonObject;
 
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -63,6 +60,7 @@ public class MainVerticle extends AbstractVerticle {
       );
 
     JsonObject knownArtifacts = new JsonObject()
+        .put("http://example.org/Annotator", "org.hyperagents.yggdrasil.cartago.artifacts.AnnotationController")
         .put("https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D",
             "org.hyperagents.yggdrasil.cartago.artifacts.PhantomX3D")
         .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter")
