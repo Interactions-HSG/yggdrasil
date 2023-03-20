@@ -80,6 +80,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
     router.get("/agents/:agentid").handler(handler::handleGetAgentProfile);
     router.post("/agents/:agentid").handler(handler::handleReceiveNotification);
+    router.delete("/agents/:agentid").handler(handler::handleDeleteAgent);
     router.post("/agents/:agentid/message").handler(handler::handleReceiveMessage);
     router.options("/agents/:agentid/message").handler(CorsHandler.create("*")
       .maxAgeSeconds(86400)

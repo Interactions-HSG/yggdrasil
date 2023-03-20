@@ -7,10 +7,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.*;
-import org.hyperagents.yggdrasil.jason.AgentMessageCallback;
-import org.hyperagents.yggdrasil.jason.AgentNotificationCallback;
-import org.hyperagents.yggdrasil.jason.AgentRegistry;
-import org.hyperagents.yggdrasil.jason.JasonVerticle;
+import org.hyperagents.yggdrasil.jason.*;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -462,7 +459,7 @@ public class HttpEntityHandler {
   public void handleInstantiateAgent(RoutingContext routingContext){
     System.out.println("handle instantiate agent");
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
-    String agentName = routingContext.request().getHeader("X-Agent-Name");
+    String agentName = routingContext.request().getHeader("Slug");
     String representation = routingContext.getBodyAsString();
     if (agentId == null){
       routingContext.response()
@@ -534,6 +531,52 @@ public class HttpEntityHandler {
       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
       e.printStackTrace();
     }
+  }
+
+  public void handleReceiveJasonMessage(RoutingContext context){
+    System.out.println("message received");
+    String uri = context.request().absoluteURI();
+    int n = uri.length();
+    String agentUri = uri.substring(0, n-6);
+    int index  = agentUri.indexOf("/agents/");
+    String agentName = agentUri.substring(index + 8);
+    System.out.println("agent name: "+ agentName);
+    String body = context.getBodyAsString();
+    System.out.println("message received: "+body);
+    AgentRegistry agentRegistry = AgentRegistry.getInstance();
+    try {
+      AgentJasonMessageCallback callback = agentRegistry.getAgentJasonMessageCallback(agentName);
+      callback.addMessage(body);
+      System.out.println("message added to message callback");
+      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
+    } catch(Exception e){
+      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
+      e.printStackTrace();
+    }
+  }
+
+  public void handleDeleteAgent(RoutingContext context){
+    System.out.println("handle delete agent");
+    String uri = context.request().absoluteURI();
+    int index  = uri.indexOf("/agents/");
+    System.out.println("index: "+index);
+    String agentName = uri.substring(index + 8);
+    System.out.println("agent name: "+agentName);
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, JasonVerticle.DELETE_AGENT)
+      .addHeader(JasonVerticle.AGENT_NAME, agentName);
+      vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, "", options, reply -> {
+        if (reply.succeeded()) {
+          AgentRegistry.getInstance().printAllAgents();
+          System.out.println("agent deletion succeeded");
+          context.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
+        } else {
+          System.out.println("agent deletion failed");
+          context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+        }
+      });
+
+
   }
 
 

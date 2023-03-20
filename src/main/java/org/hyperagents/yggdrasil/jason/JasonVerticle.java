@@ -37,6 +37,9 @@ public class JasonVerticle extends AbstractVerticle {
   public static final String INSTANTIATE_AGENT = "org.hyperagents.yggdrasil.eventbus.headers.methods"
     + ".instantiateAgent";
 
+  public static final String DELETE_AGENT = "org.hyperagents.yggdrasil.eventbus.headers.methods"
+    + ".deleteAgent";
+
   public static final String CREATE_AGENT_FROM_FILE_NAME = "org.hyperagents.yggdrasil.eventbus.headers.methods"
     + ".createAgentFromFileName";
 
@@ -71,18 +74,22 @@ public class JasonVerticle extends AbstractVerticle {
     switch(requestMethod){
       case INSTANTIATE_AGENT:
         String aslFile = message.body();
-        instantiateAgent(agentName, aslFile);
-        message.reply("agent created");
+        String agentUrl = instantiateAgent(agentName, aslFile);
+        message.reply(agentUrl);
         break;
+      case DELETE_AGENT:
+        deleteAgent(agentName);
+        message.reply("agent deleted");
 
 
     }
 
   }
 
-  private void instantiateAgent(String agentName, String aslFile){
+  private String instantiateAgent(String agentName, String aslFile){
+    String hypermediaAgentName = "";
     try {
-      String hypermediaAgentName = AgentRegistry.getInstance().addAgent(agentName);
+      hypermediaAgentName = AgentRegistry.getInstance().addAgent(agentName);
       InputStream stream = new ByteArrayInputStream(aslFile.getBytes());
       String agArchName = agentService.createAgent(hypermediaAgentName, stream, hypermediaAgentName);
       agentService.startAgent(agArchName);
@@ -94,6 +101,7 @@ public class JasonVerticle extends AbstractVerticle {
     } catch(Exception e){
       e.printStackTrace();
     }
+    return hypermediaAgentName;
   }
 
   private void registerAgent(String agentName, IRI agentIRI){
@@ -123,6 +131,14 @@ public class JasonVerticle extends AbstractVerticle {
     String modelString = out.toString();
     return modelString;
 
+  }
+
+  private void deleteAgent(String agentName){
+    System.out.println("delete agent: "+ agentName);
+    agentService.killAgent(agentName, "", 5); //TODO: check parameters
+    System.out.println("agent killed");
+    AgentRegistry.getInstance().deleteAgent(agentName);
+    System.out.println("agent deleted");
   }
 
 

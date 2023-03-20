@@ -411,12 +411,33 @@ public class YAgentArch2 extends AgArch {
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }
+      AgentJasonMessageCallback jasonMessageCallback = registry.getAgentJasonMessageCallback(agentName);
+      if (jasonMessageCallback.hasNewMessage()){
+        LOGGER.info("agent "+ this.getAgName()+ " has new message");
+        String message = messageCallback.retrieveMessage();
+        System.out.println("message: "+message);
+        Literal messageBelief = new LiteralImpl("message");
+        Term id = getNewMessageId();
+        System.out.println("id: "+id);
+        JsonElement jsonElement = getJsonElementFromString(message);
+        if (jsonElement.isJsonObject()){
+          com.google.gson.JsonObject messageObject = jsonElement.getAsJsonObject();
+          processJasonMessage(messageObject);
+        }
+        //Term jsonTerm = getJsonFromString(message);
+        this.getTS().getAg().addBel(messageBelief);
+        messageCallback.noNewMessage();
+      }
     } catch(Exception e){
       e.printStackTrace();
     }
 
 
     return super.perceive();
+  }
+
+  private void processJasonMessage(com.google.gson.JsonObject jsonObject){
+
   }
 
   public String getAgHypermediaName(){
@@ -439,6 +460,18 @@ public class YAgentArch2 extends AgArch {
       e.printStackTrace();
     }
     return t;
+  }
+
+  private JsonElement getJsonElementFromString(String message) {
+    JsonElement jsonElement = null;
+    try {
+      jsonElement = JsonParser.parseString(message);
+
+
+    } catch (Exception e){
+      e.printStackTrace();
+    }
+    return jsonElement;
   }
 
   public Term getAsTerm(JsonElement jsonElement){

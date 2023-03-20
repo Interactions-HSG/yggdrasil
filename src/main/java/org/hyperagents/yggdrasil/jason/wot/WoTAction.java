@@ -2,9 +2,7 @@ package org.hyperagents.yggdrasil.jason.wot;
 
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
@@ -127,4 +125,72 @@ public class WoTAction extends DefaultInternalAction {
     System.out.println("clean string: "+ returnString);
     return returnString;
   }
+
+  public boolean isJson(String str) { //TODO: check
+    boolean b = true;
+    try {
+      JsonParser.parseString(str);
+    } catch (Exception e) {
+      b = false;
+    }
+    return b;
+  }
+
+  public Map<String, Object> getAsMap(MapTerm t){
+    Map<String, Object> map = new Hashtable<>();
+    return map;
+  }
+
+  public List<Object> getAsList(ListTerm t){
+    List<Object> list = new ArrayList<>();
+    return list;
+  }
+
+  public JsonElement getAsJsonElement(Term t){
+    StringBuilder s = new StringBuilder();
+    JsonElement e = null;
+    if (t.isMap()){
+      JsonObject o = new JsonObject();
+      MapTerm mt = (MapTerm) t;
+      for (Term key: mt.keys()){
+        String keyString = key.toString();
+        JsonElement value = getAsJsonElement(mt.get(key));
+        o.add(keyString, value);
+      }
+      e = o;
+
+    } else if (t.isList()){
+      JsonArray a = new JsonArray();
+      ListTerm lt = (ListTerm) t;
+      for (Term term: lt){
+        a.add(getAsJsonElement(term));
+      }
+      e = a;
+    } else if (t.isString()){
+      JsonPrimitive p = new JsonPrimitive(t.toString());
+      e = p;
+    } else if (t.isNumeric()){
+      NumberTerm nt = (NumberTerm) t;
+      try {
+        double d = nt.solve();
+        long r = Math.round(d);
+        if (d == (double)r) {
+          JsonPrimitive p = new JsonPrimitive(r);
+          e = p;
+        } else {
+          JsonPrimitive p = new JsonPrimitive(d);
+          e = p;
+        }
+      } catch (Exception ex){
+        System.err.println("The number is not valid");
+      }
+    } else if (t.isLiteral()){
+      JsonPrimitive p = new JsonPrimitive(t.toString());
+      e = p;
+      System.out.println("literal is : "+ s);
+    }
+    return e;
+  }
+
+
 }

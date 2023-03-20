@@ -31,10 +31,10 @@ public class invokeAction extends WoTAction{
     String tdUrl = tdUriTerm.getString();
     StringTerm actionTerm = (StringTerm) arg[1];
     String actionName = actionTerm.getString();
-    String body = "";
+    Object body = null;
     if (arg.length > 3) {
       Term t = arg[2];
-      body = getAsJson(t);
+      body = t;
       /*boolean b = body.startsWith("\"") && body.endsWith("\"");
       while (b){ //TODO: to check
         body = body.substring(1, body.length()-1);
@@ -78,7 +78,7 @@ public class invokeAction extends WoTAction{
     return true;
   }
 
-  public MapTerm invokeAction(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
+  public MapTerm invokeAction1(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
       System.out.println("invoke action has body: "+ body);
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
@@ -166,6 +166,87 @@ public class invokeAction extends WoTAction{
       e.printStackTrace();
     }
     return null;
+  }
+
+  public MapTerm invokeAction(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
+    try {
+      System.out.println("invoke action has payload: " + payload);
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      if (opAction.isPresent()) {
+        ActionAffordance action = opAction.get();
+        Optional<Form> opForm = action.getFirstForm();
+        if (opForm.isPresent()) {
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          if (action.getUriVariables().isPresent()) {
+            System.out.println("form target: " + form.getTarget());
+            System.out.println("uri variables: " + uriVariables);
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+
+          for (String key : headers.keySet()) {
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+
+          Optional<DataSchema> opSchema = action.getInputSchema();
+
+          // Set the payload depending on the data type of the input data
+          setRequestPayload(payload, request, opSchema);
+
+          TDHttpResponse response = request.execute();
+          return createResponseObject(response);
+        } else {
+          System.out.println("form is not present");
+          return null;
+        }
+      } else {
+        System.out.println("action is not present");
+        return null;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+    if (payload instanceof Term){
+      JsonElement element = getAsJsonElement((Term) payload);
+      if (element.isJsonObject()){
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+      } else if (element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      } else {
+        DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+        request.setPrimitivePayload(schema, payload.toString());
+      }
+    }
+    // OPTION 1: There is only one request payload
+    else if (!isJson(payload.toString())) {
+      // 1a. The payload's data type can be a PRIMITIVE
+      DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+      request.setPrimitivePayload(schema, payload.toString());
+    } else {
+      JsonElement element = JsonParser.parseString(payload.toString());
+      // 1b. The payload's data type can be an OBJECT
+      if (element.isJsonObject()) {
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+        // 1c. The payload's data type can be an ARRAY (i.e. an array in an array)
+      } else if (element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      }
+    }
   }
 
   public String removeQuotes(String body){
