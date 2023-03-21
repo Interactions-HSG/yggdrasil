@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.jason;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -120,5 +122,11 @@ public class AgentRegistry {
     } else {
       throw new Exception("Agent does not exist");
     }
+  }
+
+  public void setHttpPrefix(JsonObject config){
+    String host = config.getJsonObject("http-config").getString("host");
+    int port = config.getJsonObject("http-config").getInteger("port");
+    this.httpPrefix = "http://"+host+":"+port+"/";
   }
 }

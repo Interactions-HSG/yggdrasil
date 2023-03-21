@@ -4,6 +4,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import org.apache.http.HttpStatus;
+import org.apache.tools.ant.taskdefs.condition.Http;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -66,6 +68,7 @@ public class JasonVerticle extends AbstractVerticle {
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
     HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config()); //TODO: see if needed, maybe for URIs
+    AgentRegistry.getInstance().setHttpPrefix(config());
   }
 
   private void handleAgentRequest(Message<String> message){
@@ -135,10 +138,21 @@ public class JasonVerticle extends AbstractVerticle {
 
   private void deleteAgent(String agentName){
     System.out.println("delete agent: "+ agentName);
-    agentService.killAgent(agentName, "", 5); //TODO: check parameters
     System.out.println("agent killed");
-    AgentRegistry.getInstance().deleteAgent(agentName);
-    System.out.println("agent deleted");
+    try {
+      String agentUri = AgentRegistry.getInstance().getAgentUri(agentName);
+      agentService.killAgent(agentName, "", 5); //TODO: check parameters
+      AgentRegistry.getInstance().deleteAgent(agentName);
+      System.out.println("agent deleted");
+      DeliveryOptions options = new DeliveryOptions()
+        .addHeader(HttpEntityHandler.REQUEST_METHOD, RdfStore.DELETE_ENTITY)
+        .addHeader(HttpEntityHandler.REQUEST_URI, agentUri);
+
+      vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
+        reply -> System.out.println(reply));
+    } catch (Exception e){
+      e.printStackTrace();
+    }
   }
 
 
