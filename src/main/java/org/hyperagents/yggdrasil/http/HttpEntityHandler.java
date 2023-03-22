@@ -83,6 +83,7 @@ public class HttpEntityHandler {
 
 
   public void handleCreateWorkspace(RoutingContext context) {
+    System.out.println("handle create workspace");
     String representation = context.getBodyAsString();
     String workspaceName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
