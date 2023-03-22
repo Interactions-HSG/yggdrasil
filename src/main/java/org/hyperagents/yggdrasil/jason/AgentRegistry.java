@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.jason;
 
+import cartago.JsonObj;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -124,9 +125,20 @@ public class AgentRegistry {
     }
   }
 
-  public void setHttpPrefix(JsonObject config){
-    String host = config.getJsonObject("http-config").getString("host");
-    int port = config.getJsonObject("http-config").getInteger("port");
-    this.httpPrefix = "http://"+host+":"+port+"/";
+  public void setHttpPrefix(JsonObject config) {
+    JsonObject httpConfig = config.getJsonObject("http-config");
+    if (httpConfig.containsKey("base-uri")) {
+      this.httpPrefix = httpConfig.getString("base-uri");
+    } else {
+      String host = "localhost";
+      if (httpConfig.containsKey("host")) {
+        host = httpConfig.getString("host");
+      }
+      int port = 8080;
+      if (httpConfig.containsKey("port")) {
+        port = httpConfig.getInteger("port");
+      }
+      this.httpPrefix = "http://" + host + ":" + port + "/";
+    }
   }
 }
