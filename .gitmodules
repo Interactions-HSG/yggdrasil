@@ -9,4 +9,4 @@
 [submodule "moise"]
 	path = moise
 	url = git@github.com:moise-lang/moise.git
-  branch = master
+  branch = v1.0
