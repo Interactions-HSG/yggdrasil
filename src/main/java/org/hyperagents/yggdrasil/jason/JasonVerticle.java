@@ -76,8 +76,10 @@ public class JasonVerticle extends AbstractVerticle {
     String agentName = message.headers().get(AGENT_NAME);
     switch(requestMethod){
       case INSTANTIATE_AGENT:
+        System.out.println("instantiate agent");
         String aslFile = message.body();
         String agentUrl = instantiateAgent(agentName, aslFile);
+        System.out.println("agent url: "+ agentUrl);
         message.reply(agentUrl);
         break;
       case DELETE_AGENT:
@@ -90,17 +92,23 @@ public class JasonVerticle extends AbstractVerticle {
   }
 
   private String instantiateAgent(String agentName, String aslFile){
+    System.out.println("start instantiate agent");
     String hypermediaAgentName = "";
     try {
       hypermediaAgentName = AgentRegistry.getInstance().addAgent(agentName);
+      System.out.println("hypermedia agent name 1: "+hypermediaAgentName);
       InputStream stream = new ByteArrayInputStream(aslFile.getBytes());
       String agArchName = agentService.createAgent(hypermediaAgentName, stream, hypermediaAgentName);
+      System.out.println("before start agent");
       agentService.startAgent(agArchName);
+      System.out.println("after start agent");
       hypermediaAgentName = AgentRegistry.getInstance().getAgentUri(agentName);
       System.out.println("hypermedia agent name: "+hypermediaAgentName);
       IRI agentIRI = rdf.createIRI(hypermediaAgentName);
       System.out.println("agent IRI: "+agentIRI);
+      System.out.println("before register agent");
       registerAgent(agentName, agentIRI);
+      System.out.println("after register agent");
     } catch(Exception e){
       e.printStackTrace();
     }
