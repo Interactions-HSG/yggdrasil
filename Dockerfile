@@ -3,7 +3,7 @@ FROM openjdk:11
 EXPOSE 8080
 
 COPY .  /yggdrasil
-COPY src/main/conf/config.json /usr/verticles/
+COPY src/main/conf/config3.json /usr/verticles/
 
 RUN cd /yggdrasil && ./gradlew build -x test
 
