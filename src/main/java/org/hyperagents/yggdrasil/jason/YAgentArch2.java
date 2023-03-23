@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.jason;
 
 
+import cartago.Op;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.EventAffordance;
@@ -414,19 +415,17 @@ public class YAgentArch2 extends AgArch {
       AgentJasonMessageCallback jasonMessageCallback = registry.getAgentJasonMessageCallback(agentName);
       if (jasonMessageCallback.hasNewMessage()){
         LOGGER.info("agent "+ this.getAgName()+ " has new message");
-        String message = messageCallback.retrieveMessage();
-        System.out.println("message: "+message);
-        Literal messageBelief = new LiteralImpl("message");
+        Message message = jasonMessageCallback.retrieveMessage();
+        String content = message.getContent();
+        String sender = message.getSender();
         Term id = getNewMessageId();
         System.out.println("id: "+id);
-        JsonElement jsonElement = getJsonElementFromString(message);
+        JsonElement jsonElement = getJsonElementFromString(content);
         if (jsonElement.isJsonObject()){
           com.google.gson.JsonObject messageObject = jsonElement.getAsJsonObject();
-          processJasonMessage(messageObject);
+          processJasonMessage(messageObject, sender);
         }
-        //Term jsonTerm = getJsonFromString(message);
-        this.getTS().getAg().addBel(messageBelief);
-        messageCallback.noNewMessage();
+        jasonMessageCallback.noNewMessage();
       }
     } catch(Exception e){
       e.printStackTrace();
@@ -436,7 +435,48 @@ public class YAgentArch2 extends AgArch {
     return super.perceive();
   }
 
-  private void processJasonMessage(com.google.gson.JsonObject jsonObject){
+  private void processJasonMessage(com.google.gson.JsonObject jsonObject, String sender){
+    String performative = jsonObject.get("performative").getAsString();
+    //String sender = jsonObject.get("sender").getAsString();//TODO: sender from X-Agent-WebID
+    String content = jsonObject.get("content").getAsString();
+    String messageId = jsonObject.get("msgId").getAsString();
+    Optional<String> callback = Optional.empty();
+    if (jsonObject.has("callback")){
+      callback = Optional.of(jsonObject.get("callback").getAsString()); //TODO: retrieve callback from agent profile
+    }
+    if (performative.equals("tell")){
+      try {
+        Literal messageBelief = Literal.parseLiteral(content);
+        Literal senderAnnotation = new LiteralImpl("source");
+        senderAnnotation.addTerm(new StringTermImpl(sender));
+        messageBelief.addAnnot(senderAnnotation);
+        this.getTS().getAg().addBel(messageBelief);
+      } catch (Exception e){
+        e.printStackTrace();
+      }
+
+    } else if (performative.equals("achieve")) {
+      try {
+        Literal messageGoal = Literal.parseLiteral(content);
+        Literal senderAnnotation = new LiteralImpl("source");
+        senderAnnotation.addTerm(new StringTermImpl(sender));
+        messageGoal.addAnnot(senderAnnotation);
+        this.getTS().getAg().addInitialGoal(messageGoal); //TODO: check
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    } else if (performative.equals("tellHow")){
+      try {
+        Plan p = Plan.parse(content);
+        Literal senderAnnotation = new LiteralImpl("source");
+        senderAnnotation.addTerm(new StringTermImpl(sender));
+        p.addAnnot(senderAnnotation);
+        this.getTS().getAg().getPL().add(p);
+      } catch (Exception e){
+        e.printStackTrace();
+      }
+
+    } //TODO: implement other performatives
 
   }
 

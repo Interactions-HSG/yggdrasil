@@ -7,7 +7,7 @@ public class AgentJasonMessageCallback {
 
   private String agentName;
 
-  private Queue<String> messages;
+  private Queue<Message> messages;
 
   private boolean newMessage;
 
@@ -17,9 +17,9 @@ public class AgentJasonMessageCallback {
     this.newMessage = false;
   }
 
-  public void addMessage(String message){
+  public void addMessage(String message, String agent){
 
-    this.messages.add(message);
+    this.messages.add(new Message(message, agent));
     this.newMessage = true;
   }
 
@@ -31,11 +31,12 @@ public class AgentJasonMessageCallback {
     newMessage = false;
   }
 
-  public String retrieveMessage(){
+  public Message retrieveMessage(){
     return this.messages.poll();
   }
 
   public boolean isEmpty(){
     return this.messages.isEmpty();
   }
+
 }

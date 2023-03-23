@@ -68,6 +68,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     //end new
     router.get("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+    router.put("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
+    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.post("/workspaces/:wkspid/artifacts/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
     router.post("/workspaces/:wkspid/artifacts/").consumes("application/json")

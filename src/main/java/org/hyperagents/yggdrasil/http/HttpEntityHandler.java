@@ -538,6 +538,7 @@ public class HttpEntityHandler {
   }
 
   public void handleReceiveJasonMessage(RoutingContext context){
+    String agentSenderUri = context.request().getHeader("X-Agent-WebID");
     System.out.println("message received");
     String uri = context.request().absoluteURI();
     int n = uri.length();
@@ -550,7 +551,7 @@ public class HttpEntityHandler {
     AgentRegistry agentRegistry = AgentRegistry.getInstance();
     try {
       AgentJasonMessageCallback callback = agentRegistry.getAgentJasonMessageCallback(agentName);
-      callback.addMessage(body);
+      callback.addMessage(body, agentSenderUri);
       System.out.println("message added to message callback");
       context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
     } catch(Exception e){
