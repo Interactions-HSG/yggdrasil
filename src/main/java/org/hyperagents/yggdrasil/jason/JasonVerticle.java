@@ -4,6 +4,7 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 import org.apache.http.HttpStatus;
 import org.apache.tools.ant.taskdefs.condition.Http;
 import org.eclipse.rdf4j.model.IRI;
@@ -68,7 +69,9 @@ public class JasonVerticle extends AbstractVerticle {
     EventBus eventBus = vertx.eventBus();
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
     HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config()); //TODO: see if needed, maybe for URIs
-    AgentRegistry.getInstance().setHttpPrefix(config());
+    JsonObject config = config();
+    System.out.println("config: "+config.encodePrettily());
+    AgentRegistry.getInstance().setHttpPrefix(config);
   }
 
   private void handleAgentRequest(Message<String> message){

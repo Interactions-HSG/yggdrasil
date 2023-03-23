@@ -139,6 +139,7 @@ public class AgentRegistry {
         port = httpConfig.getInteger("port");
       }
       this.httpPrefix = "http://" + host + ":" + port + "/";
+      System.out.println("http prefix: "+ httpPrefix);
     }
   }
 }

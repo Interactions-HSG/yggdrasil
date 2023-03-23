@@ -461,7 +461,10 @@ public class HttpEntityHandler {
     System.out.println("handle instantiate agent");
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
     String agentName = routingContext.request().getHeader("Slug");
+    System.out.println("agent name: "+ agentName);
+
     String representation = routingContext.getBodyAsString();
+    System.out.println("representation: "+representation);
     if (agentId == null){
       routingContext.response()
         .setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
