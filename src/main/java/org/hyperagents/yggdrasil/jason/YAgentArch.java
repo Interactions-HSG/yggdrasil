@@ -124,6 +124,9 @@ public class YAgentArch extends AgArch {
       focus(workspaceName, artifactName);
 
     } else if (func.equals("stopFocus")) { //Inside YAgentArch, to develop
+      String workspaceName = terms.get(0).toString();
+      String artifactName = terms.get(1).toString();
+      stopFocus(workspaceName, artifactName);
 
     } else if (func.equals("setValue")){ //To check
       Unifier u = getTS().getC().getSelectedIntention().peek().getUnif();
@@ -402,7 +405,7 @@ public class YAgentArch extends AgArch {
         jsonManager.registerJson(jsonTerm, jsonElement);
         messageBelief.addTerm(id);
         messageBelief.addTerm(jsonTerm);
-        System.out.println("message added: "+message);
+        System.out.println("message added: "+messageBelief);
         this.getTS().getAg().addBel(messageBelief);
         messageCallback.noNewMessage();
       }
@@ -580,14 +583,14 @@ public class YAgentArch extends AgArch {
   public void stopFocus(String workspaceName, String artifactName){
     try {
       String bodyName = AgentRegistry.getInstance().getBody(this.getAgName(), workspaceName);
-      String focusUri = bodyName+"/stopFocus";
+      String stopFocusUri = bodyName+"/stopFocus";
       System.out.println("body name: "+bodyName);
       Map<String, String> headers = new Hashtable<>();
       headers.put("X-Agent-WebID", this.getAgName());
       headers.put("Content-Type", "application/json");
       String body = "[\""+artifactName+"\"]";
       System.out.println("focus body: "+body);
-      sendHttpRequest(focusUri, "PUT", headers, body);
+      sendHttpRequest(stopFocusUri, "PUT", headers, body);
 
     } catch(Exception e){
       e.printStackTrace();
@@ -1297,6 +1300,7 @@ public class YAgentArch extends AgArch {
   public boolean hasAttribute(Term jsonId, String attribute){
     boolean b = false;
     JsonElement jsonElement = getJsonElement(jsonId);
+    System.out.println("json element: "+jsonElement);
     if (jsonElement.isJsonObject()){
       b = jsonElement.getAsJsonObject().keySet().contains(attribute);
     }

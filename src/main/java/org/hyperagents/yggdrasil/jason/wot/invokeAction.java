@@ -6,275 +6,260 @@ import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
-import jason.asSyntax.ListTerm;
+import jason.asSyntax.MapTerm;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
-import org.hyperagents.yggdrasil.jason.YAgentArch;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
-public class invokeAction extends WotAction {
+public class invokeAction extends WoTAction{
 
-  @Override
   public Object execute(TransitionSystem ts,
                         final Unifier un,
                         final Term[] arg) throws Exception {
-    StringTerm t1 = (StringTerm) arg[0];
-    String tdUrl = t1.getString();
-    StringTerm t2 = (StringTerm) arg[1];
-    String actionName = t2.getString();
+    StringTerm tdUriTerm = (StringTerm) arg[0];
+    String tdUrl = tdUriTerm.getString();
+    StringTerm actionTerm = (StringTerm) arg[1];
+    String actionName = actionTerm.getString();
+    Object body = null;
+    if (arg.length > 3) {
+      Term t = arg[2];
+      body = t;
+      /*boolean b = body.startsWith("\"") && body.endsWith("\"");
+      while (b){ //TODO: to check
+        body = body.substring(1, body.length()-1);
+        System.out.println("current body: "+ body);
+        b = body.startsWith("\"") && body.endsWith("\"");
+      }*/
+    }
+    System.out.println("body: "+body);
     Map<String, String> headers = new Hashtable<>();
-    if (ts.getAgArch() instanceof YAgentArch) {
-      YAgentArch agArch = (YAgentArch) ts.getAgArch();
-      headers = agArch.getHeaders();
-    }
-    String body = null;
-    if (arg.length > 2) {
-      Term t3 = arg[2];
-      if (t3.isString()) {
-        StringTerm st = (StringTerm) t3;
-        body =  st.getString();
-        System.out.println("body: "+body);
+    if (arg.length > 4) {
+      MapTerm headersMap = (MapTerm) arg[3];
+      for (Term key : headersMap.keys()) {
+        headers.put(cleanString(key.toString()), cleanString(headersMap.get(key).toString()));
       }
     }
-    if (arg.length == 4){
-      VarTerm var = (VarTerm) arg[3];
-      invokeAction(tdUrl, actionName, headers, body, var, un ,ts);
-    }
-    else if (arg.length == 6){
-      ListTerm uriVariableNames = (ListTerm) arg[3];
-      ListTerm uriVariableValues = (ListTerm) arg[4];
-      VarTerm var = (VarTerm) arg[5];
-      invokeAction(tdUrl, actionName, headers, body, uriVariableNames, uriVariableValues, var, un, ts);
-    } else {
-      invokeAction(tdUrl, actionName, headers, body, un, ts);
-    }
-    return null;
-
-
-  }
-
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, VarTerm term, Unifier un, TransitionSystem ts){
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
-      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      if (opAction.isPresent()) {
-        System.out.println("action is present");
-        ActionAffordance action = opAction.get();
-        Optional<Form> opForm = action.getFirstForm();
-        if (opForm.isPresent()) {
-          System.out.println("form is present");
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          System.out.println("request target: "+request.getTarget());
-
-          for (String key: headers.keySet()){
-            String value = headers.get(key);
-            request.addHeader(key, value);
-          }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              System.out.println("schema is present");
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-            System.out.println("request body: "+request.getPayloadAsString());
-
-          }
-          TDHttpResponse response = request.execute();
-          com.google.gson.JsonObject responseObject = createResponseObject(response);
-          bindTermToJson(term, responseObject, un, ts);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-        } else {
-          System.out.println("form is not present");
+    System.out.println("headers: "+headers);
+    Map<String, Object> uriVariables = new Hashtable<>();
+    if (arg.length > 5) {
+      MapTerm uriVariablesMap = (MapTerm) arg[4];
+      System.out.println("uri variable map term: "+ uriVariablesMap);
+      for (Term key : uriVariablesMap.keys()) {
+        StringTerm keyStringTerm = (StringTerm) key;
+        String keyString = keyStringTerm.getString();
+        System.out.println("key String: "+ keyString);
+        Term valueTerm = uriVariablesMap.get(key);
+        String valueString = valueTerm.toString();
+        if (valueTerm instanceof StringTerm){
+          valueString =  ((StringTerm) valueTerm).getString();
         }
-      } else {
-        System.out.println("action is not present");
+        uriVariables.put(keyString, valueString);
       }
-    } catch(Exception e){
-      e.printStackTrace();
     }
+    System.out.println("uri variables: "+ uriVariables);
+    MapTerm result = invokeAction(tdUrl, actionName, body, headers, uriVariables);
+    Term lastTerm = arg[arg.length - 1];
+    if (lastTerm.isVar()) {
+      VarTerm v = (VarTerm) lastTerm;
+      un.bind(v, result);
+    }
+
+    return true;
   }
 
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, Unifier un, TransitionSystem ts){
+  public MapTerm invokeAction1(String tdUrl, String affordanceName, String body, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
+      System.out.println("invoke action has body: "+ body);
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
+      System.out.println("all actions: "+ td.getActions());
+      System.out.println("action name: "+ affordanceName);
       Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
       if (opAction.isPresent()) {
-        System.out.println("action is present");
         ActionAffordance action = opAction.get();
         Optional<Form> opForm = action.getFirstForm();
         if (opForm.isPresent()) {
-          System.out.println("form is present");
-          Form form = opForm.get();
-          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
-          System.out.println("request target: "+request.getTarget());
-
-          for (String key: headers.keySet()){
-            String value = headers.get(key);
-            request.addHeader(key, value);
-          }
-          if (body != null){
-            JsonElement element = JsonParser.parseString(body);
-            Optional<DataSchema> opSchema = action.getInputSchema();
-            if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
-              System.out.println("schema is present");
-              DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
-                List<Object> payload = createArrayPayload(element.getAsJsonArray());
-                request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
-                Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
-                request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
-                request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
-                request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
-                request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
-                request.setPrimitivePayload(schema, element.getAsBoolean());
-              }
-            }
-            System.out.println("request body: "+request.getPayloadAsString());
-
-          }
-          TDHttpResponse response = request.execute();
-          com.google.gson.JsonObject responseObject = createResponseObject(response);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
-        } else {
-          System.out.println("form is not present");
-        }
-      } else {
-        System.out.println("action is not present");
-      }
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-  }
-
-  public void invokeAction(String tdUrl, String affordanceName, Map<String, String> headers, String body, ListTerm uriVariableNames, ListTerm uriVariableValues, VarTerm term, Unifier un, TransitionSystem ts){
-    try {
-      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td received");
-      System.out.println("td: "+ new TDGraphWriter(td).write());
-      System.out.println("number of actions: "+td.getActions().size());
-      td.getActions().forEach(a -> System.out.println(a));
-      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
-      if (opAction.isPresent()) {
-        System.out.println("action is present");
-        ActionAffordance action = opAction.get();
-        Optional<Form> opForm = action.getFirstForm();
-        if (opForm.isPresent()) {
-          System.out.println("form is present");
           Form form = opForm.get();
           TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
           if (action.getUriVariables().isPresent()) {
-            Map<String, DataSchema> uriVariables = action.getUriVariables().get();
-            Map<String, Object> values = new Hashtable<>();
-            int n = uriVariableNames.size();
-            int m = uriVariableValues.size();
-            if (n==m){
-              for (int i = 0; i <n; i++){
-                StringTerm name = (StringTerm) uriVariableNames.get(i);
-                System.out.println("name: "+name);
-                StringTerm value = (StringTerm) uriVariableValues.get(i);
-                System.out.println("value: "+value);
-                values.put(name.getString(), value.getString());
-              }
-            }
-            System.out.println("uri variables: "+uriVariables);
-            System.out.println("values: "+values);
-            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), values);
+            System.out.println("form target: "+form.getTarget());
+            System.out.println("uri variables: "+ uriVariables);
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
             System.out.println(request.getTarget());
           }
-          System.out.println("request target: "+request.getTarget());
 
           for (String key: headers.keySet()){
+            System.out.println("header used: "+ key);
             String value = headers.get(key);
+            System.out.println("value: "+value);
             request.addHeader(key, value);
           }
           if (body != null){
-            JsonElement element = JsonParser.parseString(body);
+            //JsonElement element = JsonParser.parseString(body);
+            //System.out.println("json element: "+ element);
             Optional<DataSchema> opSchema = action.getInputSchema();
             if (opSchema.isPresent()){
-              request.addHeader("Content-Type", "application/json");
               System.out.println("schema is present");
+              if (!headers.containsKey("Content-Type")) {
+                request.addHeader("Content-Type", "application/json");
+              }
               DataSchema schema = opSchema.get();
-              if (schema.getDatatype() == "array" && element.isJsonArray()){
+              if (Objects.equals(schema.getDatatype(), DataSchema.ARRAY)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 List<Object> payload = createArrayPayload(element.getAsJsonArray());
                 request.setArrayPayload((ArraySchema) schema, payload);
-              } else if (schema.getDatatype() == "object" && element.isJsonObject()){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.OBJECT)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 Map<String, Object> payload = createObjectPayload(element.getAsJsonObject());
                 request.setObjectPayload((ObjectSchema) schema, payload );
-              } else if (schema.getDatatype() == "string"){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.STRING)){
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsString());
-              } else if (schema.getDatatype() == "number"){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.NUMBER)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsDouble());
-              } else if (schema.getDatatype() == "integer"){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.INTEGER)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsLong());
-              } else if (schema.getDatatype() == "boolean"){
+              } else if (Objects.equals(schema.getDatatype(), DataSchema.BOOLEAN)){
+                body = removeQuotes(body);
+                JsonElement element = JsonParser.parseString(body);
                 request.setPrimitivePayload(schema, element.getAsBoolean());
               }
+            } else {
+              System.out.println("schema is not present");
+              request.setPrimitivePayload(new StringSchema.Builder().build(), body);
+              System.out.println("payload added");
             }
-            System.out.println("request body: "+request.getPayloadAsString());
 
           }
           TDHttpResponse response = request.execute();
-          com.google.gson.JsonObject responseObject = createResponseObject(response);
-          bindTermToJson(term, responseObject, un, ts);
-          //Unifier u =  getTS().getC().getSelectedIntention().peek().getUnif();
-          //u.bind(term, new StringTermImpl(response.getPayloadAsString()));
+          //return createResponseObject(response);
+          String methodName = "POST";
+            if (form.getMethodName().isPresent()){
+              methodName = form.getMethodName().get();
+            }
+          return createResponseObject(form.getTarget(), methodName , headers, body, response );
         } else {
           System.out.println("form is not present");
+          return null;
         }
       } else {
         System.out.println("action is not present");
+        return null;
       }
     } catch(Exception e){
       e.printStackTrace();
     }
+    return null;
   }
+
+  public MapTerm invokeAction(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
+    try {
+      System.out.println("invoke action has payload: " + payload);
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      if (opAction.isPresent()) {
+        ActionAffordance action = opAction.get();
+        Optional<Form> opForm = action.getFirstForm();
+        if (opForm.isPresent()) {
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          if (action.getUriVariables().isPresent()) {
+            System.out.println("form target: " + form.getTarget());
+            System.out.println("uri variables: " + uriVariables);
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+
+          for (String key : headers.keySet()) {
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+
+          Optional<DataSchema> opSchema = action.getInputSchema();
+
+          // Set the payload depending on the data type of the input data
+          setRequestPayload(payload, request, opSchema);
+
+          TDHttpResponse response = request.execute();
+          return createResponseObject(response);
+        } else {
+          System.out.println("form is not present");
+          return null;
+        }
+      } else {
+        System.out.println("action is not present");
+        return null;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+    if (payload instanceof Term){
+      JsonElement element = getAsJsonElement((Term) payload);
+      if (element.isJsonObject()){
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+      } else if (element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      } else {
+        DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+        request.setPrimitivePayload(schema, payload.toString());
+      }
+    }
+    // OPTION 1: There is only one request payload
+    else if (!isJson(payload.toString())) {
+      // 1a. The payload's data type can be a PRIMITIVE
+      DataSchema schema = opSchema.orElseGet(StringSchema::getEmptySchema);
+      request.setPrimitivePayload(schema, payload.toString());
+    } else {
+      JsonElement element = JsonParser.parseString(payload.toString());
+      // 1b. The payload's data type can be an OBJECT
+      if (element.isJsonObject()) {
+        DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
+        Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
+        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+        // 1c. The payload's data type can be an ARRAY (i.e. an array in an array)
+      } else if (element.isJsonArray()) {
+        DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
+        List<Object> arrayPayload = createArrayPayload(element.getAsJsonArray());
+        request.setArrayPayload((ArraySchema) schema, arrayPayload);
+      }
+    }
+  }
+
+  public String removeQuotes(String body){
+    boolean b = body.startsWith("\"") && body.endsWith("\"");
+    while (b){ //TODO: to check
+      body = body.substring(1, body.length()-1);
+      System.out.println("current body: "+ body);
+      b = body.startsWith("\"") && body.endsWith("\"");
+    }
+    return body;
+  }
+
+
+
+
 }

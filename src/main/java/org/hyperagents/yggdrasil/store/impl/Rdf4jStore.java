@@ -6,10 +6,7 @@ import java.io.StringReader;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.apache.commons.rdf.api.Dataset;
-import org.apache.commons.rdf.api.Graph;
-import org.apache.commons.rdf.api.IRI;
-import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.*;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JGraph;
 import org.apache.commons.rdf.rdf4j.RDF4JTriple;
@@ -34,7 +31,7 @@ import org.hyperagents.yggdrasil.store.RdfStore;
 public class Rdf4jStore implements RdfStore {
   private RDF4J rdfImpl;
   private Dataset dataset;
-  
+
   public Rdf4jStore() {
     Repository repository = new SailRepository(new MemoryStore());
 
@@ -81,10 +78,14 @@ public class Rdf4jStore implements RdfStore {
     return rdfImpl.createIRI(iriString);
   }
 
+  public RDFTerm createLiteral(String value){
+    return rdfImpl.createLiteral(value);
+  }
+
   @Override
   public String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    
+
     RDFWriter writer;
 
     if (syntax.equals(RDFSyntax.TURTLE)) {
@@ -97,7 +98,7 @@ public class Rdf4jStore implements RdfStore {
     } else {
       throw new IllegalArgumentException("Unsupported RDF serialization format.");
     }
-    
+
     writer.getWriterConfig()
       .set(BasicWriterSettings.PRETTY_PRINT, true)
       .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
@@ -107,7 +108,7 @@ public class Rdf4jStore implements RdfStore {
     if (graph instanceof RDF4JGraph) {
       try {
         writer.startRDF();
-        
+
         writer.handleNamespace("eve", "http://w3id.org/eve#");
         writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
         writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
@@ -116,7 +117,7 @@ public class Rdf4jStore implements RdfStore {
         writer.handleNamespace("dct", "http://purl.org/dc/terms/");
         writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
         writer.handleNamespace("saref", "https://w3id.org/saref#");
-        
+
         try (Stream<RDF4JTriple> stream = ((RDF4JGraph) graph).stream()) {
           stream.forEach(triple -> {
             writer.handleStatement(triple.asStatement());
@@ -166,7 +167,7 @@ public class Rdf4jStore implements RdfStore {
     }
     return rdfImpl.asGraph(model);
   }
-  
+
   public void addEntityGraph(IRI entityIri, Graph entityGraph) {
     try(Stream<RDF4JTriple> stream = ((RDF4JGraph) entityGraph).stream()) {
       stream.forEach(triple -> {

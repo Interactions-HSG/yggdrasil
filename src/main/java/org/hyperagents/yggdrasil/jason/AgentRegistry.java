@@ -1,5 +1,8 @@
 package org.hyperagents.yggdrasil.jason;
 
+import cartago.JsonObj;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -10,7 +13,7 @@ public class AgentRegistry {
 
   private static AgentRegistry registry;
 
-  private String httpPrefix = "http://localhost:8080/";
+  private String httpPrefix = "http://localhost:8080/"; //TODO: check
 
   private Map<String, String> agents;
 
@@ -18,12 +21,15 @@ public class AgentRegistry {
 
   private Map<String, AgentMessageCallback> messageCallbackMap;
 
+  private Map<String, AgentJasonMessageCallback> jasonMessageCallbackMap;
+
   private Map<ImmutablePair<String, String>, String> bodies;
 
   private AgentRegistry(){
     this.agents = new Hashtable<>();
     this.callbacks = new Hashtable<>();
     this.messageCallbackMap = new Hashtable<>();
+    this.jasonMessageCallbackMap = new Hashtable<>();
     this.bodies = new Hashtable<>();
   }
 
@@ -46,16 +52,29 @@ public class AgentRegistry {
 
   public String addAgent(String agentName) throws Exception {
     String agentUri = httpPrefix + "agents/"+agentName;
+    System.out.println("agent uri: "+ agentUri);
     if (!agents.containsKey(agentName)) {
       this.agents.put(agentName, agentUri);
       this.callbacks.put(agentName, new AgentNotificationCallback(agentUri));
       this.messageCallbackMap.put(agentName, new AgentMessageCallback(agentName));
+      this.jasonMessageCallbackMap.put(agentName, new AgentJasonMessageCallback(agentName));
 
       return agentName;
     }
     else {
       throw new Exception("Agent already exists");
     }
+  }
+
+  public void deleteAgent(String agentName){
+    if (agents.containsKey(agentName)) {
+      agents.remove(agentName);
+      this.callbacks.remove(agentName);
+      this.messageCallbackMap.remove(agentName);
+      this.jasonMessageCallbackMap.remove(agentName);
+
+    }
+
   }
 
   public String getAgentUri(String agentName) throws Exception {
@@ -96,5 +115,31 @@ public class AgentRegistry {
 
   public String getHttpPrefix(){
     return httpPrefix;
+  }
+
+  public AgentJasonMessageCallback getAgentJasonMessageCallback(String agentName) throws Exception {
+    if (jasonMessageCallbackMap.containsKey(agentName)){
+      return jasonMessageCallbackMap.get(agentName);
+    } else {
+      throw new Exception("Agent does not exist");
+    }
+  }
+
+  public void setHttpPrefix(JsonObject config) {
+    JsonObject httpConfig = config.getJsonObject("http-config");
+    if (httpConfig.containsKey("base-uri")) {
+      this.httpPrefix = httpConfig.getString("base-uri");
+    } else {
+      String host = "localhost";
+      if (httpConfig.containsKey("host")) {
+        host = httpConfig.getString("host");
+      }
+      int port = 8080;
+      if (httpConfig.containsKey("port")) {
+        port = httpConfig.getInteger("port");
+      }
+      this.httpPrefix = "http://" + host + ":" + port + "/";
+      System.out.println("http prefix: "+ httpPrefix);
+    }
   }
 }

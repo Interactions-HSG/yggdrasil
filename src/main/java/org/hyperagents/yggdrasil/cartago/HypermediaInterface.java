@@ -11,7 +11,11 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -34,7 +38,13 @@ public class HypermediaInterface {
 
   private Set<String> feedbackActions = new HashSet<>();
 
-  public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions){
+  private Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+
+  private Model metadata;
+
+  private static ValueFactory rdf = SimpleValueFactory.getInstance();
+
+  public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions, Map<String, ResponseConverter> responseConverterMap, Model metadata){
     this.aClass = aClass;
     this.workspace = workspace;
     this.artifactId = artifactId;
@@ -43,6 +53,25 @@ public class HypermediaInterface {
     this.name = name;
     this.hypermediaName = hypermediaName;
     this.feedbackActions = feedbackActions;
+    this.responseConverterMap = responseConverterMap;
+    this.metadata = metadata;
+  }
+
+  public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions, Map<String, ResponseConverter> responseConverterMap){
+    this.aClass = aClass;
+    this.workspace = workspace;
+    this.artifactId = artifactId;
+    this.descriptions = descriptions;
+    this.converterMap = converterMap;
+    this.name = name;
+    this.hypermediaName = hypermediaName;
+    this.feedbackActions = feedbackActions;
+    this.responseConverterMap = responseConverterMap;
+    this.metadata = new LinkedHashModel();
+  }
+
+  public ArtifactId getArtifactId(){
+    return artifactId;
   }
 
 
@@ -78,7 +107,7 @@ public class HypermediaInterface {
       .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
       .addSemanticType(getSemanticType())
       .addThingURI(getArtifactUri())
-      .addGraph(new LinkedHashModel());
+      .addGraph(metadata);
     Map<String, List<ActionAffordance>> actionAffordances = getActions();
 
     for (String actionName : actionAffordances.keySet()) {
@@ -151,6 +180,10 @@ public class HypermediaInterface {
     return feedbackActions;
   }
 
+  public Map<String, ResponseConverter> getResponseConverterMap(){
+    return responseConverterMap;
+  }
+
   private String getSemanticType() {
     Optional<String> semType = HypermediaArtifactRegistry.getInstance().getArtifactSemanticType(
       this.aClass.getCanonicalName());
@@ -171,7 +204,7 @@ public class HypermediaInterface {
     }
   }
 
-  public static HypermediaInterface getBodyInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId){
+  public static HypermediaInterface getBodyInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId, String agentIRI){
     Class aClass = descriptor.getArtifact().getClass();
     List<ActionDescription> descriptions = new ArrayList<>();
     ActionDescription focusDescription = new ActionDescription.Builder("focus", "http://example.org/focus", "/focus")
@@ -220,9 +253,13 @@ public class HypermediaInterface {
       return objs.toArray();
     });
     String hypermediaArtifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
+    System.out.println("hypermedia artifact name");
     String artifactName = artifactId.getName();
     HypermediaAgentBodyArtifactRegistry.getInstance().registerName(artifactId.getName(), hypermediaArtifactName);
-    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.of(artifactName), Optional.of(hypermediaArtifactName), new HashSet<>());
+    Model metadata = new LinkedHashModel();
+    String artifactUri = HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix()+workspace.getId().getName()+"/artifacts/"+hypermediaArtifactName;
+    metadata.add(rdf.createIRI(artifactUri), rdf.createIRI("https://purl.org/hmas/interaction#isAgentBodyOf"), rdf.createIRI(agentIRI));
+    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.of(artifactName), Optional.of(hypermediaArtifactName), new HashSet<>(), new Hashtable<>(), metadata);
   }
 
   public static HypermediaInterface getConsoleInterface(Workspace workspace, ArtifactDescriptor descriptor, ArtifactId artifactId){
@@ -242,7 +279,7 @@ public class HypermediaInterface {
     descriptions.add(printWithAgNameDescription);
     descriptions.add(printlnWithAgNameDescription);
     Map<String, ArgumentConverter> converters = new Hashtable<>();
-    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.empty(), Optional.empty(), new HashSet<>());
+    return new HypermediaInterface(aClass, workspace, artifactId, descriptions,converters, Optional.empty(), Optional.empty(), new HashSet<>(), new Hashtable<>());
   }
 
 }

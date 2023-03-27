@@ -64,9 +64,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put("/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
     router.delete("/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
     router.post("/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
+    router.post("/workspaces/:wkspid/focus").handler(handler::handleFocus);
     //end new
     router.get("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
     router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
+    router.put("/workspaces/:wkspid/artifacts/:artid/").handler(handler::handleRedirectWithoutSlash);
+    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
     router.post("/workspaces/:wkspid/artifacts/").consumes("text/turtle")
         .handler(handler::handleCreateEntity);
     router.post("/workspaces/:wkspid/artifacts/").consumes("application/json")
@@ -79,6 +82,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
     router.get("/agents/:agentid").handler(handler::handleGetAgentProfile);
     router.post("/agents/:agentid").handler(handler::handleReceiveNotification);
+    router.delete("/agents/:agentid").handler(handler::handleDeleteAgent);
     router.post("/agents/:agentid/message").handler(handler::handleReceiveMessage);
     router.options("/agents/:agentid/message").handler(CorsHandler.create("*")
       .maxAgeSeconds(86400)

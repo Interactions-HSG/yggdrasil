@@ -1,22 +1,13 @@
 package org.hyperagents.yggdrasil.http;
 
 import java.util.*;
-import java.util.stream.Collectors;
-
-import cartago.ArtifactId;
-import cartago.Workspace;
 import ch.unisg.ics.interactions.wot.td.io.TDWriter;
-import com.google.gson.JsonArray;
 import io.vertx.core.http.HttpMethod;
-import org.apache.commons.rdf.api.RDF;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.*;
-import org.hyperagents.yggdrasil.jason.AgentMessageCallback;
-import org.hyperagents.yggdrasil.jason.AgentNotificationCallback;
-import org.hyperagents.yggdrasil.jason.AgentRegistry;
-import org.hyperagents.yggdrasil.jason.JasonVerticle;
+import org.hyperagents.yggdrasil.jason.*;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -26,9 +17,7 @@ import com.google.gson.JsonParser;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import io.vertx.core.AsyncResult;
@@ -94,6 +83,7 @@ public class HttpEntityHandler {
 
 
   public void handleCreateWorkspace(RoutingContext context) {
+    System.out.println("handle create workspace");
     String representation = context.getBodyAsString();
     String workspaceName = context.request().getHeader("Slug");
     String agentId = context.request().getHeader("X-Agent-WebID");
@@ -105,9 +95,7 @@ public class HttpEntityHandler {
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createWorkspace(agentId, workspaceName, representation, cartagoPromise);
 
-    cartagoPromise.future().compose(result ->  {
-      return Future.future(promise -> storeEntity(context, workspaceName, result, promise));
-    });
+    cartagoPromise.future().compose(result -> Future.future(promise -> storeEntity(context, workspaceName, result, promise)));
   }
 
   public void handleCreateArtifact(RoutingContext context) {
@@ -143,6 +131,40 @@ public class HttpEntityHandler {
     createEntity(routingContext, entityRepresentation);
   }
 
+  public void handleFocus(RoutingContext context){
+    System.out.println("handle focus");
+    String wkspName = context.pathParam("wkspid");
+    String representation = context.getBodyAsString();
+    System.out.println("representation: "+ representation);
+    JsonObject jsonRepresentation = (JsonObject) Json.decodeValue(representation);
+    String artifactName = jsonRepresentation.getString("artifactName");
+    String agentId = context.request().getHeader("X-Agent-WebID");
+
+    if (agentId == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    } else {
+      DeliveryOptions cartagoOptions = new DeliveryOptions()
+        .addHeader(CartagoVerticle.AGENT_ID, agentId)
+        .addHeader(REQUEST_METHOD, CartagoVerticle.FOCUS)
+        .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
+        .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName);
+
+      vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, representation, cartagoOptions,
+        cartagoReply -> {
+          if (cartagoReply.succeeded()) {
+            context.response().setStatusCode(HttpStatus.SC_OK).end();
+          } else {
+            context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+              .end();
+          }
+        });
+
+    }
+
+
+
+  }
+
   public void handleAction(RoutingContext context) {
     String entityRepresentation = context.getBodyAsString();
     String wkspName = context.pathParam("wkspid");
@@ -154,8 +176,6 @@ public class HttpEntityHandler {
     } else {
       artifactName = hypermediaArtifactName;
     }
-    Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(wkspName);
-    ArtifactId id = workspace.getArtifact(artifactName);
 
     HttpServerRequest request = context.request();
     String agentId = request.getHeader("X-Agent-WebID");
@@ -183,6 +203,7 @@ public class HttpEntityHandler {
               String artifactDescription = (String) reply.result().body();
               ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
                   artifactDescription);
+              System.out.println("agent id: "+agentId);
 
               DeliveryOptions cartagoOptions = new DeliveryOptions()
                   .addHeader(CartagoVerticle.AGENT_ID, agentId)
@@ -236,7 +257,7 @@ public class HttpEntityHandler {
         });
   }
 
-  public void handleBodyAction(RoutingContext context) {
+  /*public void handleBodyAction(RoutingContext context) {
     String entityRepresentation = context.getBodyAsString();
     String wkspName = context.pathParam("wkspid");
     String artifactName = context.pathParam("body");
@@ -308,7 +329,7 @@ public class HttpEntityHandler {
           });
       }
     });
-  }
+  }*/
 
 
 
@@ -405,7 +426,7 @@ public class HttpEntityHandler {
     }
   }
 
-  public void handleCreateBody(RoutingContext routingContext){
+  /*public void handleCreateBody(RoutingContext routingContext){
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
     String artifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
     if (agentId == null) {
@@ -419,7 +440,7 @@ public class HttpEntityHandler {
         Future.future(promise -> storeEntity(routingContext, artifactName, result, promise)));
     }
 
-  }
+  }*/
 
   public void handleCreateSubWorkspace(RoutingContext routingContext){
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
@@ -433,16 +454,17 @@ public class HttpEntityHandler {
     }
     Promise<String> cartagoPromise = Promise.promise();
     cartagoHandler.createSubWorkspace(agentId, currentWorkspaceName, workspaceName, cartagoPromise);
-    cartagoPromise.future().compose(result ->  {
-      return Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise));
-    });
+    cartagoPromise.future().compose(result -> Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise)));
   }
 
   public void handleInstantiateAgent(RoutingContext routingContext){
     System.out.println("handle instantiate agent");
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
-    String agentName = routingContext.request().getHeader("X-Agent-Name");
+    String agentName = routingContext.request().getHeader("Slug");
+    System.out.println("agent name: "+ agentName);
+
     String representation = routingContext.getBodyAsString();
+    System.out.println("representation: "+representation);
     if (agentId == null){
       routingContext.response()
         .setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
@@ -477,13 +499,18 @@ public class HttpEntityHandler {
   }
 
   public void handleReceiveNotification(RoutingContext context){
-    String agentName = context.request().absoluteURI();
+    String agentUri = context.request().absoluteURI();
+    int index = agentUri.indexOf("/agents");
+    String agentName = agentUri.substring(index + 8);
+    System.out.println("agent name: "+agentName);
     String body = context.getBodyAsString();
     AgentRegistry agentRegistry = AgentRegistry.getInstance();
     try {
       AgentNotificationCallback callback = agentRegistry.getAgentCallback(agentName);
       callback.addNotification(body);
+      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("notification received");
     } catch(Exception e){
+      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("notification not received");
       e.printStackTrace();
     }
   }
@@ -508,6 +535,53 @@ public class HttpEntityHandler {
       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
       e.printStackTrace();
     }
+  }
+
+  public void handleReceiveJasonMessage(RoutingContext context){
+    String agentSenderUri = context.request().getHeader("X-Agent-WebID");
+    System.out.println("message received");
+    String uri = context.request().absoluteURI();
+    int n = uri.length();
+    String agentUri = uri.substring(0, n-6);
+    int index  = agentUri.indexOf("/agents/");
+    String agentName = agentUri.substring(index + 8);
+    System.out.println("agent name: "+ agentName);
+    String body = context.getBodyAsString();
+    System.out.println("message received: "+body);
+    AgentRegistry agentRegistry = AgentRegistry.getInstance();
+    try {
+      AgentJasonMessageCallback callback = agentRegistry.getAgentJasonMessageCallback(agentName);
+      callback.addMessage(body, agentSenderUri);
+      System.out.println("message added to message callback");
+      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
+    } catch(Exception e){
+      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
+      e.printStackTrace();
+    }
+  }
+
+  public void handleDeleteAgent(RoutingContext context){
+    System.out.println("handle delete agent");
+    String uri = context.request().absoluteURI();
+    int index  = uri.indexOf("/agents/");
+    System.out.println("index: "+index);
+    String agentName = uri.substring(index + 8);
+    System.out.println("agent name: "+agentName);
+    DeliveryOptions options = new DeliveryOptions()
+      .addHeader(REQUEST_METHOD, JasonVerticle.DELETE_AGENT)
+      .addHeader(JasonVerticle.AGENT_NAME, agentName);
+      vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, "", options, reply -> {
+        if (reply.succeeded()) {
+          AgentRegistry.getInstance().printAllAgents();
+          System.out.println("agent deletion succeeded");
+          context.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
+        } else {
+          System.out.println("agent deletion failed");
+          context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+        }
+      });
+
+
   }
 
 
@@ -537,10 +611,10 @@ public class HttpEntityHandler {
   }
 
   private Map<String, ? extends List<String>> getCORSHeaders() {
-    Map<String, List<String>> corsHeaders = new HashMap<String, List<String>>();
+    Map<String, List<String>> corsHeaders = new HashMap<>();
 
-    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, Arrays.asList("*"));
-    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, Arrays.asList("true"));
+    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, List.of("*"));
+    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, List.of("true"));
     corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, Arrays.asList(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(), HttpMethod.DELETE.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name()));
 
     return corsHeaders;
@@ -633,7 +707,7 @@ public class HttpEntityHandler {
 
         // Note: forEach produces duplicate keys. If anyone wants to, please replace this with a Java 8 version ;-)
         for(String headerName : headers.keySet()) {
-          httpResponse.putHeader(headerName, headers.get(headerName).stream().collect(Collectors.joining(",")));
+          httpResponse.putHeader(headerName, String.join(",", headers.get(headerName))); //TODO: check
         }
 
         String storeReply = reply.result().body();

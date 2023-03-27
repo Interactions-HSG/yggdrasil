@@ -5,10 +5,14 @@ import cartago.Workspace;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
+import ora4mas.nopl.GroupBoard;
+import ora4mas.nopl.NormativeBoard;
 import ora4mas.nopl.OrgBoard;
+import ora4mas.nopl.SchemeBoard;
 import org.hyperagents.yggdrasil.cartago.ActionDescription;
 import org.hyperagents.yggdrasil.cartago.ArgumentConverter;
 import org.hyperagents.yggdrasil.cartago.HypermediaInterface;
+import org.hyperagents.yggdrasil.cartago.ResponseConverter;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -49,7 +53,8 @@ public class MoiseInterfaces {
     feedbackActions.add("createGroup");
     feedbackActions.add("createScheme");
     feedbackActions.add("createNormativeBoard");
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions);
+    Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions, responseConverterMap);
     return hypermediaInterface;
   }
 
@@ -105,7 +110,8 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>());
+    Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+    hypermediaInterface = new HypermediaInterface(GroupBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>(), responseConverterMap);
     return hypermediaInterface;
   }
 
@@ -171,7 +177,8 @@ public class MoiseInterfaces {
     HypermediaInterface hypermediaInterface = null;
     Set<String> feedbackActions = new HashSet<>();
     feedbackActions.add("getState");
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions);
+    Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+    hypermediaInterface = new HypermediaInterface(SchemeBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), feedbackActions, responseConverterMap);
     return hypermediaInterface;
   }
 
@@ -205,7 +212,8 @@ public class MoiseInterfaces {
     Map<String, ArgumentConverter> converterMap = new Hashtable<>();
 
     HypermediaInterface hypermediaInterface = null;
-    hypermediaInterface = new HypermediaInterface(OrgBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>());
+    Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+    hypermediaInterface = new HypermediaInterface(NormativeBoard.class, workspace, artifactId, descriptions, converterMap, Optional.empty(), Optional.empty(), new HashSet<>(), responseConverterMap);
     return hypermediaInterface;
   }
 }

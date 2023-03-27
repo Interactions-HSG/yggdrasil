@@ -26,12 +26,10 @@ public class JsonManager {
 
   public JsonElement getJsonElementFromTerm(Term jsonId){
     if (jsonId.isString()) {
-      System.out.println("jsonId is string");
       System.out.println(currentJsons);
       String json = jsonId.toString();
-      System.out.println("json: "+json);
       JsonElement e;
-      if (currentJsons.containsKey(jsonId)) {
+      if (currentJsons.containsKey(json)) {
         e = currentJsons.get(json);
       } else {
         StringTerm st = (StringTerm) jsonId;
@@ -42,10 +40,7 @@ public class JsonManager {
       return e;
     }
     else if (jsonId.isAtom()){
-      System.out.println("jsonId is atom");
       String s = jsonId.toString();
-      System.out.println("all jsons: "+currentJsons.keySet());
-      System.out.println("json: "+currentJsons.get(s));
       return currentJsons.get(s);
     } else {
       System.out.println("jsonId is neither string nor atom");

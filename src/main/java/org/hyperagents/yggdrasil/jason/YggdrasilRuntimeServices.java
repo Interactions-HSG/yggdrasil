@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.jason;
 
+import jason.architecture.AgArch;
 import jason.asSemantics.Agent;
+import jason.infra.centralised.CentralisedAgArch;
 import jason.infra.centralised.CentralisedRuntimeServices;
 import jason.mas2j.ClassParameters;
 import jason.runtime.Settings;
@@ -15,30 +17,17 @@ public class YggdrasilRuntimeServices extends CentralisedRuntimeServices {
   }
 
   @Override
-  public String createAgent(String agName, String agSource, String agClass, Collection<String> archClasses, ClassParameters bbPars, Settings stts, Agent father) throws Exception {
+  public String createAgent(String agName, String agSource, String agClass, Collection<String> archClasses, ClassParameters bbPars, Settings stts, Agent father) {
     Agent agent = father;
     YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch();
     masRunner.addAg(agArch);
     return agName;
   }
 
-  public String createAgent(String agentName, String aslFile){
-    try {
-      JasonAgent agent = new JasonAgent(aslFile);
-      YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch().getNextAgArch();
-      masRunner.addAg(agArch);
-      return agArch.getAgName();
-    } catch(Exception e){
-      e.printStackTrace();
-    }
-    return null;
-
-  }
-
   public String createAgent(String agentName, InputStream in, String sourceId){
     try {
       JasonAgent agent = new JasonAgent(agentName, in, sourceId);
-      YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch().getNextAgArch();
+      CentralisedAgArch agArch = (CentralisedAgArch) agent.getTS().getAgArch().getNextAgArch().getNextAgArch();
       masRunner.addAg(agArch);
       return agArch.getAgName();
     } catch(Exception e){

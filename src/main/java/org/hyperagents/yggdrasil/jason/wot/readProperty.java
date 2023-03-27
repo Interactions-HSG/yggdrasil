@@ -7,68 +7,100 @@ import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
+import jason.asSemantics.DefaultInternalAction;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
+import jason.asSyntax.MapTerm;
 import jason.asSyntax.StringTerm;
 import jason.asSyntax.Term;
 import jason.asSyntax.VarTerm;
-import org.hyperagents.yggdrasil.jason.YAgentArch;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class readProperty extends WotAction{
+public class readProperty extends WoTAction {
 
-  @Override
   public Object execute(TransitionSystem ts,
                         final Unifier un,
                         final Term[] arg) throws Exception {
-    StringTerm t1 = (StringTerm) arg[0];
-    String tdUrl = t1.getString();
-    StringTerm t2 = (StringTerm) arg[1];
-    String propertyName = t2.getString();
-    VarTerm var = (VarTerm) arg[2];
+    StringTerm tdUriTerm = (StringTerm) arg[0];
+    String tdUrl = tdUriTerm.getString();
+    StringTerm propertyTerm = (StringTerm) arg[1];
+    String propertyName = propertyTerm.getString();
     Map<String, String> headers = new Hashtable<>();
-    if (ts.getAgArch() instanceof YAgentArch) {
-      YAgentArch agArch = (YAgentArch) ts.getAgArch();
-      headers = agArch.getHeaders();
+    if (arg.length > 3) {
+      MapTerm headersMap = (MapTerm) arg[2];
+      for (Term key : headersMap.keys()) {
+        headers.put(key.toString(), headersMap.get(key).toString());
+      }
     }
-    readProperty(tdUrl, propertyName, headers, var, un,ts);
-    return null;
+    Map<String, Object> uriVariables = new Hashtable<>();
+    if (arg.length > 4) {
+      MapTerm uriVariablesMap = (MapTerm) arg[3];
+      System.out.println("uri variable map term: "+ uriVariablesMap);
+      for (Term key : uriVariablesMap.keys()) {
+        StringTerm keyStringTerm = (StringTerm) key;
+        String keyString = keyStringTerm.getString();
+        System.out.println("key String uri variable: "+ keyString);
+        Term valueTerm = uriVariablesMap.get(key);
+        String valueString = valueTerm.toString();
+        if (valueTerm instanceof StringTerm){
+          valueString =  ((StringTerm) valueTerm).getString();
+          System.out.println("value string uri variable: "+valueString);
+        }
+        uriVariables.put(keyString, valueString);
+      }
+    }
+    System.out.println("uri variables: "+ uriVariables);
+    MapTerm result = readProperty(tdUrl, propertyName, headers, uriVariables);
+    Term lastTerm = arg[arg.length - 1];
+    if (lastTerm.isVar()) {
+      VarTerm v = (VarTerm) lastTerm;
+      un.bind(v, result);
+    }
 
+    return true;
   }
 
-  public void readProperty(String tdUrl, String propertyName, Map<String, String> headers, VarTerm term, Unifier un, TransitionSystem ts){
-    tdUrl = tdUrl.replace("\"","");
+  public MapTerm readProperty(String tdUrl, String affordanceName, Map<String, String> headers, Map<String, Object> uriVariables){
     try {
-      System.out.println("try read property");
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
-      System.out.println("td read");
-      Optional<PropertyAffordance> opProperty = td.getPropertyByName(propertyName);
-      if (opProperty.isPresent()){
-        System.out.println("property is present");
+      Optional<PropertyAffordance> opProperty = td.getPropertyByName(affordanceName);
+      if (opProperty.isPresent()) {
         PropertyAffordance property = opProperty.get();
-        Optional<Form> opForm = property.getFirstFormForOperationType(TD.readProperty);
-        if (opForm.isPresent()){
-          System.out.println("form is present");
-          Form form = opForm.get();
+        List<Form> formList= property.getForms();
+        if (formList.size()>0) {
+          Form form = formList.get(0);
           TDHttpRequest request = new TDHttpRequest(form, TD.readProperty);
+          if (property.getUriVariables().isPresent()) {
+            System.out.println("form target: "+form.getTarget());
+            request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+
           for (String key: headers.keySet()){
             String value = headers.get(key);
             request.addHeader(key, value);
           }
           TDHttpResponse response = request.execute();
-          com.google.gson.JsonObject responseObject = createResponseObject(response);
-          System.out.println("response object: "+responseObject);
-          bindTermToJson(term, responseObject, un, ts);
+          String methodName = "GET";
+          if (form.getMethodName().isPresent()){
+            methodName = form.getMethodName().get();
+          }
+          return createResponseObject(form.getTarget(), methodName , headers, "", response );
+        } else {
+          System.out.println("form is not present");
+          return null;
         }
+      } else {
+        System.out.println("property is not present");
+        return null;
       }
-
     } catch(Exception e){
       e.printStackTrace();
     }
-
+    return null;
   }
-
 }
