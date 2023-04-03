@@ -107,3 +107,29 @@ that contains a JSON payload with the following fields (see the
 When a resource is updated, Yggdrasil issues `POST` requests with the (updated) resource
 representation to all registered callbacks.
 
+## Error Resolution
+
+### Address already in use! - error message after rebooting application
+We observed that the application fails to reboot from time to time
+because the process is not shut down properly from the previous run.
+As temporary solution the manual abortion of the process may help:
+
+**Find the process ID with**:
+```shell
+lsof -i :<PORT NO WHERE YGGDRASIL RUNS>
+```
+
+**Kill the process with**:
+```shell
+kill <PROCESS ID>
+```
+
+## How to debug Yggdrasil (with breakpoints)
+In order to debug the yggdrasil application, a remote debugger needs to be used (because of the nature of vert.x).
+
+1. Add '--java-opts="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"' to the run task in **build.gradle** like so: ```groovy run { args = ['run', mainVerticleName, '--java-opts="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"', "--redeploy=$watchForChange", "--launcher-class=$mainClassName", "--on-redeploy=$doOnChange"] }```
+2. Start the application (in normal mode), attach a debugger to the process running on port 5005.
+3. Set your breakpoints, they should now be active.
+
+
+
