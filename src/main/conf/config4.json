@@ -1,0 +1,9 @@
+{
+  "http-config" : {
+    "host" : "edge.fritz.box",
+    "port" : 8888,
+    "virtual-host" : "edge.fritz.box",
+    "virtual-host-port" : 8888,
+    "websub-hub" : "http://edge.fritz.box:8888/hub/"
+  }
+}
