@@ -47,8 +47,8 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai> a td:Thing, <http://w3id.org/eve#Artifact>;
-  td:title "aiService";
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai> a td:Thing;
+  td:title "Camera AI";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasBase <'"${DEVICE_BASE}"'/camera-ai>;
@@ -111,6 +111,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
             ]
         ]
     ] .
+
 '
 
 
@@ -126,8 +127,8 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service> a td:Thing, <http://w3id.org/eve#Artifact>;
-  td:title "hilService";
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service> a td:Thing;
+  td:title "HIL Service";
   td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
       wotsec:in "HEADER";
       wotsec:name "X-API-Key"
@@ -232,7 +233,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
             "numberReassignments", "description"
         ]
     ], [ a td:PropertyAffordance, js:ObjectSchema;
-      td:name "getSessions";
+      td:name "getSession";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "sessionId"
         ];
@@ -546,6 +547,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
           hctl:hasOperationType td:invokeAction
         ]
     ] .
+
 '
 
 echo "Create Robot Controller"
@@ -556,268 +558,253 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 --data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix dct: <http://purl.org/dc/terms/> .
-@prefix eve: <http://w3id.org/eve#> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix intelliot: <https://intelliot.org/things#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller> a td:Thing, <http://w3id.org/eve#Artifact>;
-  td:title "URx Robot Controller";
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller> a td:Thing;
+  td:title "Robot Controller";
   td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
       wotsec:in "HEADER";
       wotsec:name "X-API-Key"
     ];
-  td:hasBase <'"${DEVICE_BASE}"'/robot-controller/>;
-  td:hasPropertyAffordance [ a td:PropertyAffordance, intelliot:ReadStatus, js:ObjectSchema;
-      td:name "readStatus";
+  td:hasBase <'"${DEVICE_BASE}"'/robot-controller/robot-controller>;
+  td:hasPropertyAffordance [ a td:PropertyAffordance, <https://intelliot.org/things#ReadStatus>,
+        js:ObjectSchema;
+      td:name "status";
       td:hasForm [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/status>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/status>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:readProperty
         ];
       td:isObservable false;
-      js:properties [ a js:BooleanSchema, intelliot:InMovement;
+      js:properties [ a js:BooleanSchema, <https://intelliot.org/things#InMovement>;
           js:propertyName "inMovement"
         ];
       js:required "inMovement"
-    ], [ a td:PropertyAffordance, intelliot:ReadOperator, js:ObjectSchema, intelliot:OperatorProfile;
-      td:name "readOperator";
-      td:hasForm [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/operator>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:readProperty
-        ];
-      td:isObservable false;
-      js:properties [ a js:StringSchema, foaf:Name;
-          js:propertyName "name"
-        ], [ a js:StringSchema, foaf:Mbox;
-          js:propertyName "email"
-        ];
-      js:required "name", "email"
-    ], [ a td:PropertyAffordance, intelliot:ReadHandles, js:ObjectSchema, intelliot:Handle;
+    ], [ a td:PropertyAffordance, <https://intelliot.org/things#ReadHandles>, js:ObjectSchema,
+        <https://intelliot.org/things#Handle>;
       td:name "readHandles";
       td:hasForm [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/handle>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/handle>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:readProperty
         ];
       td:isObservable false;
-      js:properties [ a js:StringSchema, intelliot:RobotHandle;
+      js:properties [ a js:StringSchema, <https://intelliot.org/things#RobotHandle>;
           js:propertyName "robot"
-        ], [ a js:StringSchema, intelliot:CameraHandle;
+        ], [ a js:StringSchema, <https://intelliot.org/things#CameraHandle>;
           js:propertyName "camera"
         ];
       js:required "robot", "camera"
-    ], [ a td:PropertyAffordance, intelliot:ReadPose, js:ObjectSchema;
+    ], [ a td:PropertyAffordance, <https://intelliot.org/things#ReadPose>, js:ObjectSchema;
       td:name "readPose";
       td:hasForm [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/pose>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
           hctl:forContentType "application/joint+json";
           hctl:hasOperationType td:readProperty
         ], [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/pose>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
           hctl:forContentType "application/tcp+json";
           hctl:hasOperationType td:readProperty
         ], [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/pose>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
           hctl:forContentType "application/namedpose+json";
           hctl:hasOperationType td:readProperty
         ], [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/pose>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
           hctl:forContentType "application/ai+json";
           hctl:hasOperationType td:readProperty
         ];
       td:isObservable false;
       js:properties [ a js:DataSchema;
           js:propertyName "value";
-          js:oneOf [ a js:ObjectSchema, intelliot:JointCoordinates, intelliot:PoseValue;
+          js:oneOf [ a js:ObjectSchema, <https://intelliot.org/things#JointCoordinates>, <https://intelliot.org/things#PoseValue>;
               js:contentMediaType "application/joint+json";
-              js:properties [ a js:IntegerSchema, intelliot:Joint1Coordinate;
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#Joint1Coordinate>;
                   js:propertyName "j1"
-                ], [ a js:IntegerSchema, intelliot:Joint2Coordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint2Coordinate>;
                   js:propertyName "j2"
-                ], [ a js:IntegerSchema, intelliot:Joint3Coordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint3Coordinate>;
                   js:propertyName "j3"
-                ], [ a js:IntegerSchema, intelliot:Joint4Coordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint4Coordinate>;
                   js:propertyName "j4"
-                ], [ a js:IntegerSchema, intelliot:Joint5Coordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint5Coordinate>;
                   js:propertyName "j5"
-                ], [ a js:IntegerSchema, intelliot:Joint6Coordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint6Coordinate>;
                   js:propertyName "j6"
                 ];
               js:required "j1", "j2", "j3", "j4", "j5", "j6"
-            ], [ a js:ObjectSchema, intelliot:PoseValue, intelliot:TCPCoordinate;
+            ], [ a js:ObjectSchema, <https://intelliot.org/things#PoseValue>, <https://intelliot.org/things#TCPCoordinate>;
               js:contentMediaType "application/tcp+json";
-              js:properties [ a js:IntegerSchema, intelliot:AlphaCoordinate;
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#AlphaCoordinate>;
                   js:propertyName "alpha"
-                ], [ a js:IntegerSchema, intelliot:XCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#XCoordinate>;
                   js:propertyName "x"
-                ], [ a js:IntegerSchema, intelliot:YCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#YCoordinate>;
                   js:propertyName "y"
-                ], [ a js:IntegerSchema, intelliot:ZCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#ZCoordinate>;
                   js:propertyName "z"
-                ], [ a js:IntegerSchema, intelliot:BetaCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#BetaCoordinate>;
                   js:propertyName "beta"
-                ], [ a js:IntegerSchema, intelliot:GammaCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#GammaCoordinate>;
                   js:propertyName "gamma"
                 ];
               js:required "x", "y", "z", "alpha", "beta", "gamma"
-            ], [ a js:StringSchema, intelliot:PoseValue, intelliot:NamedPose;
-              js:enum "milling_machine_load", "dump_workpiece", "engraver_load", "home";
+            ], [ a js:StringSchema, <https://intelliot.org/things#PoseValue>, <https://intelliot.org/things#NamedPose>;
+              js:enum "milling_machine_pick", "milling_machine_place", "error", "engraver_load",
+                "home";
               js:contentMediaType "application/namedpose+json"
-            ], [ a js:ObjectSchema, intelliot:AICoordinate, intelliot:PoseValue;
+            ], [ a js:ObjectSchema, <https://intelliot.org/things#AICoordinate>, <https://intelliot.org/things#PoseValue>;
               js:contentMediaType "application/ai+json";
-              js:properties [ a js:IntegerSchema, intelliot:AlphaCoordinate;
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#AlphaCoordinate>;
                   js:propertyName "alpha"
-                ], [ a js:IntegerSchema, intelliot:XCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#XCoordinate>;
                   js:propertyName "x"
-                ], [ a js:IntegerSchema, intelliot:YCoordinate;
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#YCoordinate>;
                   js:propertyName "y"
                 ];
               js:required "x", "y", "alpha"
             ]
         ];
       js:required "value"
-    ], [ a td:PropertyAffordance, intelliot:ReadGripper, js:ObjectSchema;
+    ], [ a td:PropertyAffordance, <https://intelliot.org/things#ReadGripper>, js:ObjectSchema;
       td:name "readGripper";
       td:hasForm [
-          htv:methodName "GET";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/gripper>;
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/gripper>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:readProperty
         ];
       td:isObservable false;
-      js:properties [ a js:StringSchema, intelliot:Gripper;
+      js:properties [ a js:StringSchema, <https://intelliot.org/things#Gripper>;
           js:propertyName "status"
         ]
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, intelliot:Register;
-      td:name "register";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/operator>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasInputSchema [ a js:ObjectSchema, intelliot:OperatorProfile;
-          js:properties [ a js:StringSchema, foaf:Name;
-              js:propertyName "name"
-            ], [ a js:StringSchema, foaf:Mbox;
-              js:propertyName "email"
-            ];
-          js:required "name", "email"
-        ]
-    ], [ a td:ActionAffordance, intelliot:Deregister;
-      td:name "deregister";
-      td:hasForm [
-          htv:methodName "DELETE";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/operator>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance, intelliot:SetGripper;
+  td:hasActionAffordance [ a td:ActionAffordance, <https://intelliot.org/things#SetGripper>;
       td:name "setGripper";
       td:hasForm [
-          htv:methodName "PUT";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/services/gripper>;
+          <http://www.w3.org/2011/http#methodName> "PUT";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/gripper>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
       td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema, intelliot:Gripper;
+          js:properties [ a js:StringSchema, <https://intelliot.org/things#Gripper>;
               js:propertyName "status"
             ]
         ]
-    ];
-  td:hasEventAffordance [ a td:EventAffordance, intelliot:SetPose, intelliot:SubscribePose;
-      td:name "setPose";
+    ], [ a td:ActionAffordance;
+      td:name "setAIPose";
       td:hasForm [
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/pose>;
-          hctl:forContentType "application/joint+json";
-          hctl:hasOperationType td:subscribeEvent, td:unsubscribeEvent
-        ], [
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/pose>;
-          hctl:forContentType "application/tcp+json";
-          hctl:hasOperationType td:subscribeEvent, td:unsubscribeEvent
-        ], [
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/pose>;
-          hctl:forContentType "application/namedpose+json";
-          hctl:hasOperationType td:subscribeEvent, td:unsubscribeEvent
-        ], [
-          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/pose>;
+          <http://www.w3.org/2011/http#methodName> "PUT";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
           hctl:forContentType "application/ai+json";
-          hctl:hasOperationType td:subscribeEvent, td:unsubscribeEvent
+          hctl:hasOperationType td:invokeAction
         ];
-      td:hasSubscriptionSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema, intelliot:CallbackLocation;
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
               js:propertyName "callback"
-            ], [ a js:DataSchema;
+            ], [ a js:ObjectSchema, <https://intelliot.org/things#AICoordinate>, <https://intelliot.org/things#PoseValue>;
               js:propertyName "value";
-              js:oneOf [ a js:ObjectSchema, intelliot:JointCoordinates, intelliot:PoseValue;
-                  js:contentMediaType "application/joint+json";
-                  js:properties [ a js:IntegerSchema, intelliot:Joint1Coordinate;
-                      js:propertyName "j1"
-                    ], [ a js:IntegerSchema, intelliot:Joint2Coordinate;
-                      js:propertyName "j2"
-                    ], [ a js:IntegerSchema, intelliot:Joint3Coordinate;
-                      js:propertyName "j3"
-                    ], [ a js:IntegerSchema, intelliot:Joint4Coordinate;
-                      js:propertyName "j4"
-                    ], [ a js:IntegerSchema, intelliot:Joint5Coordinate;
-                      js:propertyName "j5"
-                    ], [ a js:IntegerSchema, intelliot:Joint6Coordinate;
-                      js:propertyName "j6"
-                    ];
-                  js:required "j1", "j2", "j3", "j4", "j5", "j6"
-                ], [ a js:ObjectSchema, intelliot:PoseValue, intelliot:TCPCoordinate;
-                  js:contentMediaType "application/tcp+json";
-                  js:properties [ a js:IntegerSchema, intelliot:AlphaCoordinate;
-                      js:propertyName "alpha"
-                    ], [ a js:IntegerSchema, intelliot:XCoordinate;
-                      js:propertyName "x"
-                    ], [ a js:IntegerSchema, intelliot:YCoordinate;
-                      js:propertyName "y"
-                    ], [ a js:IntegerSchema, intelliot:ZCoordinate;
-                      js:propertyName "z"
-                    ], [ a js:IntegerSchema, intelliot:BetaCoordinate;
-                      js:propertyName "beta"
-                    ], [ a js:IntegerSchema, intelliot:GammaCoordinate;
-                      js:propertyName "gamma"
-                    ];
-                  js:required "x", "y", "z", "alpha", "beta", "gamma"
-                ], [ a js:StringSchema, intelliot:PoseValue, intelliot:NamedPose;
-                  js:enum "milling_machine_load", "dump_workpiece", "engraver_load", "home";
-                  js:contentMediaType "application/namedpose+json"
-                ], [ a js:ObjectSchema, intelliot:AICoordinate, intelliot:PoseValue;
-                  js:contentMediaType "application/ai+json";
-                  js:properties [ a js:IntegerSchema, intelliot:AlphaCoordinate;
-                      js:propertyName "alpha"
-                    ], [ a js:IntegerSchema, intelliot:XCoordinate;
-                      js:propertyName "x"
-                    ], [ a js:IntegerSchema, intelliot:YCoordinate;
-                      js:propertyName "y"
-                    ];
-                  js:required "x", "y", "alpha"
-                ]
+              js:contentMediaType "application/ai+json";
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#AlphaCoordinate>;
+                  js:propertyName "alpha"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#XCoordinate>;
+                  js:propertyName "x"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#YCoordinate>;
+                  js:propertyName "y"
+                ];
+              js:required "x", "y", "alpha"
             ];
-          js:required "value"
+          js:required "value", "callback"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "setNamedPose";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "PUT";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
+          hctl:forContentType "application/namedpose+json";
+          hctl:hasOperationType td:invokeAction
         ];
-      td:hasNotificationSchema [ a js:ObjectSchema, intelliot:PoseNotification;
-          js:properties [ a js:StringSchema, intelliot:PoseUpdate;
-              js:propertyName "message";
-              js:enum "aborted", "completed"
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "callback"
+            ], [ a js:StringSchema, <https://intelliot.org/things#PoseValue>, <https://intelliot.org/things#NamedPose>;
+              js:propertyName "value";
+              js:enum "milling_machine_pick", "milling_machine_place", "error", "engraver_load",
+                "home";
+              js:contentMediaType "application/namedpose+json"
             ];
-          js:required "message"
+          js:required "value", "callback"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "setJointPose";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "PUT";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
+          hctl:forContentType "application/joint+json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "callback"
+            ], [ a js:ObjectSchema, <https://intelliot.org/things#JointCoordinates>, <https://intelliot.org/things#PoseValue>;
+              js:propertyName "value";
+              js:contentMediaType "application/joint+json";
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#Joint1Coordinate>;
+                  js:propertyName "j1"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint2Coordinate>;
+                  js:propertyName "j2"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint3Coordinate>;
+                  js:propertyName "j3"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint4Coordinate>;
+                  js:propertyName "j4"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint5Coordinate>;
+                  js:propertyName "j5"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#Joint6Coordinate>;
+                  js:propertyName "j6"
+                ];
+              js:required "j1", "j2", "j3", "j4", "j5", "j6"
+            ];
+          js:required "value", "callback"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "setTcpPose";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "PUT";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/robot-controller/robot-controller/pose>;
+          hctl:forContentType "application/tcp+json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "callback"
+            ], [ a js:ObjectSchema, <https://intelliot.org/things#PoseValue>, <https://intelliot.org/things#TCPCoordinate>;
+              js:propertyName "value";
+              js:contentMediaType "application/tcp+json";
+              js:properties [ a js:IntegerSchema, <https://intelliot.org/things#AlphaCoordinate>;
+                  js:propertyName "alpha"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#XCoordinate>;
+                  js:propertyName "x"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#YCoordinate>;
+                  js:propertyName "y"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#ZCoordinate>;
+                  js:propertyName "z"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#BetaCoordinate>;
+                  js:propertyName "beta"
+                ], [ a js:IntegerSchema, <https://intelliot.org/things#GammaCoordinate>;
+                  js:propertyName "gamma"
+                ];
+              js:required "x", "y", "z", "alpha", "beta", "gamma"
+            ];
+          js:required "value", "callback"
         ]
     ] .
 '
@@ -834,8 +821,9 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/engraver> a td:Thing, <http://w3id.org/eve#Artifact>, <http://example.org/intellIoT#EngraverMachine>;
-  td:title "Engraver machine";
+<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/engraver> a td:Thing, <http://w3id.org/eve#Artifact>,
+    <http://example.org/intellIoT#EngraverMachine>;
+  td:title "Engraver";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
@@ -900,7 +888,9 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
           hctl:hasOperationType td:invokeAction
         ];
       td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
+          js:properties [ a js:NumberSchema;
+              js:propertyName "textHeight"
+            ], [ a js:BooleanSchema;
               js:propertyName "laserOn"
             ], [ a js:StringSchema;
               js:propertyName "positionReference"
@@ -912,6 +902,8 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
               js:propertyName "fontsize"
             ], [ a js:NumberSchema;
               js:propertyName "y"
+            ], [ a js:NumberSchema;
+              js:propertyName "textWidth"
             ], [ a js:ArraySchema;
               js:propertyName "text";
               js:items [ a js:StringSchema
@@ -981,11 +973,27 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
 <'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators> a td:Thing, <http://w3id.org/eve#Artifact>;
-  td:title "Engraver Actuators";
+  td:title "Actuators";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "open";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/open>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasOutputSchema [ a js:ObjectSchema;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "openWithId";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "machineId"
         ];
@@ -1005,6 +1013,22 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
         ]
     ], [ a td:ActionAffordance;
       td:name "close";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/close>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasOutputSchema [ a js:ObjectSchema;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "closeWithId";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "machineId"
         ];
@@ -1024,6 +1048,22 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
         ]
     ], [ a td:ActionAffordance;
       td:name "liftup";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/liftup>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasOutputSchema [ a js:ObjectSchema;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "liftupWithId";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "machineId"
         ];
@@ -1043,6 +1083,22 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
         ]
     ], [ a td:ActionAffordance;
       td:name "lowerdown";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/lowerdown>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasOutputSchema [ a js:ObjectSchema;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "lowerdownWithId";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "machineId"
         ];
@@ -1062,6 +1118,22 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
         ]
     ], [ a td:ActionAffordance;
       td:name "pushstart";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/push-start-button>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasOutputSchema [ a js:ObjectSchema;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "pushstartWithId";
       td:hasUriTemplateSchema [ a js:StringSchema;
           td:name "machineId"
         ];
@@ -1082,3 +1154,47 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
     ];
   dct:description "Actuators for the engraver" .
 '
+
+
+
+
+echo "Create DLT Client"
+
+curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
+--header 'X-Agent-WebID: http://example.org/agent' \
+--header 'Slug: dlt-client' \
+--header 'Content-Type: text/turtle' \
+--data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+
+<http://edge.fritz.box:8888/workspaces/uc1/artifacts/dlt-client> a td:Thing, <http://w3id.org/eve#Artifact>,
+    <http://example.org/intellIoT#EngraverMachine>;
+  td:title "DLT Client";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance;
+      td:name "sendTransaction";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          hctl:hasTarget <http://edge.fritz.box:9090>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "getTransaction";
+      td:hasForm [
+          <http://www.w3.org/2011/http#methodName> "GET";
+          hctl:hasTarget <http://edge.fritz.box:9090>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ];
+  dct:description "An engraver machine used on the IntellIoT project" .
+ .
+
+'
+
