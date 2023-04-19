@@ -89,11 +89,11 @@ public class MainVerticle extends AbstractVerticle {
       new DeploymentOptions().setConfig(config())
     );
 
-    vertx.deployVerticle(new CoapServerVerticle(),
-      new DeploymentOptions().setConfig(config()));
+    /*vertx.deployVerticle(new CoapServerVerticle(),
+      new DeploymentOptions().setConfig(config()));*/
 
-    vertx.deployVerticle(new CoapClientVerticle(),
-      new DeploymentOptions().setConfig(config()));
+    /*vertx.deployVerticle(new CoapClientVerticle(),
+      new DeploymentOptions().setConfig(config()));*/
 
   }
 
