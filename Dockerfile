@@ -3,7 +3,7 @@ FROM openjdk:11
 EXPOSE 8080
 
 COPY .  /yggdrasil
-COPY src/main/conf/config_uc1.json /usr/verticles/
+COPY src/main/conf/config4.json /usr/verticles/
 
 RUN cd /yggdrasil && ./gradlew build -x test
 
@@ -15,4 +15,4 @@ WORKDIR /usr/verticles
 
 ENTRYPOINT ["sh", "-c"]
 #CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf config.json"]
-CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf /usr/verticles/config_uc1.json"]
+CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf /usr/verticles/config4.json"]
