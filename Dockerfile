@@ -15,4 +15,4 @@ WORKDIR /usr/verticles
 
 ENTRYPOINT ["sh", "-c"]
 #CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf config.json"]
-CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf /usr/verticles/config4.json"]
+CMD ["exec java -jar yggdrasil-0.0-SNAPSHOT-fat.jar -conf /usr/verticles/config3.json"]
