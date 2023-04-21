@@ -1,0 +1,10 @@
+{
+  "http-config" : {
+    "host" : "0.0.0.0",
+    "port" : 8080,
+    "base-uri": "http://192.168.70.135:8080/",
+    "virtual-host" : "localhost",
+    "virtual-host-port" : 8080,
+    "websub-hub" : "http://192.168.70.135:8080/hub/"
+  }
+}

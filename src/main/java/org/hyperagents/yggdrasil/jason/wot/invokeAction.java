@@ -13,6 +13,7 @@ import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.vertx.core.json.Json;
 import jason.asSemantics.TransitionSystem;
 import jason.asSemantics.Unifier;
 import jason.asSyntax.MapTerm;
@@ -195,6 +196,8 @@ public class invokeAction extends WoTAction{
 
           // Set the payload depending on the data type of the input data
           setRequestPayload(payload, request, opSchema);
+          String p = request.getPayloadAsString();
+          System.out.println("body: "+p);
 
           TDHttpResponse response = request.execute();
           return createResponseObject(response);
@@ -212,10 +215,25 @@ public class invokeAction extends WoTAction{
     return null;
   }
 
-  private void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
-    if (payload instanceof Term){
+  public void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema){
+    if (payload instanceof Term) {
+      System.out.println("payload is term");
       JsonElement element = getAsJsonElement((Term) payload);
+      String s = getAsJson((Term) payload);
+      System.out.println("s: " + s);
+      request.setPayload(s);
+    }
+  }
+
+  private void setRequestPayload1(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+    if (payload instanceof Term){
+      System.out.println("payload is term");
+      JsonElement element = getAsJsonElement((Term) payload);
+      String s = getAsJson((Term) payload);
+      System.out.println("s: "+s);
+      System.out.println("json element: "+ element);
       if (element.isJsonObject()){
+        System.out.println("payload is json object");
         DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
         Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
         request.setObjectPayload((ObjectSchema) schema, objectPayload);
@@ -239,7 +257,13 @@ public class invokeAction extends WoTAction{
       if (element.isJsonObject()) {
         DataSchema schema = opSchema.orElseGet(ObjectSchema::getEmptySchema);
         Map<String, Object> objectPayload = createObjectPayload(element.getAsJsonObject());
-        request.setObjectPayload((ObjectSchema) schema, objectPayload);
+        Map<String, Object> newObjectPayload = new Hashtable<>();
+        for (String key: objectPayload.keySet()){
+          String newKey = removeQuotes(key);
+          System.out.println("newKey: "+ newKey);
+          newObjectPayload.put(newKey, objectPayload.get(key));
+        }
+        request.setObjectPayload((ObjectSchema) schema, newObjectPayload);
         // 1c. The payload's data type can be an ARRAY (i.e. an array in an array)
       } else if (element.isJsonArray()) {
         DataSchema schema = opSchema.orElseGet(ArraySchema::getEmptySchema);
@@ -258,6 +282,7 @@ public class invokeAction extends WoTAction{
     }
     return body;
   }
+
 
 
 
