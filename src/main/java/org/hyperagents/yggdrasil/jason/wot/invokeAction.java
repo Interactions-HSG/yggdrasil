@@ -212,7 +212,16 @@ public class invokeAction extends WoTAction{
     return null;
   }
 
-  private void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
+  public void setRequestPayload(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema){
+    if (payload instanceof Term) {
+      System.out.println("payload is term");
+      String s = getAsJson((Term) payload);
+      System.out.println("s: " + s);
+      request.setPayload(s);
+    }
+  }
+
+  private void setRequestPayload1(Object payload, TDHttpRequest request, Optional<DataSchema> opSchema) {
     if (payload instanceof Term){
       JsonElement element = getAsJsonElement((Term) payload);
       if (element.isJsonObject()){
