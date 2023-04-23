@@ -26,7 +26,7 @@ fi
 
 curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'X-Agent-WebID: http://example.org/agent' \
---header 'X-Agent-Name: '"${AGENT_ID}"'' \
+--header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
 --data-raw '+message(Id, Json): true <-
 .print(Json);

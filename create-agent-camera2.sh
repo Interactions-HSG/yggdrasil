@@ -9,26 +9,6 @@ while [[ "$#" -gt 0 ]]
         HYPERMAS_BASE=$2
          ((REQUIRED_PARAM_COUNTER++))
         ;;
-    esac
-    shift
-  dones
-
-
-curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
---header 'X-Agent-WebID: http://example.org/agent' \
---header 'X-Agent-Name: '"${AGENT_ID}"'' \
---header 'Content-Type: text/plain' \
---data-raw 'while [[ "$#" -gt 0 ]]
-  do
-    case $1 in
-      -a|--agent)
-        AGENT_ID=$2
-         ((REQUIRED_PARAM_COUNTER++))
-        ;;
-      --hyper)
-        HYPERMAS_BASE=$2
-         ((REQUIRED_PARAM_COUNTER++))
-        ;;
       --device)
         DEVICE_BASE=$2
          ((REQUIRED_PARAM_COUNTER++))
@@ -255,6 +235,9 @@ if (Code > 299){
 .map.get(Response, "response", R);
 .map.get(R, "body", B);
 org.hyperagents.yggdrasil.jason.json.createTermFromJson(B, Body).
+
+
+
 
 
 
