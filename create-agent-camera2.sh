@@ -33,7 +33,7 @@ hil_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
 robot_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller").
 actuators_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
 engraver_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/engraver").
-dlt_client_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/dlt").
+dlt_client_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/dlt-client").
 
 camera_hostname("camera-storage.fritz.box").
 
@@ -149,18 +149,18 @@ if (BestStorage == 0){
 
 +!invoke_action_with_DLT(TDUrl, Method, Body, Headers, UriVariables): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, UriVariables, Response);
-    org.hyperagents.yggdrasil.jason.wot.dlt.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R).
 
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, UriVariables, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, UriVariables, Response);
-    org.hyperagents.yggdrasil.jason.wot.dlt.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R). 
  
 
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, Response);
-    org.hyperagents.yggdrasil.jason.wot.dlt.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R). 
 
 +?normalize_values(Alpha, X, Y, NewAlpha, NewX, NewY): true <-
@@ -182,9 +182,11 @@ if (BestStorage == 0){
     }.
 
 +?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot): true <-
-    .map.create(Headers);
+    //.map.create(Headers);
+    Headers = {};
     .map.put(Headers, "Content-Type", "application/json");
-    .map.create(UriVariables);
+    //.map.create(UriVariables);
+    UriVariables = {};
     .map.put(UriVariables, "storageId", Storage);
     .map.put(UriVariables, "cameraHostname", Hostname);
     .map.put(UriVariables, "cameraId", Camera);
