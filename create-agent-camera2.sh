@@ -112,7 +112,8 @@ y(10).
     ?get_body_as_json(Response, Body);
     .map.get(Body, "confidence", C);
     if (C>95){
-        R = .map.get(Body, "radius") *2;
+        .map.get(Body, "radius", R1);
+        R = R1 * 2;
         +storage_area_diameter(StorageNumber, R)
 
     } else {
