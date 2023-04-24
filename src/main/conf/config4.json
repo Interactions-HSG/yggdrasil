@@ -1,7 +1,7 @@
 {
   "http-config" : {
-    "host" : "edge.fritz.box",
-    "port" : 8888,
+    "host" : "0.0.0.0",
+    "port" : 8080,
     "base-uri": "http://edge.fritz.box:8888/",
     "virtual-host" : "edge.fritz.box",
     "virtual-host-port" : 8888,
