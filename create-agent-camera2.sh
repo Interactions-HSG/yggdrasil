@@ -81,7 +81,7 @@ y(10).
 !start.
 
 +!start: true <-
-    .print("start").
+    .print("start");
     ?callback(Callback);
     ?camera_hostname(Hostname);
     ?camera_id(Camera);
