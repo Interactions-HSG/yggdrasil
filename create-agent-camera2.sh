@@ -149,18 +149,18 @@ if (BestStorage == 0){
 
 +!invoke_action_with_DLT(TDUrl, Method, Body, Headers, UriVariables): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, UriVariables, Response);
-    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R).
 
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, UriVariables, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, UriVariables, Response);
-    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R). 
  
 
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, Response);
-    org.hyperagents.yggdrasil.jason.wot.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "POST", Message, R). 
 
 +?normalize_values(Alpha, X, Y, NewAlpha, NewX, NewY): true <-
