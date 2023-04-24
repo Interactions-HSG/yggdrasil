@@ -81,14 +81,18 @@ y(10).
 !start.
 
 +!start: true <-
+    .print("start").
     ?callback(Callback);
     ?camera_hostname(Hostname);
     ?camera_id(Camera);
     ?text_width(TextWidth);
     ?x(X);
     ?y(Y);
+    .print("before compute storage area");
     ?compute_storage_area(Width, X, Y, Storage);
+    .print("storage area computed");
     ?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot);
+    .print("grabspot received");
     .map.get(Grabspot, "confidence", Confidence);
     .map.get(Grabspot, "angle", Alpha);
     .map.get(Grabspot, "xcoordinate", X);
