@@ -1194,7 +1194,6 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
         ]
     ];
   dct:description "An engraver machine used on the IntellIoT project" .
- .
 
 '
 
