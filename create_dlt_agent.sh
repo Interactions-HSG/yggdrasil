@@ -25,7 +25,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
 --data-raw '
-td_dlt("http://localhost:8080/workspaces/uc3/artifacts/dlt-client").
+td_dlt("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/dlt-client").
 
 !start.
 +!start: true <-
