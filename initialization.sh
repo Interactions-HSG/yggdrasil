@@ -9,13 +9,17 @@ while [[ "$#" -gt 0 ]]
         DEVICE_BASE=$2
          ((REQUIRED_PARAM_COUNTER++))
         ;;
+      --dlt)
+        DLT_BASE=$2
+         ((REQUIRED_PARAM_COUNTER++))
+        ;;
     esac
     shift
   done
 
 
-if [[ $REQUIRED_PARAM_COUNTER -ne 2 ]]; then
-    echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL>"
+if [[ $REQUIRED_PARAM_COUNTER -ne 3 ]]; then
+    echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL> --dlt <DLT Client Url>"
     exit 1
 fi
 
@@ -1171,7 +1175,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
-<http://edge.fritz.box:8888/workspaces/uc1/artifacts/dlt-client> a td:Thing, <http://w3id.org/eve#Artifact>,
+<'"${HYPERMAS_BASE}"'/workspaces/uc1/artifacts/dlt-client> a td:Thing, <http://w3id.org/eve#Artifact>,
     <http://example.org/intellIoT#EngraverMachine>;
   td:title "DLT Client";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
@@ -1180,7 +1184,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
       td:name "sendTransaction";
       td:hasForm [
           <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <http://edge.fritz.box:9090>;
+          hctl:hasTarget <'"${DLT_BASE}"'>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -1188,7 +1192,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
       td:name "getTransaction";
       td:hasForm [
           <http://www.w3.org/2011/http#methodName> "GET";
-          hctl:hasTarget <http://edge.fritz.box:9090>;
+          hctl:hasTarget <'"${DLT_BASE}"'>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
