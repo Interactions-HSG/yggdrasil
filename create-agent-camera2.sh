@@ -89,7 +89,7 @@ y(10).
     ?x(X);
     ?y(Y);
     .print("before compute storage area");
-    ?compute_storage_area(Width, X, Y, Storage);
+    ?compute_storage_area(TextWidth, X, Y, Storage);
     .print("storage area computed");
     ?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot);
     .print("grabspot received");
@@ -159,13 +159,13 @@ if (BestStorage == 0){
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, UriVariables, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, UriVariables, Response);
     org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
-    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R). 
- 
+    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R).
+
 
 +?invoke_action_with_DLT(TDUrl, Method, Body, Headers, Response): dlt_client_td_url(DLTClientTDUrl) <-
     org.hyperagents.yggdrasil.jason.wot.invokeAction(TDUrl, Method, Body, Headers, Response);
     org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
-    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R). 
+    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R).
 
 +?normalize_values(Alpha, X, Y, NewAlpha, NewX, NewY): true <-
     X1 = X/1000;
