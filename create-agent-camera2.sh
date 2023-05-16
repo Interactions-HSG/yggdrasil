@@ -78,6 +78,11 @@ text_width(10).
 x(10).
 y(10).
 
+available_storage_area("1").
+available_storage_area("2").
+available_storage_area("3").
+available_storage_area("4").
+
 !start.
 
 +!start: true <-
@@ -102,9 +107,21 @@ y(10).
     .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY).
 
 +?compute_storage_area(Width, X, Y, StorageArea): ai_td_url(AIUrl) <-
-    for (available_storage_area(X) & X){
-        ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", "", Headers, UriVariables, Response);
-        !process_storage_response(X, Response);
+    .print("start compute storage area");
+    .findall(Z, available_storage_area(Z), L);
+    .print("L: ", L);
+    for (available_storage_area(ST)){
+        .print("Test storage area: ", ST);
+        .map.create(Headers);
+        .map.put(Headers, "Content-Type", "application/json");
+        .map.create(UriVariables);
+        .map.put(UriVariables, "storageId", ST);
+        ?camera_hostname(CameraHostname);
+        ?camera_id(CameraId);
+        .map.put(UriVariables,"cameraHostname", CameraHostname);
+        .map.put(UriVariables,"cameraId", CameraId);
+        ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
+        !process_storage_response(ST, Response);
 
     }
     RDiameter = Width + X + Y + 20
