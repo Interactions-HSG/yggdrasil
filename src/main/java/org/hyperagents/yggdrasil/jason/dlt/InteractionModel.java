@@ -4,6 +4,7 @@ package org.hyperagents.yggdrasil.jason.dlt;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
 import com.google.gson.*;
+import com.google.gson.stream.JsonWriter;
 import io.vertx.core.json.Json;
 import jason.asSyntax.*;
 import org.eclipse.rdf4j.model.IRI;
@@ -100,6 +101,7 @@ public class InteractionModel {
 
   public Model createModel(){
       com.google.gson.JsonObject modelObject = getJsonObjectFromMapTerm(modelTerm);
+      System.out.println("model used: "+ modelObject.toString());
     ModelBuilder modelBuilder = new ModelBuilder();
     Resource interactionIdentifier = rdf.createBNode("interaction");
     if (agentUri.isPresent()){

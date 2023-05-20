@@ -168,7 +168,7 @@ public class invokeAction extends WoTAction{
     return null;
   }
 
-  public MapTerm invokeAction(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
+  public MapTerm invokeAction2(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
     try {
       System.out.println("invoke action has payload: " + payload);
       ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
@@ -198,6 +198,55 @@ public class invokeAction extends WoTAction{
 
           TDHttpResponse response = request.execute();
           return createResponseObject(response);
+        } else {
+          System.out.println("form is not present");
+          return null;
+        }
+      } else {
+        System.out.println("action is not present");
+        return null;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public MapTerm invokeAction(String tdUrl, String affordanceName, Object payload, Map<String, String> headers, Map<String, Object> uriVariables) {
+    try {
+      System.out.println("invoke action has payload: " + payload);
+      ThingDescription td = TDGraphReader.readFromURL(ThingDescription.TDFormat.RDF_TURTLE, tdUrl);
+      Optional<ActionAffordance> opAction = td.getActionByName(affordanceName);
+      if (opAction.isPresent()) {
+        ActionAffordance action = opAction.get();
+        Optional<Form> opForm = action.getFirstForm();
+        if (opForm.isPresent()) {
+          Form form = opForm.get();
+          TDHttpRequest request = new TDHttpRequest(form, TD.invokeAction);
+          if (action.getUriVariables().isPresent()) {
+            System.out.println("form target: " + form.getTarget());
+            System.out.println("uri variables: " + uriVariables);
+            request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
+            System.out.println(request.getTarget());
+          }
+
+          for (String key : headers.keySet()) {
+            String value = headers.get(key);
+            request.addHeader(key, value);
+          }
+
+          Optional<DataSchema> opSchema = action.getInputSchema();
+
+          // Set the payload depending on the data type of the input data
+          setRequestPayload(payload, request, opSchema);
+
+          TDHttpResponse response = request.execute();
+          String methodName = "POST";
+          if (form.getMethodName().isPresent()){
+            methodName = form.getMethodName().get();
+          }
+          String body = payload.toString();
+          return createResponseObject(form.getTarget(), methodName , headers, body, response );
         } else {
           System.out.println("form is not present");
           return null;
