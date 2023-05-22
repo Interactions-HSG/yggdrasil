@@ -164,6 +164,7 @@ for (storage_area_diameter(S, D)){
     BestStorage = NewBestStorage;
 }
 if (BestStorage == 0){
+    .print("start goal fails");
     .fail_goal(start);
 }
 
