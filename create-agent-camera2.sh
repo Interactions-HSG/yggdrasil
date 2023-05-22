@@ -95,7 +95,7 @@ available_storage_area("4").
     ?y(Y);
     .print("before compute storage area");
     ?compute_storage_area(TextWidth, X, Y, Storage);
-    .print("storage area computed");
+    .print("storage area computed: ", Storage);
     ?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot);
     .print("grabspot received");
     .map.get(Grabspot, "confidence", Confidence);
@@ -124,8 +124,9 @@ available_storage_area("4").
         !process_storage_response(ST, Response);
 
     }
-    RDiameter = Width + X + Y + 20
-    ?select_storage_area(RDiameter, StorageArea)
+    RDiameter = Width + X + Y + 20;
+    ?select_storage_area(RDiameter, StorageArea);
+    .print("Storage area: ", StorageArea);
     .print("end compute storage area").
 
 +!process_storage_response(StorageNumber, Response): true <-
