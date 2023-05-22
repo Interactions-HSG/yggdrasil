@@ -83,6 +83,10 @@ available_storage_area("2").
 available_storage_area("3").
 available_storage_area("4").
 
+best_diameter(1000).
+
+best_storage(0).
+
 !start.
 
 +!start: true <-
@@ -156,14 +160,15 @@ available_storage_area("4").
     .print("end new selected storage area").
 
 +?select_storage_area(RDiameter, BestStorage): true <-
-BDiameter = 1000;
-BestStorage = 0;
 for (storage_area_diameter(S, D)){
+    ?best_diameter(BDiameter);
+    ?best_storage(BestStorage);
     ?new_selected_storage_area(RDiameter, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
-    BDiameter = NewBDiameter;
-    BestStorage = NewBestStorage;
+    -+best_diameter(NewBDiameter);
+    -+best_storage(NewBestStorage);
 }
-if (BestStorage == 0){
+?best_storage(BStorage);
+if (BStorage == 0){
     .print("start goal fails");
     .fail_goal(start);
 }
