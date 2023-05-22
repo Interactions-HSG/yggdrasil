@@ -209,7 +209,7 @@ if (BStorage == 0){
         }
     }.
 
-+?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot): true <-
++?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot): ai_td_url(AIUrl)<-
     //.map.create(Headers);
     .map.create(Headers);
     .map.put(Headers, "Content-Type", "application/json");
