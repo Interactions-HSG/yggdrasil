@@ -225,8 +225,8 @@ if (BStorage == 0){
     //.map.get(Response, "body", GrabspotString);
     ?get_body_as_json(Response, Grabspot);
     .print("grabspot: ", Grabspot);
-    //.map.key(Grabspot, "error_code", B);
-    ?has_key(Grabspot, "error_code", B);
+    .map.key(Grabspot, "error_code", B);
+    //?has_key(Grabspot, "error_code", B);
     .print("has error code: ", B);
     if (B){ //TODO: refactor without if
         .print("exit");
