@@ -159,7 +159,7 @@ best_storage(0).
     }
     .print("end new selected storage area").
 
-+?select_storage_area(RDiameter, BestStorage): true <-
++?select_storage_area(RDiameter, BStorage): true <-
 for (storage_area_diameter(S, D)){
     ?best_diameter(BDiameter);
     ?best_storage(BestStorage);
