@@ -211,10 +211,10 @@ if (BStorage == 0){
 
 +?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot): true <-
     //.map.create(Headers);
-    Headers = {};
+    .map.create(Headers);
     .map.put(Headers, "Content-Type", "application/json");
     //.map.create(UriVariables);
-    UriVariables = {};
+    .map.create(UriVariables);
     .map.put(UriVariables, "storageId", Storage);
     .map.put(UriVariables, "cameraHostname", Hostname);
     .map.put(UriVariables, "cameraId", Camera);
