@@ -159,7 +159,7 @@ available_storage_area("4").
 BDiameter = 1000;
 BestStorage = 0;
 for (storage_area_diameter(S, D)){
-    ?new_selected_storage_area(D, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
+    ?new_selected_storage_area(RDiameter, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
     BDiameter = NewBDiameter;
     BestStorage = NewBestStorage;
 }
