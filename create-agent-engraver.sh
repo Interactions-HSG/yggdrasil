@@ -296,7 +296,7 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     !wait(EngraverUrl, "available", 1000).
 
 +!use_actuator(ActuatorsUrl, Task): true <-
-    ?invoke_action_with_DLT(ActuatorsUrl, Task, "", Response);
+    ?invoke_action_with_DLT(ActuatorsUrl, Task, {}, {}, Response);
     !exit(Response, start);
     .print("end use actuator").
 
