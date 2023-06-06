@@ -292,12 +292,14 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     ?invoke_action_with_DLT(EngraverUrl, "createEngraveText", EngravingBody, EngravingResponse);
     !exit(EngravingResponse, start);
     !wait(EngraverUrl, "waiting", 1000); //To create
-    !use_actuator(ActuatorsUrl, "pushstart")
+    !use_actuator(ActuatorsUrl, "pushstart");
     !wait(EngraverUrl, "available", 1000).
 
 +!use_actuator(ActuatorsUrl, Task): true <-
     .map.create(Body);
+    .map.put(Body, "a", "a");
     .map.create(Headers);
+    .map.put(Headers, "Content-Type", "application/json");
     ?invoke_action_with_DLT(ActuatorsUrl, Task, Body, Headers, Response);
     !exit(Response, start);
     .print("end use actuator").
