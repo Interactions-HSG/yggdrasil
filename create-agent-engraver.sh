@@ -282,6 +282,7 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     //?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
     !use_actuator(ActuatorsUrl, "close");
     //!engraver(EngraverUrl, ActuatorsUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
+    !engraver(EngraverUrl, ActuatorsUrl, Text, 100, 180, 50);
     !use_actuator(ActuatorsUrl, "open");
     !use_actuator(ActuatorsUrl, "liftup");
     .print("end print mr beam").
