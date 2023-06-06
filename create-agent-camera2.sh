@@ -104,10 +104,10 @@ best_storage(0).
     .print("grabspot received");
     .map.get(Grabspot, "confidence", Confidence);
     .map.get(Grabspot, "angle", Alpha);
-    .map.get(Grabspot, "xcoordinate", X);
-    .map.get(Grabspot, "ycoordinate", Y);
+    .map.get(Grabspot, "xcoordinate", XCoordinate);
+    .map.get(Grabspot, "ycoordinate", YCoordinate);
     ?confidence(ConfidenceLevel);
-    ?normalize_values(Alpha, X, Y, NewAlpha, NewX, NewY);
+    ?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
     .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY).
 
 +?compute_storage_area(Width, X, Y, StorageArea): ai_td_url(AIUrl) <-
