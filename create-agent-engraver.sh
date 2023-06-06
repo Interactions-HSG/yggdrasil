@@ -109,9 +109,11 @@ best_storage(0).
     ?confidence(ConfidenceLevel);
     ?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
     .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
+    .print("before use Mr Beam");
     ?actuators_td_url(ActuatorsUrl);
     ?engraver_td_url(EngraverUrl);
     Text = "IntellIoT";
+    print("text to print: ", Text);
     !print_mr_beam(ActuatorsUrl, EngraverUrl, Text).
 
 +?compute_storage_area(Width, X, Y, StorageArea): ai_td_url(AIUrl) <-
@@ -275,6 +277,7 @@ org.hyperagents.yggdrasil.jason.json.createTermFromJson(B, Body).
 +!print_mr_beam(ActuatorsUrl, EngraverUrl, Text):
 camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngraverId) & storage(Storage)
 <-
+    .print("print Mr Beam");
     !use_actuator(ActuatorsUrl, "lowerdown");
     ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
     !use_actuator(ActuatorsUrl, "close");
