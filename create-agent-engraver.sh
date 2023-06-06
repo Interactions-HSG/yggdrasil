@@ -290,7 +290,9 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
 +!engraver(EngraverUrl, ActuatorsUrl, Text, X_MrBeam, Y_MrBeam, TextWidth): true<-
     ?make_json_term(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn"], [[Text], "ABeeZee", "regular", TextWidth, "left", "center", X_MrBeam, Y_MrBeam, false], EngravingBody);
     //org.hyperagents.yggdrasil.jason.json.getTermAsJson(EngravingBodyJson, EngravingBodyString);
-    ?invoke_action_with_DLT(EngraverUrl, "createEngraveText", EngravingBody, EngravingResponse);
+    .map.create(EngravingHeaders);
+    .map.create(EngravingHeaders, "Content-Type","application/json");
+    ?invoke_action_with_DLT(EngraverUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
     !exit(EngravingResponse, start);
     !wait(EngraverUrl, "waiting", 1000); //To create
     !use_actuator(ActuatorsUrl, "pushstart");
