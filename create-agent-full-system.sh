@@ -448,6 +448,10 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     ?make_json_term(["value","callback"],[Value, Callback], PoseStorage);
     .print("pose ai: ", PoseStorage).
 
++?create_named_pose_process(Process, Callback, NamedPose): true <-
+    Value = "engraver_load";
+    ?make_json_term(["value", "callback"], [Value, Callback], NamedPose).
+
 
 
 
