@@ -197,6 +197,13 @@ if (BStorage == 0){
     org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
     org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R).
 
++?read_property_with_DLT(TDUrl, Method,Headers, UriVariables, Response): dlt_client_td_url(DLTClientTDUrl) <-
+    org.hyperagents.yggdrasil.jason.wot.readProperty(TDUrl, Method, Headers, UriVariables, Response);
+    org.hyperagents.yggdrasil.jason.dlt.getAsDLTMessage(Response, Message);
+    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R).
+
+
+
 +?normalize_values(Alpha, X, Y, NewAlpha, NewX, NewY): true <-
     X1 = X/1000;
     Y1 = Y/1000;
@@ -291,7 +298,7 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     ?make_json_term(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn"], [[Text], "ABeeZee", "regular", TextWidth, "left", "center", X_MrBeam, Y_MrBeam, false], EngravingBody);
     //org.hyperagents.yggdrasil.jason.json.getTermAsJson(EngravingBodyJson, EngravingBodyString);
     .map.create(EngravingHeaders);
-    .map.create(EngravingHeaders, "Content-Type","application/json");
+    .map.put(EngravingHeaders, "Content-Type","application/json");
     ?invoke_action_with_DLT(EngraverUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
     !exit(EngravingResponse, start);
     !wait(EngraverUrl, "waiting", 1000); //To create
@@ -310,7 +317,8 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
 +!wait(EngraverUrl, Status, Time): true <-
     .wait(Time);
     .print("wait for status: ", Status);
-    org.hyperagents.yggdrasil.jason.wot.readProperty(EngraverUrl, "getJob", JobResponse);
+    ?read_property_with_DLT(EngraverUrl, "getJob", JobResponse);
+    //org.hyperagents.yggdrasil.jason.wot.readProperty(EngraverUrl, "getJob", JobResponse);
     !exit(JobResponse, start );
     //.map.get(JobResponse, "body", JobBody);
     ?get_body_as_json(JobResponse, JobBody);
