@@ -78,6 +78,8 @@ text_width(10).
 x(10).
 y(10).
 
+process_robot("engraver_load").
+
 available_storage_area("1").
 available_storage_area("2").
 available_storage_area("3").
@@ -97,6 +99,8 @@ best_storage(0).
     ?text_width(TextWidth);
     ?x(X);
     ?y(Y);
+    ?process_robot(Process);
+    ?callback(Callback);
     .print("before compute storage area");
     ?compute_storage_area(TextWidth, X, Y, Storage);
     .print("storage area computed: ", Storage);
@@ -114,7 +118,10 @@ best_storage(0).
     ?engraver_td_url(EngraverUrl);
     Text = "IntellIoT";
     print("text to print: ", Text);
-    !print_mr_beam(ActuatorsUrl, EngraverUrl, Text).
+    //!move_piece_to_engraver(RobotUrl, Process, Callback);
+    !print_mr_beam(ActuatorsUrl, EngraverUrl, Text);
+    //!move_piece_back(RobotUrl, Process, Callback);
+    .print("end").
 
 +?compute_storage_area(Width, X, Y, StorageArea): ai_td_url(AIUrl) <-
     .print("start compute storage area");
@@ -317,7 +324,10 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
 +!wait(EngraverUrl, Status, Time): true <-
     .wait(Time);
     .print("wait for status: ", Status);
-    ?read_property_with_DLT(EngraverUrl, "getJob", JobResponse);
+    //?read_property_with_DLT(EngraverUrl, "getJob", JobResponse);
+    .map.create(Headers);
+    .map.create(UriVariables);
+    ?read_property_with_DLT(TDUrl, "getJob",Headers, UriVariables, JobResponse);
     //org.hyperagents.yggdrasil.jason.wot.readProperty(EngraverUrl, "getJob", JobResponse);
     !exit(JobResponse, start );
     //.map.get(JobResponse, "body", JobBody);
@@ -359,6 +369,84 @@ camera_engraver_hostname(CameraEngraverHostname) & camera_engraver_id(CameraEngr
     }
     .print("engraving area computed").
 
+
+
+
++!gripper(RobotUrl, Status, Time): true <-
+    .map.create(Headers);
+    .map.put(Headers, "Content-Type", "application/json");
+    ?make_json_term(["status"], [Status], Content);
+    .print("content: ", Content);
+    org.hyperagents.yggdrasil.jason.wot.invokeAction(RobotUrl, "setGripper", Content, Headers, Response);
+    !exit(Response, start);
+    .wait(Time)
+    .print("end set gripper").
+
+
+
+
+
++!pose(RobotUrl, HeaderValue, PoseValue): true <- //TODO: refactor without if.
+    .map.create(Headers);
+    .map.put(Headers, "Content-Type", HeaderValue);
+    -+content_type(HeaderValue);
+    !pose_sub(RobotUrl, HeaderValue, PoseValue);
+    .print("end pose").
+
++!pose_sub(RobotUrl, HeaderValue, PoseValue): content_type(CT) & CT=="application/ai+json" <-
+        org.hyperagents.yggdrasil.jason.wot.invokeAction(RobotUrl, "setAIPose", PoseValue, Response);
+        printJson(Response);
+        !exit(Response, start).
+
++!pose_sub(RobotUrl, HeaderValue, PoseValue): content_type(CT) & CT=="application/namedpose+json" <-
+        org.hyperagents.yggdrasil.jason.wot.invokeAction(RobotUrl, "setNamedPose", PoseValue, Response);
+        !exit(Response, start).
+
++!pose_sub(RobotUrl, HeaderValue, PoseValue): content_type(CT) & CT=="application/joint+json" <-
+        org.hyperagents.yggdrasil.jason.wot.invokeAction(RobotUrl, "setJointPose", PoseValue, Response);
+        !exit(Response, start).
+
++!pose_sub(RobotUrl, HeaderValue, PoseValue): content_type(CT) & CT=="application/tcp+json" <-
+        org.hyperagents.yggdrasil.jason.wot.invokeAction(RobotUrl, "setTcpPose", PoseValue, Response);
+        !exit(Response, start).
+
++!move_piece_to_engraver(RobotUrl, Process, Callback): true <-
+    ?make_json_term(["value", "callback"], ["home", Callback], PoseValueHome);
+    ?create_named_pose_process(Process, Callback, PoseValueTransport);
+    !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
+    ?make_json_term(["value", "callback"], ["home", Callback], PoseValueHome);
+    !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+    .print("Before setting machine to use");
+    ?create_named_pose_process(Process, Callback, PoseValueTransport);
+    .print("The machine was selected");
+    printJson(PoseValueTransport);
+    !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
+    .print("The robot is at the  machine");
+    !gripper(RobotUrl, "open", 1000); //open gripper, check position
+    .print("The gripper is opened");
+    !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+    .print("The robot is at home").
+
++!move_piece_back(RobotUrl, Process, Callback): true <-
+    ?make_json_term(["value", "callback"], ["home", Callback], PoseValueHome);
+    ?create_named_pose_process(Process, Callback, PoseValueTransport);
+    !pose(RobotUrl, "application/namedpose+json", PoseValueTransport);
+    !gripper(RobotUrl, "close", 3000);
+    ?default_x(Storage, DefaultX);
+    ?default_y(Storage, DefaultY);
+    ?default_alpha(Storage, DefaultAlpha);
+    ?create_pose_ai(DefaultX, DefaultY, DefaultAlpha, Callback, PoseDefaultStorage);
+    org.hyperagents.yggdrasil.jason.json.getTermAsJson(PoseDefaultStorage, PoseDefaultStorageString);
+    !pose(RobotUrl, "application/ai+json", PoseDefaultStorage); //transport workpiece
+    !gripper(RobotUrl, "open", 1000); //open gripper, check position
+    !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+    .print("the robot is back at the initial position").
+
++?create_pose_ai(X, Y, Alpha, Callback, PoseStorage): true <-
+    ?make_json_term(["x","y","alpha"], [X,Y,Alpha], Value);
+    .print("pose ai value: ",Value);
+    ?make_json_term(["value","callback"],[Value, Callback], PoseStorage);
+    .print("pose ai: ", PoseStorage).
 
 
 
