@@ -118,6 +118,7 @@ best_storage(0).
     ?engraver_td_url(EngraverUrl);
     Text = "IntellIoT";
     print("text to print: ", Text);
+    ?robot_td_url(RobotUrl);
     !move_piece_to_engraver(RobotUrl, Process, Callback);
     !print_mr_beam(ActuatorsUrl, EngraverUrl, Text);
     !move_piece_back(RobotUrl, Process, Callback);
