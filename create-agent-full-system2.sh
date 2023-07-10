@@ -145,8 +145,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 -+y(Y);
                 .map.get(Message, "textWidth", TextWidth);
                 -+text_width(TextWidth);
-                .map.get(Message, "laserOn", LaserOn);
-                -+test(LaserOn);
+                .map.get(Message, "test", Test);
+                -+test(Test);
                 !update_process_robot;
                 !start.
 
