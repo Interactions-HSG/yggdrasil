@@ -317,13 +317,16 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     ?normalize_boundaries(X1, 0.08, 1.05, NewX);
     ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
 
-+?normalize_boundaries(X, Low, High, NewX): X<Low <- 
++?normalize_boundaries(X, Low, High, NewX): X<Low <-
+  .print("value is too low");
     NewX=Low.
 
 +?normalize_boundaries(X, Low, High, NewX): X>High <-
+    .print("value is too high");
     NewX=High.
 
  +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
+    .print("value is correct");
     NewX=X.
 
 
