@@ -223,7 +223,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .length(L, N);
                 ?compute_storage_area_list(TextWidth, X, Y, L, 0, N, StorageArea).
 
-            +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N <-
+            +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N & ai_td_url(AIUrl) <-
                 .nth(I, L, ST);
                 ?create_json(["Content-Type"], ["application/json"], Headers);
                 ?camera_hostname(CameraHostname);
