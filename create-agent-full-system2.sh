@@ -54,29 +54,34 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             ai_session_id(1007).
 
-            default_x("1", 0.14).
-            default_x("2", 0.41).
-            default_x("3", 0.7).
-            default_x("4", 0.98).
+            default_x(1, 0.14).
+            default_x(2, 0.41).
+            default_x(3, 0.7).
+            default_x(4, 0.98).
 
-            default_y("1", 0.37).
-            default_y("2", 0.37).
-            default_y("3", 0.37).
-            default_y("4", 0.37).
+            default_y(1, 0.37).
+            default_y(2, 0.37).
+            default_y(3, 0.37).
+            default_y(4, 0.37).
 
-            default_alpha("1", 0).
-            default_alpha("2", 0).
-            default_alpha("3", 0).
-            default_alpha("4", 0).
+            default_alpha(1, 0).
+            default_alpha(2, 0).
+            default_alpha(3, 0).
+            default_alpha(4, 0).
 
 
 
             loop_index(0).
 
+
+            x(10).
+            y(10).
+
             process_robot("engraver_load").
 
-
             storage(1).
+
+            used_storage(1).
 
             storage_engraver(1).
 
@@ -93,6 +98,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             confidence_received(0).
 
             storage_area_diameter(0).
+
 
 
             //Information Engraving
@@ -125,7 +131,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
-            !start.
+            //!start.
 
 
             +message(Id, Message): true <- //check
@@ -156,7 +162,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!start: true <-
                 .print("start");
-                //!print_parameters;
+                !print_parameters;
                 ?actuators_td_url(ActuatorsUrl);
                 ?engraver_td_url(EngraverUrl);
                 ?robot_td_url(RobotUrl);
@@ -173,28 +179,23 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("before compute storage area");
                 ?compute_storage_area(TextWidth, X, Y, Storage);
                 .print("storage area computed: ", Storage);
-                -+storage(Storage);
+                -+used_storage(Storage);
                 ?grabspot(Storage, Grabspot);
                 .print("grabspot received");
                 .map.get(Grabspot, "confidence", Confidence);
-                .print("confidence: ", Confidence);
                 .map.get(Grabspot, "angle", Alpha);
-                .print("angle: ", Alpha);
                 .map.get(Grabspot, "xcoordinate", XCoordinate);
-                .print("x coordinate: ", XCoordinate);
                 .map.get(Grabspot, "ycoordinate", YCoordinate);
-                .print("y coordinate: ", YCoordinate);
-                +actual_confidence(Confidence);
+                -+actual_confidence(Confidence);
                 ?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                //!use_hil;
+                !use_hil;
                 .print("move piece to engraver");
                 !move_piece_to_engraver(ProcessRobot, Callback);
                 .print("before print");
                 !print(Process, Text);
-                !print_mr_beam(Text);
                 .print("printing done");
                 .print("move piece back");
                 !move_piece_back(ProcessRobot, Callback);
@@ -225,130 +226,136 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
 
             // Camera zone
-+?compute_storage_area(TextWidth, X, Y, Storage): true <-
-    .findall(Z, available_storage_area(Z), L);
-    .length(L, N);
-    !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
-    RDiameter = TextWidth + X + Y + 20;
-    ?select_storage_area(RDiameter, Storage).
+
+            +?compute_storage_area(TextWidth, X, Y, Storage): true <- //TODO: the process may be wrong (to select smaller piece with a correct diameter)
+                .findall(Z, available_storage_area(Z), L);
+                .length(L, N);
+                !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
+                RDiameter = TextWidth + X + Y + 20;
+                ?select_storage_area(RDiameter, Storage).
 
 
 
-+?select_storage_area(RDiameter, BestStorage): true <-
-    ?storage_area_diameter(S, D);
-    .print("selected storage: ", S);
-    //!test_fail_best_storage(D, RDiameter);
-    BestStorage = S;
-    .print("storage area selected").
+            +?select_storage_area(RDiameter, BestStorage): true <-
+                ?storage_area_diameter(S, D);
+                .print("selected storage: ", S);
+                //!test_fail_best_storage(D, RDiameter); //TODO: check error and uncomment
+                BestStorage = S;
+                .print("storage area selected").
 
 
 
-+?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
-    ?storage_area_diameter(StorageAreaToTest, CDiameter);
-    ?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
-    .print("end new selected storage area").
+            +?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
+                ?storage_area_diameter(StorageAreaToTest, CDiameter);
+                ?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
+                .print("end new selected storage area").
 
-+?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
-    NewBDiameter = CDiameter;
-    NewBestStorage = StorageAreaToTest.
+            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
+                NewBDiameter = CDiameter;
+                NewBestStorage = StorageAreaToTest.
 
-+?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
-    NewBDiameter = BDiameter;
-    NewBestStorage = CurrentBestStorage.
+            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
+                NewBDiameter = BDiameter;
+                NewBestStorage = CurrentBestStorage.
 
-+!test_fail_best_storage(D, RDiameter): D<RDiameter <-
-    .print("best storage could not be determined");
-    .fail_goal(start).
+            +!test_fail_best_storage(D, RDiameter): D<RDiameter <-
+                .print("best storage could not be determined");
+                ?storage_area_diameter(S, D);
+                .print("storage: ", S);
+                .print("diameter: ", D);
+                .fail_goal(start).
 
-+!test_fail_best_storage(D, RDiameter): D>=RDiameter <-
-    .print("The storage area selection was successful").
+            +!test_fail_best_storage(D, RDiameter): D>=RDiameter <-
+                .print("The storage area selection was successful").
 
-+!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
-    .nth(I, L, ST);
-    ?create_json(["Content-Type"], ["application/json"], Headers);
-    ?camera_hostname(CameraHostname);
-    ?camera_id(CameraId);
-    ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
-    ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
-    .print("current storage number: ", ST);
-    .print("current response: ", Response);
-    !process_storage_response(ST, Response);
-    !compute_storage_area_list(Width, X, Y, L, I+1, N).
+            +!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
+                .nth(I, L, ST);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
+                ?camera_hostname(CameraHostname);
+                ?camera_id(CameraId);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
+                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
+                .print("current storage number: ", ST);
+                .print("current response: ", Response);
+                !process_storage_response(ST, Response);
+                !compute_storage_area_list(Width, X, Y, L, I+1, N).
 
--!compute_storage_area_list(Width, X, Y, L, I, N): true <-
-    .print("end compute storage area list").
+            -!compute_storage_area_list(Width, X, Y, L, I, N): true <-
+                .print("end compute storage area list").
 
-+!process_storage_response(StorageNumber, Response): true <-
-    !exit(Response, process_storage_response);
-    ?get_body_as_json(Response, Body);
-    .map.get(Body, "confidence", C);
-    -+confidence_received(C);
-    .print("new confidence: ", C);
-    !add_storage_area_diameter(StorageNumber, Body).
+            +!process_storage_response(StorageNumber, Response): true <-
+                !exit(Response, process_storage_response);
+                ?get_body_as_json(Response, Body);
+                .map.get(Body, "confidence", C);
+                -+confidence_received(C);
+                .print("new confidence: ", C);
+                !add_storage_area_diameter(StorageNumber, Body).
 
-+!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C>95 <-
-    .map.get(Body, "radius", R1);
-    R = R1 * 2;
-    -+storage_area_diameter(StorageNumber, R).
+            +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C>95 <-
+                .map.get(Body, "radius", R1);
+                R = R1 * 2;
+                -+storage_area_diameter(StorageNumber, R).
 
-+!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C<=95 <-
-    -+storage_area_diameter(StorageNumber, 0).
+            +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C<=95 <-
+                -+storage_area_diameter(StorageNumber, 0).
 
--!add_storage_area_diameter(StorageNumber, Body): true <-
-    .print("error add storage area diameter");
-    .fail_goal(start).
+            -!add_storage_area_diameter(StorageNumber, Body): true <-
+                .print("error add storage area diameter");
+                .fail_goal(start).
 
 
-+?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
-& camera_id(Camera)
-<-
-    ?create_json(["Content-Type"], ["Content-Type"], Headers);
+            +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
+            & camera_id(Camera)
+            <-
+                ?create_json(["Content-Type"], ["Content-Type"], Headers);
 
-    ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
-    ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
-    !exit(Response, start);
-    ?get_body_as_json(Response, Grabspot);
-    B = .map.key(Grabspot, "error_code");
-    !conditional_exit_goal(B, start). //To check
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
+                ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
+                !exit(Response, start);
+                ?get_body_as_json(Response, Grabspot);
+                B = .map.key(Grabspot, "error_code");
+                !conditional_exit_goal(B, start). //To check
 
-+?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
-    X1 = XCoordinate/1000;
-    .print("x1: ", X1);
-    Y1 = YCoordinate/1000;
-    .print("y1: ", Y1);
-    ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
-    .print("new alpha: ", NewAlpha);
-    ?normalize_boundaries(X1, 0.08, 1.05, NewX);
-    .print("new x: ", NewX);
-    ?normalize_boundaries(Y1, 0.365, 0.5, NewY);
-    .print("new y: ", NewY).
+            +?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
+                X1 = XCoordinate/1000;
+                .print("x1: ", X1);
+                Y1 = YCoordinate/1000;
+                .print("y1: ", Y1);
+                ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
+                .print("new alpha: ", NewAlpha);
+                ?normalize_boundaries(X1, 0.08, 1.05, NewX);
+                .print("new x: ", NewX);
+                ?normalize_boundaries(Y1, 0.365, 0.5, NewY);
+                .print("new y: ", NewY).
 
-+?normalize_boundaries(X, Low, High, NewX): X<Low <-
-    .print("too low, low-x=", Low-X);
-    NewX=Low.
+            +?normalize_boundaries(X, Low, High, NewX): X<Low <-
+                .print("too low, low-x=", Low-X);
+                NewX=Low.
 
-+?normalize_boundaries(X, Low, High, NewX): X>High <-
-    .print("too high x-high=", X-High);
-    NewX=High.
+            +?normalize_boundaries(X, Low, High, NewX): X>High <-
+                .print("too high x-high=", X-High);
+                NewX=High.
 
- +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
-    .print("correct");
-    NewX=X.
+             +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
+                .print("correct");
+                NewX=X.
 
-+?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_MrBeam, Y_MrBeam): ai_td_url(AIUrl) <-
-    ?create_json(Headers);
-    ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
-    ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
-    !exit(EAReply, start);
-    ?get_body_as_json(EAReply, EA);
-    B = .map.key(EA, "error_description");
-    !conditional_exit_goal(B, start);
-    .map.get(EA, "confidence", Confidence);
-    .map.get(EA, "radius", Radius);
-    .map.get(EA, "xcoordinate", X_Camera);
-    .map.get(EA, "ycoordinate", Y_Camera);
-    X_MrBeam = 100 + Y_Camera + Y; //Initial formula 100 + Y_Camera
-    Y_MrBeam = 308 - X_Camera + X. //Initial formula: 308 - X_Camera
+
+            +?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_MrBeam, Y_MrBeam): ai_td_url(AIUrl) <-
+                ?create_json(Headers);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
+                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
+                !exit(EAReply, start);
+                ?get_body_as_json(EAReply, EA);
+                B = .map.key(EA, "error_description");
+                !conditional_exit_goal(B, start);
+                .map.get(EA, "confidence", Confidence);
+                .map.get(EA, "radius", Radius);
+                .map.get(EA, "xcoordinate", X_Camera);
+                .map.get(EA, "ycoordinate", Y_Camera);
+                X_MrBeam = 100 + Y_Camera + Y; //Initial formula 100 + Y_Camera
+                Y_MrBeam = 308 - X_Camera + X. //Initial formula: 308 - X_Camera
+
 
 
             // HIL zone
@@ -417,21 +424,21 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             // Robot zone
 
-           +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
-               ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
-               ?create_named_pose_process(Process, Callback, PoseValueTransport);
-               !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
-               !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
-               .print("Before setting machine to use");
-               .print("The machine was selected");
-               !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
-               .print("The robot is at the  machine");
-               !gripper(RobotUrl, "open", 1000); //open gripper, check position
-               .print("The gripper is opened");
-               !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
-               .print("The robot is at home").
+            +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
+                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
+                ?create_named_pose_process(Process, Callback, PoseValueTransport);
+                !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
+                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+                .print("Before setting machine to use");
+                .print("The machine was selected");
+                !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
+                .print("The robot is at the  machine");
+                !gripper(RobotUrl, "open", 1000); //open gripper, check position
+                .print("The gripper is opened");
+                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+                .print("The robot is at home").
 
-            +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) <-
+            +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) & used_storage(Storage) <-
                 ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
                 ?create_named_pose_process(Process, Callback, PoseValueTransport);
                 !pose(RobotUrl, "application/namedpose+json", PoseValueTransport);
@@ -440,7 +447,6 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?default_y(Storage, DefaultY);
                 ?default_alpha(Storage, DefaultAlpha);
                 ?create_pose_ai(DefaultX, DefaultY, DefaultAlpha, Callback, PoseDefaultStorage);
-                org.hyperagents.yggdrasil.jason.json.getTermAsJson(PoseDefaultStorage, PoseDefaultStorageString);
                 !pose(RobotUrl, "application/ai+json", PoseDefaultStorage); //transport workpiece
                 !gripper(RobotUrl, "open", 1000); //open gripper, check position
                 !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
@@ -486,10 +492,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             //Engraver zone
 
             +!print(Process, Text): Process == "laser" <-
-            !print_mr_beam(Text).
+                !print_mr_beam(Text).
 
             +!print(Process, Text): Process == "milling" <-
-            !print_milling.
+                //!print_milling;
+                .print("end print milling").
 
             +!print_mr_beam(Text): actuators_td_url(ActuatorsUrl) &
             engraver_td_url(EngraverUrl) & camera_engraver_hostname(CameraEngraverHostname)
@@ -632,9 +639,6 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!update_process_robot: process(Process) & Process == "milling" <-
                 -+process_robot("milling_machine_load").
-
-
-
 
 
 
