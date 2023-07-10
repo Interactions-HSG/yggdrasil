@@ -452,23 +452,22 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!pose(RobotUrl, HeaderValue, PoseValue): true <-
                 ?create_json(["Content-Type"], [HeaderValue], Headers);
-                !pose_sub(RobotUrl, HeaderValue, PoseValue).
+                !pose_sub(RobotUrl, HeaderValue, Headers, PoseValue).
 
-            +!pose_sub(RobotUrl, HeaderValue, PoseValue): HeaderValue == "application/ai+json" <-
-                    ?invoke_action_with_DLT(RobotUrl, "setAIPose", PoseValue, Response);
-                    printJson(Response);
+            +!pose_sub(RobotUrl, HeaderValue, Headers, PoseValue): HeaderValue == "application/ai+json" <-
+                    ?invoke_action_with_DLT(RobotUrl, "setAIPose", PoseValue, Headers, Response);
                     !exit(Response, start).
 
-            +!pose_sub(RobotUrl, HeaderValue, PoseValue): HeaderValue == "application/namedpose+json" <-
-                    ?invoke_action_with_DLT(RobotUrl, "setNamedPose", PoseValue, Response);
+            +!pose_sub(RobotUrl, HeaderValue, Headers, PoseValue): HeaderValue == "application/namedpose+json" <-
+                    ?invoke_action_with_DLT(RobotUrl, "setNamedPose", PoseValue, Headers, Response);
                     !exit(Response, start).
 
-            +!pose_sub(RobotUrl, HeaderValue, PoseValue): HeaderValue == "application/joint+json" <-
-                    ?invoke_action_with_DLT(RobotUrl, "setJointPose", PoseValue, Response);
+            +!pose_sub(RobotUrl, HeaderValue, Headers, PoseValue): HeaderValue == "application/joint+json" <-
+                    ?invoke_action_with_DLT(RobotUrl, "setJointPose", PoseValue, Headers, Response);
                     !exit(Response, start).
 
-            +!pose_sub(RobotUrl, HeaderValue, PoseValue): HeaderValue == "application/tcp+json" <-
-                    ?invoke_action_with_DLT(RobotUrl, "setTcpPose", PoseValue, Response);
+            +!pose_sub(RobotUrl, HeaderValue, Headers, PoseValue): HeaderValue == "application/tcp+json" <-
+                    ?invoke_action_with_DLT(RobotUrl, "setTcpPose", PoseValue, Headers, Response);
                     !exit(Response, start).
 
             +!gripper(RobotUrl, Status, Time): true <-
