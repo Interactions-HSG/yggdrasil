@@ -28,7 +28,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
---data-raw 'ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
+--data-raw 'ai_td_url("'"${HYPERMAS_BASE}"'/uc3/artifacts/camera-ai").
             hil_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
             robot_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller").
             actuators_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
@@ -37,7 +37,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             dlt_client_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/dlt-client").
 
             //Camera and Storage Information
-
+            
             camera_hostname("camera-storage.fritz.box").
 
             camera_id("workpieceStorage").
@@ -131,7 +131,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
-            !start.
+            !start. //TODO: start from messages
 
 
             +message(Id, Message): true <- //check
@@ -191,8 +191,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                //!use_hil;
+                //!use_hil; //TODO: use hil
                 .print("move piece to engraver");
+                !engraver_table_up;
                 !move_piece_to_engraver(ProcessRobot, Callback);
                 .print("before print");
                 !print(Process, Text);
@@ -497,6 +498,23 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +!print(Process, Text): Process == "milling" <-
                 //!print_milling;
                 .print("end print milling").
+
+            +!engraver_table_up: actuators_td_url(ActuatorsUrl) <-
+                ?create_json(Headers);
+                ?create_json(UriVariables);
+                ?read_property_with_DLT(ActuatorsUrl, "tableStatus", Headers, UriVariables, Response);
+                ?get_body_as_json(Response, Body);
+                .map.get(Body, "status", Status);
+                !check_status_table(Status).
+
+            +!check_status_table(Status): Status == "up" <-
+                .print("the table is opened").
+
+            +!check_status_table(Status): not (Status == "up") <-
+                .print("the table is closed");
+                !use_actuator(ActuatorsUrl, "open");
+                !use_actuator(ActuatorsUrl, "liftup");
+                .print("the table is opened").
 
             +!print_mr_beam(Text): actuators_td_url(ActuatorsUrl) &
             engraver_td_url(EngraverUrl) & camera_engraver_hostname(CameraEngraverHostname)

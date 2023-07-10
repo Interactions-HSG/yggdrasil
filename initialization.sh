@@ -980,6 +980,22 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
   td:title "Actuators";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
+      td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
+          td:name "tableStatus";
+          td:hasForm [
+              <http://www.w3.org/2011/http#methodName> "GET";
+              hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table>;
+              hctl:forContentType "application/json";
+              hctl:hasOperationType td:readProperty
+            ];
+          td:isObservable false;
+          js:properties [ a js:BooleanSchema;
+              js:propertyName "demo"
+            ], [ a js:StringSchema;
+              js:propertyName "status"
+            ];
+          js:required "status", "demo"
+        ];
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "open";
       td:hasForm [
