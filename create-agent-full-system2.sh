@@ -125,6 +125,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
+            !start.
+
 
             +message(Id, Message): true <- //check
                 .map.get(Message, "text", Text);
@@ -150,7 +152,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !update_process_robot;
                 !start.
 
-            !start.
+
 
             +!start: true <-
                 .print("start");
