@@ -532,11 +532,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !use_actuator(ActuatorsUrl, "pushstart");
                 !wait(EngraverUrl, "available", 1000).
 
-            +!wait(EngraverUrl, Status, Time): true <-
+            +!wait(EngraverUrl, Status, Time): engraver_td_url(EngraverUrl) <-
                 .wait(Time);
                 ?create_json(Headers);
                 ?create_json(UriVariables);
-                ?read_property_with_DLT(TDUrl, "getJob",Headers, UriVariables, JobResponse);
+                ?read_property_with_DLT(EngraverUrl, "getJob",Headers, UriVariables, JobResponse);
                 !exit(JobResponse, start );
                 ?get_body_as_json(JobResponse, JobBody);
                 .map.get(JobBody, "state", State);
