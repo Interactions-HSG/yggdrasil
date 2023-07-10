@@ -154,8 +154,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!start: true <-
                 .print("start");
-                !print_parameters;
-                /*?actuators_td_url(ActuatorsUrl);
+                //!print_parameters;
+                ?actuators_td_url(ActuatorsUrl);
                 ?engraver_td_url(EngraverUrl);
                 ?robot_td_url(RobotUrl);
                 !update_callback;
@@ -189,7 +189,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !print_mr_beam(Text);
                 .print("printing done");
                 .print("move piece back");
-                !move_piece_back(ProcessRobot, Callback);*/
+                !move_piece_back(ProcessRobot, Callback);
                 .print("end").
 
 
