@@ -50,7 +50,6 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             confidence(90).
 
-            storage("1").
             callback("http://example.org/callback").
 
             ai_session_id(1007).
@@ -74,16 +73,16 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             loop_index(0).
 
-
-            x(10).
-            y(10).
-
             process_robot("engraver_load").
 
-            available_storage_area("1").
-            available_storage_area("2").
-            available_storage_area("3").
-            available_storage_area("4").
+
+            storage(1).
+
+            available_storage_area(1).
+            available_storage_area(2).
+            available_storage_area(3).
+            available_storage_area(4).
+
 
             best_diameter(1000).
 
@@ -94,17 +93,16 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             storage_area_diameter(0).
 
 
-
             //Information Engraving
             process("laser").
             text("IntellIoT").
-            text_width(10).
+            text_width(50).
             font("ABeeZee").
             variant("regular").
             alignment("left").
             position_reference("center").
-            x(10).
-            y(10).
+            x(0).
+            y(0).
             test(true).
 
 
@@ -249,14 +247,14 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
                 ?storage_area_diameter(StorageAreaToTest, CDiameter);
-                ?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
+                ?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
                 .print("end new selected storage area").
 
-            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
+            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
                 NewBDiameter = CDiameter;
                 NewBestStorage = StorageAreaToTest.
 
-            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
+            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
                 NewBDiameter = BDiameter;
                 NewBestStorage = CurrentBestStorage.
 
