@@ -238,7 +238,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     //BestStorage = NewBestStorage;
     //.print("best diameter: ", NewBDiameter);
     //.print("new best storage: ", BestStorage);
-    -+best_storage(S);
+    //-+best_storage(S);
+    .print("selected storage: ", S);
     !test_fail_best_storage(D, RDiameter);
     BestStorage = S;
     .print("storage area selected").
