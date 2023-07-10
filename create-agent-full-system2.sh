@@ -422,7 +422,6 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
                .print("Before setting machine to use");
-               ?create_named_pose_process(Process, Callback, PoseValueTransport);
                .print("The machine was selected");
                !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
                .print("The robot is at the  machine");
