@@ -260,6 +260,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!test_fail_best_storage: best_storage(X) & X == 0 <-
                 .print("best storage could not be determined");
+                .findall(Z, storage_area_diameter(S, Z), L);
+                .print(L);
                 .fail_goal(start).
 
            +!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
