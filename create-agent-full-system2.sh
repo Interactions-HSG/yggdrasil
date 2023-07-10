@@ -311,24 +311,27 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
 +?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
     X1 = X/1000;
+    .print("x1: ", X1);
     Y1 = Y/1000;
+    .print("y1: ", Y1);
     ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
     .print("new alpha: ", NewAlpha);
     ?normalize_boundaries(X1, 0.08, 1.05, NewX);
-    ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
+    .print("new x: ", NewX);
+    ?normalize_boundaries(Y1, 0.365, 0.5, NewY);
+    .print("new y: ", NewY).
 
 +?normalize_boundaries(X, Low, High, NewX): X<Low <-
-  .print("value is too low");
+    .print("too low, low-x=", Low-X);
     NewX=Low.
 
 +?normalize_boundaries(X, Low, High, NewX): X>High <-
-    .print("value is too high");
+    .print("too high high-x=", High-X);
     NewX=High.
 
  +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
-    .print("value is correct");
-    NewX=X.
-
+    .print("correct");
+    NewX=X.  
 
 +?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
     ?create_json(Headers);
