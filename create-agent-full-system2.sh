@@ -267,7 +267,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     .print("required diameter: ", RDiameter);
     .fail_goal(start).
 
--!test_fail_best_storage(D, RDiameter): true <-
++!test_fail_best_storage(D, RDiameter): D>=RDiameter <-
     .print("The storage area selection was successful").
 
 +!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
