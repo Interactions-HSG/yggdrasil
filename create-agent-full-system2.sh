@@ -249,9 +249,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
                 .print("end new selected storage area").
 
-            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter
+            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
                 NewBDiameter = CDiameter;
-                    NewBestStorage = StorageAreaToTest.
+                NewBestStorage = StorageAreaToTest.
 
             +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
                 NewBDiameter = BDiameter;
