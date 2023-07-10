@@ -317,14 +317,14 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     ?normalize_boundaries(X1, 0.08, 1.05, NewX);
     ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
 
-+?normalize_boundaries(X, Low, High, NewX): X<Low <-
-    NewX=Law.
++?normalize_boundaries(X, Low, High, NewX): X<Low <- 
+    NewX=Low.
 
 +?normalize_boundaries(X, Low, High, NewX): X>High <-
     NewX=High.
 
  +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
-    NewX=High.
+    NewX=X.
 
 
 +?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
