@@ -131,7 +131,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
-            //!start.
+            !start.
 
 
             +message(Id, Message): true <- //check
@@ -191,7 +191,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                !use_hil;
+                //!use_hil;
                 .print("move piece to engraver");
                 !move_piece_to_engraver(ProcessRobot, Callback);
                 .print("before print");
