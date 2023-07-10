@@ -226,7 +226,26 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +?compute_storage_area(TextWidth, X, Y, Storage): true <-
                 .findall(Z, available_storage_area(Z), L);
                 .length(L, N);
-                ?compute_storage_area_list(TextWidth, X, Y, L, 0, N, StorageArea).
+                ?compute_storage_area_list(TextWidth, X, Y, L, 0, N);
+                RDiameter = Width + X + Y + 20
+                ?select_storage_area(RDiameter, Storage).
+
+
+
+            +?select_storage_area(RDiameter, BestStorage): true <-
+            BDiameter = 1000;
+            BestStorage = 0;
+            for (storage_area_diameter(S, D)){ //TODO: update
+                ?new_selected_storage_area(D, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
+                BDiameter = NewBDiameter;
+                BestStorage = NewBestStorage;
+            }
+            -+best_storage(BestStorage);
+            !test_fail_best_storage;
+            .print("storage area selected").
+
+            +!test_fail_best_storage: best_storage(X) & X == 0 <-
+                .fail_goal(start).
 
            +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N & ai_td_url(AIUrl) <-
                .nth(I, L, ST);
