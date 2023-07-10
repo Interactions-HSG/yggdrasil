@@ -220,130 +220,134 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
 
             // Camera zone
-
-            +?compute_storage_area(TextWidth, X, Y, Storage): true <-
-                .findall(Z, available_storage_area(Z), L);
-                .length(L, N);
-                !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
-                RDiameter = Width + X + Y + 20
-                ?select_storage_area(RDiameter, Storage).
-
++?compute_storage_area(TextWidth, X, Y, Storage): true <-
+    .findall(Z, available_storage_area(Z), L);
+    .length(L, N);
+    !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
+    RDiameter = Width + X + Y + 20;
+    ?select_storage_area(RDiameter, Storage).
 
 
-            +?select_storage_area(RDiameter, BestStorage): true <-
-            BDiameter = 1000;
-            BestStorage = 0;
-            for (storage_area_diameter(S, D)){ //TODO: update
-                ?new_selected_storage_area(D, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
-                BDiameter = NewBDiameter;
-                BestStorage = NewBestStorage;
-                .print("best diameter: ", NewBDiameter);
-                .print("new best storage: ", BestStorage);
-            }
-            .print("for completed");
-            -+best_storage(BestStorage);
-            !test_fail_best_storage;
-            .print("storage area selected").
 
-            +?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
-                ?storage_area_diameter(StorageAreaToTest, CDiameter);
-                ?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
-                .print("end new selected storage area").
-
-            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
-                NewBDiameter = CDiameter;
-                NewBestStorage = StorageAreaToTest.
-
-            +?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
-                NewBDiameter = BDiameter;
-                NewBestStorage = CurrentBestStorage.
-
-            +!test_fail_best_storage: best_storage(X) & X == 0 <-
-                .print("best storage could not be determined");
-                .findall(Z, storage_area_diameter(S, Z), L);
-                .print(L);
-                .fail_goal(start).
-
-           +!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
-               .nth(I, L, ST);
-               ?create_json(["Content-Type"], ["application/json"], Headers);
-               ?camera_hostname(CameraHostname);
-               ?camera_id(CameraId);
-               ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
-               ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
-               .print("current storage number: ", ST);
-               .print("current response: ", Response);
-               !process_storage_response(ST, Response);
-               !compute_storage_area_list(Width, X, Y, L, I+1, N).
-
-           -!compute_storage_area_list(Width, X, Y, L, I, N): true <-
-               .print("end compute storage area list").
-
-           +!process_storage_response(StorageNumber, Response): true <-
-               !exit(Response, process_storage_response);
-               ?get_body_as_json(Response, Body);
-               .map.get(Body, "confidence", C);
-               -+confidence_received(C);
-               .print("new confidence: ", C);
-               !add_storage_area_diameter(StorageNumber, Body).
-
-           +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C>95 <-
-               .map.get(Body, "radius", R1);
-               R = R1 * 2;
-               -+storage_area_diameter(StorageNumber, R).
-
-           +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C<=95 <-
-               -+storage_area_diameter(StorageNumber, 0).
-
-           -!add_storage_area_diameter(StorageNumber, Body): true <-
-               .print("error add storage area diameter");
-               .fail_goal(start).
-
-            +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
-            & camera_id(Camera)
-            <-
-                ?create_json(["Content-Type"], ["Content-Type"], Headers);
-
-                ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
-                ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
-                !exit(Response, start);
-                ?get_body_as_json(Response, Grabspot);
-                B = .map.key(Grabspot, "error_code");
-                !conditional_exit_goal(B, start). //To check
-
-            +?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
-                X1 = X/1000;
-                Y1 = Y/1000;
-                ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
-                ?normalize_boundaries(X1, 0.08, 1.05, NewX);
-                ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
-
-            +?normalize_boundaries(X, Low, High, NewX): X<Low <-
-                NewX=Law.
-
-            +?normalize_boundaries(X, Low, High, NewX): X>High <-
-                NewX=High.
-
-             +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
-                NewX=High.
++?select_storage_area(RDiameter, BestStorage): true <-
+    BDiameter = 1000;
+    BestStorage = 0;
+    ?storage_area_diameter(S, D);
+    //?new_selected_storage_area(D, BDiameter, BestStorage, S, NewBDiameter, NewBestStorage);
+    //BDiameter = NewBDiameter;
+    //BestStorage = NewBestStorage;
+    //.print("best diameter: ", NewBDiameter);
+    //.print("new best storage: ", BestStorage);
+    -+best_storage(S);
+    !test_fail_best_storage(D, RDiameter);
+    BestStorage = S;
+    .print("storage area selected").
 
 
-            +?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
-                ?create_json(Headers);
-                ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
-                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
-                !exit(EAReply, start);
-                ?get_body_as_json(EAReply, EA);
-                B = .map.key(EA, "error_description");
-                !conditional_exit_goal(B, start);
-                .map.get(EA, "confidence", Confidence);
-                .map.get(EA, "radius-mm", Radius);
-                .map.get(EA, "xcoordinate", X);
-                .map.get(EA, "ycoordinate", Y);
-                X_MrBeam = 100 + Y;
-                Y_MrBeam = 308 - X;
-                TextWidth = 1.6 * Radius.
 
++?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
+    ?storage_area_diameter(StorageAreaToTest, CDiameter);
+    ?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
+    .print("end new selected storage area").
+
++?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter <-
+    NewBDiameter = CDiameter;
+    NewBestStorage = StorageAreaToTest.
+
++?new_storage(StorageAreaToTest, CurrentBestStorage, CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
+    NewBDiameter = BDiameter;
+    NewBestStorage = CurrentBestStorage.
+
++!test_fail_best_storage(D, RDiameter): D<RDiameter <-
+    .print("best storage could not be determined");
+    ?storage_area_diameter(S, D);
+    .print("storage: ", S);
+    .print("diameter: ", D);
+    .fail_goal(start).
+
+-!test_fail_best_storage(D, RDiameter): true <-
+    .print("The storage area selection was successful").
+
++!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
+    .nth(I, L, ST);
+    ?create_json(["Content-Type"], ["application/json"], Headers);
+    ?camera_hostname(CameraHostname);
+    ?camera_id(CameraId);
+    ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
+    ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
+    .print("current storage number: ", ST);
+    .print("current response: ", Response);
+    !process_storage_response(ST, Response);
+    !compute_storage_area_list(Width, X, Y, L, I+1, N).
+
+-!compute_storage_area_list(Width, X, Y, L, I, N): true <-
+    .print("end compute storage area list").
+
++!process_storage_response(StorageNumber, Response): true <-
+    !exit(Response, process_storage_response);
+    ?get_body_as_json(Response, Body);
+    .map.get(Body, "confidence", C);
+    -+confidence_received(C);
+    .print("new confidence: ", C);
+    !add_storage_area_diameter(StorageNumber, Body).
+
++!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C>95 <-
+    .map.get(Body, "radius", R1);
+    R = R1 * 2;
+    -+storage_area_diameter(StorageNumber, R).
+
++!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C<=95 <-
+    -+storage_area_diameter(StorageNumber, 0).
+
+-!add_storage_area_diameter(StorageNumber, Body): true <-
+    .print("error add storage area diameter");
+    .fail_goal(start).
+
+
++?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
+& camera_id(Camera)
+<-
+    ?create_json(["Content-Type"], ["Content-Type"], Headers);
+
+    ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
+    ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
+    !exit(Response, start);
+    ?get_body_as_json(Response, Grabspot);
+    B = .map.key(Grabspot, "error_code");
+    !conditional_exit_goal(B, start). //To check
+
++?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
+    X1 = X/1000;
+    Y1 = Y/1000;
+    ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
+    ?normalize_boundaries(X1, 0.08, 1.05, NewX);
+    ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
+
++?normalize_boundaries(X, Low, High, NewX): X<Low <-
+    NewX=Law.
+
++?normalize_boundaries(X, Low, High, NewX): X>High <-
+    NewX=High.
+
+ +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
+    NewX=High.
+
+
++?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
+    ?create_json(Headers);
+    ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
+    ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
+    !exit(EAReply, start);
+    ?get_body_as_json(EAReply, EA);
+    B = .map.key(EA, "error_description");
+    !conditional_exit_goal(B, start);
+    .map.get(EA, "confidence", Confidence);
+    .map.get(EA, "radius-mm", Radius);
+    .map.get(EA, "xcoordinate", X);
+    .map.get(EA, "ycoordinate", Y);
+    X_MrBeam = 100 + Y;
+    Y_MrBeam = 308 - X;
+    TextWidth = 1.6 * Radius.
 
 
             // HIL zone
