@@ -416,21 +416,20 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             // Robot zone
 
-            +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
-                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
-                ?create_named_pose_process(Process, Callback, PoseValueTransport);
-                !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
-                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
-                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
-                .print("Before setting machine to use");
-                ?create_named_pose_process(Process, Callback, PoseValueTransport);
-                .print("The machine was selected");
-                !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
-                .print("The robot is at the  machine");
-                !gripper(RobotUrl, "open", 1000); //open gripper, check position
-                .print("The gripper is opened");
-                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
-                .print("The robot is at home").
+           +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
+               ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
+               ?create_named_pose_process(Process, Callback, PoseValueTransport);
+               !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
+               !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+               .print("Before setting machine to use");
+               ?create_named_pose_process(Process, Callback, PoseValueTransport);
+               .print("The machine was selected");
+               !pose(RobotUrl,  "application/namedpose+json", PoseValueTransport);
+               .print("The robot is at the  machine");
+               !gripper(RobotUrl, "open", 1000); //open gripper, check position
+               .print("The gripper is opened");
+               !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+               .print("The robot is at home").
 
             +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) <-
                 ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
