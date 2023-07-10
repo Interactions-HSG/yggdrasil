@@ -247,7 +247,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +!test_fail_best_storage: best_storage(X) & X == 0 <-
                 .fail_goal(start).
 
-           +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N & ai_td_url(AIUrl) <-
+           +?compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
                .nth(I, L, ST);
                ?create_json(["Content-Type"], ["application/json"], Headers);
                ?camera_hostname(CameraHostname);
@@ -256,7 +256,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
                .print("current storage number: ", ST);
                .print("current response: ", Response);
-               !process_storage_response(ST, Response).
+               !process_storage_response(ST, Response);
+               ?compute_storage_area_list(Width, X, Y, L, I+1, N).
+
+           -?compute_storage_area_list(Width, X, Y, L, I, N): true <-
+               .print("end compute storage area list").
 
            +!process_storage_response(StorageNumber, Response): true <-
                !exit(Response, process_storage_response);
