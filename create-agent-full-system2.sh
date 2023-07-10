@@ -78,6 +78,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             storage(1).
 
+            storage_engraver(1).
+
             available_storage_area(1).
             available_storage_area(2).
             available_storage_area(3).
@@ -492,11 +494,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!print_mr_beam(Text): actuators_td_url(ActuatorsUrl) &
             engraver_td_url(EngraverUrl) & camera_engraver_hostname(CameraEngraverHostname)
-            & camera_engraver_id(CameraEngraverId) & storage(Storage)
+            & camera_engraver_id(CameraEngraverId) & storage_engraver(StorageEngraver)
             <-
                 .print("print Mr Beam");
                 !use_actuator(ActuatorsUrl, "lowerdown");
-                ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
+                ?compute_engraving_area(StorageEngraver, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
                 !use_actuator(ActuatorsUrl, "close");
                 !engraver(EngraverUrl, ActuatorsUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
                 !use_actuator(ActuatorsUrl, "open");
