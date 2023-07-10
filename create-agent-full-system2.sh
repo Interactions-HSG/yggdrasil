@@ -224,7 +224,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     .findall(Z, available_storage_area(Z), L);
     .length(L, N);
     !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
-    RDiameter = Width + X + Y + 20;
+    RDiameter = TextWidth + X + Y + 20;
     ?select_storage_area(RDiameter, Storage).
 
 
