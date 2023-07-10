@@ -247,18 +247,16 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                .print("new confidence: ", C);
                !add_storage_area_diameter(StorageNumber, Body).
 
-           +!add_storage_area_diameter(StorageNumber, Body): confidence_retrieved(C) & C>95 <-
+           +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C>95 <-
                .map.get(Body, "radius", R1);
                R = R1 * 2;
                -+storage_area_diameter(StorageNumber, R).
 
-           +!add_storage_area_diameter(StorageNumber, Body): confidence_retrieved(C) & C<=95 <-
+           +!add_storage_area_diameter(StorageNumber, Body): confidence_received(C) & C<=95 <-
                -+storage_area_diameter(StorageNumber, 0).
 
            -!add_storage_area_diameter(StorageNumber, Body): true <-
-               .print("error add storage area diameter")
-               ?confidence_retrieved(C);
-               .print(C);
+               .print("error add storage area diameter");
                .fail_goal(start).
 
             +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
