@@ -103,8 +103,8 @@ best_storage(0).
     ?callback(Callback);
     .print("before compute storage area");
     ?compute_storage_area(TextWidth, X, Y, Storage);
-    .print("storage area computed: ", Storage);
-    ?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot);
+    print("storage area computed: ", Storage);
+    /*?grabspot(AIUrl, Storage, Hostname, Camera,  Grabspot);
     .print("grabspot received");
     .map.get(Grabspot, "confidence", Confidence);
     .map.get(Grabspot, "angle", Alpha);
@@ -121,7 +121,7 @@ best_storage(0).
     ?robot_td_url(RobotUrl);
     !move_piece_to_engraver(RobotUrl, Process, Callback);
     !print_mr_beam(ActuatorsUrl, EngraverUrl, Text);
-    !move_piece_back(RobotUrl, Process, Callback);
+    !move_piece_back(RobotUrl, Process, Callback);*/
     .print("end").
 
 +?compute_storage_area(Width, X, Y, StorageArea): ai_td_url(AIUrl) <-
