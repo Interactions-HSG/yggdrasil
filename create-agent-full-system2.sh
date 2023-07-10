@@ -303,7 +303,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     ?create_json(["Content-Type"], ["Content-Type"], Headers);
 
     ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
-    ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
+    !invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
     !exit(Response, start);
     ?get_body_as_json(Response, Grabspot);
     B = .map.key(Grabspot, "error_code");
