@@ -183,12 +183,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .map.get(Grabspot, "ycoordinate", YCoordinate);
                 .print("y coordinate: ", YCoordinate);
                 +actual_confidence(Confidence);
-                /*?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
+                ?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
-                org.hyperagents.yggdrasil.jason.json.getTermAsJson(PoseStorage, PoseStorageString);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                !use_hil;
+                /*!use_hil;
                 .print("move piece to engraver");
                 !move_piece_to_engraver(ProcessRobot, Callback);
                 .print("before print");
