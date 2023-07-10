@@ -263,6 +263,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     ?storage_area_diameter(S, D);
     .print("storage: ", S);
     .print("diameter: ", D);
+    .print("required diameter: ", RDiameter);
     .fail_goal(start).
 
 -!test_fail_best_storage(D, RDiameter): true <-
