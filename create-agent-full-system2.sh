@@ -310,9 +310,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     !conditional_exit_goal(B, start). //To check
 
 +?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY): true <-
-    X1 = X/1000;
+    X1 = XCoordinate/1000;
     .print("x1: ", X1);
-    Y1 = Y/1000;
+    Y1 = YCoordinate/1000;
     .print("y1: ", Y1);
     ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
     .print("new alpha: ", NewAlpha);
@@ -326,7 +326,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     NewX=Low.
 
 +?normalize_boundaries(X, Low, High, NewX): X>High <-
-    .print("too high high-x=", High-X);
+    .print("too high x-high=", X-High);
     NewX=High.
 
  +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
