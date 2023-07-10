@@ -499,7 +499,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !use_actuator(ActuatorsUrl, "lowerdown");
                 ?compute_engraving_area(StorageEngraver, CameraEngraverHostname, CameraEngraverId, X, Y, X_MrBeam, Y_MrBeam);
                 !use_actuator(ActuatorsUrl, "close");
-                !engraver(EngraverUrl, ActuatorsUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
+                !engraver(EngraverUrl, ActuatorsUrl, X_MrBeam, Y_MrBeam);
                 !use_actuator(ActuatorsUrl, "open");
                 !use_actuator(ActuatorsUrl, "liftup");
                 .print("end print mr beam").
