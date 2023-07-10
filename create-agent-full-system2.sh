@@ -485,7 +485,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             //Engraver zone
 
             +!print(Process, Text): Process == "laser" <-
-            !print_mr_beam.
+            !print_mr_beam(Text).
 
             +!print(Process, Text): Process == "milling" <-
             !print_milling.
