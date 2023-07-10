@@ -150,7 +150,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !update_process_robot;
                 !start.
 
-            //!start.
+            !start.
 
             +!start: true <-
                 .print("start");
@@ -228,7 +228,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?create_json(["Content-Type"], ["application/json"], Headers);
                 ?camera_hostname(CameraHostname);
                 ?camera_id(CameraId);
-                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], Urivariables);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
                 ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
                 !process_storage_response(ST, Response).
 
