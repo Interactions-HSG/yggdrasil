@@ -335,7 +335,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     .print("correct");
     NewX=X.
 
-+?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
++?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_MrBeam, Y_MrBeam): ai_td_url(AIUrl) <-
     ?create_json(Headers);
     ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
     ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
@@ -344,12 +344,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     B = .map.key(EA, "error_description");
     !conditional_exit_goal(B, start);
     .map.get(EA, "confidence", Confidence);
-    .map.get(EA, "radius-mm", Radius);
-    .map.get(EA, "xcoordinate", X);
-    .map.get(EA, "ycoordinate", Y);
-    X_MrBeam = 100 + Y;
-    Y_MrBeam = 308 - X;
-    TextWidth = 1.6 * Radius.
+    .map.get(EA, "radius", Radius);
+    .map.get(EA, "xcoordinate", X_Camera);
+    .map.get(EA, "ycoordinate", Y_Camera);
+    X_MrBeam = 100 + Y_Camera + Y; //Initial formula 100 + Y_Camera
+    Y_MrBeam = 308 - X_Camera + X. //Initial formula: 308 - X_Camera
 
 
             // HIL zone
@@ -494,11 +493,11 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!print_mr_beam(Text): actuators_td_url(ActuatorsUrl) &
             engraver_td_url(EngraverUrl) & camera_engraver_hostname(CameraEngraverHostname)
-            & camera_engraver_id(CameraEngraverId) & storage_engraver(StorageEngraver)
+            & camera_engraver_id(CameraEngraverId) & storage_engraver(StorageEngraver) & text_width(TextWidth) & x(X) & y(Y)
             <-
                 .print("print Mr Beam");
                 !use_actuator(ActuatorsUrl, "lowerdown");
-                ?compute_engraving_area(StorageEngraver, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
+                ?compute_engraving_area(StorageEngraver, CameraEngraverHostname, CameraEngraverId, X, Y, X_MrBeam, Y_MrBeam);
                 !use_actuator(ActuatorsUrl, "close");
                 !engraver(EngraverUrl, ActuatorsUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
                 !use_actuator(ActuatorsUrl, "open");
