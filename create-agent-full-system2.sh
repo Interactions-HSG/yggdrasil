@@ -187,7 +187,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                /*!use_hil;
+                //!use_hil;
                 .print("move piece to engraver");
                 !move_piece_to_engraver(ProcessRobot, Callback);
                 .print("before print");
@@ -195,7 +195,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !print_mr_beam(Text);
                 .print("printing done");
                 .print("move piece back");
-                !move_piece_back(ProcessRobot, Callback);*/
+                !move_piece_back(ProcessRobot, Callback);
                 .print("end").
 
 
@@ -331,7 +331,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
  +?normalize_boundaries(X, Low, High, NewX): X>=Low & X<=High <-
     .print("correct");
-    NewX=X.  
+    NewX=X.
 
 +?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
     ?create_json(Headers);
