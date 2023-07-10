@@ -244,6 +244,19 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             !test_fail_best_storage;
             .print("storage area selected").
 
+            +?new_selected_storage_area(RDiameter, BDiameter, CurrentBestStorage, StorageAreaToTest, NewBDiameter, NewBestStorage): true <-
+                ?storage_area_diameter(StorageAreaToTest, CDiameter);
+                ?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage);
+                .print("end new selected storage area").
+
+            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): CDiameter>RDiameter & CDiameter <BDiameter
+                NewBDiameter = CDiameter;
+                    NewBestStorage = StorageAreaToTest.
+
+            +?new_storage(CDiameter, RDiameter, BDiameter, NewBDiameter, NewBestStorage): not (CDiameter>RDiameter & CDiameter <BDiameter) <-
+                NewBDiameter = BDiameter;
+                NewBestStorage = CurrentBestStorage.
+
             +!test_fail_best_storage: best_storage(X) & X == 0 <-
                 .fail_goal(start).
 
