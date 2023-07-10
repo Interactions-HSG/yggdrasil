@@ -174,7 +174,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?compute_storage_area(TextWidth, X, Y, Storage);
                 .print("storage area computed: ", Storage);
                 -+storage(Storage);
-                ?grabspot(Storage, Grabspot);
+                /*?grabspot(Storage, Grabspot);
                 .print("grabspot received");
                 .map.get(Grabspot, "confidence", Confidence);
                 .map.get(Grabspot, "angle", Alpha);
@@ -194,7 +194,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !print_mr_beam(Text);
                 .print("printing done");
                 .print("move piece back");
-                !move_piece_back(ProcessRobot, Callback);
+                !move_piece_back(ProcessRobot, Callback);*/
                 .print("end").
 
 
