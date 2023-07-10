@@ -29,9 +29,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
 --data-raw 'ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
-            hil_td_url(""'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
+            hil_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
             robot_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller").
-            actuators_td_url(""'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
+            actuators_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
             engraver_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/engraver").
             milling_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/milling").
             dlt_client_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/dlt-client").
@@ -152,11 +152,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //!start.
 
-            //Sequence zone
-
             +!start: true <-
                 .print("start");
-                ?actuators_td_url(ActuatorsUrl);
+                !print_parameters;
+                /*?actuators_td_url(ActuatorsUrl);
                 ?engraver_td_url(EngraverUrl);
                 ?robot_td_url(RobotUrl);
                 !update_callback;
@@ -190,9 +189,31 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !print_mr_beam(Text);
                 .print("printing done");
                 .print("move piece back");
-                !move_piece_back(ProcessRobot, Callback);
+                !move_piece_back(ProcessRobot, Callback);*/
                 .print("end").
 
+
+            +!print_parameters: true <-
+            ?process(Process);
+            .print("process: ",Process);
+            ?text(Text);
+            .print("text: ",Text);
+            ?text_width(TextWidth);
+            .print("text width: ",TextWidth);
+            ?font(Font);
+            .print("font: ",Font);
+            ?variant(Variant);
+            .print("variant: ",Variant);
+            ?alignment(Alignment);
+            .print("alignment: ", Alignment);
+            ?position_reference(PositionReference);
+            .print("position reference: ",PositionReference);
+            ?x(X);
+            .print("x: ",X);
+            ?y(Y);
+            .print("y: ",Y);
+            ?test(Test);
+            .print("test: ",Test).
 
 
             // Camera zone
@@ -204,10 +225,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N <-
                 .nth(I, L, ST);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], Headers);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
                 ?camera_hostname(CameraHostname);
                 ?camera_id(CameraId);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], Urivariables);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], Urivariables);
                 ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
                 !process_storage_response(ST, Response).
 
@@ -229,9 +250,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
             & camera_id(Camera)
             <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["Content-Type"], Headers);
+                ?create_json(["Content-Type"], ["Content-Type"], Headers);
 
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [Storage, Hostname, Camera], UriVariables);
                 ?invoke_action_with_DLT(AIUrl, "getGrabspot", {}, Headers, UriVariables, Response);
                 !exit(Response, start);
                 ?get_body_as_json(Response, Grabspot);
@@ -256,8 +277,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
 
             +?compute_engraving_area(StorageId, CameraHostname, CameraId, X_MrBeam, Y_MrBeam, TextWidth): ai_td_url(AIUrl) <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Headers);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
+                ?create_json(Headers);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
                 ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
                 !exit(EAReply, start);
                 ?get_body_as_json(EAReply, EA);
@@ -296,8 +317,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 Random = R + 1.
 
             +!create_hil_session(HILUrl, AISessionId, RobotId, CameraId, SessionType): true <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], Headers);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["aiSessionId", "robotId", "cameraId", "sessionType"], [AISessionId, RobotId, CameraId, SessionType], SessionInfo);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
+                ?create_json(["aiSessionId", "robotId", "cameraId", "sessionType"], [AISessionId, RobotId, CameraId, SessionType], SessionInfo);
                 ?invoke_action_with_DLT(HILUrl, "createSession", SessionInfo, Headers, Response);
                 !exit(Response, start);
                 .print("hil session created").
@@ -331,8 +352,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("The HIL session has finished: ", HILStr).
 
             +?hil_content(AISessionId, HILContent): hil_td_url(HILUrl) <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], Headers);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["sessionId"], [AISessionId], UriVariables);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
+                ?create_json(["sessionId"], [AISessionId], UriVariables);
                 ?read_property_with_DLT(HILUrl, "getSession", Headers, UriVariables, Response);
                 !exit(Response, start);
                 ?get_body_as_json(Response, HILContent).
@@ -340,10 +361,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             // Robot zone
 
             +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["value", "callback"], ["home", Callback], PoseValueHome);
+                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
                 ?create_named_pose_process(Process, Callback, PoseValueTransport);
                 !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["value", "callback"], ["home", Callback], PoseValueHome);
+                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
                 !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
                 .print("Before setting machine to use");
                 ?create_named_pose_process(Process, Callback, PoseValueTransport);
@@ -356,7 +377,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("The robot is at home").
 
             +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["value", "callback"], ["home", Callback], PoseValueHome);
+                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
                 ?create_named_pose_process(Process, Callback, PoseValueTransport);
                 !pose(RobotUrl, "application/namedpose+json", PoseValueTransport);
                 !gripper(RobotUrl, "close", 3000);
@@ -371,17 +392,16 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("the robot is back at the initial position").
 
             +?create_pose_ai(X, Y, Alpha, Callback, PoseStorage): true <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["x","y","alpha"], [X,Y,Alpha], Value);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["value","callback"],[Value, Callback], PoseStorage).
+                ?create_json(["x","y","alpha"], [X,Y,Alpha], Value);
+                ?create_json(["value","callback"],[Value, Callback], PoseStorage).
 
             +?create_named_pose_process(Process, Callback, NamedPose): true <-
                 Value = "engraver_load";
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["value", "callback"], [Value, Callback], NamedPose).
+                ?create_json(["value", "callback"], [Value, Callback], NamedPose).
 
 
             +!pose(RobotUrl, HeaderValue, PoseValue): true <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Headers);
-                .map.put(Headers, "Content-Type", HeaderValue);
+                ?create_json(["Content-Type"], [HeaderValue], Headers);
                 !pose_sub(RobotUrl, HeaderValue, PoseValue).
 
             +!pose_sub(RobotUrl, HeaderValue, PoseValue): HeaderValue == "application/ai+json" <-
@@ -402,8 +422,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                     !exit(Response, start).
 
             +!gripper(RobotUrl, Status, Time): true <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], Headers);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["status"], [Status], Content);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
+                ?create_json(["status"], [Status], Content);
                 ?invoke_action_with_DLT(RobotUrl, "setGripper", Content, Headers, Response);
                 !exit(Response, start);
                 .wait(Time).
@@ -443,15 +463,15 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("end print milling").
 
             +!use_actuator(ActuatorsUrl, Task): true <-
-                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Body);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], Headers);
+                ?create_json(Body);
+                ?create_json(["Content-Type"], ["application/json"], Headers);
                 ?invoke_action_with_DLT(ActuatorsUrl, Task, Body, Headers, Response);
                 !exit(Response, start).
 
             +!engraver(EngraverUrl, ActuatorsUrl, X_MrBeam, Y_MrBeam): text(Text) & text_width(TextWidth) & font(Font) & variant(Variant) & alignment(Alignment) & position_reference(PositionReference) & test(Test) <-
                 ?opposite(Test, LaserOn);
-                ?make_json_term(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn"], [[Text], Font, Variant, TextWidth, Alignment, PositionReference, X_MrBeam, Y_MrBeam, LaserOn], EngravingBody);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm(["Content-Type"], ["application/json"], EngravingHeaders);
+                ?create_json(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn"], [[Text], Font, Variant, TextWidth, Alignment, PositionReference, X_MrBeam, Y_MrBeam, LaserOn], EngravingBody);
+                ?create_json(["Content-Type"], ["application/json"], EngravingHeaders);
                 ?invoke_action_with_DLT(EngraverUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
                 !exit(EngravingResponse, start);
                 !wait(EngraverUrl, "waiting", 1000);
@@ -460,8 +480,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!wait(EngraverUrl, Status, Time): true <-
                 .wait(Time);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Headers);
-                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], UriVariables);
+                ?create_json(Headers);
+                ?create_json(UriVariables);
                 ?read_property_with_DLT(TDUrl, "getJob",Headers, UriVariables, JobResponse);
                 !exit(JobResponse, start );
                 ?get_body_as_json(JobResponse, JobBody);
@@ -480,6 +500,12 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             .map.get(Response, "response", R);
             .map.get(R, "body", B);
             org.hyperagents.yggdrasil.jason.json.createTermFromJson(B, Body).
+
+            +?create_json(L1, L2, Json): true <-
+                org.hyperagents.yggdrasil.jason.json.createMapTerm(L1, L2, Json).
+
+            +?create_json(Json): true <-
+                org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Json).
 
             //WoT zone
 
@@ -552,6 +578,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!update_process_robot: process(Process) & Process == "milling" <-
                 -+process_robot("milling_machine_load").
+
 
 
 
