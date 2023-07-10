@@ -180,9 +180,12 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .map.get(Grabspot, "angle", Alpha);
                 .map.get(Grabspot, "xcoordinate", XCoordinate);
                 .map.get(Grabspot, "ycoordinate", YCoordinate);
+                +actual_confidence(Confidence);
                 ?normalize_values(Alpha, XCoordinate, YCoordinate, NewAlpha, NewX, NewY);
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
-                -+actual_confidence(Confidence);
+                ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
+                org.hyperagents.yggdrasil.jason.json.getTermAsJson(PoseStorage, PoseStorageString);
+                !pose(RobotUrl, "application/ai+json", PoseStorage);
                 !use_hil;
                 .print("move piece to engraver");
                 !move_piece_to_engraver(ProcessRobot, Callback);
@@ -225,28 +228,30 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .length(L, N);
                 ?compute_storage_area_list(TextWidth, X, Y, L, 0, N, StorageArea).
 
-            +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N & ai_td_url(AIUrl) <-
-                .nth(I, L, ST);
-                ?create_json(["Content-Type"], ["application/json"], Headers);
-                ?camera_hostname(CameraHostname);
-                ?camera_id(CameraId);
-                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
-                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
-                !process_storage_response(ST, Response).
+           +?compute_storage_area_list(Width, X, Y, L, I, N, StorageArea): I<N & ai_td_url(AIUrl) <-
+               .nth(I, L, ST);
+               ?create_json(["Content-Type"], ["application/json"], Headers);
+               ?camera_hostname(CameraHostname);
+               ?camera_id(CameraId);
+               ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
+               ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
+               .print("current storage number: ", ST);
+               .print("current response: ", Response);
+               !process_storage_response(ST, Response).
 
-            +!process_storage_response(StorageNumber, Response): true <-
-                !exit(Response, process_storage_response);
-                ?get_body_as_json(Response, Body);
-                .map.get(Body, "confidence", C);
-                -+confidence_received(C);
-                !add_storage_area_diameter.
+           +!process_storage_response(StorageNumber, Response): true <-
+               !exit(Response, process_storage_response);
+               ?get_body_as_json(Response, Body);
+               .map.get(Body, "confidence", C);
+               -+confidence_received(C);
+               !add_storage_area_diameter(StorageNumber, Body).
 
-            +!add_storage_area_diameter: confidence_retrieved(C) & C>95 <-
-                .map.get(Body, "radius", R1);
-                R = R1 * 2;
-                -+storage_area_diameter(StorageNumber, R).
+           +!add_storage_area_diameter(StorageNumber, Body): confidence_retrieved(C) & C>95 <-
+               .map.get(Body, "radius", R1);
+               R = R1 * 2;
+               -+storage_area_diameter(StorageNumber, R).
 
-            +!add_storage_area_diameter: confidence_retrieved(C) & C<=95 <-
+            +!add_storage_area_diameter(StorageNumber, Body): confidence_retrieved(C) & C<=95 <-
                 -+storage_area_diameter(StorageNumber, 0).
 
             +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
