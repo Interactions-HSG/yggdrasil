@@ -313,6 +313,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
     X1 = X/1000;
     Y1 = Y/1000;
     ?normalize_boundaries(Alpha, -20, 25, NewAlpha);
+    .print("new alpha: ", NewAlpha);
     ?normalize_boundaries(X1, 0.08, 1.05, NewX);
     ?normalize_boundaries(Y1, 0.365, 0.5, NewY).
 
