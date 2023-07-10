@@ -226,7 +226,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +?compute_storage_area(TextWidth, X, Y, Storage): true <-
                 .findall(Z, available_storage_area(Z), L);
                 .length(L, N);
-                ?compute_storage_area_list(TextWidth, X, Y, L, 0, N);
+                !compute_storage_area_list(TextWidth, X, Y, L, 0, N);
                 RDiameter = Width + X + Y + 20
                 ?select_storage_area(RDiameter, Storage).
 
@@ -247,7 +247,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +!test_fail_best_storage: best_storage(X) & X == 0 <-
                 .fail_goal(start).
 
-           +?compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
+           +!compute_storage_area_list(Width, X, Y, L, I, N): I<N & ai_td_url(AIUrl) <-
                .nth(I, L, ST);
                ?create_json(["Content-Type"], ["application/json"], Headers);
                ?camera_hostname(CameraHostname);
@@ -257,9 +257,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                .print("current storage number: ", ST);
                .print("current response: ", Response);
                !process_storage_response(ST, Response);
-               ?compute_storage_area_list(Width, X, Y, L, I+1, N).
+               !compute_storage_area_list(Width, X, Y, L, I+1, N).
 
-           -?compute_storage_area_list(Width, X, Y, L, I, N): true <-
+           -!compute_storage_area_list(Width, X, Y, L, I, N): true <-
                .print("end compute storage area list").
 
            +!process_storage_response(StorageNumber, Response): true <-
