@@ -28,8 +28,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
---data-raw '
-ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
+--data-raw 'ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
             hil_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
             robot_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller").
             actuators_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
@@ -265,14 +264,14 @@ ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
                 ?create_json(["Content-Type"], ["application/json"], Headers);
                 ?camera_hostname(CameraHostname);
                 ?camera_id(CameraId);
-                ?create_json(["storageId", "cameraHostname", "cameraId"], [ST, CameraHostname, CameraId], UriVariables);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [I, CameraHostname, CameraId], UriVariables);
                 ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, Response);
-                .print("current storage number: ", ST);
+                .print("current storage number: ", I);
                 .print("current response: ", Response);
                 !process_storage_response(I, Response);
                 !compute_storage_area_explore(I+1, N).
 
-            -!compute_storage_area_list(I, N): true <-
+            +!compute_storage_area_explore(I, N): I>=N <-
                 .print("storage area computed").
 
             +!process_storage_response(StorageNumber, Response): true <-
@@ -288,7 +287,7 @@ ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
                 D = R * 2;
                 !check_diameter(StorageNumber, D).
 
-            -!add_storage_area_diameter(StorageNumber, C, Body): true <-
+            +!add_storage_area_diameter(StorageNumber, C, Body): C<=95 <-
                 .print("do nothing in add storage diameter").
 
             +!check_diameter(StorageNumber, D): required_diameter(RDiameter) & best_diameter(BDiameter) & D>=RDiameter & D<BDiameter <-
@@ -522,13 +521,15 @@ ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
                 !use_actuator(ActuatorsUrl, "liftup");
                 .print("end print mr beam").
 
-            +!print_milling: actuators_td_url(ActuatorsUrl) & engraver_td_url(EngraverUrl) & camera_milling_hostname(CameraEngraverHostname)
+            +!print_milling: actuators_td_url(ActuatorsUrl) & //update
+            engraver_td_url(EngraverUrl) & camera_milling_hostname(CameraEngraverHostname)
             & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) <-
                 .print("print milling");
                 ?create_json(["machineId", ["511"], UriVariables]);
+                !use_milling actuator("closeClamp", UriVariables);
                 ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
-
-            -!engraver_milling(MillingUrl, Text, X_MrBeam, Y_MrBeam, TextWidth): true <-
+                !engraver_milling(MillingUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
+                !use_milling_actuator("openClamp", UriVariables);
                 .print("end print milling").
 
             +!use_actuator(ActuatorsUrl,Task): true <-
@@ -663,6 +664,9 @@ ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
 
             +!update_process_robot: process(Process) & Process == "milling" <-
                 -+process_robot("milling_machine_load").
+
+
+
 
 
 '
