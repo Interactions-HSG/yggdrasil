@@ -1339,7 +1339,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                     ];
                   td:hasForm [
                       <http://www.w3.org/2011/http#methodName> "POST";
-                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/open>;
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/close>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:invokeAction
                     ]

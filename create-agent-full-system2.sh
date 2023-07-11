@@ -46,13 +46,15 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             camera_engraver_id("laserEngraver").
 
-            camera_milling_hostname("cammillingmachine.fritz.box").
+            camera_milling_hostname("camera-milling.fritz.box").
 
-            camera_milling_id("millingEngraver").
+            camera_milling_id("millingMachine").
 
             actual_confidence(100).
 
-            confidence(90).
+            confidence_storage(95).
+
+            confidence_hil(95).
 
             callback("http://example.org/callback").
 
@@ -81,7 +83,9 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             x(10).
             y(10).
 
-            process_robot("engraver_load").
+            process_robot_put("engraver_load").
+
+            process_robot_back("engraver_load").
 
             storage(1).
 
@@ -119,6 +123,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             y(0).
             test(true).
 
+            is_working(false).
+
 
             /*List of zones:
              - Start zone (receive and process message, or directly start)
@@ -137,7 +143,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
-            //!start.
+            //!start. //TODO: start from messages
 
 
             +message(Id, Message): true <- //check
@@ -161,13 +167,18 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 -+text_width(TextWidth);
                 .map.get(Message, "test", Test);
                 -+test(Test);
+                .map.get(Message, "confidence", GIConfidence);
+                -+confidence_hil(GIConfidence);
                 !update_process_robot;
                 !start.
 
 
 
-            +!start: true <-
+            +!start: is_working(B) & not B <-
+                -+is_working(true);
                 .print("start");
+                -+best_storage(0);
+                !reinitialize;
                 !print_parameters;
                 ?actuators_td_url(ActuatorsUrl);
                 ?engraver_td_url(EngraverUrl);
@@ -181,7 +192,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?x(X);
                 ?y(Y);
                 ?process(Process);
-                ?process_robot(ProcessRobot);
+                ?process_robot_put(ProcessRobotPut);
+                ?process_robot_back(ProcessRobotBack);
                 .print("before compute storage area");
                 ?compute_storage_area(TextWidth, X, Y, Storage);
                 .print("storage area computed: ", Storage);
@@ -197,16 +209,26 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("NewAlpha = ", NewAlpha, ", NewX = ", NewX, ", NewY = ", NewY);
                 ?create_pose_ai(NewX, NewY, NewAlpha, Callback, PoseStorage);
                 !pose(RobotUrl, "application/ai+json", PoseStorage);
-                //!use_hil; //TODO: use hil
+                !use_hil;
                 .print("move piece to engraver");
                 !engraver_table_up; //TODO: update for milling machine
-                !move_piece_to_engraver(ProcessRobot, Callback);
+                !move_piece_to_engraver(ProcessRobotPut, Callback);
                 .print("before print");
                 !print(Process, Text);
                 .print("printing done");
                 .print("move piece back");
-                !move_piece_back(ProcessRobot, Callback);
+                !move_piece_back(ProcessRobotBack, Callback);
+                -+best_storage(0);
+                -+is_working(false);
                 .print("end").
+
+            +!start: is_working(B) & B <-
+                .print("The agent is currently working. The request cannot be satisfied").
+
+            +!reinitialize: true <-
+                !engraver_table_up;
+                !robot_start.
+
 
 
             +!print_parameters: true <-
@@ -229,7 +251,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?y(Y);
                 .print("y: ",Y);
                 ?test(Test);
-                .print("test: ",Test).
+                .print("test: ",Test);
+                ?confidence_hil(Confidence);
+                .print("confidence: ",Confidence);
+                .print("end print parameters").
 
 
             // Camera zone
@@ -243,20 +268,12 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?best_storage(Storage).
 
             +!test_best_storage: best_storage(S) & S == 0 <-
-                .print("no appropriate storage found, exit.")
+                .print("no appropriate storage found, exit.");
+                -+is_working(false);
                 .fail_goal(start).
 
             -!test_best_storage: true <-
                 .print("the best storage has been defined").
-
-
-
-            +?select_storage_area(RDiameter, BestStorage): true <-
-                ?storage_area_diameter(S, D);
-                .print("selected storage: ", S);
-                //!test_fail_best_storage(D, RDiameter); //TODO: check error and uncomment
-                BestStorage = S;
-                .print("storage area selected").
 
 
 
@@ -282,19 +299,26 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("new confidence: ", C);
                 !add_storage_area_diameter(StorageNumber, C,  Body).
 
-            +!add_storage_area_diameter(StorageNumber, C, Body):  C>95  <-
+            +!add_storage_area_diameter(StorageNumber, C, Body): C > 95  <-
                 .map.get(Body, "radius", R);
                 D = R * 2;
                 !check_diameter(StorageNumber, D).
 
-            +!add_storage_area_diameter(StorageNumber, C, Body): C<=95 <-
+            +!add_storage_area_diameter(StorageNumber, C, Body):  C <= 95 <-
                 .print("do nothing in add storage diameter").
+
+            -!add_storage_area_diameter(StorageNumber, C, Body): true <-
+               .print("do nothing in add storage diameter").
 
             +!check_diameter(StorageNumber, D): required_diameter(RDiameter) & best_diameter(BDiameter) & D>=RDiameter & D<BDiameter <-
                 -+best_diameter(D);
                 -+best_storage(StorageNumber).
 
-            -!check_diameter(StorageNumber, R): true <-
+            -!check_diameter(StorageNumber, D): true <-
+                ?required_diameter(RDiameter);
+                .print("required diameter: ", RDiameter);
+                .print("current diameter: ", D);
+                .print("current storage number: ", StorageNumber);
                 .print("do nothing in check diameter").
 
             +?grabspot(Storage, Grabspot): ai_td_url(AIUrl) & camera_hostname(Hostname)
@@ -334,7 +358,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 NewX=X.
 
 
-            +?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_MrBeam, Y_MrBeam): ai_td_url(AIUrl) <-
+            +?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_MrBeam, Y_MrBeam): ai_td_url(AIUrl) & process(Process) & Process == "laser"<-
                 ?create_json(Headers);
                 ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
                 ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
@@ -346,14 +370,29 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .map.get(EA, "radius", Radius);
                 .map.get(EA, "xcoordinate", X_Camera);
                 .map.get(EA, "ycoordinate", Y_Camera);
-                X_MrBeam = 100 + Y_Camera + Y; //Initial formula 100 + Y_Camera
-                Y_MrBeam = 308 - X_Camera + X. //Initial formula: 308 - X_Camera
+                X_MrBeam = 100 + Y_Camera + X; //Initial formula 100 + Y_Camera
+                Y_MrBeam = 308 - X_Camera + Y. //Initial formula: 308 - X_Camera
+
+            +?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_Milling, Y_Milling): ai_td_url(AIUrl) & process(Process) & Process == "milling" <-
+                ?create_json(Headers);
+                ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
+                ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
+                !exit(EAReply, start);
+                ?get_body_as_json(EAReply, EA);
+                B = .map.key(EA, "error_description");
+                !conditional_exit_goal(B, start);
+                .map.get(EA, "confidence", Confidence);
+                .map.get(EA, "radius", Radius);
+                .map.get(EA, "xcoordinate", X_Camera);
+                .map.get(EA, "ycoordinate", Y_Camera);
+                X_Milling= 140 + Y_Camera + X; //Initial formula 100 + Y_Camera
+                Y_Milling= 100 - X_Camera + Y. //Initial formula: 308 - X_Camera
 
 
 
             // HIL zone
 
-            +!use_hil: actual_confidence(C) & confidence_min(CM) & C<CM <-
+            +!use_hil: actual_confidence(C) & hil_td_url(HILUrl) & confidence_hil(CM) & C<CM <-
                 .print("use hil");
                 RobotId =  "UR5";
                 CameraId = "robot-camera";
@@ -362,10 +401,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .term2string(AISessionId, AISessionIdString);
                 .print("AI session Id: ", AISessionIdString);
                 !create_hil_session(HILUrl, AISessionIdString, RobotId, CameraId, SessionType);
-                ?hil_content_loop(HILUrl, AISessionIdString, HILContent).
+                ?hil_content_loop(AISessionIdString, HILContent).
 
-            +!use_hil: actual_confidence(C) & confidence_min(CM) & C>=CM <-
-            .print("do not use hil").
+            +!use_hil: actual_confidence(C) & confidence_hil(CM) & C>=CM <-
+                .print("do not use hil").
 
             +?generate_random_session_id(C, Random): true <-
                 .random(N);
@@ -380,21 +419,10 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !exit(Response, start);
                 .print("hil session created").
 
-            +?hil_content_loop1(AISessionId, HILContent): hil_td_url(HILUrl) <-
-                ?hil_content(HILUrl, AISessionId, HILCurrentContent);
-                .print("hil current content: ", HILCurrentContent);
-                .map.get(HILCurrentContent, "status", Status);
-                if (not Status == "finished"){
-                    .wait(1000);
-                    ?hil_content_loop(AISessionId, _);
-                } else {
-                    HILContent = HILCurrentContent;
-                    org.hyperagents.yggdrasil.jason.json.getTermAsJson(HILContent, HILStr);
-                    .print("The HIL session has finished: ", HILStr);
-                }.
+
 
             +?hil_content_loop(AISessionId, HILContent): hil_td_url(HILUrl) <-
-                ?hil_content(HILUrl, AISessionId, HILCurrentContent);
+                ?hil_content(AISessionId, HILCurrentContent);
                 .print("hil current content: ", HILCurrentContent);
                 .map.get(HILCurrentContent, "status", Status);
                 ?hil_content_status(AISessionId, HILCurrentContent, Status, HILContent).
@@ -417,7 +445,15 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             // Robot zone
 
+            +!robot_start: robot_td_url(RobotUrl) <-
+                ?callback(Callback);
+                ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
+                !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
+                !gripper(RobotUrl, "open", 1000).
+
+
             +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
+                .print("robot process: ", Process);
                 ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
                 ?create_named_pose_process(Process, Callback, PoseValueTransport);
                 !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
@@ -449,9 +485,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?create_json(["x","y","alpha"], [X,Y,Alpha], Value);
                 ?create_json(["value","callback"],[Value, Callback], PoseStorage).
 
-            +?create_named_pose_process(Process, Callback, NamedPose): true <-
-                Value = "engraver_load";
-                ?create_json(["value", "callback"], [Value, Callback], NamedPose).
+            +?create_named_pose_process(ProcessRobot, Callback, NamedPose): true <-
+                ?create_json(["value", "callback"], [ProcessRobot, Callback], NamedPose).
 
 
             +!pose(RobotUrl, HeaderValue, PoseValue): true <-
@@ -488,7 +523,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !print_mr_beam(Text).
 
             +!print(Process, Text): Process == "milling" <-
-                //!print_milling;
+                !print_milling;
                 .print("end print milling").
 
             +!engraver_table_up: actuators_td_url(ActuatorsUrl) <-
@@ -502,7 +537,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +!check_status_table(Status): Status == "up" <-
                 .print("the table is opened").
 
-            +!check_status_table(Status): not (Status == "up") <-
+            +!check_status_table(Status): actuators_td_url(ActuatorsUrl) & not (Status == "up") <-
                 .print("the table is closed");
                 !use_actuator(ActuatorsUrl, "open");
                 !use_actuator(ActuatorsUrl, "liftup");
@@ -521,14 +556,13 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !use_actuator(ActuatorsUrl, "liftup");
                 .print("end print mr beam").
 
-            +!print_milling: actuators_td_url(ActuatorsUrl) & //update
-            engraver_td_url(EngraverUrl) & camera_milling_hostname(CameraEngraverHostname)
-            & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) <-
+            +!print_milling: milling_td_url(MillingUrl)  & camera_milling_hostname(CameraEngraverHostname)
+            & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) & text_width(TextWidth) & x(X) & y(Y)<-
                 .print("print milling");
-                ?create_json(["machineId", ["511"], UriVariables]);
-                !use_milling actuator("closeClamp", UriVariables);
-                ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
-                !engraver_milling(MillingUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
+                ?create_json(["machineId"], ["511"], UriVariables);
+                !use_milling_actuator("closeClamp", UriVariables);
+                ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
+                !engraver_milling(MillingUrl, Text, X_Milling, Y_Milling, TextWidth);
                 !use_milling_actuator("openClamp", UriVariables);
                 .print("end print milling").
 
@@ -541,7 +575,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
             +!use_milling_actuator(Task, UriVariables): milling_td_url(MillingUrl) <-
                 ?create_json(Body);
                 ?create_json(["Content-Type"], ["application/json"], Headers);
-                ?invoke_action_with_DLT(Milling, Task, Body, Headers, UriVariables, Response);
+                ?invoke_action_with_DLT(MillingUrl, Task, Body, Headers, UriVariables, Response);
                 !exit(Response, start).
 
             +!engraver(EngraverUrl, ActuatorsUrl, X_MrBeam, Y_MrBeam): text(Text) & text_width(TextWidth) & font(Font) & variant(Variant) & alignment(Alignment) & position_reference(PositionReference) & test(Test) <-
@@ -561,7 +595,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 ?invoke_action_with_DLT(MillingUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
                 !exit(EngravingResponse, start);
                 !wait(EngraverUrl, "waiting", 1000);
-                !use_actuator(ActuatorsUrl, "pushstart");
+                !use_actuator_milling(MillingUrl, "pushstart");
                 !wait(EngraverUrl, "available", 1000).
 
             +!wait(EngraverUrl, Status, Time): engraver_td_url(EngraverUrl) <-
@@ -639,6 +673,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!exit_code(Code, Goal): Code > 299 <-
                 .print("exit");
+                -+is_working(false);
                 .fail_goal(Goal).
 
             +!exit_code(Code, Goal): Code <= 299 <-
@@ -646,10 +681,13 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!conditional_exit_goal(B, Goal):  B <-
                 .print("exit");
+                -+is_working(false);
                 .fail_goal(Goal).
 
             +!conditional_exit_goal(B, Goal): not B <-
                 .print("do not exit").
+
+
 
 
 
@@ -660,10 +698,15 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 B2 = true.
 
             +!update_process_robot: process(Process) & Process == "laser" <-
-                -+process_robot("engraver_load").
+                -+process_robot_put("engraver_load");
+                -+process_robot_back("engraver_load").
 
             +!update_process_robot: process(Process) & Process == "milling" <-
-                -+process_robot("milling_machine_load").
+                -+process_robot_put("milling_machine_place");
+                -+process_robot_back("milling_machine_pick").
+
+
+
 
 
 
