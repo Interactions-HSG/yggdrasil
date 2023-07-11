@@ -137,7 +137,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             //Start zone
 
-            //!start. 
+            //!start.
 
 
             +message(Id, Message): true <- //check

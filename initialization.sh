@@ -1175,6 +1175,182 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 
 '
 
+echo "Create Milling Machine"
+
+curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
+--header 'X-Agent-WebID: http://example.org/agent' \
+--header 'Slug: milling' \
+--header 'Content-Type: text/turtle' \
+--data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
+            @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+            @prefix dct: <http://purl.org/dc/terms/> .
+            @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+            @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            <'"${HYPERMAS_BASE}"'/workspaces/uc1/artifacts/milling> a td:Thing, <http://w3id.org/eve#Artifact>;
+              td:title "Milling machine";
+              td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                ];
+              td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getJob";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/job>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:IntegerSchema;
+                      js:propertyName "percentageCompleted"
+                    ], [ a js:IntegerSchema;
+                      js:propertyName "secondsToFinish"
+                    ], [ a js:StringSchema;
+                      js:propertyName "state";
+                      js:enum "paused", "waiting", "available", "working", "finished", "error", "unconnected"
+                    ]
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getSpec";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/spec>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:NumberSchema;
+                      js:propertyName "workingAreaHeightMillimeter"
+                    ], [ a js:StringSchema;
+                      js:propertyName "model"
+                    ], [
+                      js:propertyName "type"
+                    ], [ a js:StringSchema;
+                      js:propertyName "laserClass"
+                    ], [ a js:NumberSchema;
+                      js:propertyName "workingAreaLengthMillimeter"
+                    ], [ a js:NumberSchema;
+                      js:propertyName "workingAreaWidthMillimeter"
+                    ]
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getConfiguration";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/configuration>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction, td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:StringSchema;
+                      js:propertyName "host"
+                    ], [ a js:StringSchema;
+                      js:propertyName "authenticationMode";
+                      js:enum "LaserCutter", "MillingMachine"
+                    ];
+                  js:required "host", "authenticationMode"
+                ];
+              td:hasActionAffordance [ a td:ActionAffordance;
+                  td:name "createEngraveText";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/job/text>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasInputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:NumberSchema;
+                          js:propertyName "textHeight"
+                        ], [ a js:BooleanSchema;
+                          js:propertyName "laserOn"
+                        ], [ a js:StringSchema;
+                          js:propertyName "positionReference"
+                        ], [ a js:StringSchema;
+                          js:propertyName "variant"
+                        ], [ a js:NumberSchema;
+                          js:propertyName "x"
+                        ], [ a js:NumberSchema;
+                          js:propertyName "fontsize"
+                        ], [ a js:NumberSchema;
+                          js:propertyName "y"
+                        ], [ a js:NumberSchema;
+                          js:propertyName "textWidth"
+                        ], [ a js:ArraySchema;
+                          js:propertyName "text";
+                          js:items [ a js:StringSchema
+                            ]
+                        ], [ a js:StringSchema;
+                          js:propertyName "font"
+                        ]
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "deleteJob";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "DELETE";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/job>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:IntegerSchema;
+                          js:propertyName "percentageCompleted"
+                        ], [ a js:IntegerSchema;
+                          js:propertyName "secondsToFinish"
+                        ], [ a js:StringSchema;
+                          js:propertyName "state";
+                          js:enum "paused", "waiting", "available", "working", "finished", "error", "unconnected"
+                        ]
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "getConfiguration";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/configuration>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction, td:readProperty, td:writeProperty
+                    ];
+                  td:hasInputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:StringSchema;
+                          js:propertyName "host"
+                        ], [ a js:StringSchema;
+                          js:propertyName "authenticationMode";
+                          js:enum "LaserCutter", "MillingMachine"
+                        ];
+                      js:required "host", "authenticationMode"
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:StringSchema;
+                          js:propertyName "host"
+                        ], [ a js:StringSchema;
+                          js:propertyName "authenticationMode";
+                          js:enum "LaserCutter", "MillingMachine"
+                        ];
+                      js:required "host", "authenticationMode"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "openClamp";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/open>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "closeClamp";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/open>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ]
+                ];
+              dct:description "Actuators for the engraver" .
+
+'
+
+
+
+
 
 
 
@@ -1213,7 +1389,9 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  dct:description "An engraver machine used on the IntellIoT project" .
+  dct:description "The DLT Client" .
 
 '
+
+
 
