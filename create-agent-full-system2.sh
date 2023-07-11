@@ -557,12 +557,12 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 .print("end print mr beam").
 
             +!print_milling: milling_td_url(MillingUrl)  & camera_milling_hostname(CameraEngraverHostname)
-            & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) & text_width(TextWidth) & x(X) & y(Y)<-
+            & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) & text_width(TextWidth) & x(X) & y(Y) <-
                 .print("print milling");
                 ?create_json(["machineId"], ["511"], UriVariables);
                 !use_milling_actuator("closeClamp", UriVariables);
                 ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
-                !engraver_milling(MillingUrl, Text, X_Milling, Y_Milling, TextWidth);
+                !engraver_milling(MillingUrl, X_Milling, Y_Milling, TextWidth);
                 !use_milling_actuator("openClamp", UriVariables);
                 .print("end print milling").
 
