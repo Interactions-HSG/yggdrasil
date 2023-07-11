@@ -970,209 +970,209 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 --header 'Slug: actuators' \
 --header 'Content-Type: text/turtle' \
 --data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+            @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+            @prefix dct: <http://purl.org/dc/terms/> .
+            @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+            @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators> a td:Thing, <http://w3id.org/eve#Artifact>;
-  td:title "Actuators";
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
-      td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
-          td:name "tableStatus";
-          td:hasForm [
-              <http://www.w3.org/2011/http#methodName> "GET";
-              hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table>;
-              hctl:forContentType "application/json";
-              hctl:hasOperationType td:readProperty
-            ];
-          td:isObservable false;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ];
-  td:hasActionAffordance [ a td:ActionAffordance;
-      td:name "open";
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/open>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "openWithId";
-      td:hasUriTemplateSchema [ a js:StringSchema;
-          td:name "machineId"
-        ];
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/open%7B?machineId%7D>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "close";
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/close>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "closeWithId";
-      td:hasUriTemplateSchema [ a js:StringSchema;
-          td:name "machineId"
-        ];
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/close%7B?machineId%7D>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "liftup";
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/liftup>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "liftupWithId";
-      td:hasUriTemplateSchema [ a js:StringSchema;
-          td:name "machineId"
-        ];
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/liftup%7B?machineId%7D>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "lowerdown";
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/lowerdown>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "lowerdownWithId";
-      td:hasUriTemplateSchema [ a js:StringSchema;
-          td:name "machineId"
-        ];
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/lowerdown%7B?machineId%7D>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "pushstart";
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/push-start-button>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ], [ a td:ActionAffordance;
-      td:name "pushstartWithId";
-      td:hasUriTemplateSchema [ a js:StringSchema;
-          td:name "machineId"
-        ];
-      td:hasForm [
-          <http://www.w3.org/2011/http#methodName> "POST";
-          hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/push-start-button%7B?machineId%7D>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasOutputSchema [ a js:ObjectSchema;
-          js:properties [ a js:BooleanSchema;
-              js:propertyName "demo"
-            ], [ a js:StringSchema;
-              js:propertyName "status"
-            ];
-          js:required "status", "demo"
-        ]
-    ];
-  dct:description "Actuators for the engraver" .
+            <'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators> a td:Thing, <http://w3id.org/eve#Artifact>;
+              td:title "Engraver Actuators";
+              td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                ];
+              td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "tableStatus";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:BooleanSchema;
+                      js:propertyName "demo"
+                    ], [ a js:StringSchema;
+                      js:propertyName "status"
+                    ];
+                  js:required "status", "demo"
+                ];
+              td:hasActionAffordance [ a td:ActionAffordance;
+                  td:name "open";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/open>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "openWithId";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/open%7B?machineId%7D>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "close";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/close>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "closeWithId";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/lid/close%7B?machineId%7D>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "liftup";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/liftup>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "liftupWithId";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/liftup%7B?machineId%7D>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "lowerdown";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/lowerdown>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "lowerdownWithId";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/table/lowerdown%7B?machineId%7D>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "pushstart";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/push-start-button>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "pushstartWithId";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-laser/actuator-api/push-start-button%7B?machineId%7D>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ];
+              dct:description "Actuators for the engraver" .
+
 '
 
 

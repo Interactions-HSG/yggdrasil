@@ -28,7 +28,8 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
---data-raw 'ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
+--data-raw '
+ai_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/camera-ai").
             hil_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/hil-service").
             robot_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/robot-controller").
             actuators_td_url("'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/actuators").
@@ -521,16 +522,13 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !use_actuator(ActuatorsUrl, "liftup");
                 .print("end print mr beam").
 
-            +!print_milling: actuators_td_url(ActuatorsUrl) & //update
-            engraver_td_url(EngraverUrl) & camera_milling_hostname(CameraEngraverHostname)
+            +!print_milling: actuators_td_url(ActuatorsUrl) & engraver_td_url(EngraverUrl) & camera_milling_hostname(CameraEngraverHostname)
             & camera_milling_id(CameraEngraverId) & storage_engraver(Storage) <-
                 .print("print milling");
-                ?create_json(["machineId", ["511'"], UriVariables]);
-                !use_milling actuator("closeClamp", UriVariables);
+                ?create_json(["machineId", ["511"], UriVariables]);
                 ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId, X_MrBeam, Y_MrBeam, TextWidth);
 
-                !engraver_milling(MillingUrl, Text, X_MrBeam, Y_MrBeam, TextWidth);
-                !use_milling_actuator("openClamp", UriVariables);
+            -!engraver_milling(MillingUrl, Text, X_MrBeam, Y_MrBeam, TextWidth): true <-
                 .print("end print milling").
 
             +!use_actuator(ActuatorsUrl,Task): true <-
@@ -665,12 +663,6 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!update_process_robot: process(Process) & Process == "milling" <-
                 -+process_robot("milling_machine_load").
-
-
-
-
-
-
 
 
 '
