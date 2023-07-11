@@ -18,6 +18,12 @@ COPY src/  /yggdrasil/src
 RUN cd /yggdrasil && ./gradlew build -x test
 RUN cp /yggdrasil/build/libs/yggdrasil-0.0-SNAPSHOT-fat.jar  /usr/verticles/
 
+ADD initialize.sh /yggdrasil
+ADD initialize-demo-lab.sh /yggdrasil
+ADD initialize-demo-lab.sh /yggdrasil
+ADD create-agent-full-system2-demo-lab.sh /yggdrasil
+ADD create-agent-full-system2.sh /yggdrasil
+
 # Launch the verticle
 WORKDIR /usr/verticles
 
