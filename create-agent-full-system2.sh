@@ -48,7 +48,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             camera_milling_hostname("cammillingmachine.fritz.box").
 
-            camera_milling_id().
+            camera_milling_id("millingEngraver").
 
             actual_confidence(100).
 
@@ -272,7 +272,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
                 !compute_storage_area_explore(I+1, N).
 
             -!compute_storage_area_list(I, N): true <-
-                .print("storage area computed");
+                .print("storage area computed").
 
             +!process_storage_response(StorageNumber, Response): true <-
                 !exit(Response, process_storage_response);
@@ -665,6 +665,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 
             +!update_process_robot: process(Process) & Process == "milling" <-
                 -+process_robot("milling_machine_load").
+
 
 
 
