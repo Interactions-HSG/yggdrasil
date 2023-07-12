@@ -77,7 +77,7 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
               if (State == "mano"){
                   ?hil_td_url(HILUrl);
                   ?current_ai_session_id(AISessionId);
-                  ?hil_content_loop(HILUrl, AISessionId, HILContent);
+                  ?hil_content_loop(AISessionId, HILContent);
                   .map.get(HILContent, "status", S);
                   if (S == "finished"){
                       !set_mode("wpo")
