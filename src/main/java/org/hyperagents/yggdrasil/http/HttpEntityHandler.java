@@ -381,9 +381,13 @@ public class HttpEntityHandler {
 
         httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
 
-        // Note: forEach produces duplicate keys. If anyone wants to, please replace this with a Java 8 version ;-)
-        for(String headerName : headers.keySet()) {
-          httpResponse.putHeader(headerName, headers.get(headerName).stream().collect(Collectors.joining(",")));
+        for (String headerName : headers.keySet()) {
+          if (headerName.equalsIgnoreCase("Link")) {
+            httpResponse.putHeader(headerName, headers.get(headerName));
+          } else {
+            httpResponse.putHeader(headerName,
+              headers.get(headerName).stream().collect(Collectors.joining(",")));
+          }
         }
 
         String storeReply = reply.result().body();
