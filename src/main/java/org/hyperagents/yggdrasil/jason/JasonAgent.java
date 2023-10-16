@@ -8,7 +8,6 @@ import jason.asSemantics.TransitionSystem;
 import jason.asSyntax.PlanLibrary;
 import jason.bb.DefaultBeliefBase;
 import jason.infra.centralised.CentralisedAgArch;
-import jason.mas2j.ClassParameters;
 import jason.runtime.Settings;
 
 import java.io.InputStream;
@@ -19,7 +18,7 @@ public class JasonAgent  extends Agent {
     super();
     System.out.println("is creating Jason agent");
     CentralisedAgArch arch = new CentralisedAgArch();
-    arch.insertAgArch(new YAgentArch2());
+    arch.insertAgArch(new YAgentArch());
     arch.insertAgArch(new MindInspectorAgArch());
     System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);
@@ -35,7 +34,7 @@ public class JasonAgent  extends Agent {
     super();
     System.out.println("is creating Jason agent");
     CentralisedAgArch arch = new CentralisedAgArch();
-    arch.insertAgArch(new YAgentArch2());
+    arch.insertAgArch(new YAgentArch());
     arch.insertAgArch(new MindInspectorAgArch());
     System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);

@@ -60,7 +60,7 @@ public class createTermFromJson extends DefaultInternalAction {
       }
       t= mapTerm;
     } else if (jsonElement.isJsonNull()){
-      JsonNull jsonNull = jsonElement.getAsJsonNull();
+      JsonNull jsonNull = jsonElement.getAsJsonNull(); //TODO: check
     }
     return t;
   }

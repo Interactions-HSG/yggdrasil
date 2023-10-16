@@ -6,9 +6,7 @@ import jason.asSemantics.Unifier;
 import jason.asSyntax.*;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.RDFHandlerWrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -5,15 +5,12 @@ import java.util.Queue;
 
 public class AgentJasonMessageCallback {
 
-  private String agentName;
-
-  private Queue<Message> messages;
+  private final Queue<Message> messages;
 
   private boolean newMessage;
 
-  public AgentJasonMessageCallback(String agentName){
-    this.agentName = agentName;
-    this.messages = new ArrayDeque();
+  public AgentJasonMessageCallback(){
+    this.messages = new ArrayDeque<>();
     this.newMessage = false;
   }
 

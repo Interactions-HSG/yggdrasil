@@ -1393,5 +1393,46 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 
 '
 
+echo 'create Goal Interface'
+
+curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
+--header 'X-Agent-WebID: http://example.org/agent' \
+--header 'Slug: goal-interface' \
+--header 'Content-Type: text/turtle' \
+--data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
+            @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+            @prefix dct: <http://purl.org/dc/terms/> .
+            @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+            @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+
+            <http://localhost:8080/workspaces/uc3/artifacts/goal-interface> a td:Thing;
+              td:title "Goal Interface UC3";
+              td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
+                  wotsec:in "HEADER";
+                  wotsec:name "X-API-Key"
+                ];
+              td:hasBase <http://localhost:5000>;
+              td:hasActionAffordance [ a td:ActionAffordance;
+                  td:name "sendNotification";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <http://localhost:5000/notification>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasInputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:StringSchema;
+                          js:propertyName "custom"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status"
+                    ]
+                ] .
+
+
+
+'
 
 

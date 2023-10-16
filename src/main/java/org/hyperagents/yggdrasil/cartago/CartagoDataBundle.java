@@ -12,7 +12,7 @@ import io.vertx.core.json.jackson.JacksonCodec;
 /**
  * A class for serializing and deserializing CArtAgO datatypes to JSON. This is used for
  * sending action parameters via the event bus.
- * 
+ *
  * @author Andrei Ciortea
  *
  */
@@ -22,16 +22,16 @@ public final class CartagoDataBundle {
     List<List<Object>> typedParams = objectListToTypedList(params);
     return Json.encode(typedParams);
   }
-  
+
   public static Object[] fromJson(String representation) {
-    TypeReference<List<List<Object>>> paramListType = new TypeReference<List<List<Object>>>() {};
+    TypeReference<List<List<Object>>> paramListType = new TypeReference<>() {};
     List<List<Object>> typedParams = JacksonCodec.decodeValue(representation, paramListType);
     return typedListToObjectList(typedParams).toArray();
   }
-  
+
   @SuppressWarnings("unchecked")
   private static List<Object> typedListToObjectList(List<List<Object>> typedParams) {
-    return typedParams.stream().map(param -> 
+    return typedParams.stream().map(param ->
         {
           String type = (String) param.get(0);
           if (type.compareTo(String.class.getCanonicalName()) == 0) {
@@ -50,12 +50,12 @@ public final class CartagoDataBundle {
         })
         .collect(Collectors.toList());
   }
-  
+
   @SuppressWarnings("unchecked")
   private static List<List<Object>> objectListToTypedList(List<Object> params) {
     return params.stream().map(param -> {
-          List<Object> typedParam = new ArrayList<Object>();
-          
+          List<Object> typedParam = new ArrayList<>();
+
           if (param instanceof List<?>) {
             typedParam.add(List.class.getCanonicalName());
             typedParam.add(objectListToTypedList((List<Object>) param));
@@ -63,8 +63,8 @@ public final class CartagoDataBundle {
             typedParam.add(param.getClass().getCanonicalName());
             typedParam.add(String.valueOf(param));
           }
-          
-          return typedParam; 
+
+          return typedParam;
         }).collect(Collectors.toList());
   }
 }

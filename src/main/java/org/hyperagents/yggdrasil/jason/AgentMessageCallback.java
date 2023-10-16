@@ -4,15 +4,12 @@ import java.util.*;
 
 public class AgentMessageCallback {
 
-  private String agentName;
-
-  private Queue<String> messages;
+  private final Queue<String> messages;
 
   private boolean newMessage;
 
-  public AgentMessageCallback(String agentName){
-    this.agentName = agentName;
-    this.messages = new ArrayDeque();
+  public AgentMessageCallback(){
+    this.messages = new ArrayDeque<>();
     this.newMessage = false;
   }
 

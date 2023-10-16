@@ -1,13 +1,9 @@
 package org.hyperagents.yggdrasil.jason.dlt;
 
 
-import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
-import ch.unisg.ics.interactions.wot.td.clients.TDHttpResponse;
+
 import com.google.gson.*;
-import com.google.gson.stream.JsonWriter;
-import io.vertx.core.json.Json;
 import jason.asSyntax.*;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -15,12 +11,11 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
 public class InteractionModel {
-    private MapTerm modelTerm;
+    private final MapTerm modelTerm;
 
 
     private Optional<String> tdUrl;
@@ -29,7 +24,7 @@ public class InteractionModel {
 
     private Optional<String> agentUri;
 
-    private static ValueFactory rdf = SimpleValueFactory.getInstance();
+    private final static ValueFactory rdf = SimpleValueFactory.getInstance();
 
     public InteractionModel(MapTerm modelTerm){
       this.modelTerm = modelTerm;
@@ -104,9 +99,7 @@ public class InteractionModel {
       System.out.println("model used: "+ modelObject.toString());
     ModelBuilder modelBuilder = new ModelBuilder();
     Resource interactionIdentifier = rdf.createBNode("interaction");
-    if (agentUri.isPresent()){
-      modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/hasAgent"), rdf.createIRI(agentUri.get()));
-    }
+    agentUri.ifPresent(s -> modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/hasAgent"), rdf.createIRI(s)));
     if (tdUrl.isPresent() && affordanceName.isPresent()){
       Resource tdAffordance = rdf.createBNode("tdAffordance");
       modelBuilder.add(interactionIdentifier, rdf.createIRI("http://example.org/interaction/useTDAffordance"), tdAffordance);
@@ -120,7 +113,7 @@ public class InteractionModel {
     modelBuilder.add(requestIdentifier, rdf.  createIRI("https://www.w3.org/2011/http#requestURI"), rdf.createIRI(target));
     String method =modelObject.get("request").getAsJsonObject().get("method").getAsString();
     modelBuilder.add(requestIdentifier, rdf.createIRI("https://www.w3.org/2011/http#methodName"), rdf.createLiteral(method));
-    Map<String, String> requestHeaders = getHeaders( modelObject.get("request").getAsJsonObject().get("headers").getAsJsonObject());;
+    Map<String, String> requestHeaders = getHeaders( modelObject.get("request").getAsJsonObject().get("headers").getAsJsonObject());
     for (String key: requestHeaders.keySet()){
       Resource headerIdentifier = rdf.createBNode("request header: "+key);
       String value = requestHeaders.get(key);

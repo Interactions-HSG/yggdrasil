@@ -1,10 +1,7 @@
 package org.hyperagents.yggdrasil.jason;
 
-import cartago.JsonObj;
-import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -55,9 +52,9 @@ public class AgentRegistry {
     System.out.println("agent uri: "+ agentUri);
     if (!agents.containsKey(agentName)) {
       this.agents.put(agentName, agentUri);
-      this.callbacks.put(agentName, new AgentNotificationCallback(agentUri));
-      this.messageCallbackMap.put(agentName, new AgentMessageCallback(agentName));
-      this.jasonMessageCallbackMap.put(agentName, new AgentJasonMessageCallback(agentName));
+      this.callbacks.put(agentName, new AgentNotificationCallback());
+      this.messageCallbackMap.put(agentName, new AgentMessageCallback());
+      this.jasonMessageCallbackMap.put(agentName, new AgentJasonMessageCallback());
 
       return agentName;
     }

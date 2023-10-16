@@ -5,8 +5,6 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
-import org.apache.http.HttpStatus;
-import org.apache.tools.ant.taskdefs.condition.Http;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -142,8 +140,7 @@ public class JasonVerticle extends AbstractVerticle {
     Model model = builder.build();
     OutputStream out = new ByteArrayOutputStream();
     Rio.write(model, out, RDFFormat.TURTLE);
-    String modelString = out.toString();
-    return modelString;
+    return out.toString();
 
   }
 
@@ -160,7 +157,7 @@ public class JasonVerticle extends AbstractVerticle {
         .addHeader(HttpEntityHandler.REQUEST_URI, agentUri);
 
       vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
-        reply -> System.out.println(reply));
+        System.out::println);
     } catch (Exception e){
       e.printStackTrace();
     }

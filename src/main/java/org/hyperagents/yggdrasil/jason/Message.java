@@ -2,9 +2,9 @@ package org.hyperagents.yggdrasil.jason;
 
 public class Message {
 
-  private String content;
+  private final String content;
 
-  private String sender;
+  private final String sender;
 
   public Message(String content, String sender){
     this.content = content;

@@ -77,7 +77,7 @@ public class readProperty extends WoTAction {
           if (property.getUriVariables().isPresent()) {
             System.out.println("form target: "+form.getTarget());
             request = new TDHttpRequest(form, TD.readProperty, property.getUriVariables().get(), uriVariables);
-            System.out.println(request.getTarget());
+            System.out.println("target url: "+request.getTarget());
           }
 
           for (String key: headers.keySet()){

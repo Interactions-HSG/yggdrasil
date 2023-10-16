@@ -227,8 +227,9 @@ public class invokeAction extends WoTAction{
             System.out.println("form target: " + form.getTarget());
             System.out.println("uri variables: " + uriVariables);
             request = new TDHttpRequest(form, TD.invokeAction, action.getUriVariables().get(), uriVariables);
-            System.out.println(request.getTarget());
+
           }
+          System.out.println("target url: "+request.getTarget());
 
           for (String key : headers.keySet()) {
             String value = headers.get(key);

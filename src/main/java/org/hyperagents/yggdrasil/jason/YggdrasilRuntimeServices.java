@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.jason;
 
-import jason.architecture.AgArch;
 import jason.asSemantics.Agent;
 import jason.infra.centralised.CentralisedAgArch;
 import jason.infra.centralised.CentralisedRuntimeServices;
@@ -18,12 +17,10 @@ public class YggdrasilRuntimeServices extends CentralisedRuntimeServices {
 
   @Override
   public String createAgent(String agName, String agSource, String agClass, Collection<String> archClasses, ClassParameters bbPars, Settings stts, Agent father) {
-    Agent agent = father;
-    YggdrasilAgArch agArch = (YggdrasilAgArch) agent.getTS().getAgArch();
+    CentralisedAgArch agArch = (CentralisedAgArch) father.getTS().getAgArch();
     masRunner.addAg(agArch);
     return agName;
   }
-
   public String createAgent(String agentName, InputStream in, String sourceId){
     try {
       JasonAgent agent = new JasonAgent(agentName, in, sourceId);

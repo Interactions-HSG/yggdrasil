@@ -4,15 +4,15 @@ import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 
 public class ActionDescription {
 
-  private String actionName;
+  private final String actionName;
 
-  private String actionClass;
+  private final String actionClass;
 
-  private String methodName;
+  private final String methodName;
 
-  private String relativeUri;
+  private final String relativeUri;
 
-  private DataSchema inputSchema;
+  private final DataSchema inputSchema;
 
   private ActionDescription(String actionName, String actionClass, String methodName, String relativeUri, DataSchema inputSchema){
     this.actionName = actionName;
@@ -44,13 +44,13 @@ public class ActionDescription {
 
   public static class Builder {
 
-    private String actionName;
+    private final String actionName;
 
-    private String actionClass;
+    private final String actionClass;
 
     private String methodName;
 
-    private String relativeUri;
+    private final String relativeUri;
 
     private DataSchema inputSchema;
 

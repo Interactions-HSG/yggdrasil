@@ -10,7 +10,7 @@ import io.vertx.core.logging.LoggerFactory;
 
 public class CartagoEntityHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoEntityHandler.class.getName());
-  private Vertx vertx;
+  private final Vertx vertx;
 
   public CartagoEntityHandler(Vertx vertx) {
     this.vertx = vertx;

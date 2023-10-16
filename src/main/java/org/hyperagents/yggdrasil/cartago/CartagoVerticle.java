@@ -400,8 +400,7 @@ public class CartagoVerticle extends AbstractVerticle {
       NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIri, callbackIri);
       ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(artifactName).getArtifact().readAllProperties();
       if (properties.size()>0){
-        for (int i = 0; i<properties.size();i++){
-          ArtifactObsProperty p = properties.get(i);
+        for (ArtifactObsProperty p : properties) {
           DeliveryOptions options = new DeliveryOptions()
             .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
             .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);

@@ -8,13 +8,14 @@ import com.google.gson.JsonObject;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class CartagoEventWrapper {
 
-  private CartagoEvent event;
+  private final CartagoEvent event;
 
-  private String type;
+  private final String type;
 
   public CartagoEventWrapper(CartagoEvent event){
     this.event = event;
@@ -66,7 +67,7 @@ public class CartagoEventWrapper {
 
   public Optional<ObsArtListChangedEvent> getObsArtListChangedEvent(){
     Optional<ObsArtListChangedEvent> opEvent = Optional.empty();
-    if (type == "obsArtListChangedEvent"){
+    if (Objects.equals(type, "obsArtListChangedEvent")){
       opEvent = Optional.of((ObsArtListChangedEvent) event);
     }
     return opEvent;

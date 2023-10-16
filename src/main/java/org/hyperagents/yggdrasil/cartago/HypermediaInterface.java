@@ -11,7 +11,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -36,13 +35,13 @@ public class HypermediaInterface {
 
   Optional<String> hypermediaName;
 
-  private Set<String> feedbackActions = new HashSet<>();
+  private Set<String> feedbackActions;
 
-  private Map<String, ResponseConverter> responseConverterMap = new Hashtable<>();
+  private Map<String, ResponseConverter> responseConverterMap;
 
   private Model metadata;
 
-  private static ValueFactory rdf = SimpleValueFactory.getInstance();
+  private final static ValueFactory rdf = SimpleValueFactory.getInstance();
 
   public HypermediaInterface(Class aClass, Workspace workspace, ArtifactId artifactId, List<ActionDescription> descriptions, Map<String, ArgumentConverter> converterMap, Optional<String> name, Optional<String> hypermediaName, Set<String> feedbackActions, Map<String, ResponseConverter> responseConverterMap, Model metadata){
     this.aClass = aClass;

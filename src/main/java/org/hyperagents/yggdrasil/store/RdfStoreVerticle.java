@@ -1,7 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,7 +31,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
 
   private RdfStore store;
-  private RDF4J rdf = new RDF4J();
+  private final RDF4J rdf = new RDF4J();
   private WebClient client;
 
   @Override
@@ -71,11 +71,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           break;
       }
     }
-    catch (IOException e) {
-      LOGGER.error(e.getMessage());
-      replyFailed(message);
-    }
-    catch (IllegalArgumentException e) {
+    catch (IOException | IllegalArgumentException e) {
       LOGGER.error(e.getMessage());
       replyFailed(message);
     }
@@ -106,6 +102,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     Graph entityGraph;
 
     String slug = message.headers().get(HttpEntityHandler.ENTITY_URI_HINT);
+    String contentType = "text/turtle";
+    contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
 //    String contentType = message.headers().get(HttpEntityHandler.CONTENT_TYPE);
     String entityIRIString = generateEntityIRI(requestIRI.getIRIString(), slug);
     System.out.println("entity IRI: "+entityIRIString);
@@ -117,8 +115,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       // Replace all null relative IRIs with the IRI generated for this entity
       String entityGraphStr = message.body();
-//      if (contentType != null && contentType.equals("application/ld+json")) {
-//        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
+      if (contentType != null && contentType.equals("application/ld+json")) {
+        entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.JSONLD);
+      }
 //      } else {
       entityGraphStr = entityGraphStr.replaceAll("<>", "<" + entityIRIString + ">");
       entityGraph = store.stringToGraph(entityGraphStr, entityIRI, RDFSyntax.TURTLE);
@@ -205,7 +204,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       }
 
     } else if (entityGraph.contains(entityIRI, store.createIRI(RDF.TYPE.stringValue()),
-      store.createIRI(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))) &&  entityIRI.getIRIString().indexOf("/artifacts") == -1) {
+      store.createIRI(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))) && !entityIRI.getIRIString().contains("/artifacts")) {
       LOGGER.info("entity created is an artifact");
       String artifactIRI = entityIRI.getIRIString();
       IRI workspaceIRI = store.createIRI(artifactIRI.substring(0, artifactIRI.indexOf("/bodies")));
@@ -305,7 +304,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       String valueString = message.headers().get("Value");
       String valueType = message.headers().get("ValueType");
       RDFTerm value;
-      if (valueType == "IRI"){
+      if (Objects.equals(valueType, "IRI")){
         value = store.createIRI(valueString);
       } else {
           value = store.createLiteral(valueString);
@@ -389,9 +388,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       LOGGER.info(crawlerUrl);
 
       String id = t.getSubject().toString();
-      client.postAbs(crawlerUrl).sendBuffer(Buffer.buffer(id), response -> {
-        LOGGER.info("Registered at crawler: " + crawlerUrl);
-      });
+      client.postAbs(crawlerUrl).sendBuffer(Buffer.buffer(id), response -> LOGGER.info("Registered at crawler: " + crawlerUrl));
     }
 
   }

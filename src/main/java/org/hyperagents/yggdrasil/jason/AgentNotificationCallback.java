@@ -4,13 +4,10 @@ import java.util.*;
 
 public class AgentNotificationCallback {
 
-  private String agentName;
+  private final Queue<String> notifications;
 
-  private Queue<String> notifications;
-
-  public AgentNotificationCallback(String agentName){
-    this.agentName = agentName;
-    this.notifications = new ArrayDeque();
+  public AgentNotificationCallback(){
+    this.notifications = new ArrayDeque<>();
   }
 
   public void addNotification(String notification){

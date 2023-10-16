@@ -122,13 +122,14 @@ public class HttpEntityHandler {
   // TODO: add payload validation
   public void handleCreateEntity(RoutingContext routingContext) {
     String agentId = routingContext.request().getHeader("X-Agent-WebID");
+    String contentType = routingContext.request().getHeader("Content-Type");
 
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
     String entityRepresentation = routingContext.getBodyAsString();
-    createEntity(routingContext, entityRepresentation);
+    createEntity(routingContext, contentType, entityRepresentation);
   }
 
   public void handleFocus(RoutingContext context){
@@ -665,7 +666,7 @@ public class HttpEntityHandler {
   }
 
   // TODO: support different content types
-  private void createEntity(RoutingContext context, String representation) {
+  private void createEntity(RoutingContext context, String contentType, String representation) {
     String entityIri = context.request().absoluteURI();
     String slug = context.request().getHeader("Slug");
 //    String contentType = context.request().getHeader("Content-Type");
@@ -673,8 +674,8 @@ public class HttpEntityHandler {
     DeliveryOptions options = new DeliveryOptions()
         .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
         .addHeader(REQUEST_URI, entityIri)
-        .addHeader(ENTITY_URI_HINT, slug);
-//        .addHeader(CONTENT_TYPE, contentType);
+        .addHeader(ENTITY_URI_HINT, slug)
+        .addHeader(CONTENT_TYPE, contentType);
 
     vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, handleStoreReply(context,
         HttpStatus.SC_CREATED));
