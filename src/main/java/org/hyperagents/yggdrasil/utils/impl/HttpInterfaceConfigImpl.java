@@ -1,16 +1,17 @@
-package org.hyperagents.yggdrasil.utils;
+package org.hyperagents.yggdrasil.utils.impl;
 
 import io.vertx.core.json.JsonObject;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 
 import java.util.Optional;
 
-public class HttpInterfaceConfigImpl {
+public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   private final String host;
-  private String baseUri = null;
+  private final String baseUri;
   private final int port;
   private final Optional<String> webSubHubUri;
 
-  public HttpInterfaceConfig(final JsonObject config) {
+  public HttpInterfaceConfigImpl(final JsonObject config) {
     final var httpConfig = Optional.ofNullable(config.getJsonObject("http-config"));
     this.host = httpConfig.map(c -> c.getString("host", "0.0.0.0")).orElse("0.0.0.0");
     this.port = httpConfig.map(c -> c.getInteger("port", 8080)).orElse(8080);
@@ -29,18 +30,22 @@ public class HttpInterfaceConfigImpl {
         .orElseGet(() -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":" + this.port);
   }
 
+  @Override
   public String getHost() {
     return this.host;
   }
 
+  @Override
   public int getPort() {
     return this.port;
   }
 
+  @Override
   public String getBaseUri() {
     return this.baseUri;
   }
 
+  @Override
   public Optional<String> getWebSubHubUri() {
     return this.webSubHubUri;
   }
