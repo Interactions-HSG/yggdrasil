@@ -1,76 +1,88 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.messages.impl;
 
-import org.hyperagents.yggdrasil.http.HttpEntityHandler;
-
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
 import io.vertx.core.eventbus.DeliveryOptions;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import org.hyperagents.yggdrasil.messages.CartagoMessagebox;
+import org.hyperagents.yggdrasil.messages.MessageAddresses;
+import org.hyperagents.yggdrasil.messages.MessageHeaders;
+import org.hyperagents.yggdrasil.messages.MessageRequestMethods;
 
-public class CartagoEntityHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CartagoEntityHandler.class.getName());
-  private Vertx vertx;
-  
-  public CartagoEntityHandler(Vertx vertx) {
-    this.vertx = vertx;
+import java.util.Optional;
+
+public class CartagoMessageboxImpl implements CartagoMessagebox {
+  private static final Logger LOGGER = LoggerFactory.getLogger(CartagoMessageboxImpl.class.getName());
+
+  private final EventBus eventBus;
+
+  public CartagoMessageboxImpl(final EventBus eventBus) {
+    this.eventBus = eventBus;
   }
-  
-  /**
-   * Creates a workspace on the local CArtAgO node.
-   * 
-   * @param agentId the identifier of the agent creating the workspace (e.g., a URI) 
-   * @param workspaceName the preferred name for the workspace to be created
-   * @param representation representation of the workspace to be created
-   * @param result a promise with the result of the create workspace operation
-   */
-  public void createWorkspace(String agentId, String envName, String workspaceName, 
-      String representation, Promise<String> result) {
-    DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_WORKSPACE)
-        .addHeader(CartagoVerticle.ENV_NAME, envName);
-    
-    sendCartagoMessage(representation, options, result);
+
+  @Override
+  public void createWorkspace(
+    final String agentId,
+    final String envName,
+    final String workspaceName,
+    final String representation,
+    final Handler<AsyncResult<Message<String>>> handler
+  ) {
+    this.eventBus.request(
+      MessageAddresses.CARTAGO.getName(),
+      representation,
+      new DeliveryOptions()
+        .addHeader(MessageHeaders.AGENT_ID.getName(), agentId)
+        .addHeader(MessageHeaders.WORKSPACE_NAME.getName(), workspaceName)
+        .addHeader(MessageHeaders.REQUEST_METHOD.getName(), MessageRequestMethods.CREATE_WORKSPACE.getName())
+        .addHeader(MessageHeaders.ENV_NAME.getName(), envName),
+      handler
+    );
   }
-  
-  /**
-   * Creates an artifact within an existing workspace on the local CArtAgO node.
-   * 
-   * @param agentId agentId the identifier of the agent creating the workspace (e.g., a URI)
-   * @param workspaceName the name of the workspace
-   * @param artifactName the preferred name for the artifact to be created
-   * @param representation representation of the artifact to be created
-   * @param result a promise with the result of the create artifact operation
-   */
-  public void createArtifact(String agentId, String workspaceName, String artifactName, 
-      String representation, Promise<String> result) {
+
+  @Override
+  public void createArtifact(
+    final String agentId,
+    final String workspaceName,
+    final String artifactName,
+    final String representation,
+    final Handler<AsyncResult<Message<String>>> handler) {
     LOGGER.info("Collecting delivery options, workspace: " + workspaceName);
-    
-    DeliveryOptions options = getDeliveryOptions(agentId, workspaceName)
-        .addHeader(HttpEntityHandler.REQUEST_METHOD, CartagoVerticle.CREATE_ARTIFACT)
-        .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName);
-    
     LOGGER.info("Sending cartago message to create artifact...");
-    
-    sendCartagoMessage(representation, options, result);
+    this.eventBus.request(
+      MessageAddresses.CARTAGO.getName(),
+      representation,
+      new DeliveryOptions()
+        .addHeader(MessageHeaders.AGENT_ID.getName(), agentId)
+        .addHeader(MessageHeaders.WORKSPACE_NAME.getName(), workspaceName)
+        .addHeader(MessageHeaders.REQUEST_METHOD.getName(), MessageRequestMethods.CREATE_ARTIFACT.getName())
+        .addHeader(MessageHeaders.ARTIFACT_NAME.getName(), artifactName),
+      handler
+    );
   }
-  
-  private DeliveryOptions getDeliveryOptions(String agentId, String workspaceName) {
-    return new DeliveryOptions().addHeader(CartagoVerticle.AGENT_ID, agentId)
-        .addHeader(CartagoVerticle.WORKSPACE_NAME, workspaceName);
+
+  @Override
+  public void doAction(
+    final String agentId,
+    final String workspaceName,
+    final String artifactName,
+    final String actionName,
+    final Optional<String> message,
+    final Handler<AsyncResult<Message<Void>>> handler
+    ) {
+    this.eventBus.request(
+      MessageAddresses.CARTAGO.getName(),
+      message.orElse(null),
+      new DeliveryOptions()
+        .addHeader(MessageHeaders.AGENT_ID.getName(), agentId)
+        .addHeader(MessageHeaders.REQUEST_METHOD.getName(), MessageRequestMethods.DO_ACTION.getName())
+        .addHeader(MessageHeaders.WORKSPACE_NAME.getName(), workspaceName)
+        .addHeader(MessageHeaders.ARTIFACT_NAME.getName(), artifactName)
+        .addHeader(MessageHeaders.ACTION_NAME.getName(), actionName),
+      handler
+    );
   }
-  
-  private void sendCartagoMessage(String message, DeliveryOptions options, Promise<String> result) {
-    vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, message, options,
-        response -> {
-          if (response.succeeded()) {
-            String workspaceDescription = (String) response.result().body();
-            result.complete(workspaceDescription);
-            LOGGER.info("CArtAgO workspace created: " + workspaceDescription);
-          } else {
-            result.fail("CArtAgO operation has failed.");
-          }
-        });
-  }
-  
 }
