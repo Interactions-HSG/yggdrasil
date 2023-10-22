@@ -7,54 +7,48 @@ plugins {
 defaultTasks 'shadowJar'
 
 repositories {
-  jcenter()
-
-  // maven { url "http://jacamo.sourceforge.net/maven2" }
+  mavenCentral()
   maven { url "https://raw.github.com/jacamo-lang/mvn-repo/master" }
 }
 
 group = "org.hyperagents"
 version = '0.0-SNAPSHOT'
-sourceCompatibility = '1.8'
+sourceCompatibility = JavaVersion.VERSION_11
 mainClassName = 'io.vertx.core.Launcher'
 
-def vertxVersion = '3.9.0'
+def vertxVersion = '3.9.7'
 def mainVerticleName = 'org.hyperagents.yggdrasil.MainVerticle'
 def watchForChange = 'src/**/*'
 def doOnChange = './gradlew classes'
 
 dependencies {
-  compile "io.vertx:vertx-core:$vertxVersion"
-  compile "io.vertx:vertx-config:$vertxVersion"
-  compile "io.vertx:vertx-web:$vertxVersion"
-  compile "io.vertx:vertx-web-api-contract:$vertxVersion"
-  compile "io.vertx:vertx-web-client:$vertxVersion"
-  compile "io.github.classgraph:classgraph:4.4.12"
+  implementation "io.vertx:vertx-core:$vertxVersion"
+  implementation "io.vertx:vertx-config:$vertxVersion"
+  implementation "io.vertx:vertx-web:$vertxVersion"
+  implementation "io.vertx:vertx-web-api-contract:$vertxVersion"
+  implementation "io.vertx:vertx-web-client:$vertxVersion"
+  implementation "io.github.classgraph:classgraph:4.4.12"
 
   implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.1'
   implementation 'org.apache.httpcomponents.client5:httpclient5-fluent:5.0.1'
 
-  compile name: "cartago", version: "2.5-SNAPSHOT"
-  compile name: "wot-td-java", version: "v0.1.2"
+  implementation name: "cartago", version: "2.5-SNAPSHOT"
+  implementation name: "wot-td-java", version: "v0.1.2"
 
-  // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
-  compile group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
-  // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-repository-sail
-  compile group: 'org.eclipse.rdf4j', name: 'rdf4j-repository-sail', version: '2.4.2'
-  // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-sail-memory
-  compile group: 'org.eclipse.rdf4j', name: 'rdf4j-sail-memory', version: '2.4.2'
-  compile group: 'org.eclipse.rdf4j', name: 'rdf4j-sail-nativerdf', version: '2.4.2'
+  implementation 'org.eclipse.rdf4j:rdf4j-model:2.4.2'
+  implementation 'org.eclipse.rdf4j:rdf4j-repository-sail:2.4.2'
+  implementation 'org.eclipse.rdf4j:rdf4j-sail-memory:2.4.2'
+  implementation 'org.eclipse.rdf4j:rdf4j-sail-nativerdf:2.4.2'
 
-  compile 'org.apache.commons:commons-rdf-api:0.5.0'
-  compile 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
-  compile 'com.google.code.gson:gson:2.8.6'
+  implementation 'org.apache.commons:commons-rdf-api:0.5.0'
+  implementation 'org.apache.commons:commons-rdf-rdf4j:0.5.0'
+  implementation 'com.google.code.gson:gson:2.8.9'
 
-  testCompile "junit:junit:4.12"
-  testCompile "io.vertx:vertx-unit:$vertxVersion"
+  testImplementation 'junit:junit:4.13.1'
+  testImplementation "io.vertx:vertx-unit:$vertxVersion"
 }
 
 shadowJar {
-  classifier = 'fat'
   manifest {
       attributes "Main-Verticle": mainVerticleName
   }
