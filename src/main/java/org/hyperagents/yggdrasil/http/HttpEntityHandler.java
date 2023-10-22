@@ -1,21 +1,5 @@
 package org.hyperagents.yggdrasil.http;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import io.vertx.core.http.HttpMethod;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.CartagoEntityHandler;
-import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
-import org.hyperagents.yggdrasil.store.RdfStore;
-import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
@@ -24,256 +8,246 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
+import io.vertx.core.Context;
 import io.vertx.core.Handler;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.ReplyException;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.messages.CartagoMessagebox;
+import org.hyperagents.yggdrasil.messages.RdfStoreMessagebox;
+import org.hyperagents.yggdrasil.messages.impl.CartagoMessageboxImpl;
+import org.hyperagents.yggdrasil.messages.impl.RdfStoreMessageboxImpl;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+
+import java.util.*;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations (e.g.,
- * creating a workspace, executing an action) are redirected to the {@link
- * org.hyperagents.yggdrasil.cartago.CartagoEntityHandler}.
+ * creating a workspace, executing an action) are redirected to the {@link CartagoMessagebox}.
  */
 public class HttpEntityHandler {
-  public static final String REQUEST_METHOD = "org.hyperagents.yggdrasil.eventbus.headers.requestMethod";
-  public static final String REQUEST_URI = "org.hyperagents.yggdrasil.eventbus.headers.requestUri";
-  public static final String ENTITY_URI_HINT = "org.hyperagents.yggdrasil.eventbus.headers.slug";
-  public static final String CONTENT_TYPE = "org.hyperagents.yggdrasil.eventbus.headers.contentType";
-
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
 
-  private final Vertx vertx;
-  private final CartagoEntityHandler cartagoHandler;
+  private final CartagoMessageboxImpl cartagoMessagebox;
+  private final RdfStoreMessagebox rdfStoreMessagebox;
+  private final HttpInterfaceConfig httpConfig;
 
-  public HttpEntityHandler(Vertx vertx) {
-    this.vertx = vertx;
-    this.cartagoHandler = new CartagoEntityHandler(vertx);
+  public HttpEntityHandler(final Vertx vertx, final Context context) {
+    this.cartagoMessagebox = new CartagoMessageboxImpl(vertx.eventBus());
+    this.rdfStoreMessagebox = new RdfStoreMessageboxImpl(vertx.eventBus());
+    this.httpConfig = new HttpInterfaceConfigImpl(context.config());
   }
 
-  public void handleRedirectWithoutSlash(RoutingContext routingContext) {
-    String requestURI = routingContext.request().absoluteURI();
+  public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
+    final var requestURI = routingContext.request().absoluteURI();
 
-    routingContext.response().setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY)
-      .headers().add(HttpHeaders.LOCATION, requestURI.substring(0, requestURI.length()-1));
-
+    routingContext
+      .response()
+      .setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY)
+      .headers()
+      .add(HttpHeaders.LOCATION, requestURI.substring(0, requestURI.length() - 1));
     routingContext.response().end();
   }
 
-  public void handleGetEntity(RoutingContext routingContext) {
-    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
-    String entityIRI = httpConfig.getBaseUri() + routingContext.request().path();
+  public void handleGetEntity(final RoutingContext routingContext) {
+    final var entityIRI = this.httpConfig.getBaseUri() + routingContext.request().path();
     LOGGER.info("GET request: " + entityIRI);
-
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, entityIRI);
-
-    Map<String,List<String>> headers = getHeaders(entityIRI);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
-      handleStoreReply(routingContext, HttpStatus.SC_OK, headers));
+    this.rdfStoreMessagebox.sendGetEntityRequest(
+      entityIRI,
+      Optional.empty(),
+      handleStoreReply(routingContext, HttpStatus.SC_OK, getHeaders(entityIRI))
+    );
   }
 
-  public void handleCreateEnvironment(RoutingContext context) {
-    String envName = context.request().getHeader("Slug");
-    String agentId = context.request().getHeader("X-Agent-WebID");
+  public void handleCreateEnvironment(final RoutingContext context) {
+    final var envName = context.request().getHeader("Slug");
+
+    if (context.request().getHeader("X-Agent-WebID") == null) {
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+    }
+
+    final var envURI = HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix() + envName;
+
+    this.createEntity(
+      context,
+      TDGraphWriter.write(
+        new ThingDescription.Builder(envName)
+          .addThingURI(envURI)
+          .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
+          .addAction(
+            new ActionAffordance.Builder("makeWorkspace", new Form.Builder(envURI + "/workspaces/").build())
+              .addSemanticType("http://w3id.org/eve#MakeWorkspace")
+              .build()
+          )
+          .build()
+      )
+    );
+  }
+
+  public void handleCreateWorkspace(final RoutingContext context) {
+    final var envName = context.pathParam("envid");
+    final var workspaceName = context.request().getHeader("Slug");
+    final var agentId = context.request().getHeader("X-Agent-WebID");
 
     if (agentId == null) {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
-    String envURI = HypermediaArtifactRegistry.getInstance().getHttpEnvironmentsPrefix() + envName;
-
-    ThingDescription td = new ThingDescription.Builder(envName)
-        .addThingURI(envURI)
-        .addSemanticType("http://w3id.org/eve#EnvironmentArtifact")
-        .addAction(new ActionAffordance.Builder("makeWorkspace",
-              new Form.Builder(envURI + "/workspaces/").build())
-            .addSemanticType("http://w3id.org/eve#MakeWorkspace")
-            .build())
-        .build();
-
-    createEntity(context, TDGraphWriter.write(td));
+    this.cartagoMessagebox.createWorkspace(
+      agentId,
+      envName,
+      workspaceName,
+      context.getBodyAsString(),
+      response -> {
+        if (response.succeeded()) {
+          HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
+          storeEntity(context, workspaceName, response.result().body());
+        } else {
+          LOGGER.error("CArtAgO operation has failed.");
+        }
+      }
+    );
   }
 
-  public void handleCreateWorkspace(RoutingContext context) {
-    String representation = context.getBodyAsString();
-    String envName = context.pathParam("envid");
-    String workspaceName = context.request().getHeader("Slug");
-    String agentId = context.request().getHeader("X-Agent-WebID");
-
-    if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
-    }
-
-    Promise<String> cartagoPromise = Promise.promise();
-    cartagoHandler.createWorkspace(agentId, envName, workspaceName, representation, cartagoPromise);
-
-    cartagoPromise.future().compose(result ->  {
-      HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
-      return Future.future(promise -> storeEntity(context, workspaceName, result, promise));
-    });
-  }
-
-  public void handleCreateArtifact(RoutingContext context) {
+  public void handleCreateArtifact(final RoutingContext context) {
     LOGGER.info("Received create artifact request");
-    String representation = context.getBodyAsString();
-    String workspaceName = context.pathParam("wkspid");
-    String agentId = context.request().getHeader("X-Agent-WebID");
+    final var representation = context.getBodyAsString();
+    final var agentId = context.request().getHeader("X-Agent-WebID");
 
     if (agentId == null) {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
-    JsonObject artifactInit = (JsonObject) Json.decodeValue(representation);
-    String artifactName = artifactInit.getString("artifactName");
+    final var artifactName = ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
-    Promise<String> cartagoPromise = Promise.promise();
-    cartagoHandler.createArtifact(agentId, workspaceName, artifactName, representation,
-        cartagoPromise);
-
-    cartagoPromise.future().compose(result ->
-      Future.future(promise -> storeEntity(context, artifactName, result, promise)));
+    this.cartagoMessagebox.createArtifact(
+      agentId,
+      context.pathParam("wkspid"),
+      artifactName,
+      representation,
+      response -> {
+        if (response.succeeded()) {
+          storeEntity(context, artifactName, response.result().body());
+        } else {
+          LOGGER.error("CArtAgO operation has failed.");
+        }
+      }
+    );
   }
 
   // TODO: add payload validation
-  public void handleCreateEntity(RoutingContext routingContext) {
-    String agentId = routingContext.request().getHeader("X-Agent-WebID");
-
-    if (agentId == null) {
+  public void handleCreateEntity(final RoutingContext routingContext) {
+    if (routingContext.request().getHeader("X-Agent-WebID") == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
-
-    String entityRepresentation = routingContext.getBodyAsString();
-    createEntity(routingContext, entityRepresentation);
+    this.createEntity(routingContext, routingContext.getBodyAsString());
   }
 
-  public void handleAction(RoutingContext context) {
-    String entityRepresentation = context.getBodyAsString();
-    String wkspName = context.pathParam("wkspid");
-    String artifactName = context.pathParam("artid");
-
-    HttpServerRequest request = context.request();
-    String agentId = request.getHeader("X-Agent-WebID");
+  public void handleAction(final RoutingContext context) {
+    final var wkspName = context.pathParam("wkspid");
+    final var artifactName = context.pathParam("artid");
+    final var request = context.request();
+    final var agentId = request.getHeader("X-Agent-WebID");
 
     if (agentId == null) {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
-    HypermediaArtifactRegistry artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    final var artifactRegistry = HypermediaArtifactRegistry.getInstance();
+    final var artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
+    final var actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
 
-    String artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
-    String actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
+    this.rdfStoreMessagebox.sendGetEntityRequest(
+      artifactIri,
+      Optional.ofNullable(request.getHeader(HttpHeaders.CONTENT_TYPE)),
+      reply -> {
+        if (reply.succeeded()) {
+          final var apiKey = context.request().getHeader("X-API-Key");
 
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-        .addHeader(REQUEST_URI, artifactIri);
+          if (apiKey != null && !apiKey.isEmpty()) {
+            artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
+          }
 
-    String contentType = request.getHeader(HttpHeaders.CONTENT_TYPE);
-
-    if (contentType != null) {
-      options.addHeader(CONTENT_TYPE, contentType);
-    }
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
-          if (reply.succeeded()) {
-              String artifactDescription = (String) reply.result().body();
-              ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE,
-                  artifactDescription);
-
-              DeliveryOptions cartagoOptions = new DeliveryOptions()
-                  .addHeader(CartagoVerticle.AGENT_ID, agentId)
-                  .addHeader(REQUEST_METHOD, CartagoVerticle.DO_ACTION)
-                  .addHeader(CartagoVerticle.WORKSPACE_NAME, wkspName)
-                  .addHeader(CartagoVerticle.ARTIFACT_NAME, artifactName)
-                  .addHeader(CartagoVerticle.ACTION_NAME, actionName);
-
-              String apiKey = context.request().getHeader("X-API-Key");
-              if (apiKey != null && !apiKey.isEmpty()) {
-                artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
+          this.cartagoMessagebox.doAction(
+            agentId,
+            wkspName,
+            artifactName,
+            actionName,
+            TDGraphReader
+              .readFromString(TDFormat.RDF_TURTLE, reply.result().body())
+              .getActions()
+              .stream()
+              .filter(action -> action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+              .findFirst()
+              .flatMap(ActionAffordance::getInputSchema)
+              .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
+              .map(inputSchema ->
+                CartagoDataBundle.toJson(((ArraySchema) inputSchema).parseJson(JsonParser.parseString(context.getBodyAsString())))
+              ),
+            cartagoReply -> {
+              if (cartagoReply.succeeded()) {
+                LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+                context.response().setStatusCode(HttpStatus.SC_OK).end();
+              } else {
+                LOGGER.info(
+                  "CArtAgO operation failed: "
+                    + artifactName
+                    + ", "
+                    + actionName
+                    + "; reason: "
+                    + cartagoReply.cause().getMessage()
+                );
+                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
               }
-
-              Optional<ActionAffordance> affordance = td.getActions().stream().filter(action ->
-                  action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
-                  .findFirst();
-
-              String serializedPayload = null;
-
-              if (affordance.isPresent()) {
-                Optional<DataSchema> inputSchema = affordance.get().getInputSchema();
-
-                if (inputSchema.isPresent() && inputSchema.get().getDatatype().equals(DataSchema.ARRAY)) {
-                  JsonElement payload = JsonParser.parseString(entityRepresentation);
-                  List<Object> params = ((ArraySchema) inputSchema.get()).parseJson(payload);
-
-                  serializedPayload = CartagoDataBundle.toJson(params);
-                }
-              }
-
-              vertx.eventBus().request(CartagoVerticle.BUS_ADDRESS, serializedPayload, cartagoOptions,
-                  cartagoReply -> {
-                    if (cartagoReply.succeeded()) {
-                      LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
-                      context.response().setStatusCode(HttpStatus.SC_OK).end();
-                    } else {
-                      LOGGER.info("CArtAgO operation failed: " + artifactName + ", " + actionName
-                          + "; reason: " + cartagoReply.cause().getMessage());
-                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                          .end();
-                    }
-                  });
             }
-        });
+          );
+        }
+      }
+    );
   }
 
   // TODO: add payload validation
-  public void handleUpdateEntity(RoutingContext routingContext) {
-    String entityIri = routingContext.request().absoluteURI();
-    String entityRepresentation = routingContext.getBodyAsString();
-
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.UPDATE_ENTITY)
-        .addHeader(REQUEST_URI, entityIri);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, entityRepresentation, options,
-        handleStoreReply(routingContext, HttpStatus.SC_OK));
+  public void handleUpdateEntity(final RoutingContext routingContext) {
+    this.rdfStoreMessagebox.sendUpdateEntityRequest(
+      routingContext.request().absoluteURI(),
+      routingContext.getBodyAsString(),
+      handleStoreReply(routingContext, HttpStatus.SC_OK)
+    );
   }
 
-  public void handleDeleteEntity(RoutingContext routingContext) {
-    String entityIri = routingContext.request().absoluteURI();
-
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.DELETE_ENTITY)
-        .addHeader(REQUEST_URI, entityIri);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
-        handleStoreReply(routingContext, HttpStatus.SC_OK));
+  public void handleDeleteEntity(final RoutingContext routingContext) {
+    this.rdfStoreMessagebox.sendDeleteEntityRequest(
+      routingContext.request().absoluteURI(),
+      handleStoreReply(routingContext, HttpStatus.SC_OK)
+    );
   }
 
-  public void handleEntitySubscription(RoutingContext routingContext) {
-    JsonObject subscribeRequest = routingContext.getBodyAsJson();
+  public void handleEntitySubscription(final RoutingContext routingContext) {
+    final var subscribeRequest = routingContext.getBodyAsJson();
 
-    String mode = subscribeRequest.getString("hub.mode");
-    String entityIri = subscribeRequest.getString("hub.topic");
-    String callbackIri = subscribeRequest.getString("hub.callback");
+    final var entityIri = subscribeRequest.getString("hub.topic");
+    final var callbackIri = subscribeRequest.getString("hub.callback");
 
-    if (mode.equalsIgnoreCase("subscribe")) {
-      DeliveryOptions options = new DeliveryOptions()
-          .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-          .addHeader(REQUEST_URI, entityIri);
-
-      vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options, reply -> {
+    switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
+      case "subscribe":
+        this.rdfStoreMessagebox.sendGetEntityRequest(
+          entityIri,
+          Optional.empty(),
+          reply -> {
             if (reply.succeeded()) {
               NotificationSubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
               routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
@@ -286,97 +260,101 @@ public class HttpEntityHandler {
                 routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
               }
             }
-          });
-    }
-    else if (mode.equalsIgnoreCase("unsubscribe")) {
-      NotificationSubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
-      routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
-    }
-    else {
-      routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+          }
+        );
+        break;
+      case "unsubscribe":
+        NotificationSubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
+        routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+        break;
+      default:
+        routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+        break;
     }
   }
 
-  private Map<String, List<String>> getHeaders(String entityIRI) {
-
-    Map<String,List<String>> headers = getWebSubHeaders(entityIRI);
-    headers.putAll(getCORSHeaders());
-
+  private Map<String, List<String>> getHeaders(final String entityIRI) {
+    final var headers = this.getWebSubHeaders(entityIRI);
+    headers.putAll(this.getCORSHeaders());
     return headers;
   }
 
-  private Map<String, List<String>> getWebSubHeaders(String entityIRI) {
-    Map<String,List<String>> headers = new HashMap<>();
-
-    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
-    Optional<String> webSubHubIRI = httpConfig.getWebSubHubUri();
-
-    webSubHubIRI.ifPresent(hubIRI -> headers.put("Link", Arrays.asList("<" + hubIRI + ">; rel=\"hub\"",
-      "<" + entityIRI + ">; rel=\"self\"")));
-
-    return headers;
+  private Map<String, List<String>> getWebSubHeaders(final String entityIRI) {
+    return
+      this.httpConfig
+          .getWebSubHubUri()
+          .map(hubIRI -> Map.of(
+            "Link",
+            Arrays.asList("<" + hubIRI + ">; rel=\"hub\"", "<" + entityIRI + ">; rel=\"self\"")
+          ))
+          .orElse(Collections.emptyMap());
   }
 
-  private Map<String, ? extends List<String>> getCORSHeaders() {
-    Map<String, List<String>> corsHeaders = new HashMap<>();
-
-    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, Arrays.asList("*"));
-    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, Arrays.asList("true"));
-    corsHeaders.put(com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, Arrays.asList(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(), HttpMethod.DELETE.name(), HttpMethod.HEAD.name(), HttpMethod.OPTIONS.name()));
-
-    return corsHeaders;
+  private Map<String, List<String>> getCORSHeaders() {
+    return Map.of(
+      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+      Collections.singletonList("*"),
+      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
+      Collections.singletonList("true"),
+      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+      Arrays.asList(
+        HttpMethod.GET.name(),
+        HttpMethod.POST.name(),
+        HttpMethod.PUT.name(),
+        HttpMethod.DELETE.name(),
+        HttpMethod.HEAD.name(),
+        HttpMethod.OPTIONS.name()
+      )
+    );
   }
 
-  private void storeEntity(RoutingContext context, String entityName, String representation,
-                           Promise<Object> promise) {
-
-    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
-    String entityIRI = httpConfig.getBaseUri() + context.request().path();
-
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-      .addHeader(REQUEST_URI, entityIRI)
-      .addHeader(ENTITY_URI_HINT, entityName);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, result -> {
-      if (result.succeeded()) {
-        context.response().setStatusCode(HttpStatus.SC_CREATED).end(representation);
-        promise.complete();
-      } else {
-        context.response().setStatusCode(HttpStatus.SC_CREATED).end();
-        promise.fail("Could not store the entity representation.");
+  private void storeEntity(
+    final RoutingContext context,
+    final String entityName,
+    final String entityRepresentation
+  ) {
+    this.rdfStoreMessagebox.sendCreateEntityRequest(
+      this.httpConfig.getBaseUri() + context.request().path(),
+      entityName,
+      entityRepresentation,
+      result -> {
+        if (result.succeeded()) {
+          context.response().setStatusCode(HttpStatus.SC_CREATED).end(entityRepresentation);
+          LOGGER.info("Entity created: " + entityRepresentation);
+        } else {
+          context.response().setStatusCode(HttpStatus.SC_CREATED).end();
+          LOGGER.error("RdfStore operation has failed.");
+        }
       }
-    });
+    );
   }
 
-  private void createEntity(RoutingContext context, String representation) {
-    String slug = context.request().getHeader("Slug");
-
-    HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(Vertx.currentContext().config());
-    String entityIri = httpConfig.getBaseUri() + context.request().path();
-
-    DeliveryOptions options = new DeliveryOptions()
-        .addHeader(REQUEST_METHOD, RdfStore.CREATE_ENTITY)
-        .addHeader(REQUEST_URI, entityIri)
-        .addHeader(ENTITY_URI_HINT, slug);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, representation, options, handleStoreReply(context,
-        HttpStatus.SC_CREATED));
+  private void createEntity(final RoutingContext context, final String entityRepresentation) {
+    this.rdfStoreMessagebox.sendCreateEntityRequest(
+      this.httpConfig.getBaseUri() + context.request().path(),
+      context.request().getHeader("Slug"),
+      entityRepresentation,
+      handleStoreReply(context, HttpStatus.SC_CREATED)
+    );
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
-      int succeededStatusCode) {
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(
+    final RoutingContext routingContext,
+    final int succeededStatusCode
+  ) {
     return handleStoreReply(routingContext, succeededStatusCode, new HashMap<>());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(RoutingContext routingContext,
-      int succeededStatusCode, Map<String,List<String>> headers) {
-
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(
+    final RoutingContext routingContext,
+    final int succeededStatusCode,
+    final Map<String, List<String>> headers
+  ) {
     return reply -> {
       if (reply.succeeded()) {
         LOGGER.info("Creating Response");
 
-        HttpServerResponse httpResponse = routingContext.response();
+        final var httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
 
         httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
@@ -385,19 +363,18 @@ public class HttpEntityHandler {
           if (headerName.equalsIgnoreCase("Link")) {
             httpResponse.putHeader(headerName, headers.get(headerName));
           } else {
-            httpResponse.putHeader(headerName,
-              headers.get(headerName).stream().collect(Collectors.joining(",")));
+            httpResponse.putHeader(headerName, String.join(",", headers.get(headerName)));
           }
         }
 
-        String storeReply = reply.result().body();
+        final var storeReply = reply.result().body();
         if (storeReply != null && !storeReply.isEmpty()) {
           httpResponse.end(storeReply);
         } else {
           httpResponse.end();
         }
       } else {
-        ReplyException exception = ((ReplyException) reply.cause());
+        final var exception = ((ReplyException) reply.cause());
 
         LOGGER.info(exception.getMessage());
 
