@@ -8,14 +8,6 @@ import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 
 public interface RdfStore {
-  public static final String BUS_ADDRESS = "org.hyperagents.yggdrasil.eventbus.rdfstore";
-  
-  public static final String GET_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.getEntity";
-  public static final String CREATE_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.createEntity";
-  public static final String UPDATE_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.updateEntity";
-  public static final String PATCH_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.patchEntity";
-  public static final String DELETE_ENTITY = "org.hyperagents.yggdrasil.eventbus.methods.deleteEntity";
-  
   boolean containsEntityGraph(IRI entityIRI);
 
   Optional<Graph> getEntityGraph(IRI entityIRI);
@@ -33,5 +25,4 @@ public interface RdfStore {
   String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException;
 
   Graph stringToGraph(String graphString, IRI baseIRI, RDFSyntax syntax) throws IllegalArgumentException, IOException;
-
 }
