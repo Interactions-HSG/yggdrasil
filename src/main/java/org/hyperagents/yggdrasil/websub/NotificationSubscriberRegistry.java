@@ -1,53 +1,47 @@
 package org.hyperagents.yggdrasil.websub;
 
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A singleton used to manage WebSub subscribers. An equivalent implementation can be obtained with
- * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster. 
- * 
+ * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster.
+ *
  * @author Andrei Ciortea
  *
  */
 public class NotificationSubscriberRegistry {
+  private static NotificationSubscriberRegistry REGISTRY;
 
-  private static NotificationSubscriberRegistry registry;
-  private Map<String,Set<String>> subscriptions;
-  
+  private final Map<String, Set<String>> subscriptions;
+
   private NotificationSubscriberRegistry() {
-    subscriptions = new Hashtable<String,Set<String>>();
+    this.subscriptions = Collections.synchronizedMap(new HashMap<>());
   }
-  
+
   public static synchronized NotificationSubscriberRegistry getInstance() {
-    if (registry == null) {
-        registry = new NotificationSubscriberRegistry();
+    if (REGISTRY == null) {
+        REGISTRY = new NotificationSubscriberRegistry();
     }
-    
-    return registry;
+    return REGISTRY;
   }
-  
-  public Set<String> getCallbackIRIs(String entityIRI) {
-    return subscriptions.getOrDefault(entityIRI, new HashSet<String>());
+
+  public Set<String> getCallbackIRIs(final String entityIRI) {
+    return this.subscriptions.getOrDefault(entityIRI, new HashSet<>());
   }
-  
-  public void addCallbackIRI(String entityIRI, String callbackIRI) {
-    Set<String> callbacks = registry.getCallbackIRIs(entityIRI);
+
+  public void addCallbackIRI(final String entityIRI, final String callbackIRI) {
+    final var callbacks = this.getCallbackIRIs(entityIRI);
     callbacks.add(callbackIRI);
-    
-    subscriptions.put(entityIRI, callbacks);
+    this.subscriptions.put(entityIRI, callbacks);
   }
-  
-  public void removeCallbackIRI(String entityIRI, String callbackIRI) {
-    Set<String> callbacks = registry.getCallbackIRIs(entityIRI);
+
+  public void removeCallbackIRI(final String entityIRI, final String callbackIRI) {
+    final var callbacks = this.getCallbackIRIs(entityIRI);
     callbacks.remove(callbackIRI);
-    
     if (callbacks.isEmpty()) {
-      subscriptions.remove(entityIRI);
+      this.subscriptions.remove(entityIRI);
     } else {
-      subscriptions.put(entityIRI, callbacks);
+      this.subscriptions.put(entityIRI, callbacks);
     }
   }
 }
