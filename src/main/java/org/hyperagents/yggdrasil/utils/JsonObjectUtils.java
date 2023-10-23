@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.utils;
 
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 
@@ -16,6 +17,14 @@ public class JsonObjectUtils {
 
   public static Optional<Boolean> getBoolean(final JsonObject jsonObject, final String key, final Logger logger) {
     return JsonObjectUtils.getValue(jsonObject, key, JsonObject::getBoolean, logger);
+  }
+
+  public static Optional<JsonObject> getJsonObject(final JsonObject jsonObject, final String key, final Logger logger) {
+    return JsonObjectUtils.getValue(jsonObject, key, JsonObject::getJsonObject, logger);
+  }
+
+  public static Optional<JsonArray> getJsonArray(final JsonObject jsonObject, final String key, final Logger logger) {
+    return JsonObjectUtils.getValue(jsonObject, key, JsonObject::getJsonArray, logger);
   }
 
   private static <T> Optional<T> getValue(

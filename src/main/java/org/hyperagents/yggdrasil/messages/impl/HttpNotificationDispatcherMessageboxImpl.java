@@ -25,4 +25,15 @@ public class HttpNotificationDispatcherMessageboxImpl implements HttpNotificatio
         .addHeader(MessageHeaders.REQUEST_URI.getName(), requestIRI.getIRIString())
     );
   }
+
+  @Override
+  public void pushNotification(final MessageNotifications notificationType, final String requestIRI, final String message) {
+    this.eventBus.send(
+      MessageAddresses.HTTP_NOTIFICATION_DISPATCHER.getName(),
+      message,
+      new DeliveryOptions()
+        .addHeader(MessageHeaders.REQUEST_METHOD.getName(), notificationType.getName())
+        .addHeader(MessageHeaders.REQUEST_URI.getName(), requestIRI)
+    );
+  }
 }
