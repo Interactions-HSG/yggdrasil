@@ -41,7 +41,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.vertx.eventBus().<String>consumer(MessageAddresses.RDF_STORE.getName(), message -> {
       try {
         final var requestIRI = this.store.createIRI(message.headers().get(MessageHeaders.REQUEST_URI.getName()));
-        switch (MessageRequestMethods.valueOf(message.headers().get(MessageHeaders.REQUEST_METHOD.getName()))) {
+        switch (MessageRequestMethods.getFromName(message.headers().get(MessageHeaders.REQUEST_METHOD.getName())).orElseThrow()) {
           case GET_ENTITY:
             this.handleGetEntity(requestIRI, message);
             break;

@@ -1,5 +1,8 @@
 package org.hyperagents.yggdrasil.messages;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 public enum MessageRequestMethods {
   GET_ENTITY("getEntity"),
   CREATE_ENTITY("createEntity"),
@@ -21,5 +24,9 @@ public enum MessageRequestMethods {
 
   public String getName() {
     return this.name;
+  }
+
+  public static Optional<MessageRequestMethods> getFromName(final String name) {
+    return Arrays.stream(MessageRequestMethods.values()).filter(m -> m.getName().equals(name)).findFirst();
   }
 }

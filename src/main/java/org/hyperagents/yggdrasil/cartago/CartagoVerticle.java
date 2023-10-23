@@ -65,7 +65,10 @@ public class CartagoVerticle extends AbstractVerticle {
 
         try {
           // TODO: Is throwing exception the best default behavior?
-          switch (MessageRequestMethods.valueOf(message.headers().get(MessageHeaders.REQUEST_METHOD.getName()))) {
+          switch (
+            MessageRequestMethods.getFromName(message.headers().get(MessageHeaders.REQUEST_METHOD.getName()))
+                                 .orElseThrow()
+          ) {
             case CREATE_WORKSPACE:
               message.reply(this.instantiateWorkspace(
                 agentUri,

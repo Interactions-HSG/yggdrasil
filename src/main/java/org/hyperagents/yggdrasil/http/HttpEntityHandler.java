@@ -69,7 +69,7 @@ public class HttpEntityHandler {
     this.rdfStoreMessagebox.sendGetEntityRequest(
       entityIRI,
       Optional.empty(),
-      handleStoreReply(routingContext, HttpStatus.SC_OK, getHeaders(entityIRI))
+      this.handleStoreReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIRI))
     );
   }
 
@@ -225,14 +225,14 @@ public class HttpEntityHandler {
     this.rdfStoreMessagebox.sendUpdateEntityRequest(
       routingContext.request().absoluteURI(),
       routingContext.getBodyAsString(),
-      handleStoreReply(routingContext, HttpStatus.SC_OK)
+      this.handleStoreReply(routingContext, HttpStatus.SC_OK)
     );
   }
 
   public void handleDeleteEntity(final RoutingContext routingContext) {
     this.rdfStoreMessagebox.sendDeleteEntityRequest(
       routingContext.request().absoluteURI(),
-      handleStoreReply(routingContext, HttpStatus.SC_OK)
+      this.handleStoreReply(routingContext, HttpStatus.SC_OK)
     );
   }
 
@@ -274,7 +274,7 @@ public class HttpEntityHandler {
   }
 
   private Map<String, List<String>> getHeaders(final String entityIRI) {
-    final var headers = this.getWebSubHeaders(entityIRI);
+    final var headers = new HashMap<>(this.getWebSubHeaders(entityIRI));
     headers.putAll(this.getCORSHeaders());
     return headers;
   }
@@ -297,7 +297,7 @@ public class HttpEntityHandler {
       com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
       Collections.singletonList("true"),
       com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
-      Arrays.asList(
+      List.of(
         HttpMethod.GET.name(),
         HttpMethod.POST.name(),
         HttpMethod.PUT.name(),
@@ -334,7 +334,7 @@ public class HttpEntityHandler {
       this.httpConfig.getBaseUri() + context.request().path(),
       context.request().getHeader("Slug"),
       entityRepresentation,
-      handleStoreReply(context, HttpStatus.SC_CREATED)
+      this.handleStoreReply(context, HttpStatus.SC_CREATED)
     );
   }
 
@@ -342,7 +342,7 @@ public class HttpEntityHandler {
     final RoutingContext routingContext,
     final int succeededStatusCode
   ) {
-    return handleStoreReply(routingContext, succeededStatusCode, new HashMap<>());
+    return this.handleStoreReply(routingContext, succeededStatusCode, new HashMap<>());
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(
