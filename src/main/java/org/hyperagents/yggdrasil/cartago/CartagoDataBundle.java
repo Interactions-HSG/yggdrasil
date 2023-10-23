@@ -17,6 +17,7 @@ import io.vertx.core.json.jackson.JacksonCodec;
  *
  */
 public final class CartagoDataBundle {
+  private CartagoDataBundle() {}
 
   public static String toJson(final List<Object> params) {
     return Json.encode(CartagoDataBundle.objectListToTypedList(params));

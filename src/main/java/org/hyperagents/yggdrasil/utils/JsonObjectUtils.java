@@ -7,7 +7,7 @@ import io.vertx.core.logging.Logger;
 import java.util.Optional;
 import java.util.function.BiFunction;
 
-public class JsonObjectUtils {
+public final class JsonObjectUtils {
 
   private JsonObjectUtils() {}
 
