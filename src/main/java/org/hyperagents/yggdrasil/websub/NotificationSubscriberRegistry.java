@@ -1,5 +1,8 @@
 package org.hyperagents.yggdrasil.websub;
 
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
+
 import java.util.*;
 
 /**
@@ -12,10 +15,10 @@ import java.util.*;
 public class NotificationSubscriberRegistry {
   private static NotificationSubscriberRegistry REGISTRY;
 
-  private final Map<String, Set<String>> subscriptions;
+  private final SetMultimap<String, String> subscriptions;
 
   private NotificationSubscriberRegistry() {
-    this.subscriptions = Collections.synchronizedMap(new HashMap<>());
+    this.subscriptions = Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
   }
 
   public static synchronized NotificationSubscriberRegistry getInstance() {
@@ -26,22 +29,14 @@ public class NotificationSubscriberRegistry {
   }
 
   public Set<String> getCallbackIRIs(final String entityIRI) {
-    return this.subscriptions.getOrDefault(entityIRI, new HashSet<>());
+    return new HashSet<>(this.subscriptions.get(entityIRI));
   }
 
   public void addCallbackIRI(final String entityIRI, final String callbackIRI) {
-    final var callbacks = this.getCallbackIRIs(entityIRI);
-    callbacks.add(callbackIRI);
-    this.subscriptions.put(entityIRI, callbacks);
+    this.subscriptions.put(entityIRI, callbackIRI);
   }
 
   public void removeCallbackIRI(final String entityIRI, final String callbackIRI) {
-    final var callbacks = this.getCallbackIRIs(entityIRI);
-    callbacks.remove(callbackIRI);
-    if (callbacks.isEmpty()) {
-      this.subscriptions.remove(entityIRI);
-    } else {
-      this.subscriptions.put(entityIRI, callbacks);
-    }
+    this.subscriptions.remove(entityIRI, callbackIRI);
   }
 }

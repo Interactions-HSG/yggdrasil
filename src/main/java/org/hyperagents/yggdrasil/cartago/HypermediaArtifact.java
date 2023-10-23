@@ -10,13 +10,17 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class HypermediaArtifact extends Artifact {
-  private final Map<String, List<ActionAffordance>> actionAffordances = new HashMap<>();
+  private final ListMultimap<String, ActionAffordance> actionAffordances =
+    Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private SecurityScheme securityScheme = new NoSecurityScheme();
 
@@ -33,7 +37,7 @@ public abstract class HypermediaArtifact extends Artifact {
                                               .addSemanticType(this.getSemanticType())
                                               .addThingURI(this.getArtifactUri())
                                               .addGraph(this.metadata);
-    this.actionAffordances.values().stream().flatMap(List::stream).forEach(tdBuilder::addAction);
+    this.actionAffordances.values().forEach(tdBuilder::addAction);
 
     return new TDGraphWriter(tdBuilder.build()).setNamespace("td", "https://www.w3.org/2019/wot/td#")
                                                .setNamespace("htv", "http://www.w3.org/2011/http#")
@@ -111,10 +115,7 @@ public abstract class HypermediaArtifact extends Artifact {
   }
 
   protected final void registerActionAffordance(final String actionName, final ActionAffordance action) {
-    final var actions = this.actionAffordances.getOrDefault(actionName, new ArrayList<>());
-
-    actions.add(action);
-    this.actionAffordances.put(actionName, actions);
+    this.actionAffordances.put(actionName, action);
   }
 
   protected final void setSecurityScheme(final SecurityScheme scheme) {
@@ -126,7 +127,11 @@ public abstract class HypermediaArtifact extends Artifact {
   }
 
   Map<String, List<ActionAffordance>> getActionAffordances() {
-    return this.actionAffordances;
+    return this.actionAffordances
+               .asMap()
+               .entrySet()
+               .stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
   }
 
   private String getSemanticType() {
