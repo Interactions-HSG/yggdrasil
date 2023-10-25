@@ -18,16 +18,10 @@ public class CartagoPerceptFetcher implements Runnable {
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
   private final Map<String, CartagoContext> agentContexts;
-  private final Executor executor;
   private final HttpNotificationDispatcherMessagebox messagebox;
 
-  CartagoPerceptFetcher(
-    final Map<String, CartagoContext> agentContexts,
-    final Executor executor,
-    final HttpNotificationDispatcherMessagebox messagebox
-  ) {
+  CartagoPerceptFetcher(final Map<String, CartagoContext> agentContexts, final HttpNotificationDispatcherMessagebox messagebox) {
     this.agentContexts = agentContexts;
-    this.executor = executor;
     this.messagebox = messagebox;
   }
 
@@ -62,7 +56,6 @@ public class CartagoPerceptFetcher implements Runnable {
       this.messagebox.pushNotification(MessageNotifications.ARTIFACT_OBS_PROP, artifactIri, p.getPropChanged()[0].toString());
       LOGGER.info("message sent to notification verticle");
     }));
-    this.executor.execute(new CartagoPerceptFetcher(this.agentContexts, this.executor, this.messagebox));
   }
 
   private Optional<Percept> fetchPercept(final CartagoContext context) {

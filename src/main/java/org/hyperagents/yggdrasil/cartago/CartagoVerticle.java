@@ -16,6 +16,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.messages.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.messages.MessageAddresses;
 import org.hyperagents.yggdrasil.messages.MessageHeaders;
 import org.hyperagents.yggdrasil.messages.MessageRequestMethods;
@@ -24,7 +25,7 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
 import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.concurrent.CompletableFuture;
 
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
@@ -46,15 +47,20 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoService.startNode();
-      final var executor = Executors.newSingleThreadExecutor();
-      executor.submit(new CartagoPerceptFetcher(
-        this.agentContexts,
-        executor,
-        new HttpNotificationDispatcherMessageboxImpl(eventBus)
-      ));
+      this.fetchCartagoPercepts(new HttpNotificationDispatcherMessageboxImpl(eventBus));
     } catch (final CartagoException e) {
       LOGGER.error(e.getMessage());
     }
+  }
+
+  private CompletableFuture<Void> fetchCartagoPercepts(final HttpNotificationDispatcherMessagebox messagebox) {
+    return CompletableFuture.runAsync(new CartagoPerceptFetcher(this.agentContexts, messagebox))
+                            .thenCompose(v -> this.fetchCartagoPercepts(messagebox))
+                            .exceptionally(t -> {
+                              LOGGER.error(t.getMessage());
+                              this.fetchCartagoPercepts(messagebox);
+                              return null;
+                            });
   }
 
   private void handleCartagoRequest(final Message<String> message) {
