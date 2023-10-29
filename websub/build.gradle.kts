@@ -3,31 +3,22 @@ plugins {
   `java-library`
 }
 
-repositories {
-  mavenCentral()
-}
-
-group = "org.hyperagents"
-version = "0.0-SNAPSHOT"
-
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
 }
 
-val vertxVersion = "3.9.7"
-
 dependencies {
   implementation(project(":utils"))
   implementation(project(":messages"))
 
-  implementation("io.vertx:vertx-core:$vertxVersion")
-  implementation("io.vertx:vertx-web-client:$vertxVersion")
+  implementation(libs.vertx.core)
+  implementation(libs.vertx.web.client)
 
-  implementation("org.apache.httpcomponents:httpcore:4.4.16")
+  implementation(libs.httpcomponents.core)
 
-  implementation("com.google.guava:guava:31.1-jre")
+  implementation(libs.guava)
 
-  testImplementation("junit:junit:4.13.2")
-  testImplementation("io.vertx:vertx-unit:$vertxVersion")
+  testImplementation(libs.junit)
+  testImplementation(libs.vertx.unit)
 }

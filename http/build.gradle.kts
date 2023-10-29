@@ -3,20 +3,10 @@ plugins {
   `java-library`
 }
 
-repositories {
-  mavenCentral()
-  maven { url = uri("https://jitpack.io") }
-}
-
-group = "org.hyperagents"
-version = "0.0-SNAPSHOT"
-
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
 }
-
-val vertxVersion = "3.9.7"
 
 dependencies {
   implementation(project(":utils"))
@@ -24,32 +14,32 @@ dependencies {
   implementation(project(":cartago"))
   implementation(project(":websub"))
 
-  implementation("io.vertx:vertx-core:$vertxVersion")
-  implementation("io.vertx:vertx-web:$vertxVersion")
+  implementation(libs.vertx.core)
+  implementation(libs.vertx.web)
 
-  implementation("com.github.Interactions-HSG:wot-td-java:v0.1.1")
+  implementation(libs.wot.td.java)
 
-  implementation("org.apache.httpcomponents:httpcore:4.4.16")
+  implementation(libs.httpcomponents.core)
 
-  implementation("com.google.guava:guava:31.1-jre")
+  implementation(libs.guava)
 
-  implementation("com.google.code.gson:gson:2.10.1")
+  implementation(libs.gson)
 
-  implementation("org.apache.commons:commons-rdf-api:0.5.0")
-  implementation("org.apache.commons:commons-rdf-rdf4j:0.5.0")
+  implementation(libs.commons.rdf.api)
+  implementation(libs.commons.rdf.rdf4j)
 
-  testImplementation("junit:junit:4.13.2")
-  testImplementation("io.vertx:vertx-unit:$vertxVersion")
+  testImplementation(libs.junit)
+  testImplementation(libs.vertx.unit)
 
   testImplementation(project(":store"))
 
-  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.2.1")
-  testImplementation("org.apache.httpcomponents.client5:httpclient5-fluent:5.2.1")
+  testImplementation(libs.httpcomponents.httpclient5)
+  testImplementation(libs.httpcomponents.httpclient5.fluent)
 
-  testImplementation("io.vertx:vertx-web-client:$vertxVersion")
+  testImplementation(libs.vertx.web.client)
 
-  testImplementation("org.eclipse.rdf4j:rdf4j-model:4.2.3")
-  testImplementation("org.eclipse.rdf4j:rdf4j-repository-sail:4.2.3")
-  testImplementation("org.eclipse.rdf4j:rdf4j-sail-memory:4.2.3")
-  testImplementation("org.eclipse.rdf4j:rdf4j-sail-nativerdf:4.2.3")
+  testImplementation(libs.rdf4j.model)
+  testImplementation(libs.rdf4j.repository.sail)
+  testImplementation(libs.rdf4j.sail.memory)
+  testImplementation(libs.rdf4j.sail.nativerdf)
 }

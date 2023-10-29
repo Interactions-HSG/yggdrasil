@@ -3,32 +3,26 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 plugins {
   application
   java
-  id("com.github.johnrengelman.shadow") version "8.1.1"
+  alias(libs.plugins.shadowJar)
 }
 
 defaultTasks = mutableListOf("shadowJar")
-
-repositories {
-  mavenCentral()
-  maven { url = uri("https://jitpack.io") }
-}
-
-group = "org.hyperagents"
-version = "0.0-SNAPSHOT"
 
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
 }
 
-application {
-  mainClass = "io.vertx.core.Launcher"
-}
+allprojects {
 
-val vertxVersion = "3.9.7"
-val mainVerticleName = "org.hyperagents.yggdrasil.MainVerticle"
-val watchForChange = "src/**/*"
-val doOnChange = "./gradlew classes"
+  repositories {
+    mavenCentral()
+    maven { url = uri("https://jitpack.io") }
+  }
+
+  group = "org.hyperagents"
+  version = "0.0-SNAPSHOT"
+}
 
 dependencies {
   implementation(project(":http"))
@@ -36,12 +30,20 @@ dependencies {
   implementation(project(":store"))
   implementation(project(":websub"))
 
-  implementation("io.vertx:vertx-core:$vertxVersion")
-  implementation("io.vertx:vertx-config:$vertxVersion")
+  implementation(libs.vertx.core)
+  implementation(libs.vertx.config)
 
-  testImplementation("junit:junit:4.13.2")
-  testImplementation("io.vertx:vertx-unit:$vertxVersion")
+  testImplementation(libs.junit)
+  testImplementation(libs.vertx.unit)
 }
+
+application {
+  mainClass = "io.vertx.core.Launcher"
+}
+
+val mainVerticleName = "org.hyperagents.yggdrasil.MainVerticle"
+val watchForChange = "src/**/*"
+val doOnChange = "./gradlew classes"
 
 tasks {
   named<ShadowJar>("shadowJar") {
