@@ -16,11 +16,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.messages.HttpNotificationDispatcherMessagebox;
-import org.hyperagents.yggdrasil.messages.MessageAddresses;
-import org.hyperagents.yggdrasil.messages.MessageHeaders;
-import org.hyperagents.yggdrasil.messages.MessageRequestMethods;
-import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessageboxImpl;
+import org.hyperagents.yggdrasil.messages.*;
+import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
@@ -47,13 +44,13 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoService.startNode();
-      this.fetchCartagoPercepts(new HttpNotificationDispatcherMessageboxImpl(eventBus));
+      this.fetchCartagoPercepts(new HttpNotificationDispatcherMessagebox(eventBus));
     } catch (final CartagoException e) {
       LOGGER.error(e.getMessage());
     }
   }
 
-  private CompletableFuture<Void> fetchCartagoPercepts(final HttpNotificationDispatcherMessagebox messagebox) {
+  private CompletableFuture<Void> fetchCartagoPercepts(final Messagebox<HttpNotificationDispatcherMessage> messagebox) {
     return CompletableFuture.runAsync(new CartagoPerceptFetcher(this.agentContexts, messagebox))
                             .thenCompose(v -> this.fetchCartagoPercepts(messagebox))
                             .exceptionally(t -> {

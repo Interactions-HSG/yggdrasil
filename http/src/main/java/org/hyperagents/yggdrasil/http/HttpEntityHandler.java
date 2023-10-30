@@ -25,10 +25,11 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
-import org.hyperagents.yggdrasil.messages.CartagoMessagebox;
-import org.hyperagents.yggdrasil.messages.RdfStoreMessagebox;
-import org.hyperagents.yggdrasil.messages.impl.CartagoMessageboxImpl;
-import org.hyperagents.yggdrasil.messages.impl.RdfStoreMessageboxImpl;
+import org.hyperagents.yggdrasil.messages.CartagoMessage;
+import org.hyperagents.yggdrasil.messages.Messagebox;
+import org.hyperagents.yggdrasil.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.messages.impl.CartagoMessagebox;
+import org.hyperagents.yggdrasil.messages.impl.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
@@ -42,13 +43,13 @@ import java.util.*;
 public class HttpEntityHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
 
-  private final CartagoMessageboxImpl cartagoMessagebox;
-  private final RdfStoreMessagebox rdfStoreMessagebox;
+  private final Messagebox<CartagoMessage> cartagoMessagebox;
+  private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
   private final HttpInterfaceConfig httpConfig;
 
   public HttpEntityHandler(final Vertx vertx, final Context context) {
-    this.cartagoMessagebox = new CartagoMessageboxImpl(vertx.eventBus());
-    this.rdfStoreMessagebox = new RdfStoreMessageboxImpl(vertx.eventBus());
+    this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
+    this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     this.httpConfig = new HttpInterfaceConfigImpl(context.config());
   }
 
@@ -66,11 +67,9 @@ public class HttpEntityHandler {
   public void handleGetEntity(final RoutingContext routingContext) {
     final var entityIRI = this.httpConfig.getBaseUri() + routingContext.request().path();
     LOGGER.info("GET request: " + entityIRI);
-    this.rdfStoreMessagebox.sendGetEntityRequest(
-      entityIRI,
-      Optional.empty(),
-      this.handleStoreReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIRI))
-    );
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.GetEntity(entityIRI, Optional.empty()))
+        .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIRI)));
   }
 
   public void handleCreateEnvironment(final RoutingContext context) {
@@ -107,20 +106,16 @@ public class HttpEntityHandler {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
-    this.cartagoMessagebox.createWorkspace(
-      agentId,
-      envName,
-      workspaceName,
-      context.getBodyAsString(),
-      response -> {
-        if (response.succeeded()) {
-          HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
-          storeEntity(context, workspaceName, response.result().body());
-        } else {
-          LOGGER.error("CArtAgO operation has failed.");
-        }
-      }
-    );
+    this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateWorkspace(agentId, envName, workspaceName, context.getBodyAsString()))
+        .onComplete(response -> {
+          if (response.succeeded()) {
+            HypermediaArtifactRegistry.getInstance().addWorkspace(envName, workspaceName);
+            storeEntity(context, workspaceName, response.result().body());
+          } else {
+            LOGGER.error("CArtAgO operation has failed.");
+          }
+        });
   }
 
   public void handleCreateArtifact(final RoutingContext context) {
@@ -134,19 +129,15 @@ public class HttpEntityHandler {
 
     final var artifactName = ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
-    this.cartagoMessagebox.createArtifact(
-      agentId,
-      context.pathParam("wkspid"),
-      artifactName,
-      representation,
-      response -> {
-        if (response.succeeded()) {
-          storeEntity(context, artifactName, response.result().body());
-        } else {
-          LOGGER.error("CArtAgO operation has failed.");
-        }
-      }
-    );
+    this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(agentId, context.pathParam("wkspid"), artifactName, representation))
+        .onComplete(response -> {
+          if (response.succeeded()) {
+            storeEntity(context, artifactName, response.result().body());
+          } else {
+            LOGGER.error("CArtAgO operation has failed.");
+          }
+      });
   }
 
   // TODO: add payload validation
@@ -171,69 +162,67 @@ public class HttpEntityHandler {
     final var artifactIri = artifactRegistry.getHttpArtifactsPrefix(wkspName) + artifactName;
     final var actionName = artifactRegistry.getActionName(request.rawMethod(), request.absoluteURI());
 
-    this.rdfStoreMessagebox.sendGetEntityRequest(
-      artifactIri,
-      Optional.ofNullable(request.getHeader(HttpHeaders.CONTENT_TYPE)),
-      reply -> {
-        if (reply.succeeded()) {
-          final var apiKey = context.request().getHeader("X-API-Key");
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.GetEntity(artifactIri, Optional.ofNullable(request.getHeader(HttpHeaders.CONTENT_TYPE))))
+        .onComplete(reply -> {
+          if (reply.succeeded()) {
+            final var apiKey = context.request().getHeader("X-API-Key");
 
-          if (apiKey != null && !apiKey.isEmpty()) {
-            artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
-          }
-
-          this.cartagoMessagebox.doAction(
-            agentId,
-            wkspName,
-            artifactName,
-            actionName,
-            TDGraphReader
-              .readFromString(TDFormat.RDF_TURTLE, reply.result().body())
-              .getActions()
-              .stream()
-              .filter(action -> action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
-              .findFirst()
-              .flatMap(ActionAffordance::getInputSchema)
-              .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
-              .map(inputSchema ->
-                CartagoDataBundle.toJson(((ArraySchema) inputSchema).parseJson(JsonParser.parseString(context.getBodyAsString())))
-              ),
-            cartagoReply -> {
-              if (cartagoReply.succeeded()) {
-                LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
-                context.response().setStatusCode(HttpStatus.SC_OK).end();
-              } else {
-                LOGGER.info(
-                  "CArtAgO operation failed: "
-                    + artifactName
-                    + ", "
-                    + actionName
-                    + "; reason: "
-                    + cartagoReply.cause().getMessage()
-                );
-                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
-              }
+            if (apiKey != null && !apiKey.isEmpty()) {
+              artifactRegistry.setAPIKeyForArtifact(artifactIri, apiKey);
             }
-          );
-        }
-      }
-    );
+
+            this.cartagoMessagebox
+                .sendMessage(new CartagoMessage.DoAction(
+                  agentId,
+                  wkspName,
+                  artifactName,
+                  actionName,
+                  TDGraphReader
+                    .readFromString(TDFormat.RDF_TURTLE, reply.result().body())
+                    .getActions()
+                    .stream()
+                    .filter(action -> action.getTitle().isPresent() && action.getTitle().get().compareTo(actionName) == 0)
+                    .findFirst()
+                    .flatMap(ActionAffordance::getInputSchema)
+                    .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
+                    .map(inputSchema ->
+                        CartagoDataBundle.toJson(
+                          ((ArraySchema) inputSchema).parseJson(JsonParser.parseString(context.getBodyAsString()))
+                        )
+                    )
+                ))
+                .onComplete(cartagoReply -> {
+                  if (cartagoReply.succeeded()) {
+                    LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
+                    context.response().setStatusCode(HttpStatus.SC_OK).end();
+                  } else {
+                    LOGGER.info(
+                      "CArtAgO operation failed: "
+                        + artifactName
+                        + ", "
+                        + actionName
+                        + "; reason: "
+                        + cartagoReply.cause().getMessage()
+                    );
+                    context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+                  }
+                });
+          }
+        });
   }
 
   // TODO: add payload validation
   public void handleUpdateEntity(final RoutingContext routingContext) {
-    this.rdfStoreMessagebox.sendUpdateEntityRequest(
-      routingContext.request().absoluteURI(),
-      routingContext.getBodyAsString(),
-      this.handleStoreReply(routingContext, HttpStatus.SC_OK)
-    );
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.UpdateEntity(routingContext.request().absoluteURI(), routingContext.getBodyAsString()))
+        .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
   }
 
   public void handleDeleteEntity(final RoutingContext routingContext) {
-    this.rdfStoreMessagebox.sendDeleteEntityRequest(
-      routingContext.request().absoluteURI(),
-      this.handleStoreReply(routingContext, HttpStatus.SC_OK)
-    );
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
+        .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
   }
 
   public void handleEntitySubscription(final RoutingContext routingContext) {
@@ -244,24 +233,22 @@ public class HttpEntityHandler {
 
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
-        this.rdfStoreMessagebox.sendGetEntityRequest(
-          entityIri,
-          Optional.empty(),
-          reply -> {
-            if (reply.succeeded()) {
-              NotificationSubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
-              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
-            } else {
-              ReplyException exception = ((ReplyException) reply.cause());
-
-              if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
-                routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+        this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.GetEntity(entityIri, Optional.empty()))
+            .onComplete(reply -> {
+              if (reply.succeeded()) {
+                NotificationSubscriberRegistry.getInstance().addCallbackIRI(entityIri, callbackIri);
+                routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
               } else {
-                routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+                ReplyException exception = ((ReplyException) reply.cause());
+
+                if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
+                  routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();
+                } else {
+                  routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+                }
               }
-            }
-          }
-        );
+            });
         break;
       case "unsubscribe":
         NotificationSubscriberRegistry.getInstance().removeCallbackIRI(entityIri, callbackIri);
@@ -313,29 +300,31 @@ public class HttpEntityHandler {
     final String entityName,
     final String entityRepresentation
   ) {
-    this.rdfStoreMessagebox.sendCreateEntityRequest(
-      this.httpConfig.getBaseUri() + context.request().path(),
-      entityName,
-      entityRepresentation,
-      result -> {
-        if (result.succeeded()) {
-          context.response().setStatusCode(HttpStatus.SC_CREATED).end(entityRepresentation);
-          LOGGER.info("Entity created: " + entityRepresentation);
-        } else {
-          context.response().setStatusCode(HttpStatus.SC_CREATED).end();
-          LOGGER.error("RdfStore operation has failed.");
-        }
-      }
-    );
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.CreateEntity(
+          this.httpConfig.getBaseUri() + context.request().path(),
+          entityName,
+          entityRepresentation
+        ))
+        .onComplete(result -> {
+          if (result.succeeded()) {
+            context.response().setStatusCode(HttpStatus.SC_CREATED).end(entityRepresentation);
+            LOGGER.info("Entity created: " + entityRepresentation);
+          } else {
+            context.response().setStatusCode(HttpStatus.SC_CREATED).end();
+            LOGGER.error("RdfStore operation has failed.");
+          }
+        });
   }
 
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
-    this.rdfStoreMessagebox.sendCreateEntityRequest(
-      this.httpConfig.getBaseUri() + context.request().path(),
-      context.request().getHeader("Slug"),
-      entityRepresentation,
-      this.handleStoreReply(context, HttpStatus.SC_CREATED)
-    );
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.CreateEntity(
+          this.httpConfig.getBaseUri() + context.request().path(),
+          context.request().getHeader("Slug"),
+          entityRepresentation
+        ))
+        .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(

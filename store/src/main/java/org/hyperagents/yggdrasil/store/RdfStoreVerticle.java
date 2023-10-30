@@ -14,7 +14,7 @@ import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.messages.*;
-import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessageboxImpl;
+import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 
 import java.io.IOException;
@@ -29,13 +29,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private final static Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
 
   private final RDF4J rdf = new RDF4J();
-  private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
+  private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private RdfStore store;
   private WebClient client;
 
   @Override
   public void start() {
-    this.dispatcherMessagebox = new HttpNotificationDispatcherMessageboxImpl(this.vertx.eventBus());
+    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     this.store = RdfStoreFactory.createStore(config().getJsonObject("rdf-store", null));
     this.client = WebClient.create(this.vertx);
     this.vertx.eventBus().<String>consumer(MessageAddresses.RDF_STORE.getName(), message -> {
@@ -105,7 +105,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       }
       this.store.createEntityGraph(entityIRI, this.addContainmentTriples(entityIRI, entityGraph));
       this.replyWithPayload(message, entityGraphStr);
-      this.dispatcherMessagebox.pushNotification(MessageNotifications.ENTITY_CREATED, requestIRI, entityGraphStr);
+      this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityCreated(requestIRI, entityGraphStr));
     }
   }
 
@@ -128,11 +128,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
         workspaceGraph.add(workspaceIRI, this.store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         this.store.createEntityGraph(workspaceIRI, workspaceGraph);
-        this.dispatcherMessagebox.pushNotification(
-          MessageNotifications.ENTITY_CHANGED,
+        this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
           workspaceIRI,
           this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
-        );
+        ));
       }
     } else if (entityGraph.contains(
       entityIRI,
@@ -151,11 +150,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
         environmentGraph.add(environmentIRI, this.store.createIRI("http://w3id.org/eve#contains"), entityIRI);
         // TODO: updateEntityGraph would yield 404, to be investigated
         this.store.createEntityGraph(environmentIRI, environmentGraph);
-        this.dispatcherMessagebox.pushNotification(
-          MessageNotifications.ENTITY_CHANGED,
+        this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
           environmentIRI,
           this.store.graphToString(environmentGraph, RDFSyntax.TURTLE)
-        );
+        ));
       }
     }
     return entityGraph;
@@ -184,7 +182,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
 
-          this.dispatcherMessagebox.pushNotification(MessageNotifications.ENTITY_CHANGED, requestIRI, entityGraphString);
+          this.dispatcherMessagebox.sendMessage(
+            new HttpNotificationDispatcherMessage.EntityChanged(requestIRI, entityGraphString)
+          );
         } else {
           this.replyFailed(message);
         }
@@ -201,7 +201,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var entityGraphString = this.store.graphToString(result.get(), RDFSyntax.TURTLE);
       this.store.deleteEntityGraph(requestIRI);
       this.replyWithPayload(message, entityGraphString);
-      this.dispatcherMessagebox.pushNotification(MessageNotifications.ENTITY_DELETED, requestIRI, entityGraphString);
+      this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityDeleted(requestIRI, entityGraphString));
     } else {
       this.replyEntityNotFound(message);
     }

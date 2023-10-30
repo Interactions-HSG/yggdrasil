@@ -5,8 +5,8 @@ import cartago.CartagoContext;
 import cartago.util.agent.Percept;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.hyperagents.yggdrasil.messages.HttpNotificationDispatcherMessagebox;
-import org.hyperagents.yggdrasil.messages.MessageNotifications;
+import org.hyperagents.yggdrasil.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.messages.Messagebox;
 
 import java.util.Map;
 import java.util.Optional;
@@ -17,9 +17,12 @@ public class CartagoPerceptFetcher implements Runnable {
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
 
   private final Map<String, CartagoContext> agentContexts;
-  private final HttpNotificationDispatcherMessagebox messagebox;
+  private final Messagebox<HttpNotificationDispatcherMessage> messagebox;
 
-  CartagoPerceptFetcher(final Map<String, CartagoContext> agentContexts, final HttpNotificationDispatcherMessagebox messagebox) {
+  CartagoPerceptFetcher(
+    final Map<String, CartagoContext> agentContexts,
+    final Messagebox<HttpNotificationDispatcherMessage> messagebox
+  ) {
     this.agentContexts = agentContexts;
     this.messagebox = messagebox;
   }
@@ -52,7 +55,9 @@ public class CartagoPerceptFetcher implements Runnable {
         HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
       LOGGER.info("artifactIri: " + artifactIri + ", percept: " + p.getPropChanged()[0].toString());
 
-      this.messagebox.pushNotification(MessageNotifications.ARTIFACT_OBS_PROP, artifactIri, p.getPropChanged()[0].toString());
+      this.messagebox.sendMessage(
+        new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(artifactIri, p.getPropChanged()[0].toString())
+      );
       LOGGER.info("message sent to notification verticle");
     }));
   }
