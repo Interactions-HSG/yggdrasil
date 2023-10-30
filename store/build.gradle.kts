@@ -17,6 +17,8 @@ dependencies {
 
   implementation(libs.httpcomponents.core)
 
+  implementation(libs.commons.lang3)
+
   implementation(libs.rdf4j.model)
   implementation(libs.rdf4j.repository.sail)
   implementation(libs.rdf4j.sail.memory)
