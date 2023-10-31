@@ -1,6 +1,6 @@
-package org.hyperagents.yggdrasil.messages;
+package org.hyperagents.yggdrasil.eventbus.messageboxes;
 
-public enum MessageAddresses {
+enum MessageAddresses {
   RDF_STORE("rdfstore"),
   CARTAGO("cartago"),
   HTTP_NOTIFICATION_DISPATCHER("dispatcher");
@@ -13,7 +13,7 @@ public enum MessageAddresses {
     this.name = PREFIX + name;
   }
 
-  public String getName() {
+  String getName() {
     return this.name;
   }
 }

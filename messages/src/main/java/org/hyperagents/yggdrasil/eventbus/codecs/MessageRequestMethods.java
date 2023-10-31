@@ -1,9 +1,9 @@
-package org.hyperagents.yggdrasil.messages;
+package org.hyperagents.yggdrasil.eventbus.codecs;
 
 import java.util.Arrays;
 import java.util.Optional;
 
-public enum MessageRequestMethods {
+enum MessageRequestMethods {
   GET_ENTITY("getEntity"),
   CREATE_ENTITY("createEntity"),
   UPDATE_ENTITY("updateEntity"),

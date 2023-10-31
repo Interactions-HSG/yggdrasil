@@ -1,6 +1,9 @@
-package org.hyperagents.yggdrasil.messages;
+package org.hyperagents.yggdrasil.eventbus.codecs;
 
-public enum MessageNotifications {
+import java.util.Arrays;
+import java.util.Optional;
+
+enum MessageNotifications {
   ENTITY_CREATED("entityCreated"),
   ENTITY_CHANGED("entityChanged"),
   ENTITY_DELETED("entityDeleted"),
@@ -16,5 +19,9 @@ public enum MessageNotifications {
 
   public String getName() {
     return this.name;
+  }
+
+  public static Optional<MessageNotifications> getFromName(final String name) {
+    return Arrays.stream(MessageNotifications.values()).filter(n -> n.getName().equals(name)).findFirst();
   }
 }

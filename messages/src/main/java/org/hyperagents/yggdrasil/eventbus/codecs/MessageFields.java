@@ -1,6 +1,6 @@
-package org.hyperagents.yggdrasil.messages;
+package org.hyperagents.yggdrasil.eventbus.codecs;
 
-public enum MessageHeaders {
+enum MessageFields {
   REQUEST_METHOD("requestMethod"),
   REQUEST_URI("requestUri"),
   ENTITY_URI_HINT("slug"),
@@ -9,13 +9,16 @@ public enum MessageHeaders {
   ENV_NAME("envName"),
   WORKSPACE_NAME("workspaceName"),
   ARTIFACT_NAME("artifactName"),
-  ACTION_NAME("actionName");
+  ACTION_NAME("actionName"),
+  ENTITY_REPRESENTATION("entityRepresentation"),
+  ACTION_CONTENT("actionContent"),
+  NOTIFICATION_CONTENT("notificationContent");
 
-  private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.headers.";
+  private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 
   private final String name;
 
-  MessageHeaders(final String name) {
+  MessageFields(final String name) {
     this.name = PREFIX + name;
   }
 

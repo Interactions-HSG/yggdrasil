@@ -16,8 +16,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.messages.*;
-import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
@@ -39,7 +42,9 @@ public class CartagoVerticle extends AbstractVerticle {
     this.agentContexts = new Hashtable<>();
 
     final var eventBus = this.vertx.eventBus();
-    eventBus.consumer(MessageAddresses.CARTAGO.getName(), this::handleCartagoRequest);
+    final var ownMessagebox = new CartagoMessagebox(eventBus);
+    ownMessagebox.init();
+    ownMessagebox.receiveMessages(this::handleCartagoRequest);
 
     try {
       LOGGER.info("Starting CArtAgO node...");
@@ -60,56 +65,49 @@ public class CartagoVerticle extends AbstractVerticle {
                             });
   }
 
-  private void handleCartagoRequest(final Message<String> message) {
-    Optional.ofNullable(message.headers().get(MessageHeaders.AGENT_ID.getName())).ifPresentOrElse(
-      agentUri -> {
-        final var workspaceName = message.headers().get(MessageHeaders.WORKSPACE_NAME.getName());
-        final var artifactName = message.headers().get(MessageHeaders.ARTIFACT_NAME.getName());
+  private void handleCartagoRequest(final Message<CartagoMessage> message) {
+    try {
+      switch (message.body()) {
+        case CartagoMessage.CreateWorkspace(String agentId, String envName, String workspaceName, String ignored) ->
+          message.reply(this.instantiateWorkspace(
+            agentId,
+            envName,
+            workspaceName
+          ));
+        case CartagoMessage.CreateArtifact(String agentId, String workspaceName, String artifactName, String representation) -> {
+          final var artifactInit = Json.decodeValue(representation, JsonObject.class);
 
-        try {
-          // TODO: Is throwing exception the best default behavior?
-          switch (
-            MessageRequestMethods.getFromName(message.headers().get(MessageHeaders.REQUEST_METHOD.getName()))
-                                 .orElseThrow()
-          ) {
-            case CREATE_WORKSPACE:
-              message.reply(this.instantiateWorkspace(
-                agentUri,
-                message.headers().get(MessageHeaders.ENV_NAME.getName()),
-                workspaceName
-              ));
-              break;
-            case CREATE_ARTIFACT:
-              final var artifactInit = Json.decodeValue(message.body(), JsonObject.class);
-
-              this.instantiateArtifact(
-                agentUri,
-                workspaceName,
-                JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER)
-                               .flatMap(c -> HypermediaArtifactRegistry.getInstance().getArtifactTemplate(c))
-                               .orElseThrow(),
-                artifactName,
-                JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER).map(i -> i.getList().toArray())
-              );
-              message.reply(HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName));
-              break;
-            case DO_ACTION:
-              this.doAction(
-                agentUri,
-                workspaceName,
-                artifactName,
-                message.headers().get(MessageHeaders.ACTION_NAME.getName()),
-                Optional.ofNullable(message.body())
-              );
-              message.reply(HttpStatus.SC_OK);
-              break;
-          }
-        } catch (final DecodeException | NoSuchElementException | CartagoException e) {
-          message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          this.instantiateArtifact(
+            agentId,
+            workspaceName,
+            JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER)
+                           .flatMap(c -> HypermediaArtifactRegistry.getInstance().getArtifactTemplate(c))
+                           .orElseThrow(),
+            artifactName,
+            JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER).map(i -> i.getList().toArray())
+          );
+          message.reply(HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName));
         }
-      },
-      () -> message.fail(HttpStatus.SC_BAD_REQUEST, "Agent WebID is missing.")
-    );
+        case CartagoMessage.DoAction(
+          String agentId,
+          String workspaceName,
+          String artifactName,
+          String actionName,
+          Optional<String> content
+        ) -> {
+          this.doAction(
+            agentId,
+            workspaceName,
+            artifactName,
+            actionName,
+            content
+          );
+          message.reply(HttpStatus.SC_OK);
+        }
+      }
+    } catch (final DecodeException | NoSuchElementException | CartagoException e) {
+      message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+    }
   }
 
   private String instantiateWorkspace(final String agentUri, final String envName, final String workspaceName)

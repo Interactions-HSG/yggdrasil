@@ -5,8 +5,8 @@ import cartago.CartagoContext;
 import cartago.util.agent.Percept;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import org.hyperagents.yggdrasil.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.messages.Messagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 
 import java.util.Map;
 import java.util.Optional;

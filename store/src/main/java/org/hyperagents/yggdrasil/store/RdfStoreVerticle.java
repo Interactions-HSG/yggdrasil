@@ -6,15 +6,17 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.WebClient;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.hyperagents.yggdrasil.messages.*;
-import org.hyperagents.yggdrasil.messages.impl.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 
 import java.io.IOException;
@@ -38,27 +40,16 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     this.store = RdfStoreFactory.createStore(config().getJsonObject("rdf-store", null));
     this.client = WebClient.create(this.vertx);
-    this.vertx.eventBus().<String>consumer(MessageAddresses.RDF_STORE.getName(), message -> {
+    final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
+    ownMessagebox.init();
+    ownMessagebox.receiveMessages(message -> {
       try {
-        final var requestIRI = this.store.createIRI(message.headers().get(MessageHeaders.REQUEST_URI.getName()));
-        switch (MessageRequestMethods.getFromName(message.headers().get(MessageHeaders.REQUEST_METHOD.getName())).orElseThrow()) {
-          case GET_ENTITY:
-            this.handleGetEntity(requestIRI, message);
-            break;
-          case CREATE_ENTITY:
-            this.handleCreateEntity(requestIRI, message);
-            break;
-          case PATCH_ENTITY:
-            this.handlePatchEntity(requestIRI, message);
-            break;
-          case UPDATE_ENTITY:
-            this.handleUpdateEntity(requestIRI, message);
-            break;
-          case DELETE_ENTITY:
-            this.handleDeleteEntity(requestIRI, message);
-            break;
-          default:
-            break;
+        final var requestIRI = this.store.createIRI(message.body().requestUri());
+        switch (message.body()) {
+          case RdfStoreMessage.GetEntity ignored -> this.handleGetEntity(requestIRI, message);
+          case RdfStoreMessage.CreateEntity content -> this.handleCreateEntity(requestIRI, content, message);
+          case RdfStoreMessage.UpdateEntity content -> this.handleUpdateEntity(requestIRI, content, message);
+          case RdfStoreMessage.DeleteEntity ignored -> this.handleDeleteEntity(requestIRI, message);
         }
       } catch (final IOException | IllegalArgumentException e) {
         LOGGER.error(e.getMessage());
@@ -67,7 +58,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
     });
   }
 
-  private void handleGetEntity(final IRI requestIRI, final Message<String> message) throws IllegalArgumentException, IOException {
+  private void handleGetEntity(
+    final IRI requestIRI,
+    final Message<RdfStoreMessage> message
+  ) throws IllegalArgumentException, IOException {
     final var result = this.store.getEntityGraph(requestIRI);
     if (result.isPresent() && result.get().size() > 0) {
       this.replyWithPayload(message, this.store.graphToString(result.get(), RDFSyntax.TURTLE));
@@ -83,13 +77,16 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * @throws IllegalArgumentException
    * @throws IOException
    */
-  private void handleCreateEntity(final IRI requestIRI, final Message<String> message)
-    throws IllegalArgumentException, IOException {
+  private void handleCreateEntity(
+    final IRI requestIRI,
+    final RdfStoreMessage.CreateEntity content,
+    final Message<RdfStoreMessage> message
+  ) throws IllegalArgumentException, IOException {
 	  // Create IRI for new entity
     final var entityIRIString =
-      this.generateEntityIRI(requestIRI.getIRIString(), message.headers().get(MessageHeaders.ENTITY_URI_HINT.getName()));
+      this.generateEntityIRI(requestIRI.getIRIString(), content.entityName());
     final var entityIRI = this.store.createIRI(entityIRIString);
-    final var optEntityGraphString = Optional.ofNullable(message.body());
+    final var optEntityGraphString = Optional.ofNullable(content.entityRepresentation());
 
     if (optEntityGraphString.filter(s -> !s.isEmpty()).isEmpty()) {
       this.replyFailed(message);
@@ -105,7 +102,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
       }
       this.store.createEntityGraph(entityIRI, this.addContainmentTriples(entityIRI, entityGraph));
       this.replyWithPayload(message, entityGraphStr);
-      this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityCreated(requestIRI, entityGraphStr));
+      this.dispatcherMessagebox.sendMessage(
+        new HttpNotificationDispatcherMessage.EntityCreated(requestIRI.getIRIString(), entityGraphStr)
+      );
     }
   }
 
@@ -129,7 +128,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         // TODO: updateEntityGraph would yield 404, to be investigated
         this.store.createEntityGraph(workspaceIRI, workspaceGraph);
         this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
-          workspaceIRI,
+          workspaceIRI.getIRIString(),
           this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
         ));
       }
@@ -151,7 +150,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         // TODO: updateEntityGraph would yield 404, to be investigated
         this.store.createEntityGraph(environmentIRI, environmentGraph);
         this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
-          environmentIRI,
+          environmentIRI.getIRIString(),
           this.store.graphToString(environmentGraph, RDFSyntax.TURTLE)
         ));
       }
@@ -159,15 +158,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
     return entityGraph;
   }
 
-  private void handlePatchEntity(final IRI requestIRI, final Message<String> message)
-    throws IllegalArgumentException, IOException {
-    throw new NotImplementedException("It is not possible to patch an entity right now");
-  }
-
-  private void handleUpdateEntity(final IRI requestIRI, final Message<String> message)
-      throws IllegalArgumentException, IOException {
+  private void handleUpdateEntity(
+    final IRI requestIRI,
+    final RdfStoreMessage.UpdateEntity content,
+    final Message<RdfStoreMessage> message
+  ) throws IllegalArgumentException, IOException {
     if (this.store.containsEntityGraph(requestIRI)) {
-      final var optEntityGraphString = Optional.ofNullable(message.body());
+      final var optEntityGraphString = Optional.ofNullable(content.entityRepresentation());
       if (optEntityGraphString.filter(s -> !s.isEmpty()).isEmpty()) {
         this.replyFailed(message);
       } else {
@@ -183,7 +180,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           LOGGER.info("Sending update notification for " + requestIRI.getIRIString());
 
           this.dispatcherMessagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.EntityChanged(requestIRI, entityGraphString)
+            new HttpNotificationDispatcherMessage.EntityChanged(requestIRI.getIRIString(), entityGraphString)
           );
         } else {
           this.replyFailed(message);
@@ -194,28 +191,30 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
-  private void handleDeleteEntity(final IRI requestIRI, final Message<String> message)
+  private void handleDeleteEntity(final IRI requestIRI, final Message<RdfStoreMessage> message)
     throws IllegalArgumentException, IOException {
     final var result = this.store.getEntityGraph(requestIRI);
     if (result.isPresent() && result.get().size() > 0) {
       final var entityGraphString = this.store.graphToString(result.get(), RDFSyntax.TURTLE);
       this.store.deleteEntityGraph(requestIRI);
       this.replyWithPayload(message, entityGraphString);
-      this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityDeleted(requestIRI, entityGraphString));
+      this.dispatcherMessagebox.sendMessage(
+        new HttpNotificationDispatcherMessage.EntityDeleted(requestIRI.getIRIString(), entityGraphString)
+      );
     } else {
       this.replyEntityNotFound(message);
     }
   }
 
-  private void replyWithPayload(final Message<String> message, final String payload) {
+  private void replyWithPayload(final Message<RdfStoreMessage> message, final String payload) {
     message.reply(payload);
   }
 
-  private void replyFailed(final Message<String> message) {
+  private void replyFailed(final Message<RdfStoreMessage> message) {
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Store request failed.");
   }
 
-  private void replyEntityNotFound(final Message<String> message) {
+  private void replyEntityNotFound(final Message<RdfStoreMessage> message) {
     message.fail(HttpStatus.SC_NOT_FOUND, "Entity not found.");
   }
 

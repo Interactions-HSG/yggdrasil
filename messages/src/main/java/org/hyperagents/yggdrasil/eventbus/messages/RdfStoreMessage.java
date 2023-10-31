@@ -1,8 +1,10 @@
-package org.hyperagents.yggdrasil.messages;
+package org.hyperagents.yggdrasil.eventbus.messages;
 
 import java.util.Optional;
 
 public sealed interface RdfStoreMessage {
+
+  String requestUri();
 
   record GetEntity(String requestUri, Optional<String> contentType) implements RdfStoreMessage {}
 
