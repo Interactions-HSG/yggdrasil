@@ -10,7 +10,8 @@ java {
 
 dependencies {
   implementation(libs.vertx.core)
-  implementation(libs.commons.rdf.api)
+
+  implementation(libs.gson)
 
   testImplementation(libs.junit)
   testImplementation(libs.vertx.unit)
