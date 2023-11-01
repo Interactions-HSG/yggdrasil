@@ -3,6 +3,9 @@ vertx = "3.9.7"
 commons-rdf = "0.5.0"
 rdf4j = "2.4.2"
 httpcomponents-client5 = "5.2.1"
+checkstyle = "10.12.4"
+spotbugs = "4.8.0"
+pmd = "7.0.0-rc4"
 
 [libraries]
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
@@ -23,6 +26,10 @@ httpcomponents-httpclient5-fluent = { module = "org.apache.httpcomponents.client
 guava = "com.google.guava:guava:31.1-jre"
 gson = "com.google.code.gson:gson:2.10.1"
 junit = "junit:junit:4.13.2"
+spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs" }
+pmd-java = { module = "net.sourceforge.pmd:pmd-java", version.ref = "pmd" }
+pmd-ant = { module = "net.sourceforge.pmd:pmd-ant", version.ref = "pmd" }
 
 [plugins]
 shadowJar = "com.github.johnrengelman.shadow:8.1.1"
+spotbugs = "com.github.spotbugs:6.0.0-rc.2"

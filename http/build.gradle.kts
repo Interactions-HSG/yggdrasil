@@ -1,6 +1,23 @@
 plugins {
   java
   `java-library`
+  checkstyle
+  pmd
+  alias(libs.plugins.spotbugs)
+}
+
+checkstyle {
+  config = resources.text.fromFile("${rootProject.projectDir}/checkstyle.xml")
+  toolVersion = libs.versions.checkstyle.get()
+}
+
+pmd {
+  toolVersion = libs.versions.pmd.get()
+  ruleSetConfig = resources.text.fromFile("${rootProject.projectDir}/pmd.xml")
+}
+
+spotbugs {
+  toolVersion = libs.versions.spotbugs
 }
 
 java {
@@ -28,6 +45,10 @@ dependencies {
   implementation(libs.commons.rdf.api)
   implementation(libs.commons.rdf.rdf4j)
 
+  compileOnly(libs.spotbugs.annotations)
+  pmd(libs.pmd.java)
+  pmd(libs.pmd.ant)
+
   testImplementation(libs.junit)
   testImplementation(libs.vertx.unit)
 
@@ -42,4 +63,19 @@ dependencies {
   testImplementation(libs.rdf4j.repository.sail)
   testImplementation(libs.rdf4j.sail.memory)
   testImplementation(libs.rdf4j.sail.nativerdf)
+
+  testCompileOnly(libs.spotbugs.annotations)
+}
+
+tasks {
+  spotbugsMain {
+    reports.create("html") {
+        required.set(true)
+    }
+  }
+  spotbugsTest {
+    reports.create("html") {
+        required.set(true)
+    }
+  }
 }
