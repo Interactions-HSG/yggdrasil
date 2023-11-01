@@ -1,18 +1,17 @@
-FROM openjdk:11
+FROM eclipse-temurin:21
 
 # Yggdrasil build configuration
-ENV YGGDRASIL_VERSION 0.0
+ENV YGGDRASIL_VERSION 0.0.0
 
 # Build environment preparation
 ENV LANG C.UTF-8
 
-# Build the jar
-WORKDIR /app
-COPY . /app/
-RUN ./gradlew
+# Copy the jar
+RUN mkdir /opt/app
+COPY build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar /opt/app
+COPY conf/config.json /opt/app
 
 # The default http port
 EXPOSE 8080
 
-ENTRYPOINT ["/bin/sh", "-c", "/usr/local/openjdk-11/bin/java -jar ./build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-fat.jar -conf ./src/main/conf/config.json"]
-#CMD ["-conf", "./src/main/conf/config.json"]
+ENTRYPOINT java -jar /opt/app/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar -conf /opt/app/config.json

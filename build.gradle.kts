@@ -38,7 +38,7 @@ allprojects {
   }
 
   group = "org.hyperagents"
-  version = "0.0-SNAPSHOT"
+  version = "0.0.0-SNAPSHOT"
 }
 
 dependencies {
