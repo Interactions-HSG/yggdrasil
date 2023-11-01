@@ -1,23 +1,18 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
-import java.io.IOException;
-
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ClassicHttpRequest;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.StringEntity;
-import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
-import org.eclipse.rdf4j.model.BNode;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
-
 import cartago.OPERATION;
 import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme.TokenLocation;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.IOException;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
@@ -33,6 +28,7 @@ public class PhantomX3D extends HypermediaArtifact {
   private static final int SHORT_WAIT_TIME = 1000;
   private static final int WAIT_TIME = 3000;
 
+  @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
   private enum State {
     NEUTRAL,
     PIKCUP_LOCATION,
@@ -43,7 +39,7 @@ public class PhantomX3D extends HypermediaArtifact {
   private String robotBaseUri;
   private State state;
 
-  public void init(String robotBaseUri) {
+  public void init(final String robotBaseUri) {
     this.state = State.NEUTRAL;
     this.robotBaseUri = robotBaseUri;
   }
@@ -51,120 +47,137 @@ public class PhantomX3D extends HypermediaArtifact {
   @OPERATION
   public void grasp() {
     this.await_time(SHORT_WAIT_TIME);
-    invokeAction(SET_GRIPPER_URI, 400);
+    this.invokeAction(SET_GRIPPER_URI, 400);
   }
 
   @OPERATION
   public void release() {
     this.await_time(SHORT_WAIT_TIME);
-    invokeAction(SET_GRIPPER_URI, 512);
+    this.invokeAction(SET_GRIPPER_URI, 512);
   }
 
   @OPERATION
   public void reset() {
     this.await_time(SHORT_WAIT_TIME);
-    invokeAction(RESET_URI, null);
-    state = State.NEUTRAL;
+    this.invokeAction(RESET_URI, null);
+    this.state = State.NEUTRAL;
   }
 
   @OPERATION
   public void moveTo() {
-    if (state == State.IN_TRANSIT) {
-      failed("Illegal state: cannot move, robot is in transit");
-    } else if (state == State.NEUTRAL) {
-      moveToPickUpLocationFromNeural();
-    } else if (state == State.PIKCUP_LOCATION) {
+    if (this.state == State.IN_TRANSIT) {
+      this.failed("Illegal this.state: cannot move, robot is in transit");
+    } else if (this.state == State.NEUTRAL) {
+      this.moveToPickUpLocationFromNeural();
+    } else if (this.state == State.PIKCUP_LOCATION) {
       moveToPlaceLocationFromPickup();
-    } else if (state == State.PLACE_LOCATION) {
-      moveToNeural();
-      moveToPickUpLocationFromNeural();
+    } else if (this.state == State.PLACE_LOCATION) {
+      this.moveToNeural();
+      this.moveToPickUpLocationFromNeural();
     }
   }
 
   @Override
   protected void registerInteractionAffordances() {
-    registerActionAffordance(PREFIX + "MoveTo", "moveTo", "/moveTo",
-        new ObjectSchema.Builder().addSemanticType(PREFIX + "FactoryFloorPosition")
-          .addProperty("x", new NumberSchema.Builder()
-              .addSemanticType(PREFIX + "XCoordinate")
-              .build())
-          .addProperty("y", new NumberSchema.Builder()
-              .addSemanticType(PREFIX + "YCoordinate")
-              .build())
-          .addProperty("z", new NumberSchema.Builder()
-              .addSemanticType(PREFIX + "ZCoordinate")
-              .build())
-          .build());
-    registerActionAffordance(PREFIX + "Grasp", "grasp", "/grasp");
-    registerActionAffordance(PREFIX + "Release", "release", "/release");
-    registerActionAffordance(PREFIX + "Reset", "reset", "/reset");
+    this.registerActionAffordance(
+        PREFIX + "MoveTo",
+        "moveTo",
+        "/moveTo",
+        new ObjectSchema.Builder()
+                        .addSemanticType(PREFIX + "FactoryFloorPosition")
+                        .addProperty(
+                          "x",
+                          new NumberSchema.Builder()
+                                          .addSemanticType(PREFIX + "XCoordinate")
+                                          .build()
+                        )
+                        .addProperty(
+                          "y",
+                          new NumberSchema.Builder()
+                                          .addSemanticType(PREFIX + "YCoordinate")
+                                          .build()
+                        )
+                        .addProperty(
+                          "z",
+                          new NumberSchema.Builder()
+                                          .addSemanticType(PREFIX + "ZCoordinate")
+                                          .build()
+                        )
+                        .build()
+    );
+    this.registerActionAffordance(PREFIX + "Grasp", "grasp", "/grasp");
+    this.registerActionAffordance(PREFIX + "Release", "release", "/release");
+    this.registerActionAffordance(PREFIX + "Reset", "reset", "/reset");
 
     // Add initial coordinates, these are currently hard-coded
-    ModelBuilder builder = new ModelBuilder();
-    ValueFactory rdf = SimpleValueFactory.getInstance();
+    final var builder = new ModelBuilder();
+    final var rdf = SimpleValueFactory.getInstance();
 
-    BNode coordinates = rdf.createBNode();
+    final var coordinates = rdf.createBNode();
     builder.add(getArtifactUri(), rdf.createIRI(PREFIX + "hasOriginCoordinates"), coordinates);
     builder.add(coordinates, rdf.createIRI(PREFIX + "coordX"), rdf.createLiteral(2.7));
     builder.add(coordinates, rdf.createIRI(PREFIX + "coordY"), rdf.createLiteral(-0.5));
     builder.add(coordinates, rdf.createIRI(PREFIX + "coordZ"), rdf.createLiteral(0.8));
 
-    addMetadata(builder.build());
+    this.addMetadata(builder.build());
 
-    setSecurityScheme(new APIKeySecurityScheme(TokenLocation.HEADER, "X-API-Key"));
+    this.setSecurityScheme(new APIKeySecurityScheme(TokenLocation.HEADER, "X-API-Key"));
   }
 
   private void moveToNeural() {
-    state = State.IN_TRANSIT;
+    this.state = State.IN_TRANSIT;
     this.await_time(1000);
-    invokeAction(RESET_URI, null);
-    state = State.NEUTRAL;
+    this.invokeAction(RESET_URI, null);
+    this.state = State.NEUTRAL;
   }
 
   private void moveToPickUpLocationFromNeural() {
-    state = State.IN_TRANSIT;
+    this.state = State.IN_TRANSIT;
 
     this.await_time(SHORT_WAIT_TIME);
-    invokeAction(SET_GRIPPER_URI, 512);
+    this.invokeAction(SET_GRIPPER_URI, 512);
     this.await_time(WAIT_TIME);
-    invokeAction(SET_BASE_URI, 512);
+    this.invokeAction(SET_BASE_URI, 512);
     this.await_time(WAIT_TIME);
-    invokeAction(SET_WRIST_ANGLE_URI, 390);
+    this.invokeAction(SET_WRIST_ANGLE_URI, 390);
     this.await_time(WAIT_TIME);
-    invokeAction(SET_SHOULDER_URI, 510);
+    this.invokeAction(SET_SHOULDER_URI, 510);
 
-    state = State.PIKCUP_LOCATION;
+    this.state = State.PIKCUP_LOCATION;
   }
 
   private void moveToPlaceLocationFromPickup() {
-    state = State.IN_TRANSIT;
+    this.state = State.IN_TRANSIT;
 
     this.await_time(WAIT_TIME);
-    invokeAction(SET_SHOULDER_URI, 400);
+    this.invokeAction(SET_SHOULDER_URI, 400);
     this.await_time(WAIT_TIME);
-    invokeAction(SET_BASE_URI, 256);
+    this.invokeAction(SET_BASE_URI, 256);
     this.await_time(WAIT_TIME);
-    invokeAction(SET_SHOULDER_URI, 510);
+    this.invokeAction(SET_SHOULDER_URI, 510);
     this.await_time(WAIT_TIME);
 
-    state = State.PLACE_LOCATION;
+    this.state = State.PLACE_LOCATION;
   }
 
-  private void invokeAction(String relativeUri, Integer value) {
-    HttpClient client = HttpClients.createDefault();
+  private void invokeAction(final String relativeUri, final Integer value) {
+    try (var client = HttpClients.createDefault()) {
 
-    ClassicHttpRequest request = new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
+      final var request =
+          new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
 
-    String apiKey = HypermediaArtifactRegistry.getInstance().getAPIKeyForArtifact(getArtifactUri());
-    request.setHeader("X-API-Key", apiKey);
+      final var apiKey =
+          HypermediaArtifactRegistry.getInstance().getApiKeyForArtifact(getArtifactUri());
+      request.setHeader("X-API-Key", apiKey);
 
-    request.setEntity(new StringEntity("{\"value\" : " + value + "}",
-        ContentType.create("application/json")));
+      request.setEntity(
+          new StringEntity("{\"value\" : " + value + "}",
+          ContentType.create("application/json"))
+      );
 
-    try {
-      client.execute(request);
-    } catch (IOException e) {
-      failed(e.getMessage());
+      client.execute(request, response -> null);
+    } catch (final IOException e) {
+      this.failed(e.getMessage());
     }
   }
 }

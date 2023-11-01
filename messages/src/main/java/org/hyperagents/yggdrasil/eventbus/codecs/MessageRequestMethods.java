@@ -27,6 +27,6 @@ enum MessageRequestMethods {
   }
 
   public static Optional<MessageRequestMethods> getFromName(final String name) {
-    return Arrays.stream(MessageRequestMethods.values()).filter(m -> m.getName().equals(name)).findFirst();
+    return Arrays.stream(values()).filter(m -> m.getName().equals(name)).findFirst();
   }
 }

@@ -1,6 +1,9 @@
 package org.hyperagents.yggdrasil.eventbus.codecs;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonSerializer;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
@@ -11,8 +14,8 @@ public class GenericMessageCodec<T> implements MessageCodec<T, T> {
   private final Class<T> messageType;
 
   public <M extends JsonSerializer<? super T> & JsonDeserializer<? super T>> GenericMessageCodec(
-    final Class<T> messageType,
-    final M messageMarshaller
+      final Class<T> messageType,
+      final M messageMarshaller
   ) {
     this.messageType = messageType;
     this.gson = new GsonBuilder().registerTypeHierarchyAdapter(messageType, messageMarshaller)
@@ -29,7 +32,8 @@ public class GenericMessageCodec<T> implements MessageCodec<T, T> {
 
   @Override
   public T decodeFromWire(final int pos, final Buffer buffer) {
-    return this.gson.fromJson(buffer.getString(pos + INT_LENGHT, buffer.getInt(pos)), this.messageType);
+    return this.gson
+               .fromJson(buffer.getString(pos + INT_LENGHT, buffer.getInt(pos)), this.messageType);
   }
 
   @Override

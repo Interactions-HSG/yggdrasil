@@ -1,10 +1,10 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import io.vertx.core.json.JsonObject;
+import java.util.Optional;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 
-import java.util.Optional;
-
+@SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   private final String host;
   private final String baseUri;

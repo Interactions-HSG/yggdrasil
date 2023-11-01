@@ -4,11 +4,10 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import java.util.function.Consumer;
 import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.codecs.RdfStoreMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
-
-import java.util.function.Consumer;
 
 public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
   private final EventBus eventBus;
@@ -20,20 +19,29 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
   @Override
   public void init() {
     this.eventBus.registerDefaultCodec(
-      RdfStoreMessage.GetEntity.class,
-      new GenericMessageCodec<>(RdfStoreMessage.GetEntity.class, new RdfStoreMessageMarshaller())
+        RdfStoreMessage.GetEntity.class,
+        new GenericMessageCodec<>(RdfStoreMessage.GetEntity.class, new RdfStoreMessageMarshaller())
     );
     this.eventBus.registerDefaultCodec(
-      RdfStoreMessage.CreateEntity.class,
-      new GenericMessageCodec<>(RdfStoreMessage.CreateEntity.class, new RdfStoreMessageMarshaller())
+        RdfStoreMessage.CreateEntity.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.CreateEntity.class,
+          new RdfStoreMessageMarshaller()
+        )
     );
     this.eventBus.registerDefaultCodec(
-      RdfStoreMessage.DeleteEntity.class,
-      new GenericMessageCodec<>(RdfStoreMessage.DeleteEntity.class, new RdfStoreMessageMarshaller())
+        RdfStoreMessage.DeleteEntity.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.DeleteEntity.class,
+          new RdfStoreMessageMarshaller()
+        )
     );
     this.eventBus.registerDefaultCodec(
-      RdfStoreMessage.UpdateEntity.class,
-      new GenericMessageCodec<>(RdfStoreMessage.UpdateEntity.class, new RdfStoreMessageMarshaller())
+        RdfStoreMessage.UpdateEntity.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.UpdateEntity.class,
+          new RdfStoreMessageMarshaller()
+        )
     );
   }
 

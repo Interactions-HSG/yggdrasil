@@ -10,9 +10,21 @@ import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
 public class MainVerticle extends AbstractVerticle {
   @Override
   public void start() {
-    this.vertx.deployVerticle(new HttpServerVerticle(), new DeploymentOptions().setConfig(this.config()));
-    this.vertx.deployVerticle(new RdfStoreVerticle(), new DeploymentOptions().setWorker(true).setConfig(config()));
-    this.vertx.deployVerticle(new HttpNotificationVerticle(), new DeploymentOptions().setWorker(true).setConfig(config()));
-    this.vertx.deployVerticle(new CartagoVerticle(), new DeploymentOptions().setWorker(true).setConfig(config()));
+    this.vertx.deployVerticle(
+        new HttpServerVerticle(),
+        new DeploymentOptions().setConfig(this.config())
+    );
+    this.vertx.deployVerticle(
+        new RdfStoreVerticle(),
+        new DeploymentOptions().setWorker(true).setConfig(config())
+    );
+    this.vertx.deployVerticle(
+        new HttpNotificationVerticle(),
+        new DeploymentOptions().setWorker(true).setConfig(config())
+    );
+    this.vertx.deployVerticle(
+        new CartagoVerticle(),
+        new DeploymentOptions().setWorker(true).setConfig(config())
+    );
   }
 }

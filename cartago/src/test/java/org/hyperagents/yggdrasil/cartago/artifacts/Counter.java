@@ -1,24 +1,25 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
-import cartago.ObsProperty;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
+@SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class Counter extends HypermediaArtifact {
 
   public void init() {
-    defineObsProperty("count", 0);
+    this.defineObsProperty("count", 0);
   }
 
   @OPERATION
   public void inc() {
-    ObsProperty prop = getObsProperty("count");
+    final var prop = this.getObsProperty("count");
     prop.updateValue(prop.intValue() + 1);
   }
 
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    registerActionAffordance("http://example.org/Increment", "inc", "/increment");
+    this.registerActionAffordance("http://example.org/Increment", "inc", "/increment");
   }
 }

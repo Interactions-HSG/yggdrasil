@@ -3,6 +3,12 @@ package org.hyperagents.yggdrasil.store.impl;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import org.apache.commons.rdf.api.Dataset;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
@@ -11,7 +17,12 @@ import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JGraph;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.*;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
@@ -21,14 +32,8 @@ import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Optional;
-
 public class Rdf4jStore implements RdfStore {
-  private final static Logger LOGGER = LoggerFactory.getLogger(RdfStore.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(RdfStore.class.getName());
 
   private final RDF4J rdfImpl;
   private final Dataset dataset;
@@ -82,14 +87,15 @@ public class Rdf4jStore implements RdfStore {
   }
 
   @Override
-  public IRI createIRI(final String iriString) throws IllegalArgumentException {
+  public IRI createIri(final String iriString) throws IllegalArgumentException {
     return this.rdfImpl.createIRI(iriString);
   }
 
   @Override
-  public String graphToString(final Graph graph, final RDFSyntax syntax) throws IllegalArgumentException, IOException {
+  public String graphToString(final Graph graph, final RDFSyntax syntax)
+      throws IllegalArgumentException, IOException {
     if (graph instanceof RDF4JGraph) {
-      try (final var out = new ByteArrayOutputStream()) {
+      try (var out = new ByteArrayOutputStream()) {
         final RDFWriter writer;
 
         if (syntax.equals(RDFSyntax.TURTLE)) {
@@ -121,7 +127,7 @@ public class Rdf4jStore implements RdfStore {
           writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
           writer.handleNamespace("saref", "https://w3id.org/saref#");
 
-          try (final var stream = ((RDF4JGraph) graph).stream()) {
+          try (var stream = ((RDF4JGraph) graph).stream()) {
             stream.forEach(triple -> writer.handleStatement(triple.asStatement()));
           }
           writer.endRDF();
@@ -130,7 +136,7 @@ public class Rdf4jStore implements RdfStore {
         } catch (final UnsupportedRDFormatException e) {
           throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
         }
-        return out.toString();
+        return out.toString(StandardCharsets.UTF_8);
       }
     } else {
       throw new IllegalArgumentException("Unsupported RDF graph implementation");
@@ -138,9 +144,9 @@ public class Rdf4jStore implements RdfStore {
   }
 
   @Override
-  public Graph stringToGraph(final String graphString, final IRI baseIRI, final RDFSyntax syntax)
-    throws IllegalArgumentException, IOException {
-    try (final var stringReader = new StringReader(graphString)) {
+  public Graph stringToGraph(final String graphString, final IRI baseIri, final RDFSyntax syntax)
+      throws IllegalArgumentException, IOException {
+    try (var stringReader = new StringReader(graphString)) {
       final RDFFormat format;
       if (syntax.equals(RDFSyntax.TURTLE)) {
         format = RDFFormat.TURTLE;
@@ -152,7 +158,7 @@ public class Rdf4jStore implements RdfStore {
       final var rdfParser = Rio.createParser(format);
       final var model = new LinkedHashModel();
       rdfParser.setRDFHandler(new StatementCollector(model));
-      rdfParser.parse(stringReader, baseIRI.getIRIString());
+      rdfParser.parse(stringReader, baseIri.getIRIString());
       return this.rdfImpl.asGraph(model);
     } catch (final RDFParseException e) {
       throw new IllegalArgumentException("RDF parse error: " + e.getMessage());
@@ -162,8 +168,13 @@ public class Rdf4jStore implements RdfStore {
   }
 
   public void addEntityGraph(final IRI entityIri, final Graph entityGraph) {
-    try (final var stream = ((RDF4JGraph) entityGraph).stream()) {
-      stream.forEach(triple -> this.dataset.add(entityIri, triple.getSubject(), triple.getPredicate(), triple.getObject()));
+    try (var stream = ((RDF4JGraph) entityGraph).stream()) {
+      stream.forEach(triple -> this.dataset.add(
+          entityIri,
+          triple.getSubject(),
+          triple.getPredicate(),
+          triple.getObject()
+      ));
     }
   }
 }

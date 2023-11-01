@@ -12,15 +12,18 @@ import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 public abstract class HypermediaArtifact extends Artifact {
   private final ListMultimap<String, ActionAffordance> actionAffordances =
-    Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private SecurityScheme securityScheme = new NoSecurityScheme();
 
@@ -73,48 +76,61 @@ public abstract class HypermediaArtifact extends Artifact {
   }
 
   protected String getArtifactUri() {
-    return HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(this.getId().getWorkspaceId().getName())
+    return HypermediaArtifactRegistry.getInstance()
+                                     .getHttpArtifactsPrefix(
+                                       this.getId().getWorkspaceId().getName()
+                                     )
            + this.getArtifactName();
   }
 
-  protected final void registerActionAffordance(final String actionClass, final String actionName, final String relativeUri) {
+  protected final void registerActionAffordance(
+      final String actionClass,
+      final String actionName,
+      final String relativeUri
+  ) {
     this.registerActionAffordance(actionClass, actionName, relativeUri, null);
   }
 
   protected final void registerActionAffordance(
-    final String actionClass,
-    final String actionName,
-    final String relativeUri,
-    final DataSchema inputSchema
+      final String actionClass,
+      final String actionName,
+      final String relativeUri,
+      final DataSchema inputSchema
   ) {
     this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
   }
 
   protected final void registerActionAffordance(
-    final String actionClass,
-    final String actionName,
-    final String methodName,
-    final String relativeUri,
-    final DataSchema inputSchema
+      final String actionClass,
+      final String actionName,
+      final String methodName,
+      final String relativeUri,
+      final DataSchema inputSchema
   ) {
     final var actionBuilder =
-      new ActionAffordance
-        .Builder(
-          actionName,
-          new Form.Builder(this.getArtifactUri() + relativeUri)
-                  .setMethodName(methodName)
-                  .build()
-        )
-        .addSemanticType(actionClass)
-        .addTitle(actionName);
+        new ActionAffordance
+          .Builder(
+            actionName,
+            new Form.Builder(this.getArtifactUri() + relativeUri)
+                    .setMethodName(methodName)
+                    .build()
+          )
+          .addSemanticType(actionClass)
+          .addTitle(actionName);
 
     this.registerActionAffordance(
-      actionName,
-      Optional.ofNullable(inputSchema).map(actionBuilder::addInputSchema).orElse(actionBuilder).build()
+        actionName,
+        Optional.ofNullable(inputSchema)
+                .map(actionBuilder::addInputSchema)
+                .orElse(actionBuilder)
+                .build()
     );
   }
 
-  protected final void registerActionAffordance(final String actionName, final ActionAffordance action) {
+  protected final void registerActionAffordance(
+      final String actionName,
+      final ActionAffordance action
+  ) {
     this.actionAffordances.put(actionName, action);
   }
 
@@ -137,6 +153,8 @@ public abstract class HypermediaArtifact extends Artifact {
   private String getSemanticType() {
     return HypermediaArtifactRegistry.getInstance()
                                      .getArtifactSemanticType(this.getClass().getCanonicalName())
-                                     .orElseThrow(() -> new RuntimeException("Artifact was not registered!"));
+                                     .orElseThrow(
+                                       () -> new RuntimeException("Artifact was not registered!")
+                                     );
   }
 }

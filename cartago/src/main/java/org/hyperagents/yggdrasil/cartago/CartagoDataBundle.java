@@ -1,13 +1,11 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.jackson.JacksonCodec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import io.vertx.core.json.Json;
-import io.vertx.core.json.jackson.JacksonCodec;
 
 /**
  * A class for serializing and deserializing CArtAgO datatypes to JSON. This is used for
@@ -20,11 +18,14 @@ public final class CartagoDataBundle {
   private CartagoDataBundle() {}
 
   public static String toJson(final List<Object> params) {
-    return Json.encode(CartagoDataBundle.objectListToTypedList(params));
+    return Json.encode(objectListToTypedList(params));
   }
 
   public static Object[] fromJson(final String representation) {
-    return CartagoDataBundle.typedListToObjectList(JacksonCodec.decodeValue(representation, new TypeReference<>() {})).toArray();
+    return typedListToObjectList(
+      JacksonCodec.decodeValue(representation, new TypeReference<>() {})
+    )
+    .toArray();
   }
 
   @SuppressWarnings("unchecked")
@@ -41,7 +42,7 @@ public final class CartagoDataBundle {
                         } else if (type.equals(Boolean.class.getCanonicalName())) {
                           return Boolean.valueOf((String) param.get(1));
                         } else if (type.equals(List.class.getCanonicalName())) {
-                          return CartagoDataBundle.typedListToObjectList((List<List<Object>>) param.get(1)).toArray();
+                          return typedListToObjectList((List<List<Object>>) param.get(1)).toArray();
                         } else {
                           return null;
                         }
@@ -56,7 +57,7 @@ public final class CartagoDataBundle {
                    final var typedParam = new ArrayList<>();
                    if (param instanceof List<?>) {
                      typedParam.add(List.class.getCanonicalName());
-                     typedParam.add(CartagoDataBundle.objectListToTypedList((List<Object>) param));
+                     typedParam.add(objectListToTypedList((List<Object>) param));
                    } else {
                      typedParam.add(param.getClass().getCanonicalName());
                      typedParam.add(String.valueOf(param));

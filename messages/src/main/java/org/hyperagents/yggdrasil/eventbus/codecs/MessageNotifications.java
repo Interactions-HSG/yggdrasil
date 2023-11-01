@@ -22,6 +22,6 @@ enum MessageNotifications {
   }
 
   public static Optional<MessageNotifications> getFromName(final String name) {
-    return Arrays.stream(MessageNotifications.values()).filter(n -> n.getName().equals(name)).findFirst();
+    return Arrays.stream(values()).filter(n -> n.getName().equals(name)).findFirst();
   }
 }

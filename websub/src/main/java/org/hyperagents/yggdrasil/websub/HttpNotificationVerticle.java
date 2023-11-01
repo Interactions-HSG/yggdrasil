@@ -10,12 +10,13 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
-  private final static Logger LOGGER = LoggerFactory.getLogger(HttpNotificationVerticle.class.getName());
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(HttpNotificationVerticle.class.getName());
 
   @Override
   public void start() {
@@ -24,45 +25,67 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
-      if (webSubHubUri.isPresent()) {
-        if (!message.body().requestIRI().isEmpty()) {
-          final var entityIRI = message.body().requestIRI();
-          LOGGER.info("Dispatching notifications for: " + entityIRI + ", changes: " + message.body().content());
-          final var client = WebClient.create(this.vertx);
+      if (webSubHubUri.isPresent() && !message.body().requestIri().isEmpty()) {
+        final var entityIri = message.body().requestIri();
+        LOGGER.info(
+            "Dispatching notifications for: "
+            + entityIri
+            + ", changes: "
+            + message.body().content()
+        );
+        final var client = WebClient.create(this.vertx);
 
-          NotificationSubscriberRegistry.getInstance().getCallbackIRIs(entityIRI).forEach(callbackIRI -> {
-            final var request =
-              client
-                .postAbs(callbackIRI)
-                .putHeader("Link", "<" + webSubHubUri.get() + ">; rel=\"hub\"")
-                .putHeader("Link", "<" + entityIRI + ">; rel=\"self\"");
+        NotificationSubscriberRegistry.getInstance().getCallbackIris(entityIri).forEach(
+            callbackIRI -> {
+              final var request =
+                  client
+                    .postAbs(callbackIRI)
+                    .putHeader("Link", "<" + webSubHubUri.get() + ">; rel=\"hub\"")
+                    .putHeader("Link", "<" + entityIri + ">; rel=\"self\"");
 
-            if (message.body() instanceof HttpNotificationDispatcherMessage.EntityDeleted) {
-              LOGGER.info("Sending notification to: " + callbackIRI + "; changes: entity deleted");
-              request.send(reponseHandler(callbackIRI));
-            } else if (!message.body().content().isEmpty()) {
-              final var changes = message.body().content();
-              LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
+              if (message.body() instanceof HttpNotificationDispatcherMessage.EntityDeleted) {
+                LOGGER.info(
+                    "Sending notification to: " + callbackIRI + "; changes: entity deleted"
+                );
+                request.send(reponseHandler(callbackIRI));
+              } else if (!message.body().content().isEmpty()) {
+                final var changes = message.body().content();
+                LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
 
-              request
-                .putHeader(HttpHeaders.CONTENT_LENGTH, "" + changes.length())
-                .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
+                request
+                  .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
+                  .sendBuffer(Buffer.buffer(changes), reponseHandler(callbackIRI));
+              }
             }
-          });
-        }
+        );
       }
     });
   }
 
-  private Handler<AsyncResult<HttpResponse<Buffer>>> reponseHandler(final String callbackIRI) {
+  private Handler<AsyncResult<HttpResponse<Buffer>>> reponseHandler(final String callbackIri) {
     return ar -> {
       final var response = ar.result();
       if (response == null) {
-        LOGGER.info("Failed to send notification to: " + callbackIRI + ", operation failed: " + ar.cause().getMessage());
+        LOGGER.info(
+            "Failed to send notification to: "
+            + callbackIri
+            + ", operation failed: "
+            + ar.cause().getMessage()
+        );
       } else if (response.statusCode() == HttpStatus.SC_OK) {
-        LOGGER.info("Notification sent to: " + callbackIRI + ", status code: " + response.statusCode());
+        LOGGER.info(
+            "Notification sent to: "
+            + callbackIri
+            + ", status code: "
+            + response.statusCode()
+        );
       } else {
-        LOGGER.info("Failed to send notification to: " + callbackIRI + ", status code: " + response.statusCode());
+        LOGGER.info(
+            "Failed to send notification to: "
+            + callbackIri
+            + ", status code: "
+            + response.statusCode()
+        );
       }
     };
   }

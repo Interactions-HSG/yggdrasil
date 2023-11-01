@@ -4,11 +4,10 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
+import java.util.function.Consumer;
 import org.hyperagents.yggdrasil.eventbus.codecs.CartagoMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
-
-import java.util.function.Consumer;
 
 public class CartagoMessagebox implements Messagebox<CartagoMessage> {
   private final EventBus eventBus;
@@ -20,16 +19,25 @@ public class CartagoMessagebox implements Messagebox<CartagoMessage> {
   @Override
   public void init() {
     this.eventBus.registerDefaultCodec(
-      CartagoMessage.CreateWorkspace.class,
-      new GenericMessageCodec<>(CartagoMessage.CreateWorkspace.class, new CartagoMessageMarshaller())
+        CartagoMessage.CreateWorkspace.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.CreateWorkspace.class,
+          new CartagoMessageMarshaller()
+        )
     );
     this.eventBus.registerDefaultCodec(
-      CartagoMessage.CreateArtifact.class,
-      new GenericMessageCodec<>(CartagoMessage.CreateArtifact.class, new CartagoMessageMarshaller())
+        CartagoMessage.CreateArtifact.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.CreateArtifact.class,
+          new CartagoMessageMarshaller()
+        )
     );
     this.eventBus.registerDefaultCodec(
-      CartagoMessage.DoAction.class,
-      new GenericMessageCodec<>(CartagoMessage.DoAction.class, new CartagoMessageMarshaller())
+        CartagoMessage.DoAction.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.DoAction.class,
+          new CartagoMessageMarshaller()
+        )
     );
   }
 
