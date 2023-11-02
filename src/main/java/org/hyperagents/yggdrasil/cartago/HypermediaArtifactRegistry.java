@@ -1,23 +1,15 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import io.vertx.core.json.JsonObject;
+
+import java.util.*;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
  * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster.
  */
 public class HypermediaArtifactRegistry {
-  private static HypermediaArtifactRegistry registry;
-
-  private String httpPrefix = "http://localhost:8080";
+  private static HypermediaArtifactRegistry REGISTRY;
 
   // Maps a workspace name to the name of the hosting environment
   private final Map<String, String> workspaceEnvironmentMap;
@@ -38,93 +30,86 @@ public class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactAPIKeys;
 
+  private String httpPrefix = "http://localhost:8080";
+
   private HypermediaArtifactRegistry() {
-    workspaceEnvironmentMap = new Hashtable<>();
-    artifactSemanticTypes = new Hashtable<>();
-    artifactTemplateDescriptions = new Hashtable<>();
-    artifactActionRouter = new Hashtable<>();
-    artifactAPIKeys = new Hashtable<>();
+    this.workspaceEnvironmentMap = new Hashtable<>();
+    this.artifactSemanticTypes = new Hashtable<>();
+    this.artifactTemplateDescriptions = new Hashtable<>();
+    this.artifactActionRouter = new Hashtable<>();
+    this.artifactAPIKeys = new Hashtable<>();
   }
 
   public static synchronized HypermediaArtifactRegistry getInstance() {
-    if (registry == null) {
-        registry = new HypermediaArtifactRegistry();
+    if (REGISTRY == null) {
+        REGISTRY = new HypermediaArtifactRegistry();
     }
 
-    return registry;
+    return REGISTRY;
   }
 
-  public void register(HypermediaArtifact artifact) {
-    String artifactTemplate = artifact.getArtifactId().getName();
-    artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+  public void register(final HypermediaArtifact artifact) {
+    this.artifactTemplateDescriptions.put(artifact.getArtifactId().getName(), artifact.getHypermediaDescription());
 
-    Map<String, List<ActionAffordance>> actions = artifact.getActionAffordances();
+    final var actions = artifact.getActionAffordances();
 
-    for (String actionName : actions.keySet()) {
-      for (ActionAffordance action : actions.get(actionName)) {
-        Optional<Form> form = action.getFirstForm();
-
-        form.ifPresent(value -> {
+    for (final var actionName : actions.keySet()) {
+      for (final var action : actions.get(actionName)) {
+        action.getFirstForm().ifPresent(value -> {
           if (value.getMethodName().isPresent()) {
-            artifactActionRouter.put(value.getMethodName().get() + value.getTarget(), actionName);
+            this.artifactActionRouter.put(value.getMethodName().get() + value.getTarget(), actionName);
           }
         });
       }
     }
   }
 
-  public void addWorkspace(String envName, String wkspName) {
-    workspaceEnvironmentMap.put(wkspName, envName);
+  public void addWorkspace(final String envName, final String workspaceName) {
+    this.workspaceEnvironmentMap.put(workspaceName, envName);
   }
 
-  public Optional<String> getEnvironmentForWorkspace(String wkspName) {
-    String envName = workspaceEnvironmentMap.get(wkspName);
-    return envName == null ? Optional.empty() : Optional.of(envName);
+  public Optional<String> getEnvironmentForWorkspace(final String workspaceName) {
+    return Optional.ofNullable(this.workspaceEnvironmentMap.get(workspaceName));
   }
 
-  public void addArtifactTemplates(JsonObject artifactTemplates) {
-    if (artifactTemplates != null) {
-      artifactTemplates.forEach(entry ->
-          artifactSemanticTypes.put(entry.getKey(), (String) entry.getValue()));
-    }
+  public void addArtifactTemplates(final JsonObject artifactTemplates) {
+    Optional.ofNullable(artifactTemplates)
+            .ifPresent(t -> t.forEach(e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())));
   }
 
   public Set<String> getArtifactTemplates() {
-    return artifactSemanticTypes.keySet();
+    return this.artifactSemanticTypes.keySet();
   }
 
-  public Optional<String> getArtifactSemanticType(String artifactTemplate) {
-    for (String artifactType : artifactSemanticTypes.keySet()) {
-      if (artifactSemanticTypes.get(artifactType).compareTo(artifactTemplate) == 0) {
-        return Optional.of(artifactType);
-      }
-    }
-
-    return Optional.empty();
+  public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
+    return this.artifactSemanticTypes
+               .keySet()
+               .stream()
+               .filter(a -> this.artifactSemanticTypes.get(a).equals(artifactTemplate))
+               .findFirst();
   }
 
-  public Optional<String> getArtifactTemplate(String artifactClass) {
-    String artifactTemplate = artifactSemanticTypes.get(artifactClass);
-    return artifactTemplate == null ? Optional.empty() : Optional.of(artifactTemplate);
+  public Optional<String> getArtifactTemplate(final String artifactClass) {
+    return Optional.ofNullable(this.artifactSemanticTypes.get(artifactClass));
   }
 
-  public String getArtifactDescription(String artifactName) {
-    return artifactTemplateDescriptions.get(artifactName);
+  public String getArtifactDescription(final String artifactName) {
+    return this.artifactTemplateDescriptions.get(artifactName);
   }
 
-  public String getActionName(String method, String requestURI) {
-    return artifactActionRouter.get(method + requestURI);
+  public String getActionName(final String method, final String requestURI) {
+    return this.artifactActionRouter.get(method + requestURI);
   }
 
-  public void setAPIKeyForArtifact(String artifactId, String apiKey) {
-    artifactAPIKeys.put(artifactId, apiKey);
+  public void setAPIKeyForArtifact(final String artifactId, final String apiKey) {
+    this.artifactAPIKeys.put(artifactId, apiKey);
   }
 
-  public String getAPIKeyForArtifact(String artifactId) {
-    return artifactAPIKeys.get(artifactId);
+  public String getAPIKeyForArtifact(final String artifactId) {
+    return this.artifactAPIKeys.get(artifactId);
   }
 
-  public void setHttpPrefix(String prefix) {
+  public void setHttpPrefix(final String prefix) {
     this.httpPrefix = prefix;
   }
 
@@ -133,20 +118,16 @@ public class HypermediaArtifactRegistry {
   }
 
   public String getHttpEnvironmentsPrefix() {
-    return getHttpPrefix() + "/environments/";
+    return this.getHttpPrefix() + "/environments/";
   }
 
-  public String getHttpWorkspacesPrefix(String envId) {
-    return getHttpEnvironmentsPrefix() + envId + "/workspaces/";
+  public String getHttpWorkspacesPrefix(final String envId) {
+    return this.getHttpEnvironmentsPrefix() + envId + "/workspaces/";
   }
 
-  public String getHttpArtifactsPrefix(String wkspName) {
-    Optional<String> envId = this.getEnvironmentForWorkspace(wkspName);
-
-    if (envId.isPresent()) {
-      return getHttpWorkspacesPrefix(envId.get()) + wkspName + "/artifacts/";
-    }
-
-    throw new IllegalArgumentException("Workspace " + wkspName + " not found in any environment.");
+  public String getHttpArtifactsPrefix(final String workspaceName) {
+    return this.getEnvironmentForWorkspace(workspaceName)
+               .map(i -> this.getHttpWorkspacesPrefix(i) + workspaceName + "/artifacts/")
+               .orElseThrow(() -> new IllegalArgumentException("Workspace " + workspaceName + " not found in any environment."));
   }
 }

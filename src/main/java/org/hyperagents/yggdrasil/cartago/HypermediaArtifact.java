@@ -1,14 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
@@ -19,42 +10,43 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class HypermediaArtifact extends Artifact {
-  private final Map<String, List<ActionAffordance>> actionAffordances = new HashMap<>();
-
-  private SecurityScheme securityScheme = new NoSecurityScheme();
+  private final ListMultimap<String, ActionAffordance> actionAffordances =
+    Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
+  private SecurityScheme securityScheme = new NoSecurityScheme();
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
-   * on the W3C Web of Things Thing Description: https://www.w3.org/TR/wot-thing-description/
+   * on the W3C Web of Things <a href="https://www.w3.org/TR/wot-thing-description/">Thing Description</a>.
    *
    * @return An RDF description of the artifact and its interface.
    */
   public String getHypermediaDescription() {
-    ThingDescription.Builder tdBuilder = new ThingDescription.Builder(getArtifactName())
-        .addSecurityScheme(securityScheme)
-        .addSemanticType("http://w3id.org/eve#Artifact")
-        .addSemanticType(getSemanticType())
-        .addThingURI(getArtifactUri())
-        .addGraph(metadata);
+    final var tdBuilder = new ThingDescription.Builder(this.getArtifactName())
+                                              .addSecurityScheme(this.securityScheme)
+                                              .addSemanticType("http://w3id.org/eve#Artifact")
+                                              .addSemanticType(this.getSemanticType())
+                                              .addThingURI(this.getArtifactUri())
+                                              .addGraph(this.metadata);
+    this.actionAffordances.values().forEach(tdBuilder::addAction);
 
-    for (String actionName : actionAffordances.keySet()) {
-      for (ActionAffordance action : actionAffordances.get(actionName)) {
-        tdBuilder.addAction(action);
-      }
-    }
-
-    return new TDGraphWriter(tdBuilder.build())
-        .setNamespace("td", "https://www.w3.org/2019/wot/td#")
-        .setNamespace("htv", "http://www.w3.org/2011/http#")
-        .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
-        .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
-        .setNamespace("dct", "http://purl.org/dc/terms/")
-        .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-        .setNamespace("eve", "http://w3id.org/eve#")
-        .write();
+    return new TDGraphWriter(tdBuilder.build()).setNamespace("td", "https://www.w3.org/2019/wot/td#")
+                                               .setNamespace("htv", "http://www.w3.org/2011/http#")
+                                               .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
+                                               .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
+                                               .setNamespace("dct", "http://purl.org/dc/terms/")
+                                               .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
+                                               .setNamespace("eve", "http://w3id.org/eve#")
+                                               .write();
   }
 
   /**
@@ -70,7 +62,7 @@ public abstract class HypermediaArtifact extends Artifact {
   protected void setupOperations() throws CartagoException {
     super.setupOperations();
 
-    registerInteractionAffordances();
+    this.registerInteractionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);
   }
 
@@ -81,65 +73,70 @@ public abstract class HypermediaArtifact extends Artifact {
   }
 
   protected String getArtifactUri() {
-    String wkspName = getId().getWorkspaceId().getName();
-
-    return HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(wkspName)
-        + getArtifactName();
+    return HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(this.getId().getWorkspaceId().getName())
+           + this.getArtifactName();
   }
 
-  protected final void registerActionAffordance(String actionClass, String actionName,
-      String relativeUri) {
-    registerActionAffordance(actionClass, actionName, relativeUri, null);
+  protected final void registerActionAffordance(final String actionClass, final String actionName, final String relativeUri) {
+    this.registerActionAffordance(actionClass, actionName, relativeUri, null);
   }
 
-  protected final void registerActionAffordance(String actionClass, String actionName,
-      String relativeUri, DataSchema inputSchema) {
-    registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
+  protected final void registerActionAffordance(
+    final String actionClass,
+    final String actionName,
+    final String relativeUri,
+    final DataSchema inputSchema
+  ) {
+    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
   }
 
-  protected final void registerActionAffordance(String actionClass, String actionName,
-      String methodName, String relativeUri, DataSchema inputSchema) {
-    ActionAffordance.Builder actionBuilder = new ActionAffordance.Builder(actionName,
-            new Form.Builder(getArtifactUri() + relativeUri)
-              .setMethodName(methodName)
-              .build())
+  protected final void registerActionAffordance(
+    final String actionClass,
+    final String actionName,
+    final String methodName,
+    final String relativeUri,
+    final DataSchema inputSchema
+  ) {
+    final var actionBuilder =
+      new ActionAffordance
+        .Builder(
+          actionName,
+          new Form.Builder(this.getArtifactUri() + relativeUri)
+                  .setMethodName(methodName)
+                  .build()
+        )
         .addSemanticType(actionClass)
         .addTitle(actionName);
 
-    if (inputSchema != null) {
-      actionBuilder.addInputSchema(inputSchema);
-    }
-
-    registerActionAffordance(actionName, actionBuilder.build());
+    this.registerActionAffordance(
+      actionName,
+      Optional.ofNullable(inputSchema).map(actionBuilder::addInputSchema).orElse(actionBuilder).build()
+    );
   }
 
-  protected final void registerActionAffordance(String actionName, ActionAffordance action) {
-    List<ActionAffordance> actions = actionAffordances.getOrDefault(actionName, new ArrayList<>());
-
-    actions.add(action);
-    actionAffordances.put(actionName, actions);
+  protected final void registerActionAffordance(final String actionName, final ActionAffordance action) {
+    this.actionAffordances.put(actionName, action);
   }
 
-  protected final void setSecurityScheme(SecurityScheme scheme) {
+  protected final void setSecurityScheme(final SecurityScheme scheme) {
     this.securityScheme = scheme;
   }
 
-  protected final void addMetadata(Model model) {
+  protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
   }
 
   Map<String, List<ActionAffordance>> getActionAffordances() {
-    return actionAffordances;
+    return this.actionAffordances
+               .asMap()
+               .entrySet()
+               .stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
   }
 
   private String getSemanticType() {
-    Optional<String> semType = HypermediaArtifactRegistry.getInstance().getArtifactSemanticType(
-        this.getClass().getCanonicalName());
-
-    if (semType.isPresent()) {
-      return semType.get();
-    }
-
-    throw new RuntimeException("Artifact was not registered!");
+    return HypermediaArtifactRegistry.getInstance()
+                                     .getArtifactSemanticType(this.getClass().getCanonicalName())
+                                     .orElseThrow(() -> new RuntimeException("Artifact was not registered!"));
   }
 }

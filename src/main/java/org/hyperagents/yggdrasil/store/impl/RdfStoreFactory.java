@@ -5,7 +5,7 @@ import org.hyperagents.yggdrasil.store.RdfStore;
 
 public class RdfStoreFactory {
 
-  public static RdfStore createStore(JsonObject config) {
+  public static RdfStore createStore(final JsonObject config) {
     return new Rdf4jStore(config);
   }
 }
