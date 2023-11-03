@@ -1,3 +1,3 @@
 rootProject.name = "yggdrasil"
 
-include("utils", "messages", "websub", "store", "cartago", "http")
+include("yggdrasil-utils", "yggdrasil-messages", "yggdrasil-websub", "yggdrasil-store", "yggdrasil-cartago", "yggdrasil-http")

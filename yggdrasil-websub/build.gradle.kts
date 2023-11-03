@@ -26,21 +26,15 @@ java {
 }
 
 dependencies {
-  implementation(project(":utils"))
-  implementation(project(":messages"))
+  implementation(project(":yggdrasil-utils"))
+  implementation(project(":yggdrasil-messages"))
 
   implementation(libs.vertx.core)
   implementation(libs.vertx.web.client)
 
   implementation(libs.httpcomponents.core)
 
-  implementation(libs.rdf4j.model)
-  implementation(libs.rdf4j.repository.sail)
-  implementation(libs.rdf4j.sail.memory)
-  implementation(libs.rdf4j.sail.nativerdf)
-
-  implementation(libs.commons.rdf.api)
-  implementation(libs.commons.rdf.rdf4j)
+  implementation(libs.guava)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
@@ -64,3 +58,4 @@ tasks {
     }
   }
 }
+

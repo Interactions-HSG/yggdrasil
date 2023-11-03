@@ -26,17 +26,18 @@ java {
 }
 
 dependencies {
-  implementation(project(":utils"))
-  implementation(project(":messages"))
+  implementation(project(":yggdrasil-utils"))
+  implementation(project(":yggdrasil-messages"))
 
   implementation(libs.vertx.core)
+  implementation(libs.vertx.web.client)
 
   implementation(libs.httpcomponents.core)
 
-  implementation(files("libs/cartago-2.5.jar"))
-  implementation(libs.wot.td.java)
-
   implementation(libs.rdf4j.model)
+  implementation(libs.rdf4j.repository.sail)
+  implementation(libs.rdf4j.sail.memory)
+  implementation(libs.rdf4j.sail.nativerdf)
 
   implementation(libs.commons.rdf.api)
   implementation(libs.commons.rdf.rdf4j)
@@ -47,9 +48,6 @@ dependencies {
 
   testImplementation(libs.junit)
   testImplementation(libs.vertx.unit)
-
-  testImplementation(libs.httpcomponents.httpclient5)
-  testImplementation(libs.httpcomponents.httpclient5.fluent)
 
   testCompileOnly(libs.spotbugs.annotations)
 }
