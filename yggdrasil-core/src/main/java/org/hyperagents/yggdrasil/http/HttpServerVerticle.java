@@ -28,7 +28,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.route().handler(BodyHandler.create());
 
     router.get("/").handler((routingContext) ->
-        routingContext.response().setStatusCode(HttpStatus.SC_OK).end("Yggdrasil v0.0")
+        routingContext.response().setStatusCode(HttpStatus.SC_OK).end("Yggdrasil v0.0.0")
     );
 
     final var handler = new HttpEntityHandler(this.vertx, this.context);
