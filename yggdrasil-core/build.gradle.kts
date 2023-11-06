@@ -27,21 +27,24 @@ java {
 
 dependencies {
   implementation(project(":yggdrasil-utils"))
-  implementation(project(":yggdrasil-messages"))
   implementation(project(":yggdrasil-cartago"))
   implementation(project(":yggdrasil-websub"))
-  implementation(project(":yggdrasil-store"))
 
   implementation(libs.vertx.core)
   implementation(libs.vertx.web)
+  implementation(libs.vertx.web.client)
 
   implementation(libs.wot.td.java)
 
   implementation(libs.httpcomponents.core)
 
   implementation(libs.guava)
-
   implementation(libs.gson)
+
+  implementation(libs.rdf4j.model)
+  implementation(libs.rdf4j.repository.sail)
+  implementation(libs.rdf4j.sail.memory)
+  implementation(libs.rdf4j.sail.nativerdf)
 
   implementation(libs.commons.rdf.api)
   implementation(libs.commons.rdf.rdf4j)
@@ -57,11 +60,6 @@ dependencies {
   testImplementation(libs.httpcomponents.httpclient5.fluent)
 
   testImplementation(libs.vertx.web.client)
-
-  testImplementation(libs.rdf4j.model)
-  testImplementation(libs.rdf4j.repository.sail)
-  testImplementation(libs.rdf4j.sail.memory)
-  testImplementation(libs.rdf4j.sail.nativerdf)
 
   testCompileOnly(libs.spotbugs.annotations)
 }

@@ -8,11 +8,16 @@ plugins {
 
 checkstyle {
   config = resources.text.fromFile("${rootProject.projectDir}/checkstyle.xml")
-  toolVersion = "10.12.4"
+  toolVersion = libs.versions.checkstyle.get()
 }
 
 pmd {
+  toolVersion = libs.versions.pmd.get()
   ruleSetConfig = resources.text.fromFile("${rootProject.projectDir}/pmd.xml")
+}
+
+spotbugs {
+  toolVersion = libs.versions.spotbugs
 }
 
 java {
@@ -22,6 +27,8 @@ java {
 
 dependencies {
   implementation(libs.vertx.core)
+
+  implementation(libs.gson)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)

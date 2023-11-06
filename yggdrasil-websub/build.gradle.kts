@@ -27,7 +27,6 @@ java {
 
 dependencies {
   implementation(project(":yggdrasil-utils"))
-  implementation(project(":yggdrasil-messages"))
 
   implementation(libs.vertx.core)
   implementation(libs.vertx.web.client)

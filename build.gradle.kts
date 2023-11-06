@@ -42,9 +42,8 @@ allprojects {
 }
 
 dependencies {
-  implementation(project(":yggdrasil-http"))
+  implementation(project(":yggdrasil-core"))
   implementation(project(":yggdrasil-cartago"))
-  implementation(project(":yggdrasil-store"))
   implementation(project(":yggdrasil-websub"))
 
   implementation(libs.vertx.core)
