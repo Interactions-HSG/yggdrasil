@@ -1,7 +1,0 @@
-[submodule "cartago"]
-	path = cartago
-	url = git@github.com:Interactions-HSG/cartago.git
-[submodule "wot-td-java"]
-	path = wot-td-java
-	url = git@github.com:Interactions-HSG/wot-td-java.git
-	branch = master
