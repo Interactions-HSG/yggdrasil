@@ -80,28 +80,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleDeleteEntity);
     router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
 
-    //route agent requests
-    router.post("/agents/").consumes("text/plain").handler(handler::handleInstantiateAgent);
-    router.get("/agents/:agentid").handler(handler::handleGetAgentProfile);
-    router.post("/agents/:agentid").handler(handler::handleReceiveNotification);
-    router.delete("/agents/:agentid").handler(handler::handleDeleteAgent);
-    router.post("/agents/:agentid/message").handler(handler::handleReceiveMessage);
-    router.options("/agents/:agentid/message").handler(CorsHandler.create("*")
-      .maxAgeSeconds(86400)
-      .allowedMethod(io.vertx.core.http.HttpMethod.GET)
-      .allowedMethod(io.vertx.core.http.HttpMethod.POST)
-      .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
-      .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
-      .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
-      .allowedHeader("Access-Control-Allow-Headers")
-      .allowedHeader("Authorization")
-      .allowedHeader("Access-Control-Allow-Method")
-      .allowedHeader("Access-Control-Allow-Origin")
-      .allowedHeader("Access-Control-Allow-Credentials")
-      .allowedHeader("Content-Type")
-        .allowedHeader("Expires")
-      .allowedHeader("Origin"));
-
     // route artifact manual requests
     // TODO: this feature was implemented for the WWW2020 demo, a manual is any RDF graph
     router.get("/manuals/:wkspid").handler(handler::handleGetEntity);

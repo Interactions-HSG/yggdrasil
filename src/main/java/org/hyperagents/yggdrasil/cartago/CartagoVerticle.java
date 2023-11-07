@@ -7,7 +7,6 @@ import cartago.*;
 import cartago.events.ArtifactObsEvent;
 import cartago.tools.Console;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.PubSubVerticle;
 import org.hyperagents.yggdrasil.http.HttpEntityHandler;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
@@ -398,7 +397,7 @@ public class CartagoVerticle extends AbstractVerticle {
       System.out.println("artifact IRI: "+ artifactIri);
       System.out.println("callback IRI: "+ callbackIri);
       NotificationSubscriberRegistry.getInstance().addCallbackIRI(artifactIri, callbackIri);
-      ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(artifactName).getArtifact().readAllProperties();
+      List<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(artifactName).getAdapter().readProperties();
       if (properties.size()>0){
         for (ArtifactObsProperty p : properties) {
           DeliveryOptions options = new DeliveryOptions()
@@ -588,17 +587,6 @@ public class CartagoVerticle extends AbstractVerticle {
       Object o = feedbackParam.get();
       System.out.println("result: "+o);
     }*/
-    DeliveryOptions options = new DeliveryOptions().addHeader(PubSubVerticle.REQUEST_METHOD, PubSubVerticle.PUBLISH)
-      .addHeader(PubSubVerticle.TOPIC_NAME, "cartago action")
-      .addHeader(PubSubVerticle.SENDER, CartagoVerticle.BUS_ADDRESS);
-    JsonObject jsonMessage = new JsonObject();
-    jsonMessage.put("actionName", action);
-    //ArtifactId artifactId = workspace.getArtifact(artifactName);
-    jsonMessage.put("artifactType", artifactId.getArtifactType());
-    jsonMessage.put("workspace", workspaceName);
-    System.out.println("message to send: " + jsonMessage);
-    vertx.eventBus().send(PubSubVerticle.BUS_ADDRESS, jsonMessage.encode(), options);
-    System.out.println("message sent");
     return returnObject;
   }
 
@@ -696,220 +684,6 @@ public class CartagoVerticle extends AbstractVerticle {
     for (String key : agentCredentials.keySet()) {
       System.out.println("agent: " + key + " has credential: " + agentCredentials.get(key).getId());
     }
-  }
-
-  class CartagoPerceptFetcher extends Thread {
-
-    public void run(){
-        while (true) {
-          try {
-            //System.out.println("new loop");
-            List<String> workspaces = WorkspaceRegistry.getInstance().getAllWorkspaces();
-            for (String w : workspaces) {
-              Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(w);
-              String[] artifacts = workspace.getArtifactList();
-              for (String a : artifacts) {
-                ArtifactId artifactId = workspace.getArtifact(a);
-                String artifactIri = HypermediaArtifactRegistry.getInstance()
-                  .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
-                ArtifactObsProperty[] added = workspace.getArtifactDescriptor(a).getArtifact().getPropsAdded();
-                ArtifactObsProperty[] removed = workspace.getArtifactDescriptor(a).getArtifact().getPropsRemoved();
-                ArtifactObsProperty[] changed = workspace.getArtifactDescriptor(a).getArtifact().getPropsChanged();
-                if (added.length>0 || removed.length>0 || changed.length>0){
-                  System.out.println("prepare notification");
-                  ArtifactObsEvent e = new ArtifactObsEvent(0, artifactId, null, changed, added, removed);
-                  DeliveryOptions options = new DeliveryOptions()
-                    .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
-                    .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
-                  vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, e.toString(), options);
-                  workspace.getArtifactDescriptor(a).getArtifact().commitChanges();
-                }
-
-              }
-            }
-
-            sleep(2000); //TODO: change
-
-          } catch (InterruptedException e){
-            e.printStackTrace();
-          }
-        }
-    }
-
-    /*public void run(){
-      while (true) {
-        try {
-          List<String> workspaces = WorkspaceRegistry.getInstance().getAllWorkspaces();
-          for (String w : workspaces) {
-            Workspace workspace = WorkspaceRegistry.getInstance().getWorkspace(w);
-            String[] artifacts = workspace.getArtifactList();
-            for (String a : artifacts) {
-              ArtifactId artifactId = workspace.getArtifact(a);
-              String artifactIri = HypermediaArtifactRegistry.getInstance()
-                .getHttpArtifactsPrefix(workspace.getId().getName()) + a;
-              ArrayList<ArtifactObsProperty> properties = workspace.getArtifactDescriptor(a).getArtifact().readAllProperties(); //TODO: check
-                if (properties !=null && properties.size()>0) {
-                  //System.out.println("send notifications");
-                  for (ArtifactObsProperty p : properties) {
-                    DeliveryOptions options = new DeliveryOptions()
-                      .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
-                      .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
-                    vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, p.toString(), options);
-
-                  }
-                } else {
-                    //System.out.println("send no notification");
-
-                }
-
-              }
-
-            }
-
-          sleep(2000); //TODO: change
-
-        } catch (Exception e) {
-          System.out.println("exception caught");
-          e.printStackTrace();
-        }
-      }
-    }*/
-
-    /*public void run() {
-      try {
-        while (true) {
-          for (AgentCredential credential : agentCredentials.values()) { //TODO: see if correct
-            ICartagoListener listener = new ICartagoListener() {
-              @Override
-              public boolean notifyCartagoEvent(CartagoEvent ev) {
-                boolean b = false;
-                if (ev instanceof ArtifactObsEvent){
-                  b = true;
-                }
-                return b;
-              }
-            };
-            AgentSession agentSession = new AgentSession(credential, "role", listener); //TODO: check because the constructor was made public
-            //CartagoContext context = new CartagoContext(credential);
-            //CartagoBasicContext context = new CartagoBasicContext(agentUri);
-            //Percept percept = context.fetchPercept();
-            CartagoEvent e = agentSession.fetchNextPercept();
-            System.out.println("event: "+ e.toString());
-            if (e instanceof ArtifactObsEvent) {
-              ArtifactObsEvent a = (ArtifactObsEvent) e;
-              System.out.println("artifact event: "+ a);
-              Percept percept = new Percept(a);
-              if (percept != null) {
-                LOGGER.info(printPercept(percept) + " for agent " + credential.getId()+ " from artifact "
-                  + percept.getArtifactSource());
-
-                // Signals don;t have an artifact source
-                if (percept.hasSignal() || percept.getPropChanged() == null) {
-                  continue;
-                }
-
-                ArtifactId source = percept.getArtifactSource();
-
-                String artifactIri = HypermediaArtifactRegistry.getInstance()
-                  .getHttpArtifactsPrefix(source.getWorkspaceId().getName()) + source.getName();
-                LOGGER.info("artifactIri: " + artifactIri + ", precept: " + percept.getPropChanged()[0].toString());
-
-                DeliveryOptions options = new DeliveryOptions()
-                  .addHeader(HttpEntityHandler.REQUEST_METHOD, HttpNotificationVerticle.ARTIFACT_OBS_PROP)
-                  .addHeader(HttpEntityHandler.REQUEST_URI, artifactIri);
-
-                vertx.eventBus().send(HttpNotificationVerticle.BUS_ADDRESS, percept.getPropChanged()[0].toString(),
-                  options);
-
-                LOGGER.info("message sent to notification verticle");
-              }
-            }
-
-            sleep(100);
-          }
-        }
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (CartagoException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    private String printPercept(Percept percept) {
-      String output = "Percept: " + percept.getSignal();
-
-      output += ", [" + printProps(percept.getAddedProperties()) + "]";
-      output += ", [" + printProps(percept.getPropChanged()) + "]";
-      output += ", [" + printProps(percept.getRemovedProperties()) + "]";
-
-      return output;
-    }
-
-    private String printProps(ArtifactObsProperty[] props) {
-      if (props == null) {
-        return "";
-      }
-
-      StringBuilder output = new StringBuilder();
-      for (ArtifactObsProperty prop : props) {
-        output.append(prop.toString()).append(", id: ").append(prop.getId()).append(", fullId: ").append(prop.getFullId()).append(", annot: ").append(prop.getAnnots());
-      }
-
-      return output.toString();
-    }*/
-
-    /*private List<String> getArtifacts(CartagoContext context) {
-      List<String> artifactNames = new ArrayList<>();
-      List<Workspace> workspaces = new ArrayList<>();
-      WorkspaceRegistry registry = WorkspaceRegistry.getInstance();
-      List<String> workspaceNames = registry.getAllWorkspaces();
-      for (String wname : workspaceNames) {
-        workspaces.add(registry.getWorkspace(wname));
-      }
-      for (Workspace workspace : workspaces) {
-        String[] artNames = workspace.getArtifactList();
-        for (int i = 0; i < artNames.length; i++) {
-          ArtifactDescriptor descriptor = workspace.getArtifactDescriptor(artNames[i]);
-          List<ArtifactObserver> observers = descriptor.getObservers();
-          for (ArtifactObserver observer : observers) {
-            if (observer.getAgentId().equals(getAgentId(context, workspace.getId()))) {
-              artifactNames.add(artNames[i]);
-            }
-          }
-        }
-      }
-      return artifactNames;
-    }
-  }*/
-
-  /*private Object[] createParam(Object... objs) {
-    return objs;
-  }*/
-
-  /*private String getOpString(Op operation) {
-    String s = "";
-    s = s + "operation name: " + operation.getName() + "\n";
-    Object[] params = operation.getParamValues();
-    int n = params.length;
-    for (int i = 0; i < n; i++) {
-      Object obj = params[i];
-      Class c = obj.getClass();
-      s = s + "object: " + obj.toString() + ", class: " + c.toString() + "\n";
-    }
-    return s;
-  }*/
-
-  /*private String getParamString(Object[] params) {
-    String s = "";
-    int n = params.length;
-    for (int i = 0; i < n; i++) {
-      Object obj = params[i];
-      Class c = obj.getClass();
-      s = s + "object: " + obj + ", class: " + c.toString() + "\n";
-    }
-    return s;
-  }*/
-
   }
 }
 

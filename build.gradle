@@ -17,7 +17,8 @@ repositories {
 
 group = "org.hyperagents"
 version = '0.0-SNAPSHOT'
-sourceCompatibility = "11"
+targetCompatibility = "15"
+sourceCompatibility = "15"
 mainClassName = 'io.vertx.core.Launcher'
 
 def vertxVersion = '3.9.0'
@@ -38,8 +39,8 @@ dependencies {
   implementation 'org.apache.httpcomponents.client5:httpclient5:5.0.1'
   implementation 'org.apache.httpcomponents.client5:httpclient5-fluent:5.0.1'
 
-  compile files("libs/cartago-3.1.jar")
-  compile group: "com.github.Interactions-HSG", name: "wot-td-java", version: "v0.1.1"
+  implementation files("libs/cartago-3.1.jar")
+  implementation "com.github.Interactions-HSG:wot-td-java:v0.1.1"
 
   // https://mvnrepository.com/artifact/org.eclipse.rdf4j/rdf4j-model
   implementation group: 'org.eclipse.rdf4j', name: 'rdf4j-model', version: '2.4.2'
@@ -59,10 +60,6 @@ dependencies {
   testImplementation "io.vertx:vertx-unit:$vertxVersion"
   //testImplementation 'ch.qos.loback:logback-classic:1.2.9'
 }
-
-
-
-
 
 shadowJar {
   classifier = 'fat'
@@ -84,4 +81,3 @@ apply plugin: 'java'
 compileJava {
   options.compilerArgs << '-parameters'
 }
-targetCompatibility = JavaVersion.VERSION_11

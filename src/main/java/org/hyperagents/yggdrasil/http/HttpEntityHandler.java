@@ -1,13 +1,11 @@
 package org.hyperagents.yggdrasil.http;
 
 import java.util.*;
-import ch.unisg.ics.interactions.wot.td.io.TDWriter;
 import io.vertx.core.http.HttpMethod;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.*;
-import org.hyperagents.yggdrasil.jason.*;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -458,139 +456,6 @@ public class HttpEntityHandler {
     cartagoPromise.future().compose(result -> Future.future(promise -> storeSubWorkspace(routingContext, workspaceName, result, promise)));
   }
 
-  public void handleInstantiateAgent(RoutingContext routingContext){
-    System.out.println("handle instantiate agent");
-    String agentId = routingContext.request().getHeader("X-Agent-WebID");
-    String agentName = routingContext.request().getHeader("Slug");
-    System.out.println("agent name: "+ agentName);
-
-    String representation = routingContext.getBodyAsString();
-    System.out.println("representation: "+representation);
-    if (agentId == null){
-      routingContext.response()
-        .setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
-    }
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(REQUEST_METHOD, JasonVerticle.INSTANTIATE_AGENT)
-      .addHeader(JasonVerticle.AGENT_NAME, agentName);
-
-    vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, representation, options, reply -> {
-      if (reply.succeeded()) {
-        AgentRegistry.getInstance().printAllAgents();
-        System.out.println("agent creation succeeded");
-        routingContext.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
-      } else {
-        System.out.println("agent creation failed");
-        routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
-      }
-    });
-  }
-
-  public void handleGetAgentProfile(RoutingContext context){
-    LOGGER.info("handle get agent profile");
-    String agentIRI = context.request().absoluteURI();
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(REQUEST_METHOD, RdfStore.GET_ENTITY)
-      .addHeader(REQUEST_URI, agentIRI);
-
-    Map<String,List<String>> headers = getHeaders(agentIRI);
-
-    vertx.eventBus().request(RdfStore.BUS_ADDRESS, null, options,
-      handleStoreReply(context, HttpStatus.SC_OK, headers));
-  }
-
-  public void handleReceiveNotification(RoutingContext context){
-    String agentUri = context.request().absoluteURI();
-    int index = agentUri.indexOf("/agents");
-    String agentName = agentUri.substring(index + 8);
-    System.out.println("agent name: "+agentName);
-    String body = context.getBodyAsString();
-    AgentRegistry agentRegistry = AgentRegistry.getInstance();
-    try {
-      AgentNotificationCallback callback = agentRegistry.getAgentCallback(agentName);
-      callback.addNotification(body);
-      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("notification received");
-    } catch(Exception e){
-      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("notification not received");
-      e.printStackTrace();
-    }
-  }
-
-  public void handleReceiveMessage(RoutingContext context){
-    System.out.println("message received");
-    String uri = context.request().absoluteURI();
-    int n = uri.length();
-    String agentUri = uri.substring(0, n-8);
-    int index  = agentUri.indexOf("/agents/");
-    String agentName = agentUri.substring(index + 8);
-    System.out.println("agent name: "+ agentName);
-    String body = context.getBodyAsString();
-    System.out.println("message received: "+body);
-    AgentRegistry agentRegistry = AgentRegistry.getInstance();
-    try {
-      AgentMessageCallback callback = agentRegistry.getAgentMessageCallback(agentName);
-      callback.addMessage(body);
-      System.out.println("message added to message callback");
-      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
-    } catch(Exception e){
-      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
-      e.printStackTrace();
-    }
-  }
-
-  public void handleReceiveJasonMessage(RoutingContext context){
-    String agentSenderUri = context.request().getHeader("X-Agent-WebID");
-    System.out.println("message received");
-    String uri = context.request().absoluteURI();
-    int n = uri.length();
-    String agentUri = uri.substring(0, n-6);
-    int index  = agentUri.indexOf("/agents/");
-    String agentName = agentUri.substring(index + 8);
-    System.out.println("agent name: "+ agentName);
-    String body = context.getBodyAsString();
-    System.out.println("message received: "+body);
-    AgentRegistry agentRegistry = AgentRegistry.getInstance();
-    try {
-      AgentJasonMessageCallback callback = agentRegistry.getAgentJasonMessageCallback(agentName);
-      callback.addMessage(body, agentSenderUri);
-      System.out.println("message added to message callback");
-      context.response().setStatusCode(HttpStatus.SC_ACCEPTED).end("message received");
-    } catch(Exception e){
-      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end("message not received");
-      e.printStackTrace();
-    }
-  }
-
-  public void handleDeleteAgent(RoutingContext context){
-    System.out.println("handle delete agent");
-    String uri = context.request().absoluteURI();
-    int index  = uri.indexOf("/agents/");
-    System.out.println("index: "+index);
-    String agentName = uri.substring(index + 8);
-    System.out.println("agent name: "+agentName);
-    DeliveryOptions options = new DeliveryOptions()
-      .addHeader(REQUEST_METHOD, JasonVerticle.DELETE_AGENT)
-      .addHeader(JasonVerticle.AGENT_NAME, agentName);
-      vertx.eventBus().request(JasonVerticle.BUS_ADDRESS, "", options, reply -> {
-        if (reply.succeeded()) {
-          AgentRegistry.getInstance().printAllAgents();
-          System.out.println("agent deletion succeeded");
-          context.response().setStatusCode(HttpStatus.SC_OK).end(reply.result().body().toString());
-        } else {
-          System.out.println("agent deletion failed");
-          context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
-        }
-      });
-
-
-  }
-
-
-
-
-
-
-
   private Map<String, List<String>> getHeaders(String entityIRI) {
 
     Map<String,List<String>> headers = getWebSubHeaders(entityIRI);
@@ -714,7 +579,8 @@ public class HttpEntityHandler {
         String storeReply = reply.result().body();
         if (mediatype.equals("application/ld+json")){
           ThingDescription td = TDGraphReader.readFromString(TDFormat.RDF_TURTLE, storeReply);
-          storeReply = TDWriter.write(td, RDFFormat.JSONLD);
+          //TODO: Push wot-td-java to v0.1.2 on jitpack
+          //storeReply = TDWriter.write(td, RDFFormat.JSONLD);
         }
 
         if (storeReply != null && !storeReply.isEmpty()) {
