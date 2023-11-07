@@ -1,10 +1,15 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
   java
-  `java-library`
+  application
+  alias(libs.plugins.shadowJar)
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
 }
+
+defaultTasks = mutableListOf("shadowJar")
 
 checkstyle {
   config = resources.text.fromFile("${rootProject.projectDir}/checkstyle.xml")
@@ -59,12 +64,33 @@ dependencies {
   testImplementation(libs.httpcomponents.httpclient5)
   testImplementation(libs.httpcomponents.httpclient5.fluent)
 
-  testImplementation(libs.vertx.web.client)
-
   testCompileOnly(libs.spotbugs.annotations)
 }
 
+application {
+  mainClass = "io.vertx.core.Launcher"
+}
+
+val mainVerticleName = "org.hyperagents.yggdrasil.DefaultMainVerticle"
+
 tasks {
+  named<ShadowJar>("shadowJar") {
+    manifest {
+      attributes(mapOf("Main-Verticle" to mainVerticleName))
+    }
+    mergeServiceFiles {
+      include("META-INF/services/io.vertx.core.spi.VerticleFactory")
+    }
+  }
+
+  named<JavaExec>("run") {
+    args = mutableListOf("run", mainVerticleName, "--launcher-class=${application.mainClass}")
+  }
+
+  compileJava {
+    options.compilerArgs.addAll(listOf("-parameters"))
+  }
+
   spotbugsMain {
     reports.create("html") {
         required.set(true)
