@@ -13,6 +13,10 @@ while [[ "$#" -gt 0 ]]
         DLT_BASE=$2
          ((REQUIRED_PARAM_COUNTER++))
         ;;
+      --iobox)
+        IOBOX_BASE=$2
+          ((REQUIRED_PARAM_COUNTER++))
+        ;;
     esac
     shift
   done
@@ -1193,6 +1197,44 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
               td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
                 ];
               td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getSpec";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/spec>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:NumberSchema;
+                      js:propertyName "workingAreaHeightMillimeter"
+                    ], [ a js:StringSchema;
+                      js:propertyName "model"
+                    ], [ a js:StringSchema;
+                      js:propertyName "type";
+                      js:enum "LaserCutter", "MillingMachine"
+                    ], [ a js:StringSchema;
+                      js:propertyName "laserClass"
+                    ], [ a js:NumberSchema;
+                      js:propertyName "workingAreaLengthMillimeter"
+                    ], [ a js:NumberSchema;
+                      js:propertyName "powerWatt"
+                    ], [ a js:NumberSchema;
+                      js:propertyName "workingAreaWidthMillimeter"
+                    ]
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getConfiguration";
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/configuration>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:StringSchema;
+                      js:propertyName "host"
+                    ], [ a js:StringSchema;
+                      js:propertyName "authenticationMode"
+                    ];
+                  js:required "host", "authenticationMode"
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
                   td:name "getJob";
                   td:hasForm [
                       hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/job>;
@@ -1211,7 +1253,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                 ], [ a td:PropertyAffordance, js:ObjectSchema;
                   td:name "getSpec";
                   td:hasForm [
-                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/spec>;
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/spec>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:readProperty, td:writeProperty
                     ];
@@ -1220,32 +1262,78 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                       js:propertyName "workingAreaHeightMillimeter"
                     ], [ a js:StringSchema;
                       js:propertyName "model"
-                    ], [
-                      js:propertyName "type"
+                    ], [ a js:StringSchema;
+                      js:propertyName "type";
+                      js:enum "LaserCutter", "MillingMachine"
                     ], [ a js:StringSchema;
                       js:propertyName "laserClass"
                     ], [ a js:NumberSchema;
                       js:propertyName "workingAreaLengthMillimeter"
                     ], [ a js:NumberSchema;
+                      js:propertyName "powerWatt"
+                    ], [ a js:NumberSchema;
                       js:propertyName "workingAreaWidthMillimeter"
                     ]
                 ], [ a td:PropertyAffordance, js:ObjectSchema;
-                  td:name "getConfiguration";
+                  td:name "getClamp";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
                   td:hasForm [
-                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/configuration>;
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp>;
                       hctl:forContentType "application/json";
-                      hctl:hasOperationType td:invokeAction, td:readProperty, td:writeProperty
+                      hctl:hasOperationType td:readProperty, td:writeProperty
                     ];
                   td:isObservable false;
-                  js:properties [ a js:StringSchema;
-                      js:propertyName "host"
+                  js:properties [ a js:BooleanSchema;
+                      js:propertyName "demo"
                     ], [ a js:StringSchema;
-                      js:propertyName "authenticationMode";
-                      js:enum "LaserCutter", "MillingMachine"
+                      js:propertyName "status"
                     ];
-                  js:required "host", "authenticationMode"
+                  js:required "status", "demo"
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getSpindle";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/spindle>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:BooleanSchema;
+                      js:propertyName "demo"
+                    ], [ a js:StringSchema;
+                      js:propertyName "status"
+                    ];
+                  js:required "status", "demo"
                 ];
               td:hasActionAffordance [ a td:ActionAffordance;
+                  td:name "setConfiguration";
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/configuration>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasInputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:StringSchema;
+                          js:propertyName "host"
+                        ], [ a js:StringSchema;
+                          js:propertyName "authenticationMode"
+                        ];
+                      js:required "host", "authenticationMode"
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:StringSchema;
+                          js:propertyName "host"
+                        ], [ a js:StringSchema;
+                          js:propertyName "authenticationMode"
+                        ];
+                      js:required "host", "authenticationMode"
+                    ]
+                ], [ a td:ActionAffordance;
                   td:name "createEngraveText";
                   td:hasForm [
                       <http://www.w3.org/2011/http#methodName> "POST";
@@ -1268,6 +1356,8 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                           js:propertyName "fontsize"
                         ], [ a js:NumberSchema;
                           js:propertyName "y"
+                        ], [ a js:BooleanSchema;
+                          js:propertyName "noDrilling"
                         ], [ a js:NumberSchema;
                           js:propertyName "textWidth"
                         ], [ a js:ArraySchema;
@@ -1297,31 +1387,6 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                         ]
                     ]
                 ], [ a td:ActionAffordance;
-                  td:name "getConfiguration";
-                  td:hasForm [
-                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/api/configuration>;
-                      hctl:forContentType "application/json";
-                      hctl:hasOperationType td:invokeAction, td:readProperty, td:writeProperty
-                    ];
-                  td:hasInputSchema [ a js:ObjectSchema;
-                      js:properties [ a js:StringSchema;
-                          js:propertyName "host"
-                        ], [ a js:StringSchema;
-                          js:propertyName "authenticationMode";
-                          js:enum "LaserCutter", "MillingMachine"
-                        ];
-                      js:required "host", "authenticationMode"
-                    ];
-                  td:hasOutputSchema [ a js:ObjectSchema;
-                      js:properties [ a js:StringSchema;
-                          js:propertyName "host"
-                        ], [ a js:StringSchema;
-                          js:propertyName "authenticationMode";
-                          js:enum "LaserCutter", "MillingMachine"
-                        ];
-                      js:required "host", "authenticationMode"
-                    ]
-                ], [ a td:ActionAffordance;
                   td:name "openClamp";
                   td:hasUriTemplateSchema [ a js:StringSchema;
                       td:name "machineId"
@@ -1331,6 +1396,14 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                       hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/open>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
                     ]
                 ], [ a td:ActionAffordance;
                   td:name "closeClamp";
@@ -1342,9 +1415,56 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                       hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/clamp/close>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "startSpindle";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/spindle/start>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
+                    ]
+                ], [ a td:ActionAffordance;
+                  td:name "stopSpindle";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "machineId"
+                    ];
+                  td:hasForm [
+                      <http://www.w3.org/2011/http#methodName> "POST";
+                      hctl:hasTarget <'"${DEVICE_BASE}"'/engraver-milling/actuator-api/spindle/stop>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:invokeAction
+                    ];
+                  td:hasOutputSchema [ a js:ObjectSchema;
+                      js:properties [ a js:BooleanSchema;
+                          js:propertyName "demo"
+                        ], [ a js:StringSchema;
+                          js:propertyName "status"
+                        ];
+                      js:required "status", "demo"
                     ]
                 ];
               dct:description "Actuators for the engraver" .
+
 
 '
 
@@ -1395,7 +1515,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 
 echo 'create Goal Interface'
 
-curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
+curl --location --request POST "${HYPERMAS_BASE}"/workspaces/uc3/artifacts/ \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: goal-interface' \
 --header 'Content-Type: text/turtle' \
@@ -1406,18 +1526,18 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
             @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
             @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
-            <http://localhost:8080/workspaces/uc3/artifacts/goal-interface> a td:Thing;
+            <'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/goal-interface> a td:Thing;
               td:title "Goal Interface UC3";
               td:hasSecurityConfiguration [ a wotsec:APIKeySecurityScheme;
                   wotsec:in "HEADER";
                   wotsec:name "X-API-Key"
                 ];
-              td:hasBase <http://localhost:5000>;
+              td:hasBase <'"${HYPERMAS_BASE}"':5000>;
               td:hasActionAffordance [ a td:ActionAffordance;
                   td:name "sendNotification";
                   td:hasForm [
                       <http://www.w3.org/2011/http#methodName> "POST";
-                      hctl:hasTarget <http://localhost:5000/notification>;
+                      hctl:hasTarget <'"${HYPERMAS_BASE}"':5000/notification>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:invokeAction
                     ];
@@ -1430,6 +1550,53 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
                       js:required "status"
                     ]
                 ] .
+
+
+
+'
+
+curl --location --request POST "${HYPERMAS_BASE}"/workspaces/uc3/artifacts/ \
+--header 'X-Agent-WebID: http://example.org/agent' \
+--header 'Slug: iobox' \
+--header 'Content-Type: text/turtle' \
+--data-raw '@prefix td: <https://www.w3.org/2019/wot/td#> .
+            @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+            @prefix dct: <http://purl.org/dc/terms/> .
+            @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+            @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+            @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+            <'"${HYPERMAS_BASE}"'/workspaces/uc3/artifacts/iobox> a td:Thing, <http://w3id.org/eve#Artifact>;
+              td:title "Interoperability Box";
+              td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                ];
+              td:hasPropertyAffordance [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getBLEDevices";
+                  td:hasForm [
+                      hctl:hasTarget <'"${IOBOX_BASE}"'/devices/ble>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false
+                ], [ a td:PropertyAffordance, js:ObjectSchema;
+                  td:name "getTemperature";
+                  td:hasUriTemplateSchema [ a js:StringSchema;
+                      td:name "deviceId"
+                    ];
+                  td:hasForm [
+                      hctl:hasTarget <'"${IOBOX_BASE}"'/devices/ble/%7BdeviceId%7D/temperature>;
+                      hctl:forContentType "application/json";
+                      hctl:hasOperationType td:readProperty, td:writeProperty
+                    ];
+                  td:isObservable false;
+                  js:properties [ a js:NumberSchema;
+                      js:propertyName "temperature"
+                    ], [ a js:IntegerSchema;
+                      js:propertyName "timestamp"
+                    ];
+                  js:required "temperature", "timestamp"
+                ];
+              dct:description "Actuators for the engraver" .
 
 
 

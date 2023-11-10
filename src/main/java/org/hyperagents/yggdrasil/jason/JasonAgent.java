@@ -16,11 +16,9 @@ public class JasonAgent  extends Agent {
 
   public JasonAgent(String agentName, InputStream in, String sourceId) throws JasonException {
     super();
-    System.out.println("is creating Jason agent");
     CentralisedAgArch arch = new CentralisedAgArch();
     arch.insertAgArch(new YAgentArch());
     arch.insertAgArch(new MindInspectorAgArch());
-    System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);
     Settings settings = new Settings();
     this.ts = new TransitionSystem(this, null, settings, arch);
@@ -32,11 +30,9 @@ public class JasonAgent  extends Agent {
 
   public JasonAgent(String agentName) throws JasonException {
     super();
-    System.out.println("is creating Jason agent");
     CentralisedAgArch arch = new CentralisedAgArch();
     arch.insertAgArch(new YAgentArch());
     arch.insertAgArch(new MindInspectorAgArch());
-    System.out.println("Yggdrasil arch created");
     arch.setAgName(agentName);
     Settings settings = new Settings();
     this.ts = new TransitionSystem(this, null, settings, arch);

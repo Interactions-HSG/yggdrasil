@@ -68,7 +68,7 @@ public class JasonVerticle extends AbstractVerticle {
     eventBus.consumer(BUS_ADDRESS, this::handleAgentRequest);
     HttpInterfaceConfig httpConfig = new HttpInterfaceConfig(config()); //TODO: see if needed, maybe for URIs
     JsonObject config = config();
-    System.out.println("config: "+config.encodePrettily());
+    System.out.println("config: "+config.encodePrettily()); //TODO: check
     AgentRegistry.getInstance().setHttpPrefix(config);
   }
 
