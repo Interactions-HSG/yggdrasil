@@ -1,0 +1,42 @@
+{
+  "baseBranches": ["main"],
+  "configMigration": true,
+  "extends": [
+    "config:recommended",
+    ":automergeDisabled",
+    ":pinDependencies",
+    ":prNotPending",
+    ":semanticCommits",
+    ":separateMultipleMajorReleases",
+    ":separatePatchReleases",
+    ":rebaseStalePrs"
+  ],
+  "ignorePresets": [
+    ":semanticPrefixFixDepsChoreOthers"
+  ],
+  "git-submodules": {
+    "enabled": true
+  },
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Updates to GitHub Actions should be tagged as 'ci'",
+      "matchFileNames": [".github/workflows/*.yml", ".github/workflows/*.yaml", "renovate.json"],
+      "semanticCommitType": "ci"
+    },
+    {
+      "description": "Updates to build automation files should be tagged as 'build'",
+      "matchFileNames": [
+        "**/build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle/libs.versions.toml",
+        "gradle/wrapper/gradle-wrapper.properties",
+        "Dockerfile",
+        "docker-compose.yml"
+      ],
+      "semanticCommitType": "build"
+    }
+  ],
+  "platformCommit": true,
+  "prNotPendingHours": 2
+}

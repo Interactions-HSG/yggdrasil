@@ -20,8 +20,7 @@ systems: an artifact-based perspective. Autonomous Agents and Multi-Agent System
 
 ## Prerequisites
 
-* JDK 8+
-* Use `git clone --recursive` to make sure that the project is checked out including its submodules
+* JDK 21+
 
 ## Building the project
 
@@ -39,12 +38,25 @@ The default Gradle task `shadowJar` generates a fat-jar in the `build/libs` dire
 To start an Yggdrasil node:
 
 ```shell
-java -jar build/libs/yggdrasil-0.0-SNAPSHOT-fat.jar -conf src/main/conf/config.json
+java -jar build/libs/yggdrasil-0.0.0-SNAPSHOT-all.jar -conf conf/config.json
 ```
 
 The configuration file is optional. Open your browser to
-[http://localhost:8080](http://localhost:8080). You should see an `Yggdrasil v0.0` message.
+[http://localhost:8080](http://localhost:8080). You should see an `Yggdrasil v0.0.0` message.
 
+## Running Yggdrasil as a Docker container
+
+Build the image with the current context and creates the image `yggdrasil`:
+
+```shell
+docker-compose build
+```
+
+Run with docker-compose (by default, it exposes the port `8899` of the host machine):
+
+```shell
+docker-compose up
+```
 
 ## HTTP API Overview
 
