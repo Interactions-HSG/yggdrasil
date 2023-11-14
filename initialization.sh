@@ -22,7 +22,7 @@ while [[ "$#" -gt 0 ]]
   done
 
 
-if [[ $REQUIRED_PARAM_COUNTER -ne 3 ]]; then
+if [[ $REQUIRED_PARAM_COUNTER -ne 4 ]]; then
     echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL> --dlt <DLT Client Url>"
     exit 1
 fi
