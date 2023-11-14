@@ -529,19 +529,41 @@ is_working(false).
 
 +!check_temperature(IntermediateTemperature, MaxTemperature): true <-
     ?get_mirocard_id(DeviceId);
+    .print("mirocard id: ", DeviceId);
     ?get_temperature(DeviceId, Temperature);
-    !test_temperature(Temperature, MaxTemperature).
+    .print("temperature: ", Temperature);
+    .wait(10000);
+    !test_temperature(DeviceId, Temperature, IntermediateTemperature, MaxTemperature).
 
 -!check_temperature(IntermediateTemperature,MaxTemperature): true <-
     .print("do nothing").
 
-+!test_temperature(Temperature, IntermediateTemperature,MaxTemperature): Temperature>MaxTemperature <-
++!test_temperature(DeviceId, Temperature, IntermediateTemperature,MaxTemperature): Temperature>MaxTemperature <-
+    !use_actuator(ActuatorsUrl, "open");
+    !wait_good_temperature(DeviceId, MaxTemperature);
+    !use_actuator(ActuatorsUrl, "close");
+    !use_actuator(ActuatorsUrl, "pushstart").
+
++!wait_good_temperature(DeviceId, MaxTemperature): true <-
+    .wait(100);
+    ?get_temperature(DeviceId, Temperature);
+    !wait_good_temperature_loop(DeviceId, Temperature, MaxTemperature).
+
++!wait_good_temperature_loop(DeviceId, Temperature): Temperature<=MaxTemperature <-
+    .print("temperature loop stops").
+
++!wait_good_temperature_loop(DeviceId, Temperature)`: Temperature>MaxTemperature <-
+    !wait_good_temperature(DeviceId, MaxTemperature).
+
+-!wait_good_temperature_loop: true <-
+    !send_message_goal_interface("failed", "Temperature check failed");
     .fail_goal(start).
 
-+!test_temperature(Temperature, IntermediateTemperature,MaxTemperature): Temperature<=MaxTemperature & Temperature>IntermediateTemperature <-
+
++!test_temperature(DeviceId, Temperature, IntermediateTemperature,MaxTemperature): Temperature<=MaxTemperature & Temperature>IntermediateTemperature <-
     !send_warning(Temperature).
 
-+!test_temperature(Temperature, MaxTemperature): Temperature<=MaxIntermediateTemperature <-
++!test_temperature(DeviceId, Temperature, IntermediateTemperature, MaxTemperature): Temperature<=MaxIntermediateTemperature <-
     .print("temperature is OK").
 
 +!send_warning(Temperature): true <-
