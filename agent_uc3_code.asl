@@ -353,13 +353,13 @@ is_working(false).
     !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
     .print("The robot is at home").
 
-+!check_process(Process): Process == "engraver-load" <-
++!check_process(Process): Process == "engraver_load" <-
     !engraver_table_up.
 
 +!check_process(Process): Process == "milling_machine_place" <-
     .print("go to milling machine").
 
--check_process(Process): true <-
+-!check_process(Process): true <-
     .print("do not need to move table up").
 
 +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) & used_storage(Storage) <-
