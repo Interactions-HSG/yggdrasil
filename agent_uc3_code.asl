@@ -170,7 +170,7 @@ is_working(false).
 -!test_best_storage: true <-
     .print("best storage defined").
 
-+!compute_storage_area_explore(I, N): I<N & ai_td_url(AIUrl) <-
++!compute_storage_area_explore(I, N): I<=N & ai_td_url(AIUrl) <-
     ?create_json(["Content-Type"], ["application/json"], Headers);
     ?camera_hostname(CameraHostname);
     ?camera_id(CameraId);
@@ -181,7 +181,7 @@ is_working(false).
     !process_storage_response(I, Response);
     !compute_storage_area_explore(I+1, N).
 
-+!compute_storage_area_explore(I, N): I>=N <-
++!compute_storage_area_explore(I, N): I>N <-
     .print("storage area computed").
 
 +!process_storage_response(StorageNumber, Response): true <-
