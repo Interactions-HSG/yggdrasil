@@ -275,7 +275,7 @@ is_working(false).
     .map.get(EA, "xcoordinate", X_Camera);
     .map.get(EA, "ycoordinate", Y_Camera);
     X_Milling= 140 + X; //140 + Y_Camera + X; Initial formula 100 + Y_Camera
-    Y_Milling= 80 - 1.1*Radius + Y; //100 - X_Camera + Y. //Initial formula: 308 - X_Camera
+    Y_Milling= 80 - 1.1*Radius + Y. //100 - X_Camera + Y. //Initial formula: 308 - X_Camera
 
 
  +!use_hil: actual_confidence(C) & hil_td_url(HILUrl) & confidence_hil(CM) & C<CM <-
