@@ -136,7 +136,6 @@ is_working(false).
     !pose(RobotUrl, "application/ai+json", PoseStorage);
     !use_hil;
     .print("move to engraver");
-    !engraver_table_up; //TODO: update for milling machine
     !move_piece_to_engraver(ProcessRobotPut, Callback);
     .print("before print");
     !print(Process, Text);
@@ -263,7 +262,7 @@ is_working(false).
     X_MrBeam = 100 + Y_Camera + X; //Initial formula 100 + Y_Camera
     Y_MrBeam = 308 - X_Camera + Y. //Initial formula: 308 - X_Camera
 
-+?compute_engraving_area(StorageId, CameraHostname, CameraId, X, Y, X_Milling, Y_Milling): ai_td_url(AIUrl) & process(Process) & Process == "milling" <-
++?compute_engraving_area_milling(StorageId, CameraHostname, CameraId, X, Y, X_Milling, Y_Milling): ai_td_url(AIUrl) & process(Process) & Process == "milling" <-
     ?create_json(Headers);
     ?create_json(["storageId", "cameraHostname", "cameraId"], [StorageId, CameraHostname, CameraId], UriVariables);
     ?invoke_action_with_DLT(AIUrl, "computeEngravingArea", {}, Headers, UriVariables, EAReply);
@@ -337,6 +336,7 @@ is_working(false).
 
 +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
     .print("robot process: ", Process);
+    !check_process(Process);
     ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
     ?create_named_pose_process(Process, Callback, PoseValueTransport);
     !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
@@ -349,6 +349,12 @@ is_working(false).
     .print("The gripper is opened");
     !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
     .print("The robot is at home").
+
++!check_process(Process): Process == "engraver-load" <-
+    !engraver_table_up.
+
+-check_process(Process): true <-
+    .print("do not need to move table up").
 
 +!move_piece_back(Process, Callback): robot_td_url(RobotUrl) & used_storage(Storage) <-
     ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
@@ -440,9 +446,9 @@ is_working(false).
     .print("print milling");
     ?create_json(["machineId"], ["511"], UriVariables);
     !use_milling_actuator("closeClamp", UriVariables);
-    .print("Before compute engraving area milling.")
-    ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
-    .print("After compute engraving area milling.")
+    .print("Before compute engraving area milling.");
+    ?compute_engraving_area_milling(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
+    .print("After compute engraving area milling.");
     !engraver_milling(MillingUrl, X_Milling, Y_Milling);
     !use_milling_actuator("stopSpindle", UriVariables);
     !use_milling_actuator("openClamp", UriVariables);
@@ -626,6 +632,7 @@ is_working(false).
 +!conditional_exit_goal(B, Goal):  B <-
     .print("exit");
     -+is_working(false);
+    !send_message_goal_interface("failed");
     .fail_goal(Goal).
 
 +!conditional_exit_goal(B, Goal): not B <-
