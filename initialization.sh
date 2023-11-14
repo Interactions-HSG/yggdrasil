@@ -17,13 +17,17 @@ while [[ "$#" -gt 0 ]]
         IOBOX_BASE=$2
           ((REQUIRED_PARAM_COUNTER++))
         ;;
+      --interface)
+              INTERFACE_BASE=$2
+                ((REQUIRED_PARAM_COUNTER++))
+              ;;
     esac
     shift
   done
 
 
-if [[ $REQUIRED_PARAM_COUNTER -ne 4 ]]; then
-    echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL> --dlt <DLT Client Url>"
+if [[ $REQUIRED_PARAM_COUNTER -ne 5 ]]; then
+    echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL> --dlt <DLT Client Url> --iobox <IOBox --interface <Interface>"
     exit 1
 fi
 
@@ -1515,7 +1519,7 @@ curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 
 echo 'create Goal Interface'
 
-curl --location --request POST "${HYPERMAS_BASE}"/workspaces/uc3/artifacts/ \
+curl --location --request POST ${HYPERMAS_BASE}/workspaces/uc3/artifacts/ \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: goal-interface' \
 --header 'Content-Type: text/turtle' \
@@ -1532,12 +1536,12 @@ curl --location --request POST "${HYPERMAS_BASE}"/workspaces/uc3/artifacts/ \
                   wotsec:in "HEADER";
                   wotsec:name "X-API-Key"
                 ];
-              td:hasBase <'"${HYPERMAS_BASE}"':5000>;
+              td:hasBase <'"${INTERFACE_BASE}"'>;
               td:hasActionAffordance [ a td:ActionAffordance;
                   td:name "sendNotification";
                   td:hasForm [
                       <http://www.w3.org/2011/http#methodName> "POST";
-                      hctl:hasTarget <'"${HYPERMAS_BASE}"':5000/notification>;
+                      hctl:hasTarget <'"${INTERFACE_BASE}"'/notification>;
                       hctl:forContentType "application/json";
                       hctl:hasOperationType td:invokeAction
                     ];
