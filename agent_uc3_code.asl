@@ -88,13 +88,16 @@ is_working(false).
     !check_goal.
 
 +!check_goal: text_width(Width) & Width<=500 <-
+    .print("Width: ", Width)
     !update_process_robot;
     !start.
 
 +!check_goal: text_width(Width) & Width>500 <-
+    .print("Width: ", Width)
     !send_message_goal_interface("rejected", "The text width is superior to 500.").
 
 -!check_goal: true <-
+    .print("Width: ", Width)
     !send_message_goal_interface("rejected").
 
 +!start: is_working(B) & not B <-
