@@ -586,10 +586,12 @@ is_working(false).
     !send_transaction(DLTClientTDUrl, Message).
 
 +!send_transaction(DLTClientTDUrl, Message): true <-
-    !send_transaction(DLTClientTDUrl, Message).
+    .print("send transaction to DLT");
+    .print("Message: ", Message);
+    org.hyperagents.yggdrasil.jason.wot.invokeAction(DLTClientTDUrl, "sendTransaction", Message, R).
 
 -!send_transaction(DLTClientTDUrl, Message): true <-
-    .print("interaction notstored in DLT").
+    .print("interaction not stored in DLT").
 
 +!update_callback: true <-
     getAgHypermediaName(Name);
