@@ -548,7 +548,7 @@ is_working(false).
     org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Json).
 
 +!send_message_goal_interface(Status, Message): goal_interface_td_url(GoalInterfaceTDUrl) <-
-    ?create_json(["status", "custom"], [Status, Message], Headers);
+    ?create_json(["status", "custom"], [Status, Message], Body);
     ?create_json([], [], Headers);
     ?create_json([], [], UriVariables);
     !invoke_action_with_DLT(GoalInterfaceTDUrl, "sendNotification", Body, Headers, UriVariables).
@@ -557,7 +557,7 @@ is_working(false).
     .print("Message not sent").
 
 +!send_message_goal_interface(Status): goal_interface_td_url(GoalInterfaceTDUrl) <-
-    ?create_json(["status"], [Status], Headers);
+    ?create_json(["status"], [Status], Body);
     ?create_json([], [], Headers);
     ?create_json([], [], UriVariables);
     !invoke_action_with_DLT(GoalInterfaceTDUrl, "sendNotification", Body, Headers, UriVariables).
