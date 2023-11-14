@@ -87,7 +87,7 @@ is_working(false).
     -+confidence_hil(GIConfidence);
     !check_goal.
 
-+!check_goal: text_width(Width) & Width<500 <-
++!check_goal: text_width(Width) & Width<=500 <-
     !update_process_robot;
     !start.
 
