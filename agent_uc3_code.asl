@@ -552,7 +552,7 @@ is_working(false).
 +!wait_good_temperature_loop(DeviceId, Temperature): Temperature<=MaxTemperature <-
     .print("temperature loop stops").
 
-+!wait_good_temperature_loop(DeviceId, Temperature)`: Temperature>MaxTemperature <-
++!wait_good_temperature_loop(DeviceId, Temperature): Temperature>MaxTemperature <-
     !wait_good_temperature(DeviceId, MaxTemperature).
 
 -!wait_good_temperature_loop: true <-
