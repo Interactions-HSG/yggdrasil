@@ -337,8 +337,11 @@ is_working(false).
 +!move_piece_to_engraver(Process, Callback): robot_td_url(RobotUrl) <-
     .print("robot process: ", Process);
     !check_process(Process);
+    .print("process checked");
     ?create_json(["value", "callback"], ["home", Callback], PoseValueHome);
+    .print("pose value home created");
     ?create_named_pose_process(Process, Callback, PoseValueTransport);
+    .print("pose process created");
     !gripper(RobotUrl, "close", 3000); //close gripper time = 3000, check position
     !pose(RobotUrl, "application/namedpose+json", PoseValueHome); //moving home
     .print("Before setting machine to use");
@@ -352,6 +355,9 @@ is_working(false).
 
 +!check_process(Process): Process == "engraver-load" <-
     !engraver_table_up.
+
++!check_process(Process): Process == "milling_machine_place" <-
+    .print("go to milling machine").
 
 -check_process(Process): true <-
     .print("do not need to move table up").
