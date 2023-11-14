@@ -98,7 +98,7 @@ is_working(false).
 
 -!check_goal: true <-
     .print("Width: ", Width)
-    !send_message_goal_interface("rejected").
+    !send_message_goal_interface("failed").
 
 +!start: is_working(B) & not B <-
     !send_message_goal_interface("accepted");
@@ -440,9 +440,10 @@ is_working(false).
     .print("print milling");
     ?create_json(["machineId"], ["511"], UriVariables);
     !use_milling_actuator("closeClamp", UriVariables);
-    //!use_milling_actuator("startSpindle", UriVariables);
+    .print("Before compute engraving area milling.")
     ?compute_engraving_area(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
-    !engraver_milling(MillingUrl, X_Milling, Y_Milling, TextWidth);
+    .print("After compute engraving area milling.")
+    !engraver_milling(MillingUrl, X_Milling, Y_Milling);
     !use_milling_actuator("stopSpindle", UriVariables);
     !use_milling_actuator("openClamp", UriVariables);
     .print("end print milling").
@@ -469,14 +470,15 @@ is_working(false).
     !use_actuator(ActuatorsUrl, "pushstart");
     !wait(EngraverUrl, "available", 1000).
 
-+!engraver_milling(MillingUrl, X_MrBeam, Y_MrBeam): text(Text) & text_width(TextWidth) & font(Font) & variant(Variant) & alignment(Alignment) & position_reference(PositionReference) & test(Test) <-
++!engraver_milling(MillingUrl, X_Milling, Y_Milling): text(Text) & text_width(TextWidth) & font(Font) & variant(Variant) & alignment(Alignment) & position_reference(PositionReference) & test(Test) <-
+    .print("Engraver Milling");
     ?opposite(Test, LaserOn);
-    ?create_json(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn", "noDrilling"], [[Text], Font, Variant, TextWidth, Alignment, PositionReference, X_MrBeam, Y_MrBeam, LaserOn, Test], EngravingBody);
+    ?create_json(["text", "font", "variant","textWidth", "alignment", "positionReference","x", "y", "laserOn", "noDrilling"], [[Text], Font, Variant, TextWidth, Alignment, PositionReference, X_Milling, Y_Milling, LaserOn, Test], EngravingBody);
     ?create_json(["Content-Type"], ["application/json"], EngravingHeaders);
+    .print("Before engrave text milling");
     ?invoke_action_with_DLT(MillingUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
     !exit(EngravingResponse, start);
-    !wait(EngraverUrl, "waiting", 1000);
-    !use_actuator_milling(MillingUrl, "pushstart");
+    .print("Before wait milling");
     !wait(EngraverUrl, "available", 1000).
 
 +!wait(EngraverUrl, Status, Time): engraver_td_url(EngraverUrl) <-
