@@ -3,7 +3,6 @@ package org.hyperagents.yggdrasil.websub;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;

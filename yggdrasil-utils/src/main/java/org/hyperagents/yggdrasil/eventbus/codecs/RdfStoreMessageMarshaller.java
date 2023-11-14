@@ -8,8 +8,8 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import java.lang.reflect.Type;
+import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
 public class RdfStoreMessageMarshaller
     implements JsonSerializer<RdfStoreMessage>, JsonDeserializer<RdfStoreMessage> {

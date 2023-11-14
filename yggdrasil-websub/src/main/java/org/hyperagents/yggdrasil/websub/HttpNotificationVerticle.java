@@ -9,11 +9,11 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import java.util.regex.Pattern;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
-import java.util.regex.Pattern;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER =
@@ -51,22 +51,26 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                 );
                 request.send(this.reponseHandler(callbackIRI));
               } else if (
-                message.body()
-                  instanceof HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated
+                  message.body()
+                    instanceof HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated
               ) {
                 LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
                 request
-                  .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                  .sendBuffer(
-                    Buffer.buffer(
-                      Pattern.compile("https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]")
-                             .matcher(changes)
-                             .replaceAll(r -> changes.charAt(r.start() - 1) == '"' && changes.charAt(r.end()) == '"'
-                                              ? r.group()
-                                              : "\"" + r.group() + "\"")
-                    ),
-                    this.reponseHandler(callbackIRI)
-                  );
+                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
+                    .sendBuffer(
+                      Buffer.buffer(
+                        Pattern.compile(
+                          "https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]"
+                        )
+                        .matcher(changes)
+                        .replaceAll(r ->
+                          changes.charAt(r.start() - 1) == '"' && changes.charAt(r.end()) == '"'
+                          ? r.group()
+                          : "\"" + r.group() + "\""
+                        )
+                      ),
+                      this.reponseHandler(callbackIRI)
+                    );
               } else if (!changes.isEmpty()) {
                 LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
                 request

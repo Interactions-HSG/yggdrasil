@@ -1,13 +1,19 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import cartago.*;
+import cartago.Workspace;
+import cartago.WorkspaceDescriptor;
+import cartago.WorkspaceId;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import java.util.*;
-
-public class WorkspaceRegistry {
+@SuppressWarnings("PMD.ReplaceHashtableWithMap")
+public final class WorkspaceRegistry {
   private static WorkspaceRegistry REGISTRY;
 
   private final Map<String, WorkspaceDescriptor> workspaceMap;
@@ -27,8 +33,8 @@ public class WorkspaceRegistry {
 
   public void registerWorkspace(final WorkspaceDescriptor workspaceDescriptor) {
     this.workspaceMap.put(
-      workspaceDescriptor.getWorkspace().getId().getName(),
-      workspaceDescriptor
+        workspaceDescriptor.getWorkspace().getId().getName(),
+        workspaceDescriptor
     );
   }
 
@@ -38,16 +44,18 @@ public class WorkspaceRegistry {
     this.nameToUriMap.put(name, uri);
   }
 
-  public WorkspaceDescriptor getWorkspaceDescriptor(final String name) {
-    return this.workspaceMap.get(name);
+  public Optional<Workspace> getWorkspace(final String name) {
+    return Optional.ofNullable(this.workspaceMap.get(name)).map(WorkspaceDescriptor::getWorkspace);
   }
 
-  public Workspace getWorkspace(final String name) {
-    return this.workspaceMap.get(name).getWorkspace();
-  }
-
-  public WorkspaceId getWorkspaceId(final String name) {
-    return this.workspaceMap.get(name).getId();
+  public WorkspaceId getWorkspaceId(final Workspace workspace) {
+    return this.workspaceMap
+               .values()
+               .stream()
+               .filter(d -> d.getWorkspace().equals(workspace))
+               .map(WorkspaceDescriptor::getId)
+               .findFirst()
+               .orElse(null);
   }
 
   public List<String> getAllWorkspaces() {
@@ -70,15 +78,5 @@ public class WorkspaceRegistry {
 
   public Optional<String> getParentWorkspaceUriFromUri(final String workspaceUri) {
     return this.getParentWorkspaceUriFromName(this.nameToUriMap.inverse().get(workspaceUri));
-  }
-
-  public WorkspaceId getWorkspaceId(final Workspace workspace) {
-    return this.workspaceMap
-               .values()
-               .stream()
-               .filter(d -> d.getWorkspace().equals(workspace))
-               .map(WorkspaceDescriptor::getId)
-               .findFirst()
-               .orElse(null);
   }
 }

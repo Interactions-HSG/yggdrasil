@@ -8,17 +8,17 @@ public sealed interface CartagoMessage {
   record CreateWorkspace(String workspaceName) implements CartagoMessage {}
 
   record CreateSubWorkspace(String workspaceName, String subWorkspaceName)
-    implements CartagoMessage {}
+      implements CartagoMessage {}
 
   record JoinWorkspace(String agentId, String workspaceName) implements CartagoMessage {}
 
   record LeaveWorkspace(String agentId, String workspaceName) implements CartagoMessage {}
 
   record Focus(
-    String agentId,
-    String workspaceName,
-    String artifactName,
-    String callbackIri
+      String agentId,
+      String workspaceName,
+      String artifactName,
+      String callbackIri
   ) implements CartagoMessage {}
 
   record CreateArtifact(

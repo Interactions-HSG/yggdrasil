@@ -9,6 +9,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import java.util.Optional;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
 public class CartagoMessageMarshaller
@@ -69,6 +70,7 @@ public class CartagoMessageMarshaller
   }
 
   @SuppressWarnings({"PMD.SwitchDensity", "PMD.SwitchStmtsShouldHaveDefault"})
+  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public JsonElement serialize(
       final CartagoMessage message,
@@ -106,8 +108,8 @@ public class CartagoMessageMarshaller
       }
       case CartagoMessage.Focus m -> {
         json.addProperty(
-          MessageFields.REQUEST_METHOD.getName(),
-          MessageRequestMethods.FOCUS.getName()
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.FOCUS.getName()
         );
         json.addProperty(MessageFields.AGENT_ID.getName(), m.agentId());
         json.addProperty(MessageFields.REQUEST_URI.getName(), m.callbackIri());

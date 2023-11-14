@@ -9,8 +9,6 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +18,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -49,7 +49,7 @@ public final class HypermediaArtifactRegistry {
   private final Map<String, String> hypermediaNames;
   private final SetMultimap<String, String> feedbackActions;
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
-  private int n = 1;
+  private int counter;
   private String httpPrefix = "http://localhost:8080";
 
   private HypermediaArtifactRegistry() {
@@ -67,6 +67,7 @@ public final class HypermediaArtifactRegistry {
     this.feedbackActions =
       Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
     this.feedbackResponseConverters = Collections.synchronizedMap(new HashMap<>());
+    this.counter = 0;
   }
 
   @SuppressFBWarnings({"MS_EXPOSE_REP"})
@@ -104,8 +105,8 @@ public final class HypermediaArtifactRegistry {
   public void register(final HypermediaInterface hypermediaInterface) {
     final var artifactTemplate = hypermediaInterface.getHypermediaArtifactName();
     this.artifactTemplateDescriptions.put(
-      artifactTemplate,
-      hypermediaInterface.getHypermediaDescription()
+        artifactTemplate,
+        hypermediaInterface.getHypermediaDescription()
     );
     hypermediaInterface.getActions()
                        .entrySet()
@@ -129,8 +130,8 @@ public final class HypermediaArtifactRegistry {
     this.artifactNames.put(artifactTemplate, artifactName);
     this.feedbackActions.putAll(artifactTemplate, hypermediaInterface.getFeedbackActions());
     this.feedbackResponseConverters.put(
-      artifactTemplate,
-      hypermediaInterface.getResponseConverterMap()
+        artifactTemplate,
+        hypermediaInterface.getResponseConverterMap()
     );
   }
 
@@ -143,8 +144,8 @@ public final class HypermediaArtifactRegistry {
   }
 
   public void registerInterfaceConstructor(
-    final String artifactClass,
-    final HypermediaInterfaceConstructor interfaceConstructor
+      final String artifactClass,
+      final HypermediaInterfaceConstructor interfaceConstructor
   ) {
     this.interfaceConstructorMap.put(artifactClass, interfaceConstructor);
   }
@@ -174,14 +175,15 @@ public final class HypermediaArtifactRegistry {
 
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
-               .values()
+               .entrySet()
                .stream()
-               .filter(t -> t.equals(artifactTemplate))
+               .filter(e -> e.getValue().equals(artifactTemplate))
+               .map(Map.Entry::getKey)
                .findFirst();
   }
 
-  public Optional<String> getArtifactTemplate(final String artifactClass) {
-    return Optional.ofNullable(this.artifactSemanticTypes.get(artifactClass));
+  public Optional<String> getArtifactTemplate(final String artifactSemanticType) {
+    return Optional.ofNullable(this.artifactSemanticTypes.get(artifactSemanticType));
   }
 
   public String getArtifactDescription(final String artifactName) {
@@ -226,10 +228,10 @@ public final class HypermediaArtifactRegistry {
       } else {
         workspaces.remove(workspace);
         workspaces.addAll(
-          workspace.getChildWSPs()
-                   .stream()
-                   .map(WorkspaceDescriptor::getWorkspace)
-                   .toList()
+            workspace.getChildWSPs()
+                     .stream()
+                     .map(WorkspaceDescriptor::getWorkspace)
+                     .toList()
         );
       }
     }
@@ -262,9 +264,9 @@ public final class HypermediaArtifactRegistry {
   }
 
   public void setArtifact(
-    final AgentId agentId,
-    final WorkspaceId workspaceId,
-    final String bodyName
+      final AgentId agentId,
+      final WorkspaceId workspaceId,
+      final String bodyName
   ) {
     this.agentArtifacts.put(new ImmutablePair<>(agentId, workspaceId), bodyName);
   }
@@ -278,8 +280,8 @@ public final class HypermediaArtifactRegistry {
   }
 
   public String getName() {
-    this.n++;
-    return "hypermedia_body_" + this.n;
+    this.counter++;
+    return "hypermedia_body_" + this.counter;
   }
 
   public boolean hasFeedbackParam(final String artifactName, final String action) {
@@ -305,8 +307,8 @@ public final class HypermediaArtifactRegistry {
   }
 
   public UnaryOperator<Object> getFeedbackResponseConverter(
-    final String artifactName,
-    final String action
+      final String artifactName,
+      final String action
   ) {
     final var registry = HypermediaAgentBodyArtifactRegistry.getInstance();
     return this.feedbackResponseConverters

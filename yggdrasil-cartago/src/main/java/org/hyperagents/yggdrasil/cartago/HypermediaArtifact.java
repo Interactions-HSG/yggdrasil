@@ -13,7 +13,6 @@ import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,12 +41,12 @@ public abstract class HypermediaArtifact extends Artifact {
    */
   public String getHypermediaDescription() {
     final var tdBuilder =
-      new ThingDescription.Builder(this.getArtifactName())
-                          .addSecurityScheme(this.securityScheme)
-                          .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
-                          .addSemanticType(this.getSemanticType())
-                          .addThingURI(this.getArtifactUri())
-                          .addGraph(this.metadata);
+        new ThingDescription.Builder(this.getArtifactName())
+                            .addSecurityScheme(this.securityScheme)
+                            .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+                            .addSemanticType(this.getSemanticType())
+                            .addThingURI(this.getArtifactUri())
+                            .addGraph(this.metadata);
     this.actionAffordances.values().forEach(tdBuilder::addAction);
 
     return new TDGraphWriter(tdBuilder.build())
@@ -92,7 +91,7 @@ public abstract class HypermediaArtifact extends Artifact {
            + this.getArtifactName();
   }
 
-  protected WorkspaceId getWorkspaceId(){
+  protected WorkspaceId getWorkspaceId() {
     return this.getArtifactId().getWorkspaceId();
   }
 
@@ -152,8 +151,8 @@ public abstract class HypermediaArtifact extends Artifact {
   }
 
   protected final void registerFeedbackParameter(
-    final String actionName,
-    final UnaryOperator<Object> responseConverter
+      final String actionName,
+      final UnaryOperator<Object> responseConverter
   ) {
     this.feedbackActions.add(actionName);
     this.responseConverterMap.put(actionName, responseConverter);
@@ -163,8 +162,8 @@ public abstract class HypermediaArtifact extends Artifact {
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public Set<String> getFeedbackActions(){
-    return this.feedbackActions;
+  public Set<String> getFeedbackActions() {
+    return new HashSet<>(this.feedbackActions);
   }
 
   protected final void setSecurityScheme(final SecurityScheme scheme) {

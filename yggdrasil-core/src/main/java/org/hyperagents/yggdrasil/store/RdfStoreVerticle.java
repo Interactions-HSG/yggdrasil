@@ -6,6 +6,10 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.WebClient;
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Stream;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
@@ -18,10 +22,6 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Stream;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
@@ -137,14 +137,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
         try (var workspaceGraph = optWorkspaceGraph.get()) {
           LOGGER.info("Found workspace graph: " + workspaceGraph);
           workspaceGraph.add(
-            workspaceIri,
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#directlyContains"),
-            entityIri
+              workspaceIri,
+              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#directlyContains"),
+              entityIri
           );
           workspaceGraph.add(
-            entityIri,
-            this.store.createIri(RDF.TYPE.toString()),
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+              entityIri,
+              this.store.createIri(RDF.TYPE.toString()),
+              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
           this.store.createEntityGraph(workspaceIri, workspaceGraph);
@@ -177,9 +177,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
               entityIri
           );
           environmentGraph.add(
-            entityIri,
-            this.store.createIri(RDF.TYPE.toString()),
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+              entityIri,
+              this.store.createIri(RDF.TYPE.toString()),
+              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
           this.store.createEntityGraph(environmentIri, environmentGraph);
@@ -192,66 +192,66 @@ public class RdfStoreVerticle extends AbstractVerticle {
         }
       }
       final var optParentUri =
-        WorkspaceRegistry.getInstance().getParentWorkspaceUriFromUri(entityIri.getIRIString());
+          WorkspaceRegistry.getInstance().getParentWorkspaceUriFromUri(entityIri.getIRIString());
       if (optParentUri.isPresent()) {
         final var parentIri = this.store.createIri(optParentUri.get());
         entityGraph.add(
-          entityIri,
-          this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#isContainedBy"),
-          parentIri
+            entityIri,
+            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#isContainedBy"),
+            parentIri
         );
         final var optParentGraph = this.store.getEntityGraph(parentIri);
         if (optParentGraph.isPresent()) {
           try (var parentGraph = optParentGraph.get()) {
             parentGraph.add(
-              parentIri,
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
-              entityIri
+                parentIri,
+                this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+                entityIri
             );
             parentGraph.add(
-              entityIri,
-              this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+                entityIri,
+                this.store.createIri(RDF.TYPE.toString()),
+                this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
             );
           } catch (final Exception e) {
-              LOGGER.error(e.getMessage());
+            LOGGER.error(e.getMessage());
           }
         }
       }
     } else if (
-      entityGraph.contains(
-        entityIri,
-        this.store.createIri(RDF.TYPE.stringValue()),
-        this.store.createIri(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))
-      )
-      && !entityIri.getIRIString().contains("/artifacts")
+        entityGraph.contains(
+          entityIri,
+          this.store.createIri(RDF.TYPE.stringValue()),
+          this.store.createIri(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))
+        )
+        && !entityIri.getIRIString().contains("/artifacts")
     ) {
       LOGGER.info("entity created is an artifact");
-      final var artifactIRI = entityIri.getIRIString();
-      final var workspaceIRI =
-        this.store.createIri(artifactIRI.substring(0, artifactIRI.indexOf("/bodies")));
+      final var artifactIri = entityIri.getIRIString();
+      final var workspaceIri =
+          this.store.createIri(artifactIri.substring(0, artifactIri.indexOf("/bodies")));
 
-      LOGGER.info("Found workspace IRI: " + workspaceIRI);
+      LOGGER.info("Found workspace IRI: " + workspaceIri);
 
-      final var optWorkspaceGraph = store.getEntityGraph(workspaceIRI);
+      final var optWorkspaceGraph = store.getEntityGraph(workspaceIri);
       if (optWorkspaceGraph.isPresent()) {
         try (var workspaceGraph = optWorkspaceGraph.get()) {
           LOGGER.info("Found workspace graph: " + workspaceGraph);
           workspaceGraph.add(
-            workspaceIRI,
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
-            entityIri
+              workspaceIri,
+              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+              entityIri
           );
           workspaceGraph.add(
-            entityIri,
-            this.store.createIri(RDF.TYPE.toString()),
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+              entityIri,
+              this.store.createIri(RDF.TYPE.toString()),
+              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
-          this.store.createEntityGraph(workspaceIRI, workspaceGraph);
+          this.store.createEntityGraph(workspaceIri, workspaceGraph);
           this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
-            workspaceIRI.getIRIString(),
-            this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
+              workspaceIri.getIRIString(),
+              this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
           ));
         } catch (final Exception e) {
           LOGGER.error(e.getMessage());
@@ -301,49 +301,52 @@ public class RdfStoreVerticle extends AbstractVerticle {
       throws IllegalArgumentException, IOException {
     final var optEntityGraph = this.store.getEntityGraph(requestIri);
     if (optEntityGraph.isPresent() && optEntityGraph.get().size() > 0) {
-      final var entityGraph = optEntityGraph.get();
-      final var entityGraphString = this.store.graphToString(entityGraph, RDFSyntax.TURTLE);
-      if (entityGraph.contains(
-        requestIri,
-        this.store.createIri(RDF.TYPE.stringValue()),
-        this.store.createIri("http://w3id.org/eve#Artifact")
-      )) {
-        final var artifactIRI = requestIri.getIRIString();
-        final var workspaceIRI =
-          this.store.createIri(artifactIRI.substring(0, artifactIRI.indexOf("/artifacts")));
-        final var optWorkspaceGraph = this.store.getEntityGraph(workspaceIRI);
-        if (optWorkspaceGraph.isPresent()) {
-          try (var workspaceGraph = optWorkspaceGraph.get()) {
-            LOGGER.info("Found workspace graph: " + workspaceGraph);
-            workspaceGraph.remove(
-              workspaceIRI,
-              this.store.createIri("http://w3id.org/eve#contains"),
-              requestIri
-            );
-            workspaceGraph.remove(
-              workspaceIRI,
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
-              requestIri
-            );
-            // TODO: updateEntityGraph would yield 404, to be investigated
-            this.store.createEntityGraph(workspaceIRI, workspaceGraph);
-            this.dispatcherMessagebox.sendMessage(
-              new HttpNotificationDispatcherMessage.EntityChanged(
-                workspaceIRI.getIRIString(),
-                this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
-              )
-            );
-          } catch (final Exception e) {
-            LOGGER.error(e.getMessage());
+      try (var entityGraph = optEntityGraph.get()) {
+        final var entityGraphString = this.store.graphToString(entityGraph, RDFSyntax.TURTLE);
+        if (entityGraph.contains(
+            requestIri,
+            this.store.createIri(RDF.TYPE.stringValue()),
+            this.store.createIri("http://w3id.org/eve#Artifact")
+        )) {
+          final var artifactIri = requestIri.getIRIString();
+          final var workspaceIri =
+              this.store.createIri(artifactIri.substring(0, artifactIri.indexOf("/artifacts")));
+          final var optWorkspaceGraph = this.store.getEntityGraph(workspaceIri);
+          if (optWorkspaceGraph.isPresent()) {
+            try (var workspaceGraph = optWorkspaceGraph.get()) {
+              LOGGER.info("Found workspace graph: " + workspaceGraph);
+              workspaceGraph.remove(
+                  workspaceIri,
+                  this.store.createIri("http://w3id.org/eve#contains"),
+                  requestIri
+              );
+              workspaceGraph.remove(
+                  workspaceIri,
+                  this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+                  requestIri
+              );
+              // TODO: updateEntityGraph would yield 404, to be investigated
+              this.store.createEntityGraph(workspaceIri, workspaceGraph);
+              this.dispatcherMessagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.EntityChanged(
+                  workspaceIri.getIRIString(),
+                  this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
+                )
+              );
+            } catch (final Exception e) {
+              LOGGER.error(e.getMessage());
+            }
           }
         }
+        this.store.deleteEntityGraph(requestIri);
+        this.replyWithPayload(message, entityGraphString);
+        this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityDeleted(
+            requestIri.getIRIString(),
+            entityGraphString
+        ));
+      } catch (final Exception e) {
+        LOGGER.error(e.getMessage());
       }
-      this.store.deleteEntityGraph(requestIri);
-      this.replyWithPayload(message, entityGraphString);
-      this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityDeleted(
-          requestIri.getIRIString(),
-          entityGraphString
-      ));
     } else {
       this.replyEntityNotFound(message);
     }

@@ -11,6 +11,10 @@ public class Counter extends HypermediaArtifact {
     this.defineObsProperty("count", 0);
   }
 
+  public void init(final int count) {
+    this.defineObsProperty("count", count);
+  }
+
   @OPERATION
   public void inc() {
     final var prop = this.getObsProperty("count");

@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.cartago;
 
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 public final class ActionDescription {
   private final String actionName;
@@ -10,11 +11,11 @@ public final class ActionDescription {
   private final DataSchema inputSchema;
 
   private ActionDescription(
-    final String actionName,
-    final String actionClass,
-    final String methodName,
-    final String relativeUri,
-    final DataSchema inputSchema
+      final String actionName,
+      final String actionClass,
+      final String methodName,
+      final String relativeUri,
+      final DataSchema inputSchema
   ) {
     this.actionName = actionName;
     this.actionClass = actionClass;
@@ -43,6 +44,7 @@ public final class ActionDescription {
     return this.relativeUri;
   }
 
+  @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
   public static class Builder {
     private final String actionName;
     private final String actionClass;
@@ -67,6 +69,7 @@ public final class ActionDescription {
       this.inputSchema = inputSchema;
       return this;
     }
+
     public ActionDescription build() {
       return new ActionDescription(
         this.actionName,

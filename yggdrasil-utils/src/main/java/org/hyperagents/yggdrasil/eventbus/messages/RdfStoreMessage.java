@@ -11,8 +11,8 @@ public sealed interface RdfStoreMessage {
   record DeleteEntity(String requestUri) implements RdfStoreMessage {}
 
   record CreateEntity(
-    String requestUri,
-    String entityName,
-    String entityRepresentation
+      String requestUri,
+      String entityName,
+      String entityRepresentation
   ) implements RdfStoreMessage {}
 }

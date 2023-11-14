@@ -10,10 +10,6 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +22,11 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
 public class HypermediaInterface {
   private static final ValueFactory RDF = SimpleValueFactory.getInstance();
@@ -41,52 +42,53 @@ public class HypermediaInterface {
   private final Map<String, UnaryOperator<Object>> responseConverterMap;
   private final Model metadata;
 
+  @SuppressFBWarnings("EI_EXPOSE_REP2")
   public HypermediaInterface(
-    final Class<?> clazz,
-    final Workspace workspace,
-    final ArtifactId artifactId,
-    final List<ActionDescription> descriptions,
-    final Map<String, UnaryOperator<Object[]>> converterMap,
-    final Optional<String> name,
-    final Optional<String> hypermediaName,
-    final Set<String> feedbackActions,
-    final Map<String, UnaryOperator<Object>> responseConverterMap,
-    final Model metadata
-  ){
+      final Class<?> clazz,
+      final Workspace workspace,
+      final ArtifactId artifactId,
+      final List<ActionDescription> descriptions,
+      final Map<String, UnaryOperator<Object[]>> converterMap,
+      final Optional<String> name,
+      final Optional<String> hypermediaName,
+      final Set<String> feedbackActions,
+      final Map<String, UnaryOperator<Object>> responseConverterMap,
+      final Model metadata
+  ) {
     this.clazz = clazz;
     this.workspace = workspace;
     this.artifactId = artifactId;
-    this.descriptions = descriptions;
-    this.converterMap = converterMap;
+    this.descriptions = new ArrayList<>(descriptions);
+    this.converterMap = new HashMap<>(converterMap);
     this.name = name;
     this.hypermediaName = hypermediaName;
-    this.feedbackActions = feedbackActions;
-    this.responseConverterMap = responseConverterMap;
+    this.feedbackActions = new HashSet<>(feedbackActions);
+    this.responseConverterMap = new HashMap<>(responseConverterMap);
     this.metadata = metadata;
   }
 
   public HypermediaInterface(
-    final Class<?> clazz,
-    final Workspace workspace,
-    final ArtifactId artifactId,
-    final List<ActionDescription> descriptions,
-    final Map<String, UnaryOperator<Object[]>> converterMap,
-    final Optional<String> name,
-    final Optional<String> hypermediaName,
-    final Set<String> feedbackActions,
-    final Map<String, UnaryOperator<Object>> responseConverterMap
+      final Class<?> clazz,
+      final Workspace workspace,
+      final ArtifactId artifactId,
+      final List<ActionDescription> descriptions,
+      final Map<String, UnaryOperator<Object[]>> converterMap,
+      final Optional<String> name,
+      final Optional<String> hypermediaName,
+      final Set<String> feedbackActions,
+      final Map<String, UnaryOperator<Object>> responseConverterMap
   ) {
     this(
-      clazz,
-      workspace,
-      artifactId,
-      descriptions,
-      converterMap,
-      name,
-      hypermediaName,
-      feedbackActions,
-      responseConverterMap,
-      new LinkedHashModel()
+        clazz,
+        workspace,
+        artifactId,
+        descriptions,
+        converterMap,
+        name,
+        hypermediaName,
+        feedbackActions,
+        responseConverterMap,
+        new LinkedHashModel()
     );
   }
 
@@ -115,12 +117,12 @@ public class HypermediaInterface {
 
   public String getHypermediaDescription() {
     final var tdBuilder =
-      new ThingDescription.Builder(this.getArtifactName())
-                          .addSecurityScheme(new NoSecurityScheme())
-                          .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
-                          .addSemanticType(this.getSemanticType())
-                          .addThingURI(this.getArtifactUri())
-                          .addGraph(this.metadata);
+        new ThingDescription.Builder(this.getArtifactName())
+                            .addSecurityScheme(new NoSecurityScheme())
+                            .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+                            .addSemanticType(this.getSemanticType())
+                            .addThingURI(this.getArtifactUri())
+                            .addGraph(this.metadata);
     this.getActions()
         .values()
         .stream()
@@ -143,14 +145,14 @@ public class HypermediaInterface {
                .map(description -> {
                  final var actionName = description.getActionName();
                  final var actionBuilder =
-                   new ActionAffordance.Builder(
-                     actionName,
-                     new Form.Builder(this.getArtifactUri() + description.getRelativeUri())
-                             .setMethodName(description.getMethodName())
-                             .build()
-                   )
-                   .addSemanticType(description.getActionClass())
-                   .addTitle(actionName);
+                     new ActionAffordance.Builder(
+                         actionName,
+                         new Form.Builder(this.getArtifactUri() + description.getRelativeUri())
+                                 .setMethodName(description.getMethodName())
+                                 .build()
+                     )
+                     .addSemanticType(description.getActionClass())
+                     .addTitle(actionName);
                  Optional.ofNullable(description.getInputSchema())
                          .ifPresent(actionBuilder::addInputSchema);
                  return Map.entry(actionName, List.of(actionBuilder.build()));
@@ -163,11 +165,11 @@ public class HypermediaInterface {
   }
 
   public Set<String> getFeedbackActions() {
-    return this.feedbackActions;
+    return new HashSet<>(this.feedbackActions);
   }
 
   public Map<String, UnaryOperator<Object>> getResponseConverterMap() {
-    return this.responseConverterMap;
+    return new HashMap<>(this.responseConverterMap);
   }
 
   private String getSemanticType() {
@@ -177,17 +179,17 @@ public class HypermediaInterface {
       .orElseThrow(() -> new NoSuchElementException("Artifact was not registered!"));
   }
 
-  public Object[] convert(final String method, final Object[] args) {
-   return this.converterMap.containsKey(method)
-          ? this.converterMap.get(method).apply(args)
-          : args;
+  public Object[] convert(final String method, final Object... args) {
+    return this.converterMap.containsKey(method)
+           ? this.converterMap.get(method).apply(args)
+           : args;
   }
 
   public static HypermediaInterface getBodyInterface(
-    final Workspace workspace,
-    final ArtifactDescriptor descriptor,
-    final ArtifactId artifactId,
-    final String agentIri
+      final Workspace workspace,
+      final ArtifactDescriptor descriptor,
+      final ArtifactId artifactId,
+      final String agentIri
   ) {
     final var hypermediaArtifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
     final var artifactName = artifactId.getName();
@@ -195,67 +197,67 @@ public class HypermediaInterface {
                                        .registerName(artifactName, hypermediaArtifactName);
     final var metadata = new LinkedHashModel();
     metadata.add(
-      RDF.createIRI(HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix()
-                    + workspace.getId().getName()
-                    + "/artifacts/"
-                    + hypermediaArtifactName),
-      RDF.createIRI("https://purl.org/hmas/interaction#isAgentBodyOf"),
-      RDF.createIRI(agentIri)
+        RDF.createIRI(HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix()
+                      + workspace.getId().getName()
+                      + "/artifacts/"
+                      + hypermediaArtifactName),
+        RDF.createIRI("https://purl.org/hmas/interaction#isAgentBodyOf"),
+        RDF.createIRI(agentIri)
     );
     return new HypermediaInterface(
-      descriptor.getArtifact().getClass(),
-      workspace,
-      artifactId,
-      List.of(
-        new ActionDescription.Builder(
+        descriptor.getArtifact().getClass(),
+        workspace,
+        artifactId,
+        List.of(
+          new ActionDescription.Builder(
+            "focus",
+            "http://example.org/focus",
+            "/focus"
+          )
+          .setMethodName("PUT")
+          .setInputSchema(new ArraySchema.Builder()
+                                         .addItem(new StringSchema.Builder().build()).build())
+          .build(),
+          new ActionDescription.Builder(
+            "focusWhenAvailable",
+            "http://example.org/focusWhenAvailable",
+            "/focusWhenAvailable"
+          )
+          .setMethodName("PUT")
+          .setInputSchema(new ArraySchema.Builder()
+                                         .addItem(new StringSchema.Builder().build()).build())
+          .build(),
+          new ActionDescription.Builder(
+            "stopFocus",
+            "http://example.org/stopFocus",
+            "/stopFocus"
+          )
+          .setMethodName("DELETE")
+          .setInputSchema(new ArraySchema.Builder()
+                                         .addItem(new StringSchema.Builder().build())
+                                         .build())
+          .build()
+        ),
+        Map.of(
           "focus",
-          "http://example.org/focus",
-          "/focus"
-        )
-        .setMethodName("PUT")
-        .setInputSchema(new ArraySchema.Builder()
-                                       .addItem(new StringSchema.Builder().build()).build())
-        .build(),
-        new ActionDescription.Builder(
-          "focusWhenAvailable",
-          "http://example.org/focusWhenAvailable",
-          "/focusWhenAvailable"
-        )
-        .setMethodName("PUT")
-        .setInputSchema(new ArraySchema.Builder()
-                                       .addItem(new StringSchema.Builder().build()).build())
-        .build(),
-        new ActionDescription.Builder(
+          args -> Stream.concat(
+                          Arrays.stream(args)
+                                .limit(1)
+                                .map(e -> workspace.getArtifact(e.toString())),
+                          Arrays.stream(args).skip(1).map(e -> null)
+                        )
+                        .toArray(),
           "stopFocus",
-          "http://example.org/stopFocus",
-          "/stopFocus"
-        )
-        .setMethodName("DELETE")
-        .setInputSchema(new ArraySchema.Builder()
-                                       .addItem(new StringSchema.Builder().build())
-                                       .build())
-        .build()
-      ),
-      Map.of(
-        "focus",
-        args -> Stream.concat(
-                        Arrays.stream(args)
-                              .limit(1)
-                              .map(e -> workspace.getArtifact(e.toString())),
-                        Arrays.stream(args).skip(1).map(e -> null)
-                      )
-                      .toArray(),
-        "stopFocus",
-        args -> Arrays.stream(args)
-                      .limit(1)
-                      .map(e -> workspace.getArtifact(e.toString()))
-                      .toArray()
-      ),
-      Optional.of(artifactName),
-      Optional.of(hypermediaArtifactName),
-      new HashSet<>(),
-      new HashMap<>(),
-      metadata
+          args -> Arrays.stream(args)
+                        .limit(1)
+                        .map(e -> workspace.getArtifact(e.toString()))
+                        .toArray()
+        ),
+        Optional.of(artifactName),
+        Optional.of(hypermediaArtifactName),
+        new HashSet<>(),
+        new HashMap<>(),
+        metadata
     );
   }
 }

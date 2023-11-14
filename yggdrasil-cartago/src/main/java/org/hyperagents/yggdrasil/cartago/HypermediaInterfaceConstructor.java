@@ -7,8 +7,8 @@ import cartago.Workspace;
 public interface HypermediaInterfaceConstructor {
 
   HypermediaInterface createHypermediaInterface(
-    Workspace workspace,
-    ArtifactDescriptor descriptor,
-    ArtifactId artifactId
+      Workspace workspace,
+      ArtifactDescriptor descriptor,
+      ArtifactId artifactId
   );
 }

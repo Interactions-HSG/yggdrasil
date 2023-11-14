@@ -12,6 +12,8 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
  * corresponding handler.
  */
 public class HttpServerVerticle extends AbstractVerticle {
+  private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
+
   @Override
   public void start() {
     final var httpConfig = new HttpInterfaceConfigImpl(this.context.config());
@@ -60,8 +62,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/workspaces/:wkspid/focus").handler(handler::handleFocus);
     router.get("/workspaces/:wkspid/artifacts/:artid/")
           .handler(handler::handleRedirectWithoutSlash);
-    router.get("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleGetEntity);
-    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
+    router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
+    router.put(ARTIFACT_PATH).handler(handler::handleUpdateEntity);
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes("text/turtle")
           .handler(handler::handleCreateEntity);
@@ -71,9 +73,8 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes("application/json")
           .handler(handler::handleCreateArtifact);
-    router.put("/workspaces/:wkspid/artifacts/:artid").handler(handler::handleUpdateEntity);
-    router.delete("/workspaces/:wkspid/artifacts/:artid")
-          .handler(handler::handleDeleteEntity);
+    router.put(ARTIFACT_PATH).handler(handler::handleUpdateEntity);
+    router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
     router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
     router.post("/hub/").handler(handler::handleEntitySubscription);
     return router;

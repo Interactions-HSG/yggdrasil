@@ -19,6 +19,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
@@ -31,13 +38,6 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
@@ -46,6 +46,7 @@ import java.util.Optional;
  */
 public class HttpEntityHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
+  private static final String WORKSPACE_ID_PARAM = "wkspid";
 
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
 
@@ -108,12 +109,12 @@ public class HttpEntityHandler {
     }
 
     final var artifactName =
-      ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
+        ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
             agentId,
-            context.pathParam("wkspid"),
+            context.pathParam(WORKSPACE_ID_PARAM),
             artifactName,
             representation
         ))
@@ -145,7 +146,7 @@ public class HttpEntityHandler {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           agentId,
-          context.pathParam("wkspid"),
+          context.pathParam(WORKSPACE_ID_PARAM),
           representation.getString("artifactName"),
           representation.getString("callbackIri")
         ))
@@ -162,13 +163,13 @@ public class HttpEntityHandler {
     }
 
     final var hypermediaArtifactName = context.pathParam("artid");
-    final var workspaceName = context.pathParam("wkspid");
+    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var artifactIri = registry.getHttpArtifactsPrefix(workspaceName) + hypermediaArtifactName;
     final var artifactName =
-      registry.hasOtherName(hypermediaArtifactName)
-      ? registry.getActualName(hypermediaArtifactName)
-      : hypermediaArtifactName;
+        registry.hasOtherName(hypermediaArtifactName)
+        ? registry.getActualName(hypermediaArtifactName)
+        : hypermediaArtifactName;
     final var actionName =
         registry.getActionName(request.rawMethod(), request.absoluteURI());
 
@@ -268,12 +269,13 @@ public class HttpEntityHandler {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
-    this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
-      agentId,
-      routingContext.pathParam("wkspid")
-    ))
-    .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-    .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+    this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.JoinWorkspace(
+          agentId,
+          routingContext.pathParam(WORKSPACE_ID_PARAM)
+        ))
+        .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
+        .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 
   public void handleLeaveWorkspace(final RoutingContext routingContext) {
@@ -283,12 +285,13 @@ public class HttpEntityHandler {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
-    this.cartagoMessagebox.sendMessage(new CartagoMessage.LeaveWorkspace(
-      agentId,
-      routingContext.pathParam("wkspid")
-    ))
-    .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-    .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+    this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.LeaveWorkspace(
+          agentId,
+          routingContext.pathParam(WORKSPACE_ID_PARAM)
+        ))
+        .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
+        .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 
   public void handleCreateSubWorkspace(final RoutingContext routingContext) {
@@ -299,16 +302,17 @@ public class HttpEntityHandler {
     }
 
     final var subWorkspaceName = routingContext.request().getHeader("Slug");
-    this.cartagoMessagebox.sendMessage(new CartagoMessage.CreateSubWorkspace(
-      routingContext.pathParam("wkspid"),
-      subWorkspaceName
-    ))
-    .compose(r -> this.storeEntity(
-      routingContext,
-      HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(),
-      subWorkspaceName,
-      r.body()
-    ));
+    this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateSubWorkspace(
+          routingContext.pathParam(WORKSPACE_ID_PARAM),
+          subWorkspaceName
+        ))
+        .compose(r -> this.storeEntity(
+            routingContext,
+            HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(),
+            subWorkspaceName,
+            r.body()
+        ));
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {
@@ -402,10 +406,7 @@ public class HttpEntityHandler {
 
         Optional.ofNullable(reply.result().body())
                 .filter(r -> !r.isEmpty())
-                .ifPresentOrElse(
-                  httpResponse::end,
-                  httpResponse::end
-                );
+                .ifPresentOrElse(httpResponse::end, httpResponse::end);
       } else {
         final var exception = ((ReplyException) reply.cause());
 

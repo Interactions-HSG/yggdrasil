@@ -2,32 +2,34 @@ package org.hyperagents.yggdrasil.cartago;
 
 import cartago.AgentId;
 import cartago.WorkspaceId;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 
-public class HypermediaAgentBodyArtifactRegistry {
+public final class HypermediaAgentBodyArtifactRegistry {
   private static HypermediaAgentBodyArtifactRegistry REGISTRY;
 
   private final Map<String, String> artifactActionRouter;
-  private final Map<String, String> artifactAPIKeys;
+  private final Map<String, String> artifactApiKeys;
   private final Map<String, String> artifactTemplateDescriptions;
   private final Map<Pair<AgentId, WorkspaceId>, String> agentBodyNames;
   private final Map<String, String> hypermediaNames;
   private String httpPrefix = "http://localhost:8080";
-  private int n;
+  private int counter;
 
   private HypermediaAgentBodyArtifactRegistry() {
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
-    this.artifactAPIKeys = Collections.synchronizedMap(new HashMap<>());
+    this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
     this.agentBodyNames = Collections.synchronizedMap(new HashMap<>());
     this.hypermediaNames = Collections.synchronizedMap(new HashMap<>());
-    this.n = 1;
+    this.counter = 0;
   }
 
+  @SuppressFBWarnings("MS_EXPOSE_REP")
   public static synchronized HypermediaAgentBodyArtifactRegistry getInstance() {
     if (REGISTRY == null) {
       REGISTRY = new HypermediaAgentBodyArtifactRegistry();
@@ -45,8 +47,8 @@ public class HypermediaAgentBodyArtifactRegistry {
   }
 
   public String getName() {
-    this.n++;
-    return "hypermedia_body_" + this.n;
+    this.counter++;
+    return "hypermedia_body_" + this.counter;
   }
 
   public void setHttpPrefix(final String prefix) {
@@ -65,22 +67,22 @@ public class HypermediaAgentBodyArtifactRegistry {
     return this.artifactTemplateDescriptions.get(artifactName);
   }
 
-  public String getActionName(final String method, final String requestURI) {
-    return this.artifactActionRouter.get(method + requestURI);
+  public String getActionName(final String method, final String requestUri) {
+    return this.artifactActionRouter.get(method + requestUri);
   }
 
-  public void setAPIKeyForArtifact(final String artifactId, final String apiKey) {
-    this.artifactAPIKeys.put(artifactId, apiKey);
+  public void setApiKeyForArtifact(final String artifactId, final String apiKey) {
+    this.artifactApiKeys.put(artifactId, apiKey);
   }
 
-  public String getAPIKeyForArtifact(final String artifactId) {
-    return this.artifactAPIKeys.get(artifactId);
+  public String getApiKeyForArtifact(final String artifactId) {
+    return this.artifactApiKeys.get(artifactId);
   }
 
   public void setArtifact(
-    final AgentId agentId,
-    final WorkspaceId workspaceId,
-    final String bodyName
+      final AgentId agentId,
+      final WorkspaceId workspaceId,
+      final String bodyName
   ) {
     this.agentBodyNames.put(new ImmutablePair<>(agentId, workspaceId), bodyName);
   }

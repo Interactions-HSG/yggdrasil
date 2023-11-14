@@ -3,6 +3,12 @@ package org.hyperagents.yggdrasil.store.impl;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import org.apache.commons.rdf.api.Dataset;
 import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
@@ -25,12 +31,6 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 public class Rdf4jStore implements RdfStore {
   private static final Logger LOGGER = LoggerFactory.getLogger(RdfStore.class.getName());
@@ -94,7 +94,7 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public String graphToString(final Graph graph, final RDFSyntax syntax)
       throws IllegalArgumentException, IOException {
-    if (graph instanceof RDF4JGraph rdf4JGraph) {
+    if (graph instanceof RDF4JGraph rdf4jGraph) {
       try (var out = new ByteArrayOutputStream()) {
         final RDFWriter writer;
 
@@ -127,7 +127,7 @@ public class Rdf4jStore implements RdfStore {
           writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
           writer.handleNamespace("saref", "https://w3id.org/saref#");
 
-          try (var stream = rdf4JGraph.stream()) {
+          try (var stream = rdf4jGraph.stream()) {
             stream.forEach(triple -> writer.handleStatement(triple.asStatement()));
           }
           writer.endRDF();
@@ -148,9 +148,9 @@ public class Rdf4jStore implements RdfStore {
       throws IllegalArgumentException, IOException {
     try (var stringReader = new StringReader(graphString)) {
       final RDFFormat format =
-        syntax.equals(RDFSyntax.TURTLE)
-        ? RDFFormat.TURTLE
-        : RDFFormat.JSONLD;
+          syntax.equals(RDFSyntax.TURTLE)
+          ? RDFFormat.TURTLE
+          : RDFFormat.JSONLD;
       final var rdfParser = Rio.createParser(format);
       final var model = new LinkedHashModel();
       rdfParser.setRDFHandler(new StatementCollector(model));

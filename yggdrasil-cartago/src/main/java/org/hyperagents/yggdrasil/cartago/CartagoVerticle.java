@@ -26,10 +26,15 @@ import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -40,16 +45,11 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
+  private static final String ARTIFACT_NAME_PARAM = "artifactName";
 
   private Map<String, AgentCredential> agentCredentials;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
@@ -101,7 +101,7 @@ public class CartagoVerticle extends AbstractVerticle {
           ));
         case CartagoMessage.LeaveWorkspace(String agentId, String workspaceName) -> {
           this.leaveWorkspace(agentId, workspaceName);
-          message.reply(HttpStatus.SC_OK);
+          message.reply(String.valueOf(HttpStatus.SC_OK));
         }
         case CartagoMessage.CreateArtifact(
             String agentId,
@@ -109,7 +109,7 @@ public class CartagoVerticle extends AbstractVerticle {
             String artifactName,
             String representation
           ) -> {
-          final var artifactInit = Json.decodeValue(representation, JsonObject.class);
+          final var artifactInit = new JsonObject(representation);
           final var registry = HypermediaArtifactRegistry.getInstance();
           this.instantiateArtifact(
               agentId,
@@ -128,9 +128,9 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceName,
           String artifactName,
           String callbackIri
-        ) -> {
+          ) -> {
           this.focus(agentId, workspaceName, artifactName, callbackIri);
-          message.reply(HttpStatus.SC_OK);
+          message.reply(String.valueOf(HttpStatus.SC_OK));
         }
         case CartagoMessage.DoAction(
           String agentId,
@@ -153,103 +153,102 @@ public class CartagoVerticle extends AbstractVerticle {
     final var workspaceId =
         HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix() + workspaceName;
     WorkspaceRegistry.getInstance()
-                     .registerWorkspace(
-                       CartagoEnvironment.getInstance()
-                                         .getRootWSP()
-                                         .getWorkspace()
-                                         .createWorkspace(workspaceName),
-                       workspaceId
-                     );
+                     .registerWorkspace(CartagoEnvironment.getInstance()
+                                                          .getRootWSP()
+                                                          .getWorkspace()
+                                                          .createWorkspace(workspaceName),
+                                        workspaceId);
     return this.createWorkspaceRepresentation(workspaceId, workspaceName);
   }
 
   private String instantiateSubWorkspace(final String workspaceName, final String subWorkspaceName)
-    throws CartagoException {
-    LOGGER.info("Creating workspace " + subWorkspaceName);
+      throws CartagoException {
+    LOGGER.info("Creating workspace " + subWorkspaceName + " under " + workspaceName);
     final var subWorkspaceId =
-      HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix() + subWorkspaceName;
+        HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix() + subWorkspaceName;
     WorkspaceRegistry.getInstance()
-                     .registerWorkspace(
-                       CartagoEnvironment.getInstance()
-                                         .resolveWSP(workspaceName)
-                                         .getWorkspace()
-                                         .createWorkspace(subWorkspaceName),
-                       subWorkspaceId
-                     );
+                     .registerWorkspace(WorkspaceRegistry.getInstance()
+                                                         .getWorkspace(workspaceName)
+                                                         .orElseThrow()
+                                                         .createWorkspace(subWorkspaceName),
+                                        subWorkspaceId);
     return this.createWorkspaceRepresentation(subWorkspaceId, subWorkspaceName);
   }
 
-  private String createWorkspaceRepresentation(final String workspaceId, final String workspaceName) {
+  private String createWorkspaceRepresentation(
+      final String workspaceId,
+      final String workspaceName
+  ) {
     return new TDGraphWriter(
-      new ThingDescription
-        .Builder(workspaceName)
-        .addThingURI(workspaceId)
-        .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
-        .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Workspace")
-        .addAction(
-          new ActionAffordance.Builder(
-            "makeArtifact",
-            new Form.Builder(workspaceId + "/artifacts/").build()
+        new ThingDescription
+          .Builder(workspaceName)
+          .addThingURI(workspaceId)
+          .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
+          .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+          .addAction(
+            new ActionAffordance.Builder(
+                "makeArtifact",
+                new Form.Builder(workspaceId + "/artifacts/").build()
+            )
+            .addSemanticType("http://w3id.org/eve#MakeArtifact")
+            .addInputSchema(
+              new ObjectSchema
+                .Builder()
+                .addProperty(
+                  "artifactClass",
+                  new StringSchema
+                    .Builder()
+                    .addSemanticType("http://w3id.org/eve#ArtifactClass")
+                    .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+                    .build()
+                )
+                .addProperty(
+                  ARTIFACT_NAME_PARAM,
+                  new StringSchema
+                    .Builder()
+                    .addSemanticType("http://w3id.org/eve#ArtifactName")
+                    .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
+                    .build()
+                )
+                .addProperty("initParams", new ArraySchema.Builder().build())
+                .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
+                .build()
+            )
+            .build()
           )
-          .addSemanticType("http://w3id.org/eve#MakeArtifact")
-          .addInputSchema(
-            new ObjectSchema
-              .Builder()
-              .addProperty(
-                "artifactClass",
-                new StringSchema
-                  .Builder()
-                  .addSemanticType("http://w3id.org/eve#ArtifactClass")
-                  .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
-                  .build()
-              )
-              .addProperty(
-                "artifactName",
-                new StringSchema
-                  .Builder()
-                  .addSemanticType("http://w3id.org/eve#ArtifactName")
-                  .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
-                  .build()
-              )
-              .addProperty("initParams", new ArraySchema.Builder().build())
-              .addRequiredProperties("artifactClass", "artifactName")
-              .build()
+          .addAction(
+            new ActionAffordance.Builder(
+                "joinWorkspace",
+                new Form.Builder(workspaceId + "/join").setMethodName("PUT").build()
+            )
+            .addSemanticType("http://example.org/joinWorkspace")
+            .build()
+          )
+          .addAction(
+            new ActionAffordance.Builder(
+                "leaveWorkspace",
+                new Form.Builder(workspaceId + "/leave").setMethodName("DELETE").build()
+            )
+            .addSemanticType("http://example.org/leaveWorkspace")
+            .build()
+          )
+          .addAction(
+            new ActionAffordance.Builder(
+                "focus",
+                new Form.Builder(workspaceId + "/focus").setMethodName("POST").build()
+            )
+            .addInputSchema(
+              new ObjectSchema
+                .Builder()
+                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
+                .addProperty("artifactIri", new StringSchema.Builder().build())
+                .addProperty("callbackIri", new StringSchema.Builder().build())
+                .addRequiredProperties(ARTIFACT_NAME_PARAM, "artifactIri", "callbackIri")
+                .build()
+            )
+            .build()
           )
           .build()
-        )
-        .addAction(
-          new ActionAffordance.Builder(
-            "joinWorkspace",
-            new Form.Builder(workspaceId + "/join").setMethodName("PUT").build()
-          )
-          .addSemanticType("http://example.org/joinWorkspace")
-          .build()
-        )
-        .addAction(
-          new ActionAffordance.Builder(
-            "leaveWorkspace",
-            new Form.Builder(workspaceId + "/leave").setMethodName("DELETE").build()
-          )
-          .addSemanticType("http://example.org/leaveWorkspace")
-          .build()
-        )
-        .addAction(
-          new ActionAffordance.Builder(
-            "focus",
-            new Form.Builder(workspaceId + "/focus").setMethodName("POST").build()
-          )
-          .addInputSchema(
-            new ObjectSchema
-              .Builder()
-              .addProperty("artifactName", new StringSchema.Builder().build())
-              .addProperty("artifactIri", new StringSchema.Builder().build())
-              .addProperty("callbackIri", new StringSchema.Builder().build())
-              .addRequiredProperties("artifactName", "artifactIri", "callbackIri")
-              .build()
-          )
-          .build()
-        )
-        .build()
     )
     .setNamespace("td", "https://www.w3.org/2019/wot/td#")
     .setNamespace("htv", "http://www.w3.org/2011/http#")
@@ -263,9 +262,11 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String joinWorkspace(final String agentUri, final String workspaceName)
-    throws CartagoException {
+      throws CartagoException {
     LOGGER.info(agentUri + " joins workspace " + workspaceName);
-    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    final var workspace = WorkspaceRegistry.getInstance()
+                                           .getWorkspace(workspaceName)
+                                           .orElseThrow();
     final var agentCredential = this.getAgentCredential(agentUri);
     workspace.joinWorkspace(agentCredential, e -> {});
     final var workspaceId = workspace.getId();
@@ -277,63 +278,66 @@ public class CartagoVerticle extends AbstractVerticle {
       LOGGER.info("create body for agent: " + agentUri);
       final var bodyName = "body_" + agentUri;
       final var hypermediaInterface = HypermediaInterface.getBodyInterface(
-        workspace,
-        workspace.getArtifactDescriptor(bodyName),
-        workspace.getArtifact(bodyName),
-        agentUri
+          workspace,
+          workspace.getArtifactDescriptor(bodyName),
+          workspace.getArtifact(bodyName),
+          agentUri
       );
       HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
       this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-        WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
-        hypermediaInterface.getActualArtifactName(),
-        hypermediaInterface.getHypermediaDescription()
+          WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
+          hypermediaInterface.getActualArtifactName(),
+          hypermediaInterface.getHypermediaDescription()
       ));
       final var hypermediaBodyName = registry.getHypermediaName(bodyName);
       registry.setArtifact(agentId, workspaceId, bodyName);
       this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-        HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceId.getName()),
-        hypermediaBodyName,
-        HypermediaArtifactRegistry.getInstance().getArtifactDescription(hypermediaBodyName)
+          HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceId.getName()),
+          hypermediaBodyName,
+          HypermediaArtifactRegistry.getInstance().getArtifactDescription(hypermediaBodyName)
       ));
       return hypermediaBodyName;
     }
   }
 
-  public void focus(
-    final String agentUri,
-    final String workspaceName,
-    final String artifactName,
-    final String callbackIri
+  private void focus(
+      final String agentUri,
+      final String workspaceName,
+      final String artifactName,
+      final String callbackIri
   ) throws CartagoException {
-    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    this.joinWorkspace(agentUri, workspaceName);
+    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
     final var artifactIri =
-      HypermediaArtifactRegistry.getInstance().getArtifactUri(workspaceName, artifactName);
-    LOGGER.info("artifact IRI: "+ artifactIri);
-    LOGGER.info("callback IRI: "+ callbackIri);
+        HypermediaArtifactRegistry.getInstance().getArtifactUri(workspaceName, artifactName);
+    LOGGER.info("artifact IRI: " + artifactIri);
+    LOGGER.info("callback IRI: " + callbackIri);
     NotificationSubscriberRegistry.getInstance().addCallbackIri(artifactIri, callbackIri);
     workspace
-      .focus(
-        this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
-        p -> true,
-        new NotificationCallback(this.dispatcherMessagebox),
-        workspace.getArtifact(artifactName)
-      )
-      .forEach(p -> this.dispatcherMessagebox.sendMessage(
-        new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(artifactIri, p.toString())
-      ));
+        .focus(
+          this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
+          p -> true,
+          new NotificationCallback(this.dispatcherMessagebox),
+          Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
+        )
+        .forEach(p -> this.dispatcherMessagebox.sendMessage(
+          new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+            artifactIri,
+            p.toString()
+          )
+        ));
   }
 
   private void leaveWorkspace(final String agentUri, final String workspaceName)
-    throws CartagoException {
-    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+      throws CartagoException {
+    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
     final var workspaceId = workspace.getId();
     final var agentId = this.getAgentId(this.getAgentCredential(agentUri), workspaceId);
     final var bodyName = HypermediaAgentBodyArtifactRegistry.getInstance()
                                                             .getArtifact(agentId, workspaceId);
-    workspace.disposeArtifact(agentId, workspace.getArtifact(bodyName));
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-      HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)
-      + HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName)
+        HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)
+        + HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName)
     ));
     workspace.quitAgent(agentId);
   }
@@ -347,25 +351,25 @@ public class CartagoVerticle extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
-    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName);
+    final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
     final var artifactId = workspace.makeArtifact(
-      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
-      artifactName,
-      artifactClass,
-      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+        this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+        artifactName,
+        artifactClass,
+        params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
     final var artifactDescriptor = workspace.getArtifactDescriptor(artifactName);
     LOGGER.info("Done!");
     final var registry = HypermediaArtifactRegistry.getInstance();
     if (registry.hasInterfaceConstructor(artifactClass)) {
       final var hypermediaInterface =
-        registry.getInterfaceConstructor(artifactClass)
-                .createHypermediaInterface(workspace, artifactDescriptor, artifactId);
+          registry.getInterfaceConstructor(artifactClass)
+                  .createHypermediaInterface(workspace, artifactDescriptor, artifactId);
       registry.register(hypermediaInterface);
       this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-        WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
-        hypermediaInterface.getActualArtifactName(),
-        hypermediaInterface.getHypermediaDescription()
+          WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
+          hypermediaInterface.getActualArtifactName(),
+          hypermediaInterface.getHypermediaDescription()
       ));
     }
   }
@@ -381,21 +385,21 @@ public class CartagoVerticle extends AbstractVerticle {
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
-      payload
-        .map(p -> {
-          final var params = CartagoDataBundle.fromJson(payload.get());
-          final var convertedParams =
-            registry.hasHypermediaInterface(artifactName)
-            ? registry.getHypermediaInterface(artifactName).convert(action, params)
-            : params;
-          final var completeParams =
-            registry.hasFeedbackParam(artifactName, action)
-            ? Stream.concat(Arrays.stream(convertedParams), Stream.of(feedbackParameter))
-                    .toArray()
-            : convertedParams;
-          return new Op(action, completeParams);
-        })
-        .orElseGet(() -> new Op(action));
+        payload
+          .map(p -> {
+            final var params = CartagoDataBundle.fromJson(payload.get());
+            final var convertedParams =
+                registry.hasHypermediaInterface(artifactName)
+                ? registry.getHypermediaInterface(artifactName).convert(action, params)
+                : params;
+            final var completeParams =
+                registry.hasFeedbackParam(artifactName, action)
+                ? Stream.concat(Arrays.stream(convertedParams), Stream.of(feedbackParameter))
+                        .toArray()
+                : convertedParams;
+            return new Op(action, completeParams);
+          })
+          .orElseGet(() -> new Op(action));
     LOGGER.info(
         "Performing action "
         + action
@@ -407,24 +411,26 @@ public class CartagoVerticle extends AbstractVerticle {
     final var promise = Promise.<Void>promise();
     WorkspaceRegistry.getInstance()
                      .getWorkspace(workspaceName)
-                     .execOp(
-                       0L,
-                       this.getAgentId(
-                         this.getAgentCredential(agentUri),
-                         WorkspaceRegistry.getInstance().getWorkspaceId(workspaceName)
-                       ),
-                       e -> {
-                         if (e instanceof ActionSucceededEvent) {
-                           promise.complete();
-                         } else if (e instanceof ActionFailedEvent f) {
-                           promise.fail(f.getFailureMsg());
-                         }
-                       },
-                       artifactName,
-                       operation,
-                       -1,
-                       null
-                     );
+                     .orElseThrow()
+                     .execOp(0L,
+                             this.getAgentId(
+                               this.getAgentCredential(agentUri),
+                               WorkspaceRegistry.getInstance()
+                                                .getWorkspace(workspaceName)
+                                                .orElseThrow()
+                                                .getId()
+                             ),
+                             e -> {
+                               if (e instanceof ActionSucceededEvent) {
+                                 promise.complete();
+                               } else if (e instanceof ActionFailedEvent f) {
+                                 promise.fail(f.getFailureMsg());
+                               }
+                             },
+                             artifactName,
+                             operation,
+                             -1,
+                             null);
     return promise.future()
                   .map(ignored ->
                     Optional.ofNullable(feedbackParameter.get())
