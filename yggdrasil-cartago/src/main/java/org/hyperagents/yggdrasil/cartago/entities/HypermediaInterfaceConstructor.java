@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.entities;
 
 import cartago.ArtifactDescriptor;
 import cartago.ArtifactId;

@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.entities;
 
 import cartago.CartagoEvent;
 import cartago.ICartagoCallback;
@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 

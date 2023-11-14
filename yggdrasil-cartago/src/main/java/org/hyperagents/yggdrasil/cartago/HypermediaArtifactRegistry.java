@@ -20,6 +20,9 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
+import org.hyperagents.yggdrasil.cartago.entities.HypermediaInterface;
+import org.hyperagents.yggdrasil.cartago.entities.HypermediaInterfaceConstructor;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with

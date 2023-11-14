@@ -36,6 +36,8 @@ import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperagents.yggdrasil.cartago.entities.HypermediaInterfaceFactory;
+import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -277,7 +279,7 @@ public class CartagoVerticle extends AbstractVerticle {
     } else {
       LOGGER.info("create body for agent: " + agentUri);
       final var bodyName = "body_" + agentUri;
-      final var hypermediaInterface = HypermediaInterface.getBodyInterface(
+      final var hypermediaInterface = HypermediaInterfaceFactory.createBodyInterface(
           workspace,
           workspace.getArtifactDescriptor(bodyName),
           workspace.getArtifact(bodyName),

@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.entities;
 
 import cartago.ArtifactDescriptor;
 import cartago.ArtifactId;
@@ -27,10 +27,10 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
+import org.hyperagents.yggdrasil.cartago.HypermediaAgentBodyArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
 public class HypermediaInterface {
-  private static final ValueFactory RDF = SimpleValueFactory.getInstance();
-
   private final Class<?> clazz;
   private final Workspace workspace;
   private final ArtifactId artifactId;
@@ -43,7 +43,7 @@ public class HypermediaInterface {
   private final Model metadata;
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
-  public HypermediaInterface(
+  HypermediaInterface(
       final Class<?> clazz,
       final Workspace workspace,
       final ArtifactId artifactId,
@@ -65,31 +65,6 @@ public class HypermediaInterface {
     this.feedbackActions = new HashSet<>(feedbackActions);
     this.responseConverterMap = new HashMap<>(responseConverterMap);
     this.metadata = metadata;
-  }
-
-  public HypermediaInterface(
-      final Class<?> clazz,
-      final Workspace workspace,
-      final ArtifactId artifactId,
-      final List<ActionDescription> descriptions,
-      final Map<String, UnaryOperator<Object[]>> converterMap,
-      final Optional<String> name,
-      final Optional<String> hypermediaName,
-      final Set<String> feedbackActions,
-      final Map<String, UnaryOperator<Object>> responseConverterMap
-  ) {
-    this(
-        clazz,
-        workspace,
-        artifactId,
-        descriptions,
-        converterMap,
-        name,
-        hypermediaName,
-        feedbackActions,
-        responseConverterMap,
-        new LinkedHashModel()
-    );
   }
 
   public ArtifactId getArtifactId() {
@@ -183,81 +158,5 @@ public class HypermediaInterface {
     return this.converterMap.containsKey(method)
            ? this.converterMap.get(method).apply(args)
            : args;
-  }
-
-  public static HypermediaInterface getBodyInterface(
-      final Workspace workspace,
-      final ArtifactDescriptor descriptor,
-      final ArtifactId artifactId,
-      final String agentIri
-  ) {
-    final var hypermediaArtifactName = HypermediaAgentBodyArtifactRegistry.getInstance().getName();
-    final var artifactName = artifactId.getName();
-    HypermediaAgentBodyArtifactRegistry.getInstance()
-                                       .registerName(artifactName, hypermediaArtifactName);
-    final var metadata = new LinkedHashModel();
-    metadata.add(
-        RDF.createIRI(HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix()
-                      + workspace.getId().getName()
-                      + "/artifacts/"
-                      + hypermediaArtifactName),
-        RDF.createIRI("https://purl.org/hmas/interaction#isAgentBodyOf"),
-        RDF.createIRI(agentIri)
-    );
-    return new HypermediaInterface(
-        descriptor.getArtifact().getClass(),
-        workspace,
-        artifactId,
-        List.of(
-          new ActionDescription.Builder(
-            "focus",
-            "http://example.org/focus",
-            "/focus"
-          )
-          .setMethodName("PUT")
-          .setInputSchema(new ArraySchema.Builder()
-                                         .addItem(new StringSchema.Builder().build()).build())
-          .build(),
-          new ActionDescription.Builder(
-            "focusWhenAvailable",
-            "http://example.org/focusWhenAvailable",
-            "/focusWhenAvailable"
-          )
-          .setMethodName("PUT")
-          .setInputSchema(new ArraySchema.Builder()
-                                         .addItem(new StringSchema.Builder().build()).build())
-          .build(),
-          new ActionDescription.Builder(
-            "stopFocus",
-            "http://example.org/stopFocus",
-            "/stopFocus"
-          )
-          .setMethodName("DELETE")
-          .setInputSchema(new ArraySchema.Builder()
-                                         .addItem(new StringSchema.Builder().build())
-                                         .build())
-          .build()
-        ),
-        Map.of(
-          "focus",
-          args -> Stream.concat(
-                          Arrays.stream(args)
-                                .limit(1)
-                                .map(e -> workspace.getArtifact(e.toString())),
-                          Arrays.stream(args).skip(1).map(e -> null)
-                        )
-                        .toArray(),
-          "stopFocus",
-          args -> Arrays.stream(args)
-                        .limit(1)
-                        .map(e -> workspace.getArtifact(e.toString()))
-                        .toArray()
-        ),
-        Optional.of(artifactName),
-        Optional.of(hypermediaArtifactName),
-        new HashSet<>(),
-        new HashMap<>(),
-        metadata
-    );
   }
 }

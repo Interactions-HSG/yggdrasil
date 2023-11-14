@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.AgentBodyArtifact;
 import cartago.CartagoException;
@@ -6,6 +6,9 @@ import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.Vertx;
 import java.util.NoSuchElementException;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
+import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 

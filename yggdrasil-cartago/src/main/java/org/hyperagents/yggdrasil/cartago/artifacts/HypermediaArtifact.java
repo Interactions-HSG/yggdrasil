@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.Artifact;
 import cartago.ArtifactId;
@@ -24,6 +24,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
 public abstract class HypermediaArtifact extends Artifact {
   private final ListMultimap<String, ActionAffordance> actionAffordances =
