@@ -539,6 +539,10 @@ is_working(false).
 +?create_json(L1, L2, Json): true <-
     org.hyperagents.yggdrasil.jason.json.createMapTerm(L1, L2, Json).
 
+-?create_json(L1, L2, Json): true <-
+    .print("L1: ", L1);
+    .print("L1: ", L2).
+
 +?create_json(Json): true <-
     org.hyperagents.yggdrasil.jason.json.createMapTerm([], [], Json).
 
