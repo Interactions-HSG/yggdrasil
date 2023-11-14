@@ -8,7 +8,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Flow;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 public class DltInterface extends HypermediaArtifact {
   private String dltClientUrl;

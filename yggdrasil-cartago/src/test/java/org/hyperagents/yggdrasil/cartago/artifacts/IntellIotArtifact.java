@@ -6,7 +6,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
 import java.util.List;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 public class IntellIotArtifact extends HypermediaArtifact {
 

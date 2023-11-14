@@ -4,7 +4,6 @@ import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 public class Adder extends HypermediaArtifact {
   @OPERATION

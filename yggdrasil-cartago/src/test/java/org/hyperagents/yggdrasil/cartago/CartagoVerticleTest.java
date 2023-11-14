@@ -112,7 +112,7 @@ public class CartagoVerticleTest {
 
   @Order(1)
   @Test
-  public void createWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateWorkspaceSucceeds(final VertxTestContext ctx)
       throws IOException, URISyntaxException {
     final var expectedThingDescription =
         Files.readString(
@@ -131,7 +131,7 @@ public class CartagoVerticleTest {
 
   @Order(2)
   @Test
-  public void createWorkspaceFailsWithAlreadyCreatedOne(final VertxTestContext ctx) {
+  public void testCreateWorkspaceFailsWithAlreadyCreatedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
         .onFailure(t -> Assertions.assertEquals(
@@ -144,7 +144,7 @@ public class CartagoVerticleTest {
 
   @Order(3)
   @Test
-  public void joinWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedBodyArtifactThingDescription =
         Files.readString(
@@ -202,7 +202,7 @@ public class CartagoVerticleTest {
 
   @Order(4)
   @Test
-  public void joinWorkspaceIsIdempotent(final VertxTestContext ctx) {
+  public void testJoinWorkspaceIsIdempotent(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onComplete(ctx.succeedingThenComplete());
@@ -210,7 +210,7 @@ public class CartagoVerticleTest {
 
   @Order(5)
   @Test
-  public void joinWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
+  public void testJoinWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, NONEXISTENT_NAME))
         .onFailure(t -> Assertions.assertEquals(
@@ -223,7 +223,7 @@ public class CartagoVerticleTest {
 
   @Order(6)
   @Test
-  public void createSubWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateSubWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
         Files.readString(
@@ -242,7 +242,7 @@ public class CartagoVerticleTest {
 
   @Order(7)
   @Test
-  public void createSubWorkspaceOfSubWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateSubWorkspaceOfSubWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
         Files.readString(
@@ -261,7 +261,7 @@ public class CartagoVerticleTest {
 
   @Order(8)
   @Test
-  public void createSubWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
+  public void testCreateSubWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(NONEXISTENT_NAME, SUB_WORKSPACE_NAME))
         .onFailure(t -> Assertions.assertEquals(
@@ -274,7 +274,7 @@ public class CartagoVerticleTest {
 
   @Order(9)
   @Test
-  public void createSubWorkspaceFailsOnAlreadyCreatedOne(final VertxTestContext ctx) {
+  public void testCreateSubWorkspaceFailsOnAlreadyCreatedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(MAIN_WORKSPACE_NAME, SUB_WORKSPACE_NAME))
         .onFailure(t -> Assertions.assertEquals(
@@ -287,7 +287,7 @@ public class CartagoVerticleTest {
 
   @Order(10)
   @Test
-  public void leaveWorkspaceSucceeds(final VertxTestContext ctx) {
+  public void testLeaveWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.LeaveWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onSuccess(r -> Assertions.assertEquals(
@@ -300,7 +300,7 @@ public class CartagoVerticleTest {
 
   @Order(11)
   @Test
-  public void leaveWorkspaceFailsOnNotJoinedOne(final VertxTestContext ctx) {
+  public void testLeaveWorkspaceFailsOnNotJoinedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.LeaveWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onFailure(t -> Assertions.assertEquals(
@@ -313,7 +313,7 @@ public class CartagoVerticleTest {
 
   @Order(12)
   @Test
-  public void createArtifactWithoutParametersSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithoutParametersSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
         Files.readString(
@@ -342,7 +342,7 @@ public class CartagoVerticleTest {
 
   @Order(13)
   @Test
-  public void createArtifactWithParametersSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithParametersSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
         Files.readString(
@@ -371,7 +371,7 @@ public class CartagoVerticleTest {
 
   @Order(14)
   @Test
-  public void createArtifactWithFeedbackParameterSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithFeedbackParameterSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
         Files.readString(
@@ -400,7 +400,7 @@ public class CartagoVerticleTest {
 
   @Order(15)
   @Test
-  public void createArtifactFailsWithUnknownClass(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithUnknownClass(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
           AGENT_IRI,
@@ -423,7 +423,7 @@ public class CartagoVerticleTest {
 
   @Order(16)
   @Test
-  public void createArtifactFailsWithUnknownWorkspace(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithUnknownWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
           AGENT_IRI,
@@ -446,7 +446,7 @@ public class CartagoVerticleTest {
 
   @Order(17)
   @Test
-  public void createArtifactFailsWithWrongParameters(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
           AGENT_IRI,
@@ -469,7 +469,7 @@ public class CartagoVerticleTest {
 
   @Order(18)
   @Test
-  public void focusSucceeds(final VertxTestContext ctx) {
+  public void testFocusSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
@@ -506,7 +506,7 @@ public class CartagoVerticleTest {
 
   @Order(19)
   @Test
-  public void focusFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
+  public void testFocusFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
@@ -524,7 +524,7 @@ public class CartagoVerticleTest {
 
   @Order(20)
   @Test
-  public void focusFailsWithNonexistentArtifactName(final VertxTestContext ctx) {
+  public void testFocusFailsWithNonexistentArtifactName(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
@@ -542,7 +542,7 @@ public class CartagoVerticleTest {
 
   @Order(21)
   @Test
-  public void focusIsIdempotent(final VertxTestContext ctx) {
+  public void testFocusIsIdempotent(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
@@ -579,7 +579,7 @@ public class CartagoVerticleTest {
 
   @Order(22)
   @Test
-  public void doActionSucceeds(final VertxTestContext ctx) {
+  public void testDoActionSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,
@@ -598,12 +598,12 @@ public class CartagoVerticleTest {
 
   @Order(23)
   @Test
-  public void doActionAfterFocusSucceeds(final VertxTestContext ctx) {
+  public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "c0",
+          SUB_WORKSPACE_NAME,
+          "c1",
           CALLBACK_IRI
         ))
         .compose(r -> {
@@ -612,10 +612,27 @@ public class CartagoVerticleTest {
               r.body(),
               OPERATION_SUCCESS_MESSAGE
           );
+          try {
+            final var notifyPropertyMessage =
+                (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
+                  this.notificationQueue.take();
+            Assertions.assertEquals(
+                "http://localhost:8080/workspaces/sub/artifacts/c1",
+                notifyPropertyMessage.requestIri(),
+                IRIS_EQUAL_MESSAGE
+            );
+            Assertions.assertEquals(
+                "count(5)",
+                notifyPropertyMessage.content(),
+                PROPERTIES_EQUAL_MESSAGE
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
           return this.cartagoMessagebox.sendMessage(new CartagoMessage.DoAction(
             AGENT_IRI,
-            MAIN_WORKSPACE_NAME,
-            "c0",
+            SUB_WORKSPACE_NAME,
+            "c1",
             "inc",
             Optional.empty()
           ));
@@ -631,12 +648,12 @@ public class CartagoVerticleTest {
                 (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
                   this.notificationQueue.take();
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_IRI,
+                "http://localhost:8080/workspaces/sub/artifacts/c1",
                 notifyPropertyMessage.requestIri(),
                 IRIS_EQUAL_MESSAGE
             );
             Assertions.assertEquals(
-                "count(1)",
+                "count(6)",
                 notifyPropertyMessage.content(),
                 PROPERTIES_EQUAL_MESSAGE
             );
@@ -649,7 +666,7 @@ public class CartagoVerticleTest {
 
   @Order(24)
   @Test
-  public void doActionWithFeedbackParameterSucceeds(final VertxTestContext ctx) {
+  public void testDoActionWithFeedbackParameterSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,
@@ -668,7 +685,7 @@ public class CartagoVerticleTest {
 
   @Order(25)
   @Test
-  public void doActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,
@@ -687,7 +704,7 @@ public class CartagoVerticleTest {
 
   @Order(26)
   @Test
-  public void doActionFailsWithNonexistentArtifact(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentArtifact(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,
@@ -706,7 +723,7 @@ public class CartagoVerticleTest {
 
   @Order(27)
   @Test
-  public void doActionFailsWithNonexistentOperation(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentOperation(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,
@@ -725,7 +742,7 @@ public class CartagoVerticleTest {
 
   @Order(28)
   @Test
-  public void doActionFailsWithWrongParameters(final VertxTestContext ctx) {
+  public void testDoActionFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
           AGENT_IRI,

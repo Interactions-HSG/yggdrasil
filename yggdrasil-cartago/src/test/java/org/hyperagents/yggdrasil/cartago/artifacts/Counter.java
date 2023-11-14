@@ -2,7 +2,6 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class Counter extends HypermediaArtifact {

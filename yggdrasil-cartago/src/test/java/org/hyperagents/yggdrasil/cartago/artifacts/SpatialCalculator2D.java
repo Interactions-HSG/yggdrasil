@@ -13,7 +13,6 @@ import ch.unisg.ics.interactions.wot.td.vocabularies.WoTSec;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifact;
 
 public class SpatialCalculator2D extends HypermediaArtifact {
   private static final String PREFIX = "http://example.org/";
