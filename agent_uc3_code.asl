@@ -98,7 +98,7 @@ is_working(false).
 
 -!check_goal: true <-
     .print("Width: ", Width)
-    !send_message_goal_interface("failed").
+    !send_message_goal_interface("failed", "check_goal failed").
 
 +!start: is_working(B) & not B <-
     !send_message_goal_interface("accepted");
@@ -624,6 +624,7 @@ is_working(false).
 +!exit_code(Code, Goal): Code > 299 <-
     .print("exit");
     -+is_working(false);
+    !send_message_goal_interface("failed", "exit_code failed");
     .fail_goal(Goal).
 
 +!exit_code(Code, Goal): Code <= 299 <-
@@ -632,7 +633,7 @@ is_working(false).
 +!conditional_exit_goal(B, Goal):  B <-
     .print("exit");
     -+is_working(false);
-    !send_message_goal_interface("failed");
+    !send_message_goal_interface("failed", "conditional_exit_goal failed");
     .fail_goal(Goal).
 
 +!conditional_exit_goal(B, Goal): not B <-
