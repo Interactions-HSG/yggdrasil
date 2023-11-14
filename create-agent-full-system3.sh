@@ -9,17 +9,13 @@ while [[ "$#" -gt 0 ]]
         HYPERMAS_BASE=$2
          ((REQUIRED_PARAM_COUNTER++))
         ;;
-      --device)
-        DEVICE_BASE=$2
-         ((REQUIRED_PARAM_COUNTER++))
-        ;;
     esac
     shift
   done
 
 
-if [[ $REQUIRED_PARAM_COUNTER -ne 3 ]]; then
-    echo "$(basename $0)  --hyper <HyperMAS base URL> --device <Edge device base URL> -a/--agent <agent id>"
+if [[ $REQUIRED_PARAM_COUNTER -ne 2 ]]; then
+    echo "$(basename $0)  --hyper <HyperMAS base URL> -a/--agent <agent id>"
     exit 1
 fi
 
@@ -28,4 +24,4 @@ curl --location --request POST ''"${HYPERMAS_BASE}"'/agents/' \
 --header 'X-Agent-WebID: http://example.org/agent' \
 --header 'Slug: '"${AGENT_ID}"'' \
 --header 'Content-Type: text/plain' \
--d @agent_uc3_code.asl
+--data-binary @agent_uc3_code.asl

@@ -1,1 +1,1 @@
-./create-agent-full-system31.sh --hyper http://localhost:8080 --device http://micro1.fritz.box --agent manager
+./create-agent-full-system3.sh --hyper http://localhost:8080 --agent manager
