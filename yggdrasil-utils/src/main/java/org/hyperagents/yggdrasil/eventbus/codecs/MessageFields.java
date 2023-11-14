@@ -4,7 +4,6 @@ enum MessageFields {
   REQUEST_METHOD("requestMethod"),
   REQUEST_URI("requestUri"),
   ENTITY_URI_HINT("slug"),
-  CONTENT_TYPE("contentType"),
   AGENT_ID("agentID"),
   WORKSPACE_NAME("workspaceName"),
   SUB_WORKSPACE_NAME("subWorkspaceName"),

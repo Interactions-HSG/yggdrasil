@@ -3,8 +3,6 @@ package org.hyperagents.yggdrasil.store;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.WebClient;
 import java.io.IOException;
 import java.util.Optional;
@@ -14,6 +12,8 @@ import org.apache.commons.rdf.api.Graph;
 import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -27,7 +27,7 @@ import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
  * Stores the RDF graphs representing the instantiated artifacts.
  */
 public class RdfStoreVerticle extends AbstractVerticle {
-  private static final Logger LOGGER = LoggerFactory.getLogger(RdfStoreVerticle.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
 
   private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private RdfStore store;
@@ -83,7 +83,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final IRI requestIri,
       final RdfStoreMessage.CreateEntity content,
       final Message<RdfStoreMessage> message
-  ) throws IllegalArgumentException, IOException {
+  ) throws IllegalArgumentException {
     // Create IRI for new entity
     final var entityIriString =
         this.generateEntityIri(requestIri.getIRIString(), content.entityName());
@@ -298,7 +298,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   private void handleDeleteEntity(final IRI requestIri, final Message<RdfStoreMessage> message)
-      throws IllegalArgumentException, IOException {
+      throws IllegalArgumentException {
     final var optEntityGraph = this.store.getEntityGraph(requestIri);
     if (optEntityGraph.isPresent() && optEntityGraph.get().size() > 0) {
       try (var entityGraph = optEntityGraph.get()) {

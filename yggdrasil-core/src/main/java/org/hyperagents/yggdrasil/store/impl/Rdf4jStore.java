@@ -1,8 +1,6 @@
 package org.hyperagents.yggdrasil.store.impl;
 
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +13,8 @@ import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.api.RDFSyntax;
 import org.apache.commons.rdf.rdf4j.RDF4J;
 import org.apache.commons.rdf.rdf4j.RDF4JGraph;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -33,7 +33,7 @@ import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 public class Rdf4jStore implements RdfStore {
-  private static final Logger LOGGER = LoggerFactory.getLogger(RdfStore.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(RdfStore.class);
 
   private final RDF4J rdfImpl;
   private final Dataset dataset;

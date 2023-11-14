@@ -4,17 +4,15 @@ import cartago.CartagoEvent;
 import cartago.ICartagoCallback;
 import cartago.events.ArtifactObsEvent;
 import cartago.util.agent.Percept;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Stream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 
 public class NotificationCallback implements ICartagoCallback {
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(NotificationCallback.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(NotificationCallback.class);
 
   private final HttpNotificationDispatcherMessagebox messagebox;
 

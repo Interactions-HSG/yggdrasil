@@ -2,9 +2,9 @@ package org.hyperagents.yggdrasil.utils;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import org.apache.logging.log4j.Logger;
 
 public final class JsonObjectUtils {
 

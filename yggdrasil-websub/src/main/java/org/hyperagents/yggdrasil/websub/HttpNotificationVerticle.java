@@ -5,19 +5,18 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.regex.Pattern;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(HttpNotificationVerticle.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
 
   @Override
   public void start() {

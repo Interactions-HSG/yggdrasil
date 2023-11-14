@@ -7,9 +7,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
 import java.util.Optional;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
 public class CartagoMessageMarshaller

@@ -28,6 +28,7 @@ java {
 dependencies {
   implementation(project(":yggdrasil-utils"))
 
+  implementation(libs.log4j.core)
   implementation(libs.vertx.core)
   implementation(libs.vertx.web.client)
 
@@ -39,13 +40,18 @@ dependencies {
   pmd(libs.pmd.java)
   pmd(libs.pmd.ant)
 
-  testImplementation(libs.junit)
-  testImplementation(libs.vertx.unit)
+  testImplementation(platform(libs.junit.platform))
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.vertx.junit5)
 
   testCompileOnly(libs.spotbugs.annotations)
 }
 
 tasks {
+  test {
+    useJUnitPlatform()
+  }
+
   spotbugsMain {
     reports.create("html") {
         required.set(true)

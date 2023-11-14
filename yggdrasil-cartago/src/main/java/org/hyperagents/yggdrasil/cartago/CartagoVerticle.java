@@ -27,8 +27,6 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
@@ -36,6 +34,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -48,7 +48,7 @@ import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public class CartagoVerticle extends AbstractVerticle {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CartagoVerticle.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
 
   private Map<String, AgentCredential> agentCredentials;

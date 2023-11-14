@@ -8,10 +8,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
 import java.io.StringReader;
 import org.apache.hc.core5.http.ContentType;
@@ -27,15 +27,15 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.hyperagents.yggdrasil.websub.HttpNotificationVerticle;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-@RunWith(VertxUnitRunner.class)
-@Ignore
+@Disabled
+@ExtendWith(VertxExtension.class)
 public class HttpServerVerticleTest {
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
@@ -66,43 +66,50 @@ public class HttpServerVerticleTest {
               : " .");
   }
 
-  @Before
-  public void setUp(final TestContext tc) {
+  @BeforeEach
+  public void setUp(final VertxTestContext tc) {
     this.vertx = Vertx.vertx();
     this.client = WebClient.create(this.vertx);
 
-    this.vertx.deployVerticle(HttpServerVerticle.class.getName(), tc.asyncAssertSuccess());
-    this.vertx.deployVerticle(RdfStoreVerticle.class.getName(), tc.asyncAssertSuccess());
-    this.vertx.deployVerticle(HttpNotificationVerticle.class.getName(), tc.asyncAssertSuccess());
+    this.vertx.deployVerticle(HttpServerVerticle.class.getName(), tc.succeedingThenComplete());
+    this.vertx.deployVerticle(RdfStoreVerticle.class.getName(), tc.succeedingThenComplete());
+    this.vertx.deployVerticle(
+        HttpNotificationVerticle.class.getName(),
+        tc.succeedingThenComplete()
+    );
   }
 
-  @After
-  public void tearDown(final TestContext tc) {
-    this.vertx.close(tc.asyncAssertSuccess());
+  @AfterEach
+  public void tearDown(final VertxTestContext tc) {
+    this.vertx.close(tc.succeedingThenComplete());
   }
 
   @Test
-  public void testThatTheServerIsStarted(final TestContext tc) {
-    final var async = tc.async();
+  public void testThatTheServerIsStarted(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
     this.client.get(TEST_PORT, TEST_HOST, "/")
                .send(ar -> {
                  final var response = ar.result();
-                 tc.assertEquals(HttpStatus.SC_OK, response.statusCode(), OK_STATUS_MESSAGE);
-                 tc.assertTrue(
-                     !response.bodyAsString().isEmpty(),
+                 Assertions.assertEquals(
+                     HttpStatus.SC_OK,
+                     response.statusCode(),
+                     OK_STATUS_MESSAGE
+                 );
+                 Assertions.assertFalse(
+                     response.bodyAsString().isEmpty(),
                      "Body length should be greater than zero"
                  );
-                 async.complete();
+                 checkpoint.flag();
                });
   }
 
   @Test
-  @Ignore
-  public void testGetEntity(final TestContext tc) {
-    final var async = tc.async();
+  @Disabled
+  public void testGetEntity(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.createResourceAndThen(createAR -> {
-      tc.assertEquals(
+      Assertions.assertEquals(
           HttpStatus.SC_CREATED,
           createAR.result().statusCode(),
           CREATED_STATUS_MESSAGE
@@ -113,47 +120,46 @@ public class HttpServerVerticleTest {
           .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
           .send(ar -> {
             final var getResponse = ar.result();
-            tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), OK_STATUS_MESSAGE);
+            Assertions.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), OK_STATUS_MESSAGE);
 
             try {
               // TODO: Check that the following makes sense
               // (the response that comes back is certainly not isomorphic to the expected string)
               assertIsomorphic(
-                  tc,
                   createMainWorkspaceGraph(false, false),
                   getResponse.bodyAsString()
               );
             } catch (final RDFParseException | RDFHandlerException | IOException e) {
-              tc.fail(e);
+              tc.failNow(e);
             }
 
-            async.complete();
+            checkpoint.flag();
           });
     });
   }
 
   @Test
-  public void testGetEntityNotFound(final TestContext tc) {
-    final var async = tc.async();
+  public void testGetEntityNotFound(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.client.get(TEST_PORT, TEST_HOST, "/environments/bla123")
                .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                .send(ar -> {
-                 tc.assertEquals(
+                 Assertions.assertEquals(
                      HttpStatus.SC_NOT_FOUND,
                      ar.result().statusCode(),
                      "Status code should be NOT FOUND"
                  );
-                 async.complete();
+                 checkpoint.flag();
                });
   }
 
   @Test
-  public void testEntityCorsHeaders(final TestContext tc) {
-    final var async = tc.async();
+  public void testEntityCorsHeaders(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.createResourceAndThen(createAR -> {
-      tc.assertEquals(
+      Assertions.assertEquals(
           HttpStatus.SC_CREATED,
           createAR.result().statusCode(),
           CREATED_STATUS_MESSAGE
@@ -164,61 +170,65 @@ public class HttpServerVerticleTest {
                  .send(ar -> {
                    final var getResponse = ar.result();
 
-                   tc.assertEquals(HttpStatus.SC_OK, getResponse.statusCode(), OK_STATUS_MESSAGE);
+                   Assertions.assertEquals(
+                       HttpStatus.SC_OK,
+                       getResponse.statusCode(),
+                       OK_STATUS_MESSAGE
+                   );
 
-                   tc.assertEquals(
+                   Assertions.assertEquals(
                        "*",
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN),
                        "CORS origin should be open"
                    );
-                   tc.assertEquals(
+                   Assertions.assertEquals(
                        "true",
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS),
                        "CORS credentials should be allowed"
                    );
 
-                   tc.assertTrue(
+                   Assertions.assertTrue(
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.GET.name()),
                        "CORS should permit GET on entities"
                    );
-                   tc.assertTrue(
+                   Assertions.assertTrue(
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.POST.name()),
                        "CORS should permit POST on entities"
                    );
-                   tc.assertTrue(
+                   Assertions.assertTrue(
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.PUT.name()),
                        "CORS should permit PUT on entities"
                    );
-                   tc.assertTrue(
+                   Assertions.assertTrue(
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.DELETE.name()),
                        "CORS should permit DELETE on entities"
                    );
-                   tc.assertTrue(getResponse.getHeader(
+                   Assertions.assertTrue(getResponse.getHeader(
                        HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.HEAD.name()),
                        "CORS should permit HEAD on entities"
                    );
-                   tc.assertTrue(
+                   Assertions.assertTrue(
                        getResponse.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS)
                                   .contains(HttpMethod.OPTIONS.name()),
                        "CORS should permit OPTIONS on entities"
                    );
-                   async.complete();
+                   checkpoint.flag();
                  });
     });
   }
 
   @Test
-  @Ignore
-  public void testGetEntityWithoutContentType(final TestContext tc) {
-    final var async = tc.async();
+  @Disabled
+  public void testGetEntityWithoutContentType(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.createResourceAndThen(createAR -> {
-      tc.assertEquals(
+      Assertions.assertEquals(
           HttpStatus.SC_CREATED,
           createAR.result().statusCode(),
           CREATED_STATUS_MESSAGE
@@ -226,20 +236,20 @@ public class HttpServerVerticleTest {
 
       this.client.get(TEST_PORT, TEST_HOST, TEST_ROOT_WORKSPACE_PATH)
                  .send(ar -> {
-                   tc.assertEquals(
+                   Assertions.assertEquals(
                        HttpStatus.SC_NOT_FOUND,
                        ar.result().statusCode(),
                        "Status code should be NOT FOUND"
                    );
-                   async.complete();
+                   checkpoint.flag();
                  });
     });
   }
 
   @Test
-  @Ignore
-  public void testCreateEntity(final TestContext tc) {
-    final var async = tc.async();
+  @Disabled
+  public void testCreateEntity(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.client.post(TEST_PORT, TEST_HOST, "/environments/")
                .putHeader(SLUG_HEADER, "env1")
@@ -249,7 +259,7 @@ public class HttpServerVerticleTest {
                  Buffer.buffer(createMainWorkspaceGraph(true, false)),
                  ar -> {
                    final var response = ar.result();
-                   tc.assertEquals(
+                   Assertions.assertEquals(
                        HttpStatus.SC_CREATED,
                        response.statusCode(),
                        CREATED_STATUS_MESSAGE
@@ -260,21 +270,20 @@ public class HttpServerVerticleTest {
                      // (the response that comes back is certainly not isomorphic to the expected
                      //  string)
                      assertIsomorphic(
-                         tc,
                          createMainWorkspaceGraph(false, false),
                          response.bodyAsString()
                      );
                    } catch (final RDFParseException | RDFHandlerException | IOException e) {
-                     tc.fail(e);
+                     tc.failNow(e);
                    }
 
-                   async.complete();
+                   checkpoint.flag();
                  });
   }
 
   @Test
-  public void testCreateEntityUnauthorzedNoWebId(final TestContext tc) {
-    final var async = tc.async();
+  public void testCreateEntityUnauthorzedNoWebId(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.client.post(TEST_PORT, TEST_HOST, "/environments/")
                .putHeader(SLUG_HEADER, "test_env")
@@ -283,21 +292,21 @@ public class HttpServerVerticleTest {
                  Buffer.buffer(createMainWorkspaceGraph(true, false)),
                  ar -> {
                    final var response = ar.result();
-                   tc.assertEquals(
+                   Assertions.assertEquals(
                        HttpStatus.SC_UNAUTHORIZED,
                        response.statusCode(),
                        "Status code should be UNAUTHORIZED"
                    );
-                   async.complete();
+                   checkpoint.flag();
                  });
   }
 
   @Test
-  public void testUpdateEntity(final TestContext tc) {
-    final var async = tc.async();
+  public void testUpdateEntity(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.createResourceAndThen(createAR -> {
-      tc.assertEquals(
+      Assertions.assertEquals(
           HttpStatus.SC_CREATED,
           createAR.result().statusCode(),
           CREATED_STATUS_MESSAGE
@@ -309,7 +318,7 @@ public class HttpServerVerticleTest {
                    Buffer.buffer(createMainWorkspaceGraph(true, true)),
                    ar -> {
                      final var updateResponse = ar.result();
-                     tc.assertEquals(
+                     Assertions.assertEquals(
                          HttpStatus.SC_OK,
                          updateResponse.statusCode(),
                          OK_STATUS_MESSAGE
@@ -317,25 +326,24 @@ public class HttpServerVerticleTest {
 
                      try {
                        assertIsomorphic(
-                           tc,
                            createMainWorkspaceGraph(false, true),
                            updateResponse.bodyAsString()
                        );
                      } catch (final RDFParseException | RDFHandlerException | IOException e) {
-                       tc.fail(e);
+                       tc.failNow(e);
                      }
 
-                     async.complete();
+                     checkpoint.flag();
                    });
     });
   }
 
   @Test
-  public void testDeleteEntity(final TestContext tc) {
-    final var async = tc.async();
+  public void testDeleteEntity(final VertxTestContext tc) {
+    final var checkpoint = tc.checkpoint();
 
     this.createResourceAndThen(createAR -> {
-      tc.assertEquals(
+      Assertions.assertEquals(
           HttpStatus.SC_CREATED,
           createAR.result().statusCode(),
           CREATED_STATUS_MESSAGE
@@ -343,26 +351,19 @@ public class HttpServerVerticleTest {
 
       this.client.delete(TEST_PORT, TEST_HOST, TEST_ROOT_WORKSPACE_PATH)
                  .send(ar -> {
-                   tc.assertEquals(HttpStatus.SC_OK, ar.result().statusCode(), OK_STATUS_MESSAGE);
-                   async.complete();
+                   Assertions.assertEquals(
+                       HttpStatus.SC_OK,
+                       ar.result().statusCode(),
+                       OK_STATUS_MESSAGE
+                   );
+                   checkpoint.flag();
                  });
     });
   }
 
   @Test
-  public void testCartagoVerticleNoArtifactTemplates(final TestContext tc) {
-    this.vertx.deployVerticle(
-        CartagoVerticle.class.getName(),
-        new DeploymentOptions().setWorker(true).setConfig(null),
-        tc.asyncAssertSuccess()
-    );
-
-    // TODO: Why is this flagged as test?
-  }
-
-  @Test
-  @Ignore
-  public void testCartagoArtifact(final TestContext tc) {
+  @Disabled
+  public void testCartagoArtifact(final VertxTestContext tc) {
     // Register artifact template for this test
     final var knownArtifacts =
         new JsonObject()
@@ -372,10 +373,10 @@ public class HttpServerVerticleTest {
         CartagoVerticle.class.getName(),
         new DeploymentOptions().setWorker(true)
                                .setConfig(new JsonObject().put("known-artifacts", knownArtifacts)),
-        tc.asyncAssertSuccess()
+        tc.succeedingThenComplete()
     );
 
-    final var async = tc.async();
+    final var checkpoint = tc.checkpoint();
 
     // TODO: This test seems wrong. Why would there be a localhost:8080/workspaces path?
     this.client
@@ -383,7 +384,7 @@ public class HttpServerVerticleTest {
         .putHeader(AGENT_WEBID, "http://andreiciortea.ro/#me")
         .putHeader(SLUG_HEADER, "wksp1")
         .sendBuffer(Buffer.buffer(""), wkspAR -> {
-          tc.assertEquals(
+          Assertions.assertEquals(
               HttpStatus.SC_CREATED,
               wkspAR.result().statusCode(),
               CREATED_STATUS_MESSAGE
@@ -398,7 +399,7 @@ public class HttpServerVerticleTest {
                 Buffer.buffer("{\"artifactClass\" : \"http://example.org/Counter\"}"),
                 ar -> {
                   System.out.println("artifact created");
-                  tc.assertEquals(
+                  Assertions.assertEquals(
                       HttpStatus.SC_CREATED,
                       ar.result().statusCode(),
                       CREATED_STATUS_MESSAGE
@@ -416,12 +417,12 @@ public class HttpServerVerticleTest {
                         Buffer.buffer("[1]"),
                         actionAr -> {
                           System.out.println("operation executed");
-                          tc.assertEquals(
+                          Assertions.assertEquals(
                               HttpStatus.SC_OK,
                               actionAr.result().statusCode(),
                               OK_STATUS_MESSAGE
                           );
-                          async.complete();
+                          checkpoint.flag();
                         }
                       );
                 }
@@ -437,12 +438,15 @@ public class HttpServerVerticleTest {
                .sendBuffer(Buffer.buffer(createMainWorkspaceGraph(true, false)), handler);
   }
 
-  private void assertIsomorphic(final TestContext tc, final String graph1, final String graph2)
+  private void assertIsomorphic(final String graph1, final String graph2)
       throws RDFParseException, RDFHandlerException, IOException {
-    tc.assertTrue(Models.isomorphic(
-        this.readModelFromString(graph1, ""),
-        this.readModelFromString(graph2, "")
-    ));
+    Assertions.assertTrue(
+        Models.isomorphic(
+          this.readModelFromString(graph1, ""),
+          this.readModelFromString(graph2, "")
+        ),
+        "The models should be equal"
+    );
   }
 
   private Model readModelFromString(final String description, final String baseUri)

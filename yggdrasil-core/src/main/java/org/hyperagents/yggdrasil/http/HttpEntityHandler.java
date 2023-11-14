@@ -16,8 +16,6 @@ import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.RoutingContext;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +26,8 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -45,9 +45,8 @@ import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
  * {@link CartagoMessagebox}.
  */
 public class HttpEntityHandler {
-  private static final Logger LOGGER = LoggerFactory.getLogger(HttpEntityHandler.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
-
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
 
   private final Messagebox<CartagoMessage> cartagoMessagebox;
@@ -101,7 +100,7 @@ public class HttpEntityHandler {
 
   public void handleCreateArtifact(final RoutingContext context) {
     LOGGER.info("Received create artifact request");
-    final var representation = context.getBodyAsString();
+    final var representation = context.body().asString();
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
@@ -131,12 +130,12 @@ public class HttpEntityHandler {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
-    this.createEntity(routingContext, routingContext.getBodyAsString());
+    this.createEntity(routingContext, routingContext.body().asString());
   }
 
   public void handleFocus(final RoutingContext context) {
     LOGGER.info("handle focus");
-    final var representation = ((JsonObject) Json.decodeValue(context.getBodyAsString()));
+    final var representation = ((JsonObject) Json.decodeValue(context.body().asString()));
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
@@ -171,7 +170,7 @@ public class HttpEntityHandler {
         ? registry.getActualName(hypermediaArtifactName)
         : hypermediaArtifactName;
     final var actionName =
-        registry.getActionName(request.rawMethod(), request.absoluteURI());
+        registry.getActionName(request.method().name(), request.absoluteURI());
 
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(artifactIri))
@@ -199,7 +198,7 @@ public class HttpEntityHandler {
                   .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
                   .map(inputSchema -> CartagoDataBundle.toJson(
                     ((ArraySchema) inputSchema)
-                      .parseJson(JsonParser.parseString(context.getBodyAsString()))
+                      .parseJson(JsonParser.parseString(context.body().asString()))
                   ))
               ))
               .onSuccess(cartagoResponse -> {
@@ -221,7 +220,7 @@ public class HttpEntityHandler {
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.UpdateEntity(
             routingContext.request().absoluteURI(),
-            routingContext.getBodyAsString()
+            routingContext.body().asString()
         ))
         .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
   }
@@ -233,7 +232,7 @@ public class HttpEntityHandler {
   }
 
   public void handleEntitySubscription(final RoutingContext routingContext) {
-    final var subscribeRequest = routingContext.getBodyAsJson();
+    final var subscribeRequest = routingContext.body().asJsonObject();
 
     final var entityIri = subscribeRequest.getString("hub.topic");
     final var callbackIri = subscribeRequest.getString("hub.callback");
