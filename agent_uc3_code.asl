@@ -456,6 +456,7 @@ is_working(false).
     ?compute_engraving_area_milling(Storage, CameraEngraverHostname, CameraEngraverId,X, Y, X_Milling, Y_Milling);
     .print("After compute engraving area milling.");
     !engraver_milling(MillingUrl, X_Milling, Y_Milling);
+    .print("engraver milling completed");
     !use_milling_actuator("stopSpindle", UriVariables);
     !use_milling_actuator("openClamp", UriVariables);
     .print("end print milling").
@@ -491,9 +492,9 @@ is_working(false).
     ?invoke_action_with_DLT(MillingUrl, "createEngraveText", EngravingBody, EngravingHeaders, EngravingResponse);
     !exit(EngravingResponse, start);
     .print("Before wait milling");
-    !wait(MillingUrl, "available", 1000).
+    !wait_milling(MillingUrl, "available", 1000).
 
-+!wait(EngraverUrl, Status, Time): engraver_td_url(EngraverUrl) <-
++!wait(EngraverUrl, Status, Time): true <-
     .wait(Time);
     !check_temperature(40, 60);
     ?create_json(Headers);
@@ -502,13 +503,29 @@ is_working(false).
     !exit(JobResponse, start );
     ?get_body_as_json(JobResponse, JobBody);
     .map.get(JobBody, "state", State);
-    !continue_wait(State, Status, Time).
+    !continue_wait(EngraverUrl, State, Status, Time).
 
-+!continue_wait(State, Status, Time): not (State == Status) <-
++!continue_wait(EngraverUrl, State, Status, Time): not (State == Status) <-
     !wait(EngraverUrl, Status, Time).
 
-+!continue_wait(State, Status, Time):  (State == Status) <-
++!continue_wait(EngraverUrl, State, Status, Time):  (State == Status) <-
     .print("stop waiting").
+
++!wait_milling(MillingUrl, Status, Time): true <-
+    .wait(Time);
+    ?create_json(Headers);
+    ?create_json(UriVariables);
+    ?read_property_with_DLT(EngraverUrl, "getJob",Headers, UriVariables, JobResponse);
+    !exit(JobResponse, start );
+    ?get_body_as_json(JobResponse, JobBody);
+    .map.get(JobBody, "state", State);
+    !continue_wait_milling(MillingUrl, State, Status, Time).
+
++!continue_wait_milling(MillingUrl, State, Status, Time): not (State == Status) <-
+    !wait_milling(MillingUrl, Status, Time).
+
++!continue_wait_milling(MillingUrl, State, Status, Time):  (State == Status) <-
+    .print("stop waiting milling").
 
 +!check_temperature(IntermediateTemperature, MaxTemperature): true <-
     ?get_mirocard_id(DeviceId);
