@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleQueryTest {
   private static final String PLATFORM_URI = "http://localhost:8080/";
@@ -38,64 +39,67 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testQueryRequest(final VertxTestContext ctx) {
-    this.messagebox.sendMessage(new RdfStoreMessage.Query(
-        """
-        PREFIX td: <https://www.w3.org/2019/wot/td#>
-        PREFIX hmas: <https://purl.org/hmas/core/>
-        SELECT ?thing ?name
-        WHERE {
-            ?thing td:hasActionAffordance [
-                     td:name ?name
-                   ];
-                   a hmas:HypermediaMASPlatform.
-        }
-        """
-    ))
-    .onSuccess(r -> Assertions.assertEquals(
-        JsonArray.of(JsonObject.of(THING_PARAM, PLATFORM_URI, NAME_PARAM, "createWorkspace")),
-        Json.decodeValue(r.body()),
-        CONTENTS_EQUAL_MESSAGE
-    ))
-    .onComplete(ctx.succeedingThenComplete());
+    this.messagebox
+        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
+            """
+            PREFIX td: <https://www.w3.org/2019/wot/td#>
+            PREFIX hmas: <https://purl.org/hmas/core/>
+            SELECT ?thing ?name
+            WHERE {
+                ?thing td:hasActionAffordance [
+                         td:name ?name
+                       ];
+                       a hmas:HypermediaMASPlatform.
+            }
+            """
+        ))
+        .onSuccess(r -> Assertions.assertEquals(
+            JsonArray.of(JsonObject.of(THING_PARAM, PLATFORM_URI, NAME_PARAM, "createWorkspace")),
+            Json.decodeValue(r.body()),
+            CONTENTS_EQUAL_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testQueryRequestWithUnassignedBinding(final VertxTestContext ctx) {
-    this.messagebox.sendMessage(new RdfStoreMessage.Query(
-        """
-        PREFIX td: <https://www.w3.org/2019/wot/td#>
-        PREFIX hmas: <https://purl.org/hmas/core/>
-        SELECT ?thing ?name
-        WHERE {
-            ?thing td:hasActionAffordance [
-                     td:name "createWorkspace"
-                   ];
-                   a hmas:HypermediaMASPlatform.
-        }
-        """
-    ))
-    .onSuccess(r -> Assertions.assertEquals(
-        JsonArray.of(JsonObject.of(THING_PARAM, PLATFORM_URI, NAME_PARAM, null)),
-        Json.decodeValue(r.body()),
-        CONTENTS_EQUAL_MESSAGE
-    ))
-    .onComplete(ctx.succeedingThenComplete());
+    this.messagebox
+        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
+            """
+            PREFIX td: <https://www.w3.org/2019/wot/td#>
+            PREFIX hmas: <https://purl.org/hmas/core/>
+            SELECT ?thing ?name
+            WHERE {
+                ?thing td:hasActionAffordance [
+                         td:name "createWorkspace"
+                       ];
+                       a hmas:HypermediaMASPlatform.
+            }
+            """
+        ))
+        .onSuccess(r -> Assertions.assertEquals(
+            JsonArray.of(JsonObject.of(THING_PARAM, PLATFORM_URI, NAME_PARAM, null)),
+            Json.decodeValue(r.body()),
+            CONTENTS_EQUAL_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testQueryRequestWithMalformedQuery(final VertxTestContext ctx) {
-    this.messagebox.sendMessage(new RdfStoreMessage.Query(
-        """
-        PREFIX wot: <https://www.w3.org/2019/wot/td#>
-        PREFIX eve: <http://w3id.org/eve#>
-        SELECT ?thing ?name
-        """
-    ))
-    .onFailure(t -> Assertions.assertEquals(
-        HttpStatus.SC_INTERNAL_SERVER_ERROR,
-        ((ReplyException) t).failureCode(),
-        "The failure code should be INTERNAL SERVER ERROR"
-    ))
-    .onComplete(ctx.failingThenComplete());
+    this.messagebox
+        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
+            """
+            PREFIX wot: <https://www.w3.org/2019/wot/td#>
+            PREFIX eve: <http://w3id.org/eve#>
+            SELECT ?thing ?name
+            """
+        ))
+        .onFailure(t -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            ((ReplyException) t).failureCode(),
+            "The failure code should be INTERNAL SERVER ERROR"
+        ))
+        .onComplete(ctx.failingThenComplete());
   }
 }

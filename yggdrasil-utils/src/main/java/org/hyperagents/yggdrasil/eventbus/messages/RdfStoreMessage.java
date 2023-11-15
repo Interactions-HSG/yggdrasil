@@ -23,5 +23,5 @@ public sealed interface RdfStoreMessage {
       String workspaceRepresentation
   ) implements RdfStoreMessage {}
 
-  record Query(String query) implements RdfStoreMessage {}
+  record QueryKnowledgeGraph(String query) implements RdfStoreMessage {}
 }

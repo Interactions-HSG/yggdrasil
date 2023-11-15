@@ -72,7 +72,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             );
           case RdfStoreMessage.DeleteEntity(String requestUri) ->
             this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
-          case RdfStoreMessage.Query(String query) ->
+          case RdfStoreMessage.QueryKnowledgeGraph(String query) ->
             this.handleQuery(query, message);
         }
       } catch (final IOException | IllegalArgumentException e) {

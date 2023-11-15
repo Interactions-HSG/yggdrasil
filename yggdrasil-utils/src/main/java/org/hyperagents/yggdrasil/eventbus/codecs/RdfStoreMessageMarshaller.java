@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
 import java.util.Optional;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
@@ -59,8 +58,8 @@ public class RdfStoreMessageMarshaller
       case RdfStoreMessage.GetEntity(String requestUri) -> {
         json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
-          MessageFields.REQUEST_METHOD.getName(),
-          MessageRequestMethods.GET_ENTITY.getName()
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.GET_ENTITY.getName()
         );
       }
       case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
@@ -71,7 +70,7 @@ public class RdfStoreMessageMarshaller
         );
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
       }
-      case RdfStoreMessage.Query(String query) -> {
+      case RdfStoreMessage.QueryKnowledgeGraph(String query) -> {
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.QUERY.getName()
