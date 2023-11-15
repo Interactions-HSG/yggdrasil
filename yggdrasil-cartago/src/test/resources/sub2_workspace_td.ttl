@@ -22,13 +22,13 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema, eve:ArtifactClass;
               js:propertyName "artifactClass";
-              js:enum <http://example.org/Body>, <http://example.org/Adder>, <http://example.org/Counter>,
+              js:enum <http://example.org/Body>, <http://example.org/AdderArtifact>, <http://example.org/CounterArtifact>,
                 <http://example.org/Console>
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema, eve:ArtifactName;
               js:propertyName "artifactName";
-              js:enum <http://example.org/Body>, <http://example.org/Adder>, <http://example.org/Counter>,
+              js:enum <http://example.org/Body>, <http://example.org/AdderArtifact>, <http://example.org/CounterArtifact>,
                 <http://example.org/Console>
             ];
           js:required "artifactClass", "artifactName"

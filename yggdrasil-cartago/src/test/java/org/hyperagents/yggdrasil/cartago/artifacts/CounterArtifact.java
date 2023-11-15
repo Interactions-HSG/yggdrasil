@@ -1,10 +1,8 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-@SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
-public class Counter extends HypermediaArtifact {
+public class CounterArtifact extends HypermediaArtifact {
 
   public void init() {
     this.defineObsProperty("count", 0);

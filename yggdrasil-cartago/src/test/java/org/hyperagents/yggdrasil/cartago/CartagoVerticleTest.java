@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.Json;
@@ -17,11 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
-import org.hyperagents.yggdrasil.cartago.artifacts.Counter;
+import org.hyperagents.yggdrasil.cartago.artifacts.AdderArtifact;
+import org.hyperagents.yggdrasil.cartago.artifacts.CounterArtifact;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -45,8 +43,8 @@ public class CartagoVerticleTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
-  private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
-  private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
+  private static final String ADDER_SEMANTIC_TYPE = "http://example.org/AdderArtifact";
+  private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/CounterArtifact";
   private static final String CALLBACK_IRI = "http://localhost:8080/callback";
   private static final String COUNTER_ARTIFACT_IRI = "http://localhost:8080/workspaces/test/artifacts/c0";
   private static final String NONEXISTENT_NAME = "nonexistent";
@@ -64,7 +62,6 @@ public class CartagoVerticleTest {
   private final BlockingQueue<RdfStoreMessage> storeMessageQueue;
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private CartagoMessagebox cartagoMessagebox;
-  private Optional<String> cartagoVerticleId;
 
   public CartagoVerticleTest() {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
@@ -72,7 +69,7 @@ public class CartagoVerticleTest {
   }
 
   @BeforeEach
-  public void setUp(final Vertx vertx) throws InterruptedException {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
@@ -81,7 +78,6 @@ public class CartagoVerticleTest {
         new HttpNotificationDispatcherMessagebox(vertx.eventBus());
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
-    final var promise = Promise.<String>promise();
     vertx.deployVerticle(
         new CartagoVerticle(),
         new DeploymentOptions()
@@ -89,25 +85,18 @@ public class CartagoVerticleTest {
             "known-artifacts",
             Map.of(
               ADDER_SEMANTIC_TYPE,
-              Adder.class.getCanonicalName(),
+              AdderArtifact.class.getCanonicalName(),
               COUNTER_SEMANTIC_TYPE,
-              Counter.class.getCanonicalName()
+              CounterArtifact.class.getCanonicalName()
             )
           ))),
-        promise
+        ctx.succeedingThenComplete()
     );
-    final var latch = new CountDownLatch(1);
-    promise.future()
-           .onSuccess(i -> {
-             this.cartagoVerticleId = Optional.of(i);
-             latch.countDown();
-           });
-    latch.await();
   }
 
   @AfterEach
   public void tearDown(final Vertx vertx, final VertxTestContext ctx) {
-    this.cartagoVerticleId.ifPresent(i -> vertx.undeploy(i, ctx.succeedingThenComplete()));
+    vertx.close(ctx.succeedingThenComplete());
   }
 
   @Order(1)
@@ -151,10 +140,6 @@ public class CartagoVerticleTest {
           Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
-    final var expectedHypermediaBodyArtifactThingDescription = Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_agent_hypermedia_body_td.ttl").toURI()),
-        StandardCharsets.UTF_8
-    );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onSuccess(r -> {
@@ -190,7 +175,7 @@ public class CartagoVerticleTest {
             );
             Assertions.assertEquals(
                 hypermediaBodyCreationMessage.entityRepresentation(),
-                expectedHypermediaBodyArtifactThingDescription,
+                expectedBodyArtifactThingDescription,
                 TDS_EQUAL_MESSAGE
             );
           } catch (final Exception e) {

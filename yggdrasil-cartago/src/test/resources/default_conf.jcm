@@ -1,6 +1,6 @@
 mas example {
   workspace test {
-    artifact m0: org.hyperagents.yggdrasil.cartago.artifacts.Matcher()
-    artifact m1: org.hyperagents.yggdrasil.cartago.artifacts.Matcher("[a-z]+")
+    artifact m0: org.hyperagents.yggdrasil.cartago.artifacts.MatcherArtifact()
+    artifact m1: org.hyperagents.yggdrasil.cartago.artifacts.MatcherArtifact("[a-z]+")
   }
 }

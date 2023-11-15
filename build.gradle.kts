@@ -35,6 +35,9 @@ allprojects {
   repositories {
     mavenCentral()
     maven { url = uri("https://jitpack.io") }
+    maven { url = uri("https://raw.github.com/jacamo-lang/mvn-repo/master") }
+    maven { url = uri("https://repo.gradle.org/gradle/libs-releases/") }
+    maven { url = uri("https://repo.gradle.org/gradle/libs-releases-local/") }
   }
 
   group = "org.hyperagents"

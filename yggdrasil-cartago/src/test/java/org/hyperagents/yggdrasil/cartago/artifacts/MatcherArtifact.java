@@ -6,7 +6,7 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import java.util.regex.Pattern;
 
-public class Matcher extends HypermediaArtifact {
+public class MatcherArtifact extends HypermediaArtifact {
   private Pattern pattern;
 
   public void init() {

@@ -6,7 +6,7 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix eve: <http://w3id.org/eve#> .
 
-<http://localhost:8080/workspaces/sub/artifacts/c1> a td:Thing, <http://example.org/Counter>,
+<http://localhost:8080/workspaces/sub/artifacts/c1> a td:Thing, <http://example.org/CounterArtifact>,
     <https://ci.mines-stetienne.fr/hmas/core#Artifact>;
   td:title "c1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme

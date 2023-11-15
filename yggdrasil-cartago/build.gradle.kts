@@ -25,18 +25,6 @@ java {
   targetCompatibility = JavaVersion.VERSION_21
 }
 
-repositories {
-  maven {
-      url = uri("https://raw.github.com/jacamo-lang/mvn-repo/master")
-  }
-  maven {
-      url = uri("https://repo.gradle.org/gradle/libs-releases/")  // For current version of Gradle tooling API
-  }
-  maven {
-      url = uri("https://repo.gradle.org/gradle/libs-releases-local/") // For older versions of Gradle tooling API
-  }
-}
-
 dependencies {
   implementation(project(":yggdrasil-utils"))
   implementation(project(":yggdrasil-websub"))
@@ -74,6 +62,8 @@ dependencies {
 tasks {
   test {
     useJUnitPlatform()
+
+    forkEvery = 1
   }
 
   spotbugsMain {

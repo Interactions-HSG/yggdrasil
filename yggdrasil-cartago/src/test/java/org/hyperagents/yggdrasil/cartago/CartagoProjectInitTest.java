@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.hyperagents.yggdrasil.cartago.artifacts.Matcher;
+import org.hyperagents.yggdrasil.cartago.artifacts.MatcherArtifact;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -25,10 +25,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class CartagoProjectInitTest {
-  private static final String AGENT_IRI = "http://localhost:8080/agents/test";
-  private static final String MATCHER_SEMANTIC_TYPE = "http://example.org/Matcher";
+  private static final String AGENT_IRI = "http://www.example.org/agents/default";
+  private static final String MATCHER_SEMANTIC_TYPE = "http://example.org/MatcherArtifact";
   private static final String TDS_EQUAL_MESSAGE = "The Thing Descriptions should be equal";
   private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
   public static final String IRIS_EQUAL_MESSAGE = "The IRIs should be equal";
@@ -55,7 +56,7 @@ public class CartagoProjectInitTest {
       throws URISyntaxException, IOException {
     final var expectedThingDescription =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("default_agent_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("default_agent_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     vertx
@@ -64,7 +65,7 @@ public class CartagoProjectInitTest {
           new DeploymentOptions()
             .setConfig(new JsonObject(Map.of(
               "known-artifacts",
-              Map.of(MATCHER_SEMANTIC_TYPE, Matcher.class.getCanonicalName()),
+              Map.of(MATCHER_SEMANTIC_TYPE, MatcherArtifact.class.getCanonicalName()),
               "app-conf-file",
               "src/test/resources/default_conf.jcm"
             )))
@@ -79,7 +80,7 @@ public class CartagoProjectInitTest {
                 IRIS_EQUAL_MESSAGE
             );
             Assertions.assertEquals(
-                "body_http://www.example.org/agents/default",
+                "body_" + AGENT_IRI,
                 defaultAgentBodyCreationMessage.entityName(),
                 NAMES_EQUAL_MESSAGE
             );
@@ -152,7 +153,7 @@ public class CartagoProjectInitTest {
             new DeploymentOptions()
               .setConfig(new JsonObject(Map.of(
                 "known-artifacts",
-                Map.of(MATCHER_SEMANTIC_TYPE, Matcher.class.getCanonicalName()),
+                Map.of(MATCHER_SEMANTIC_TYPE, MatcherArtifact.class.getCanonicalName()),
                 "app-conf-file",
                 "src/test/resources/bad_conf.jcm"
               )))

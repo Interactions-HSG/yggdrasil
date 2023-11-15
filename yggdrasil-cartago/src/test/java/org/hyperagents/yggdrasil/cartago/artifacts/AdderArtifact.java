@@ -5,7 +5,7 @@ import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
-public class Adder extends HypermediaArtifact {
+public class AdderArtifact extends HypermediaArtifact {
   @OPERATION
   public void add(final int x, final int y, final OpFeedbackParam<Integer> sumParam) {
     this.log("adder performs add");
