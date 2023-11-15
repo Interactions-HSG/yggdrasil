@@ -25,6 +25,18 @@ java {
   targetCompatibility = JavaVersion.VERSION_21
 }
 
+repositories {
+  maven {
+      url = uri("https://raw.github.com/jacamo-lang/mvn-repo/master")
+  }
+  maven {
+      url = uri("https://repo.gradle.org/gradle/libs-releases/")  // For current version of Gradle tooling API
+  }
+  maven {
+      url = uri("https://repo.gradle.org/gradle/libs-releases-local/") // For older versions of Gradle tooling API
+  }
+}
+
 dependencies {
   implementation(project(":yggdrasil-utils"))
   implementation(project(":yggdrasil-websub"))
@@ -35,6 +47,7 @@ dependencies {
   implementation(libs.httpcomponents.core)
 
   implementation(files("libs/cartago-3.1.jar"))
+  implementation(libs.jacamo)
   implementation(libs.wot.td.java)
 
   implementation(libs.apache.commons.lang3)

@@ -32,7 +32,7 @@ spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", ve
 pmd-java = { module = "net.sourceforge.pmd:pmd-java", version.ref = "pmd" }
 pmd-ant = { module = "net.sourceforge.pmd:pmd-ant", version.ref = "pmd" }
 apache-commons-lang3 = "org.apache.commons:commons-lang3:3.13.0"
-
+jacamo = "org.jacamo:jacamo:1.2.2"
 
 [plugins]
 shadowJar = "com.github.johnrengelman.shadow:8.1.1"
