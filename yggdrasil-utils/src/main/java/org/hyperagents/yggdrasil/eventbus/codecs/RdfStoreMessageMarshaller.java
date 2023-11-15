@@ -16,7 +16,6 @@ public class RdfStoreMessageMarshaller
     implements JsonSerializer<RdfStoreMessage>, JsonDeserializer<RdfStoreMessage> {
 
   @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
-  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
   @Override
   public JsonElement serialize(
       final RdfStoreMessage message,
@@ -24,13 +23,13 @@ public class RdfStoreMessageMarshaller
       final JsonSerializationContext context
   ) {
     final var json = new JsonObject();
-    json.addProperty(MessageFields.REQUEST_URI.getName(), message.requestUri());
     switch (message) {
       case RdfStoreMessage.CreateArtifact m -> {
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.CREATE_ARTIFACT.getName()
         );
+        json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
         json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), m.artifactName());
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.artifactRepresentation());
       }
@@ -39,6 +38,7 @@ public class RdfStoreMessageMarshaller
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.CREATE_WORKSPACE.getName()
         );
+        json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
         json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), m.workspaceName());
         json.addProperty(
             MessageFields.PARENT_WORKSPACE_URI.getName(),
@@ -49,22 +49,34 @@ public class RdfStoreMessageMarshaller
             m.workspaceRepresentation()
         );
       }
-      case RdfStoreMessage.DeleteEntity ignored ->
+      case RdfStoreMessage.DeleteEntity(String requestUri) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.DELETE_ENTITY.getName()
         );
-      case RdfStoreMessage.GetEntity ignored ->
+      }
+      case RdfStoreMessage.GetEntity(String requestUri) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
           MessageFields.REQUEST_METHOD.getName(),
           MessageRequestMethods.GET_ENTITY.getName()
         );
-      case RdfStoreMessage.UpdateEntity(String ignored, String entityRepresentation) -> {
+      }
+      case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.UPDATE_ENTITY.getName()
         );
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
+      }
+      case RdfStoreMessage.Query(String query) -> {
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.QUERY.getName()
+        );
+        json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), query);
       }
     }
     return json;

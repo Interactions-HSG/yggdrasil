@@ -4,8 +4,6 @@ import java.util.Optional;
 
 public sealed interface RdfStoreMessage {
 
-  String requestUri();
-
   record GetEntity(String requestUri) implements RdfStoreMessage {}
 
   record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {}
@@ -24,4 +22,6 @@ public sealed interface RdfStoreMessage {
       Optional<String> parentWorkspaceUri,
       String workspaceRepresentation
   ) implements RdfStoreMessage {}
+
+  record Query(String query) implements RdfStoreMessage {}
 }

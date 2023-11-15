@@ -3,12 +3,15 @@ package org.hyperagents.yggdrasil.store;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -46,18 +49,31 @@ public class RdfStoreVerticle extends AbstractVerticle {
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
       try {
-        final var requestIri = RdfModelUtils.createIri(message.body().requestUri());
         switch (message.body()) {
-          case RdfStoreMessage.GetEntity ignored ->
-            this.handleGetEntity(requestIri, message);
+          case RdfStoreMessage.GetEntity(String requestUri) ->
+            this.handleGetEntity(RdfModelUtils.createIri(requestUri), message);
           case RdfStoreMessage.CreateArtifact content ->
-            this.handleCreateArtifact(requestIri, content, message);
+            this.handleCreateArtifact(
+              RdfModelUtils.createIri(content.requestUri()),
+              content,
+              message
+            );
           case RdfStoreMessage.CreateWorkspace content ->
-            this.handleCreateWorkspace(requestIri, content, message);
+            this.handleCreateWorkspace(
+              RdfModelUtils.createIri(content.requestUri()),
+              content,
+              message
+            );
           case RdfStoreMessage.UpdateEntity content ->
-            this.handleUpdateEntity(requestIri, content, message);
-          case RdfStoreMessage.DeleteEntity ignored ->
-            this.handleDeleteEntity(requestIri, message);
+            this.handleUpdateEntity(
+              RdfModelUtils.createIri(content.requestUri()),
+              content,
+              message
+            );
+          case RdfStoreMessage.DeleteEntity(String requestUri) ->
+            this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
+          case RdfStoreMessage.Query(String query) ->
+            this.handleQuery(query, message);
         }
       } catch (final IOException | IllegalArgumentException e) {
         LOGGER.error(e);
@@ -510,6 +526,26 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 });
     }
     irisToDelete.forEach(this.store::removeEntityModel);
+  }
+
+  private void handleQuery(final String query, final Message<RdfStoreMessage> message)
+      throws IllegalArgumentException, IOException {
+    this.replyWithPayload(
+        message,
+        new JsonArray(
+          this.store.queryGraph(query)
+                    .stream()
+                    .map(m -> m.entrySet()
+                               .stream()
+                               .collect(Collector.of(
+                                 JsonObject::new,
+                                 (j, e) -> j.put(e.getKey(), e.getValue().orElse(null)),
+                                 JsonObject::mergeIn
+                               )))
+                    .toList()
+        )
+        .encode()
+    );
   }
 
   private void replyWithPayload(final Message<RdfStoreMessage> message, final String payload) {
