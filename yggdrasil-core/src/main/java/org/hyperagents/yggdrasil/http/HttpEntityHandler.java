@@ -342,6 +342,17 @@ public class HttpEntityHandler {
         .onFailure(context::fail);
   }
 
+  public void handleQuery(final RoutingContext routingContext) {
+    this.rdfStoreMessagebox
+        .sendMessage(new RdfStoreMessage.Query(routingContext.body().asString()))
+        .onSuccess(r ->
+          routingContext.response()
+                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                        .end(r.body())
+        )
+        .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+  }
+
   private Map<String, List<String>> getHeaders(final String entityIri) {
     final var headers = new HashMap<>(this.getWebSubHeaders(entityIri));
     headers.putAll(this.getCorsHeaders());

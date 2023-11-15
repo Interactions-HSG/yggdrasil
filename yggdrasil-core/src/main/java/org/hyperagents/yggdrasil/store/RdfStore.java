@@ -1,6 +1,9 @@
 package org.hyperagents.yggdrasil.store;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 
@@ -16,4 +19,7 @@ public interface RdfStore {
   void removeEntityModel(IRI entityIri);
 
   void close();
+
+  Set<Map<String, Optional<String>>> queryGraph(String query)
+      throws IllegalArgumentException, IOException;
 }
