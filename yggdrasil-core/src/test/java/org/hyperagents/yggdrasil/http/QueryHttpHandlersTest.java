@@ -9,6 +9,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
@@ -17,8 +19,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
@@ -26,17 +26,16 @@ public class QueryHttpHandlersTest {
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String PLATFORM_URI = "http://" + TEST_HOST + ":" + TEST_PORT + "/";
-  public static final String THING_PARAM = "thing";
-  public static final String NAME_PARAM = "name";
-  public static final String NAME_PARAM_VALUE = "createWorkspace";
+  private static final String THING_PARAM = "thing";
+  private static final String NAME_PARAM = "name";
+  private static final String NAME_PARAM_VALUE = "createWorkspace";
 
   private final BlockingQueue<Message<RdfStoreMessage>> messageQueue;
+  private WebClient client;
 
   public QueryHttpHandlersTest() {
     this.messageQueue = new LinkedBlockingQueue<>();
   }
-
-  private WebClient client;
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
@@ -71,9 +70,9 @@ public class QueryHttpHandlersTest {
                                    .sendBuffer(Buffer.buffer(query));
     final var message = this.messageQueue.take();
     Assertions.assertEquals(
-      query,
-      ((RdfStoreMessage.Query) message.body()).query(),
-      "The queries should be equal"
+        query,
+        ((RdfStoreMessage.QueryKnowledgeGraph) message.body()).query(),
+        "The queries should be equal"
     );
     final var result =
         JsonArray.of(JsonObject.of(THING_PARAM, PLATFORM_URI, NAME_PARAM, NAME_PARAM_VALUE))
@@ -84,7 +83,7 @@ public class QueryHttpHandlersTest {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
               r.statusCode(),
-            "Status code should be OK"
+              "Status code should be OK"
           );
           Assertions.assertEquals(
               result,

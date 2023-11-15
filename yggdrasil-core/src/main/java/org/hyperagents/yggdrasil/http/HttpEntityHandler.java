@@ -344,7 +344,7 @@ public class HttpEntityHandler {
 
   public void handleQuery(final RoutingContext routingContext) {
     this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.Query(routingContext.body().asString()))
+        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(routingContext.body().asString()))
         .onSuccess(r ->
           routingContext.response()
                         .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
