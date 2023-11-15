@@ -27,12 +27,15 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
+import jacamo.project.JaCaMoAgentParameters;
+import jacamo.project.JaCaMoProject;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.function.Failable;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,8 +83,44 @@ public class CartagoVerticle extends AbstractVerticle {
     try {
       LOGGER.info("Starting CArtAgO node...");
       CartagoEnvironment.getInstance().init(new BasicLogger());
+      this.init();
     } catch (final CartagoException e) {
       LOGGER.error(e.getMessage());
+    }
+  }
+
+  private void init() {
+    try {
+      JsonObjectUtils
+          .getString(this.config(), "app-conf-file", LOGGER)
+          .ifPresent(Failable.asConsumer(f -> {
+            final var projectConfiguration = new JaCaMoProject();
+            projectConfiguration.importProject(".", f);
+            projectConfiguration
+                .getWorkspaces()
+                .forEach(Failable.asConsumer(w -> {
+                  this.instantiateWorkspace(w.getName());
+                  w.getArtifacts().forEach(Failable.asBiConsumer((name, parameters) ->
+                      this.instantiateArtifact(
+                        "http://www.example.org/agents/default",
+                        w.getName(),
+                        parameters.getClassName(),
+                        name,
+                        Optional.of(parameters.getTypedParametersArray()).filter(a -> a.length > 0)
+                      )
+                  ));
+                }));
+            projectConfiguration
+                .getAgents()
+                .stream()
+                .map(p -> (JaCaMoAgentParameters) p)
+                .forEach(a -> a.getWorkspaces().forEach(Failable.asConsumer(w -> this.joinWorkspace(
+                  a.getAgName(),
+                  w
+                ))));
+          }));
+    } catch (final Exception e) {
+      LOGGER.error(e.getCause().getMessage());
     }
   }
 
