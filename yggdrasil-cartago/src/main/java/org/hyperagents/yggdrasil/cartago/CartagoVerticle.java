@@ -185,14 +185,12 @@ public class CartagoVerticle extends AbstractVerticle {
         new ThingDescription
           .Builder(workspaceName)
           .addThingURI(workspaceId)
-          .addSemanticType("http://w3id.org/eve#WorkspaceArtifact")
-          .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+          .addSemanticType("https://purl.org/hmas/core/Workspace")
           .addAction(
             new ActionAffordance.Builder(
                 "makeArtifact",
                 new Form.Builder(workspaceId + "/artifacts/").build()
             )
-            .addSemanticType("http://w3id.org/eve#MakeArtifact")
             .addInputSchema(
               new ObjectSchema
                 .Builder()
@@ -200,7 +198,6 @@ public class CartagoVerticle extends AbstractVerticle {
                   "artifactClass",
                   new StringSchema
                     .Builder()
-                    .addSemanticType("http://w3id.org/eve#ArtifactClass")
                     .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
                     .build()
                 )
@@ -208,7 +205,6 @@ public class CartagoVerticle extends AbstractVerticle {
                   ARTIFACT_NAME_PARAM,
                   new StringSchema
                     .Builder()
-                    .addSemanticType("http://w3id.org/eve#ArtifactName")
                     .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
                     .build()
                 )
@@ -223,7 +219,6 @@ public class CartagoVerticle extends AbstractVerticle {
                 "joinWorkspace",
                 new Form.Builder(workspaceId + "/join").setMethodName("PUT").build()
             )
-            .addSemanticType("http://example.org/joinWorkspace")
             .build()
           )
           .addAction(
@@ -231,7 +226,6 @@ public class CartagoVerticle extends AbstractVerticle {
                 "leaveWorkspace",
                 new Form.Builder(workspaceId + "/leave").setMethodName("DELETE").build()
             )
-            .addSemanticType("http://example.org/leaveWorkspace")
             .build()
           )
           .addAction(
@@ -258,8 +252,7 @@ public class CartagoVerticle extends AbstractVerticle {
     .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
     .setNamespace("dct", "http://purl.org/dc/terms/")
     .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-    .setNamespace("eve", "http://w3id.org/eve#")
-    .setNamespace("hmas", "https://ci.mines-stetienne.fr/hmas/core#")
+    .setNamespace("hmas", "https://purl.org/hmas/core/")
     .write();
   }
 

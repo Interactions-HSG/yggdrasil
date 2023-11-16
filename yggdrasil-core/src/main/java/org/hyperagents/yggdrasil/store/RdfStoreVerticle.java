@@ -31,14 +31,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private RdfStore store;
-  private WebClient client;
 
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start() {
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     this.store = RdfStoreFactory.createStore(this.config().getJsonObject("rdf-store", null));
-    this.client = WebClient.create(this.vertx);
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
@@ -99,12 +97,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
       try (
           var entityGraph = this.store.stringToGraph(entityGraphStr, entityIri, RDFSyntax.TURTLE)
       ) {
-        // TODO: seems like legacy integration from Simon Bienz, to be reviewed
-        final var subscribesIri = this.store.createIri("http://w3id.org/eve#subscribes");
-        if (entityGraph.contains(null, subscribesIri, null)) {
-          LOGGER.info("Crawler subscription link found!");
-          this.subscribeCrawler(entityGraph);
-        }
         this.store.createEntityGraph(entityIri, this.addContainmentTriples(entityIri, entityGraph));
         this.replyWithPayload(message, entityGraphStr);
         this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityCreated(
@@ -123,7 +115,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     if (entityGraph.contains(
         entityIri,
         this.store.createIri(RDF.TYPE.stringValue()),
-        this.store.createIri(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))
+        this.store.createIri(("https://purl.org/hmas/core/Artifact"))
     )) {
       LOGGER.info("entity created is an artifact");
       final var artifactIri = entityIri.getIRIString();
@@ -138,13 +130,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
           LOGGER.info("Found workspace graph: " + workspaceGraph);
           workspaceGraph.add(
               workspaceIri,
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#directlyContains"),
+              this.store.createIri("https://purl.org/hmas/core/directlyContains"),
               entityIri
           );
           workspaceGraph.add(
               entityIri,
               this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+              this.store.createIri("https://purl.org/hmas/core/Artifact")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
           this.store.createEntityGraph(workspaceIri, workspaceGraph);
@@ -159,7 +151,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else if (entityGraph.contains(
         entityIri,
         this.store.createIri(RDF.TYPE.stringValue()),
-        this.store.createIri(("https://ci.mines-stetienne.fr/hmas/core#Workspace"))
+        this.store.createIri(("https://purl.org/hmas/core/Workspace"))
     )) {
       final var workspaceIri = entityIri.getIRIString();
       final var environmentIri =
@@ -173,13 +165,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
           LOGGER.info("Found env graph: " + environmentGraph);
           environmentGraph.add(
               environmentIri,
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#directlyContains"),
+              this.store.createIri("https://purl.org/hmas/core/directlyContains"),
               entityIri
           );
           environmentGraph.add(
               entityIri,
               this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+              this.store.createIri("https://purl.org/hmas/core/Workspace")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
           this.store.createEntityGraph(environmentIri, environmentGraph);
@@ -197,7 +189,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         final var parentIri = this.store.createIri(optParentUri.get());
         entityGraph.add(
             entityIri,
-            this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#isContainedBy"),
+            this.store.createIri("https://purl.org/hmas/core/isContainedBy"),
             parentIri
         );
         final var optParentGraph = this.store.getEntityGraph(parentIri);
@@ -205,13 +197,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
           try (var parentGraph = optParentGraph.get()) {
             parentGraph.add(
                 parentIri,
-                this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+                this.store.createIri("https://purl.org/hmas/core/contains"),
                 entityIri
             );
             parentGraph.add(
                 entityIri,
                 this.store.createIri(RDF.TYPE.toString()),
-                this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Workspace")
+                this.store.createIri("https://purl.org/hmas/core/Workspace")
             );
           } catch (final Exception e) {
             LOGGER.error(e.getMessage());
@@ -222,7 +214,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         entityGraph.contains(
           entityIri,
           this.store.createIri(RDF.TYPE.stringValue()),
-          this.store.createIri(("https://ci.mines-stetienne.fr/hmas/core#Artifact"))
+          this.store.createIri(("https://purl.org/hmas/core/Artifact"))
         )
         && !entityIri.getIRIString().contains("/artifacts")
     ) {
@@ -239,13 +231,13 @@ public class RdfStoreVerticle extends AbstractVerticle {
           LOGGER.info("Found workspace graph: " + workspaceGraph);
           workspaceGraph.add(
               workspaceIri,
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+              this.store.createIri("https://purl.org/hmas/core/contains"),
               entityIri
           );
           workspaceGraph.add(
               entityIri,
               this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+              this.store.createIri("https://purl.org/hmas/core/Artifact")
           );
           // TODO: updateEntityGraph would yield 404, to be investigated
           this.store.createEntityGraph(workspaceIri, workspaceGraph);
@@ -306,7 +298,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         if (entityGraph.contains(
             requestIri,
             this.store.createIri(RDF.TYPE.stringValue()),
-            this.store.createIri("http://w3id.org/eve#Artifact")
+            this.store.createIri("https://purl.org/hmas/core/Artifact")
         )) {
           final var artifactIri = requestIri.getIRIString();
           final var workspaceIri =
@@ -317,12 +309,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               LOGGER.info("Found workspace graph: " + workspaceGraph);
               workspaceGraph.remove(
                   workspaceIri,
-                  this.store.createIri("http://w3id.org/eve#contains"),
-                  requestIri
-              );
-              workspaceGraph.remove(
-                  workspaceIri,
-                  this.store.createIri("https://ci.mines-stetienne.fr/hmas/core#contains"),
+                  this.store.createIri("https://purl.org/hmas/core/contains"),
                   requestIri
               );
               // TODO: updateEntityGraph would yield 404, to be investigated
@@ -380,18 +367,5 @@ public class RdfStoreVerticle extends AbstractVerticle {
                  .dropWhile(i -> this.store.containsEntityGraph(this.store.createIri(i)))
                  .findFirst()
                  .orElseThrow();
-  }
-
-  private void subscribeCrawler(final Graph entityGraph) {
-    entityGraph.iterate(null, this.store.createIri("http://w3id.org/eve#subscribes"), null).forEach(t -> {
-      final var crawlerUrl = t.getObject().toString();
-      LOGGER.info(crawlerUrl);
-      this.client
-          .postAbs(crawlerUrl)
-          .sendBuffer(
-            Buffer.buffer(t.getSubject().toString()),
-            response -> LOGGER.info("Registered at crawler: " + crawlerUrl)
-          );
-    });
   }
 }

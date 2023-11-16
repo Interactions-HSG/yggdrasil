@@ -58,8 +58,8 @@ public class HttpServerVerticleTest {
     return (hasBlankNode
             ? "<>"
             : String.format("<http://%s:%d%s>", TEST_HOST, TEST_PORT, TEST_ROOT_WORKSPACE_PATH))
-           + " a <https://ci.mines-stetienne.fr/hmas/core#Workspace>;\n"
-           + "<https://ci.mines-stetienne.fr/hmas/core#contains> "
+           + " a <https://purl.org/hmas/core/Workspace>;\n"
+           + "<https://purl.org/hmas/core/contains> "
            + String.format("<http://%s:%d%s>", TEST_HOST, TEST_PORT, TEST_WORKSPACE_PATH)
            + (hasTwoWorkspaces
               ? String.format(", <http://%s:%d/workspaces/wksp2> .", TEST_HOST, TEST_PORT)

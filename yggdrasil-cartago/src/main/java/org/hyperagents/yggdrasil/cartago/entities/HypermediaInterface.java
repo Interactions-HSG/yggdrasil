@@ -94,7 +94,7 @@ public class HypermediaInterface {
     final var tdBuilder =
         new ThingDescription.Builder(this.getArtifactName())
                             .addSecurityScheme(new NoSecurityScheme())
-                            .addSemanticType("https://ci.mines-stetienne.fr/hmas/core#Artifact")
+                            .addSemanticType("https://purl.org/hmas/core/Artifact")
                             .addSemanticType(this.getSemanticType())
                             .addThingURI(this.getArtifactUri())
                             .addGraph(this.metadata);
@@ -110,7 +110,7 @@ public class HypermediaInterface {
       .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
       .setNamespace("dct", "http://purl.org/dc/terms/")
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-      .setNamespace("eve", "http://w3id.org/eve#")
+      .setNamespace("hmas", "https://purl.org/hmas/core/")
       .write();
   }
 

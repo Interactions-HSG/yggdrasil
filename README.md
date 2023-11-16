@@ -60,9 +60,8 @@ docker-compose up
 
 ## HTTP API Overview
 
-The HTTP API implements CRUD operations for 3 types of resources:
+The HTTP API implements CRUD operations for 2 types of resources:
 
-* environments (URI template: `/environments/<env_id>`)
 * workspaces (URI template: `/workspaces/<wksp_id>`)
 * artifacts (URI template: `/artifacts/<art_id>`)
 
@@ -78,11 +77,10 @@ via a null relative IRI:
 
 ```shell
 curl -i -X POST \
-  http://localhost:8080/environments/ \
+  http://localhost:8080/workspaces/ \
   -H 'content-type: text/turtle' \
-  -H 'slug: env1' \
-  -d '<> a <http://w3id.org/eve#Environment> ;
-<http://w3id.org/eve#contains> <http://localhost:8080/workspaces/wksp1> .'
+  -H 'slug: wksp1' \
+  -d '<> a <https://purl.org/hmas/core/Workspace> .'
 ```
 
 When retrieving the representation of a resource from Yggdrasil, the HTTP response contains 2 `Link`
@@ -101,9 +99,9 @@ Link: <http://yggdrasil.andreiciortea.ro/hub>; rel="hub"
 Link: <http://yggdrasil.andreiciortea.ro/workspaces/wksp1>; rel="self"
 
 <http://yggdrasil.andreiciortea.ro/workspaces/wksp1>
-  a <http://w3id.org/eve#Workspace> ;
-  <http://w3id.org/eve#hasName> "wksp1" ;
-  <http://w3id.org/eve#contains>
+  a <https://purl.org/hmas/core/Workspace> ;
+  <https://purl.org/hmas/core/hasName> "wksp1" ;
+  <https://purl.org/hmas/core/contains>
     <http://85.204.10.233:8080/artifacts/hue1> ,
     <http://yggdrasil.andreiciortea.ro/artifacts/event-gen> .
 ```

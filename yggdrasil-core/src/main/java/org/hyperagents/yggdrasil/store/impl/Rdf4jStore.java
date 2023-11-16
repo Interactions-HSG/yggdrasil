@@ -118,7 +118,7 @@ public class Rdf4jStore implements RdfStore {
         try {
           writer.startRDF();
 
-          writer.handleNamespace("eve", "http://w3id.org/eve#");
+          writer.handleNamespace("hmas", "https://purl.org/hmas/core/");
           writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
           writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
           writer.handleNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#");
