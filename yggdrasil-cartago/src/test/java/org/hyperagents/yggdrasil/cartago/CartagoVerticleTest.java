@@ -41,12 +41,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class CartagoVerticleTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
-  private static final String AGENT_IRI = "http://localhost:8080/agents/test";
+  private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String CALLBACK_IRI = "http://localhost:8080/callback";
-  private static final String COUNTER_ARTIFACT_IRI = "http://localhost:8080/workspaces/test/artifacts/c0";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
@@ -56,8 +55,7 @@ public class CartagoVerticleTest {
       "The operation should have failed with 'Internal Server Error' status code";
   private static final String OPERATION_SUCCESS_MESSAGE =
       "The operation should have succeeded with an Ok status code";
-  public static final String IRIS_EQUAL_MESSAGE = "The IRIs should be equal";
-  public static final String PROPERTIES_EQUAL_MESSAGE = "The properties should be equal";
+  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
 
   private final BlockingQueue<RdfStoreMessage> storeMessageQueue;
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
@@ -66,6 +64,10 @@ public class CartagoVerticleTest {
   public CartagoVerticleTest() {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
     this.notificationQueue = new LinkedBlockingQueue<>();
+  }
+
+  private static String getArtifactsIriFromWorkspace(final String workspace) {
+    return "http://localhost:8080/workspaces/" + workspace + "/artifacts/";
   }
 
   @BeforeEach
@@ -133,50 +135,20 @@ public class CartagoVerticleTest {
 
   @Order(3)
   @Test
-  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx)
-      throws URISyntaxException, IOException {
-    final var expectedBodyArtifactThingDescription =
-        Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
-          StandardCharsets.UTF_8
-        );
+  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onSuccess(r -> {
           try {
-            final var artifactsEntityCreationMessage =
-                (RdfStoreMessage.CreateEntity) this.storeMessageQueue.take();
-            Assertions.assertEquals(
-                artifactsEntityCreationMessage.requestUri(),
-                "http://localhost:8080/workspaces/" + MAIN_WORKSPACE_NAME + "/artifacts",
-                "The URIs should be equal"
-            );
-            Assertions.assertEquals(
-                artifactsEntityCreationMessage.entityName(),
-                "body_" + AGENT_IRI,
-                "The artifact names should be equal"
-            );
-            Assertions.assertEquals(
-                expectedBodyArtifactThingDescription,
-                artifactsEntityCreationMessage.entityRepresentation(),
-                TDS_EQUAL_MESSAGE
-            );
-            final var hypermediaBodyCreationMessage =
-                (RdfStoreMessage.CreateEntity) this.storeMessageQueue.take();
-            Assertions.assertEquals(
-                hypermediaBodyCreationMessage.requestUri(),
-                "http://localhost:8080/workspaces/" + MAIN_WORKSPACE_NAME + "/artifacts/",
-                "The URIs should be equal"
-            );
-            Assertions.assertEquals(
-                hypermediaBodyCreationMessage.entityName(),
+            assertWorkspaceJoined(
+                MAIN_WORKSPACE_NAME,
+                TEST_AGENT_IRI,
                 "hypermedia_body_1",
-                "The artifact names should be equal"
-            );
-            Assertions.assertEquals(
-                expectedBodyArtifactThingDescription,
-                hypermediaBodyCreationMessage.entityRepresentation(),
-                TDS_EQUAL_MESSAGE
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("test_agent_test_workspace_body_td.ttl")
+                                     .toURI()),
+                  StandardCharsets.UTF_8
+                )
             );
           } catch (final Exception e) {
             ctx.failNow(e);
@@ -189,7 +161,7 @@ public class CartagoVerticleTest {
   @Test
   public void testJoinWorkspaceIsIdempotent(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -197,7 +169,7 @@ public class CartagoVerticleTest {
   @Test
   public void testJoinWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.JoinWorkspace(AGENT_IRI, NONEXISTENT_NAME))
+        .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, NONEXISTENT_NAME))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -274,7 +246,7 @@ public class CartagoVerticleTest {
   @Test
   public void testLeaveWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.LeaveWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.LeaveWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onSuccess(r -> Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
           r.body(),
@@ -287,7 +259,7 @@ public class CartagoVerticleTest {
   @Test
   public void testLeaveWorkspaceFailsOnNotJoinedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.LeaveWorkspace(AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.LeaveWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -307,7 +279,7 @@ public class CartagoVerticleTest {
         );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "c0",
           Json.encode(Map.of(
@@ -317,11 +289,22 @@ public class CartagoVerticleTest {
             List.of()
           ))
         ))
-        .onSuccess(r -> Assertions.assertEquals(
-          expectedCounterArtifactThingDescription,
-          r.body(),
-          TDS_EQUAL_MESSAGE
-        ))
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              expectedCounterArtifactThingDescription,
+              r.body(),
+              TDS_EQUAL_MESSAGE
+          );
+          try {
+            assertArtifactCreated(
+                MAIN_WORKSPACE_NAME,
+                "c0",
+                expectedCounterArtifactThingDescription
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        })
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -336,7 +319,7 @@ public class CartagoVerticleTest {
         );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
           "c1",
           Json.encode(Map.of(
@@ -346,11 +329,32 @@ public class CartagoVerticleTest {
             List.of(5)
           ))
         ))
-        .onSuccess(r -> Assertions.assertEquals(
-            expectedCounterArtifactThingDescription,
-            r.body(),
-            TDS_EQUAL_MESSAGE
-        ))
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              expectedCounterArtifactThingDescription,
+              r.body(),
+              TDS_EQUAL_MESSAGE
+          );
+          try {
+            assertWorkspaceJoined(
+                SUB_WORKSPACE_NAME,
+                TEST_AGENT_IRI,
+                "hypermedia_body_2",
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("test_agent_sub_workspace_body_td.ttl")
+                                     .toURI()),
+                  StandardCharsets.UTF_8
+                )
+            );
+            assertArtifactCreated(
+                SUB_WORKSPACE_NAME,
+                "c1",
+                expectedCounterArtifactThingDescription
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        })
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -358,14 +362,14 @@ public class CartagoVerticleTest {
   @Test
   public void testCreateArtifactWithFeedbackParameterSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
-    final var expectedCounterArtifactThingDescription =
+    final var expectedAdderArtifactThingDescription =
         Files.readString(
           Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a0",
           Json.encode(Map.of(
@@ -376,9 +380,9 @@ public class CartagoVerticleTest {
           ))
         ))
         .onSuccess(r -> Assertions.assertEquals(
-            expectedCounterArtifactThingDescription,
-            r.body(),
-            TDS_EQUAL_MESSAGE
+          expectedAdderArtifactThingDescription,
+          r.body(),
+          TDS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -388,7 +392,7 @@ public class CartagoVerticleTest {
   public void testCreateArtifactFailsWithUnknownClass(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           NONEXISTENT_NAME,
           Json.encode(Map.of(
@@ -411,7 +415,7 @@ public class CartagoVerticleTest {
   public void testCreateArtifactFailsWithUnknownWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           NONEXISTENT_NAME,
           "a1",
           Json.encode(Map.of(
@@ -434,7 +438,7 @@ public class CartagoVerticleTest {
   public void testCreateArtifactFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a1",
           Json.encode(Map.of(
@@ -469,18 +473,20 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            final var notifyPropertyMessage =
-                (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
-                  this.notificationQueue.take();
-            Assertions.assertEquals(
-                notifyPropertyMessage.requestIri(),
-                COUNTER_ARTIFACT_IRI,
-                IRIS_EQUAL_MESSAGE
+            assertWorkspaceJoined(
+                MAIN_WORKSPACE_NAME,
+                FOCUSING_AGENT_IRI,
+                "hypermedia_body_3",
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("focus_agent_test_workspace_body_td.ttl")
+                                     .toURI()),
+                  StandardCharsets.UTF_8
+                )
             );
-            Assertions.assertEquals(
-                notifyPropertyMessage.content(),
-                "count(0)",
-                PROPERTIES_EQUAL_MESSAGE
+            assertNotificationReceived(
+                MAIN_WORKSPACE_NAME,
+                "c0",
+                "count(0)"
             );
           } catch (Exception e) {
             ctx.failNow(e);
@@ -518,9 +524,9 @@ public class CartagoVerticleTest {
           CALLBACK_IRI
         ))
         .onFailure(t -> Assertions.assertEquals(
-          HttpStatus.SC_INTERNAL_SERVER_ERROR,
-          ((ReplyException) t).failureCode(),
-          OPERATION_FAIL_MESSAGE
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            ((ReplyException) t).failureCode(),
+            OPERATION_FAIL_MESSAGE
         ))
         .onComplete(ctx.failingThenComplete());
   }
@@ -542,18 +548,10 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            final var notifyPropertyMessage =
-                (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
-                  this.notificationQueue.take();
-            Assertions.assertEquals(
-                notifyPropertyMessage.requestIri(),
-                COUNTER_ARTIFACT_IRI,
-                IRIS_EQUAL_MESSAGE
-            );
-            Assertions.assertEquals(
-                notifyPropertyMessage.content(),
-                "count(0)",
-                PROPERTIES_EQUAL_MESSAGE
+            assertNotificationReceived(
+                MAIN_WORKSPACE_NAME,
+                "c0",
+                "count(0)"
             );
           } catch (Exception e) {
             ctx.failNow(e);
@@ -567,16 +565,16 @@ public class CartagoVerticleTest {
   public void testDoActionSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "c0",
           "inc",
           Optional.empty()
         ))
         .onSuccess(r -> Assertions.assertEquals(
-            String.valueOf(HttpStatus.SC_OK),
-            r.body(),
-            OPERATION_SUCCESS_MESSAGE
+          String.valueOf(HttpStatus.SC_OK),
+          r.body(),
+          OPERATION_SUCCESS_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -598,24 +596,26 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            final var notifyPropertyMessage =
-                (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
-                  this.notificationQueue.take();
-            Assertions.assertEquals(
-                "http://localhost:8080/workspaces/sub/artifacts/c1",
-                notifyPropertyMessage.requestIri(),
-                IRIS_EQUAL_MESSAGE
+            assertWorkspaceJoined(
+                SUB_WORKSPACE_NAME,
+                FOCUSING_AGENT_IRI,
+                "hypermedia_body_4",
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("focus_agent_sub_workspace_body_td.ttl")
+                                     .toURI()),
+                  StandardCharsets.UTF_8
+                )
             );
-            Assertions.assertEquals(
-                "count(5)",
-                notifyPropertyMessage.content(),
-                PROPERTIES_EQUAL_MESSAGE
+            assertNotificationReceived(
+                SUB_WORKSPACE_NAME,
+                "c1",
+                "count(5)"
             );
           } catch (final Exception e) {
             ctx.failNow(e);
           }
           return this.cartagoMessagebox.sendMessage(new CartagoMessage.DoAction(
-            AGENT_IRI,
+            TEST_AGENT_IRI,
             SUB_WORKSPACE_NAME,
             "c1",
             "inc",
@@ -629,18 +629,10 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            final var notifyPropertyMessage =
-                (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
-                  this.notificationQueue.take();
-            Assertions.assertEquals(
-                "http://localhost:8080/workspaces/sub/artifacts/c1",
-                notifyPropertyMessage.requestIri(),
-                IRIS_EQUAL_MESSAGE
-            );
-            Assertions.assertEquals(
-                "count(6)",
-                notifyPropertyMessage.content(),
-                PROPERTIES_EQUAL_MESSAGE
+            assertNotificationReceived(
+                SUB_WORKSPACE_NAME,
+                "c1",
+                "count(6)"
             );
           } catch (Exception e) {
             ctx.failNow(e);
@@ -654,16 +646,16 @@ public class CartagoVerticleTest {
   public void testDoActionWithFeedbackParameterSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a0",
           ADD_OPERATION,
           Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
         ))
         .onSuccess(r -> Assertions.assertEquals(
-            String.valueOf(4),
-            r.body(),
-            "The results should be equal"
+          String.valueOf(4),
+          r.body(),
+          "The results should be equal"
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -673,7 +665,7 @@ public class CartagoVerticleTest {
   public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           NONEXISTENT_NAME,
           "a0",
           ADD_OPERATION,
@@ -692,7 +684,7 @@ public class CartagoVerticleTest {
   public void testDoActionFailsWithNonexistentArtifact(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           NONEXISTENT_NAME,
           ADD_OPERATION,
@@ -711,7 +703,7 @@ public class CartagoVerticleTest {
   public void testDoActionFailsWithNonexistentOperation(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a0",
           NONEXISTENT_NAME,
@@ -730,7 +722,7 @@ public class CartagoVerticleTest {
   public void testDoActionFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          AGENT_IRI,
+          TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a0",
           ADD_OPERATION,
@@ -742,5 +734,67 @@ public class CartagoVerticleTest {
           OPERATION_FAIL_MESSAGE
         ))
         .onComplete(ctx.failingThenComplete());
+  }
+
+  private void assertWorkspaceJoined(
+      final String workspace,
+      final String agentIri,
+      final String hypermediaBodyName,
+      final String expectedBodyArtifactThingDescription
+  ) throws InterruptedException {
+    assertArtifactCreated(
+        workspace,
+        "body_" + agentIri,
+        expectedBodyArtifactThingDescription
+    );
+    assertArtifactCreated(
+        workspace,
+        hypermediaBodyName,
+        expectedBodyArtifactThingDescription
+    );
+  }
+
+  private void assertArtifactCreated(
+      final String workspace,
+      final String artifact,
+      final String expectedCounterArtifactThingDescription
+  ) throws InterruptedException {
+    final var artifactCreationMessage =
+        (RdfStoreMessage.CreateEntity) this.storeMessageQueue.take();
+    Assertions.assertEquals(
+        getArtifactsIriFromWorkspace(workspace),
+        artifactCreationMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+        artifact,
+        artifactCreationMessage.entityName(),
+        "The names should be equal"
+    );
+    Assertions.assertEquals(
+        expectedCounterArtifactThingDescription,
+        artifactCreationMessage.entityRepresentation(),
+        TDS_EQUAL_MESSAGE
+    );
+  }
+
+  private void assertNotificationReceived(
+      final String workspace,
+      final String artifact,
+      final String content
+  ) throws InterruptedException {
+    final var notifyPropertyMessage =
+        (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
+          this.notificationQueue.take();
+    Assertions.assertEquals(
+        getArtifactsIriFromWorkspace(workspace) + artifact,
+        notifyPropertyMessage.requestIri(),
+        URIS_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+        notifyPropertyMessage.content(),
+        content,
+        "The properties should be equal"
+    );
   }
 }

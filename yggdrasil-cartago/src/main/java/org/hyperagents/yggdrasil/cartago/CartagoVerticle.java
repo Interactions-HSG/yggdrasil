@@ -52,6 +52,7 @@ import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
+  private static final String ARTIFACTS_URI_SUFFIX = "/artifacts/";
 
   private Map<String, AgentCredential> agentCredentials;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
@@ -189,7 +190,7 @@ public class CartagoVerticle extends AbstractVerticle {
           .addAction(
             new ActionAffordance.Builder(
                 "makeArtifact",
-                new Form.Builder(workspaceId + "/artifacts/").build()
+                new Form.Builder(workspaceId + ARTIFACTS_URI_SUFFIX).build()
             )
             .addInputSchema(
               new ObjectSchema
@@ -280,7 +281,7 @@ public class CartagoVerticle extends AbstractVerticle {
       );
       HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
       this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
+          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
           hypermediaInterface.getActualArtifactName(),
           hypermediaInterface.getHypermediaDescription()
       ));
@@ -362,9 +363,15 @@ public class CartagoVerticle extends AbstractVerticle {
                   .createHypermediaInterface(workspace, artifactDescriptor, artifactId);
       registry.register(hypermediaInterface);
       this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts",
+          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
           hypermediaInterface.getActualArtifactName(),
           hypermediaInterface.getHypermediaDescription()
+      ));
+    } else {
+      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
+          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
+          artifactName,
+          registry.getArtifactDescription(artifactName)
       ));
     }
   }
