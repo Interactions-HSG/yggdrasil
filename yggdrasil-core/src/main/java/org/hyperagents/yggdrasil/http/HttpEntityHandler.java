@@ -161,14 +161,10 @@ public class HttpEntityHandler {
       context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
     }
 
-    final var hypermediaArtifactName = context.pathParam("artid");
+    final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     final var registry = HypermediaArtifactRegistry.getInstance();
-    final var artifactIri = registry.getHttpArtifactsPrefix(workspaceName) + hypermediaArtifactName;
-    final var artifactName =
-        registry.hasOtherName(hypermediaArtifactName)
-        ? registry.getActualName(hypermediaArtifactName)
-        : hypermediaArtifactName;
+    final var artifactIri = registry.getHttpArtifactsPrefix(workspaceName) + artifactName;
     final var actionName =
         registry.getActionName(request.method().name(), request.absoluteURI());
 

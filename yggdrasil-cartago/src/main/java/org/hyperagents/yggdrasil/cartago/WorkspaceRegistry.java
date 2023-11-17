@@ -2,13 +2,10 @@ package org.hyperagents.yggdrasil.cartago;
 
 import cartago.Workspace;
 import cartago.WorkspaceDescriptor;
-import cartago.WorkspaceId;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
-import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,13 +28,6 @@ public final class WorkspaceRegistry {
     this.nameToUriMap = Maps.synchronizedBiMap(HashBiMap.create());
   }
 
-  public void registerWorkspace(final WorkspaceDescriptor workspaceDescriptor) {
-    this.workspaceMap.put(
-        workspaceDescriptor.getWorkspace().getId().getName(),
-        workspaceDescriptor
-    );
-  }
-
   public void registerWorkspace(final WorkspaceDescriptor descriptor, final String uri) {
     final var name = descriptor.getWorkspace().getId().getName();
     this.workspaceMap.put(name, descriptor);
@@ -46,20 +36,6 @@ public final class WorkspaceRegistry {
 
   public Optional<Workspace> getWorkspace(final String name) {
     return Optional.ofNullable(this.workspaceMap.get(name)).map(WorkspaceDescriptor::getWorkspace);
-  }
-
-  public WorkspaceId getWorkspaceId(final Workspace workspace) {
-    return this.workspaceMap
-               .values()
-               .stream()
-               .filter(d -> d.getWorkspace().equals(workspace))
-               .map(WorkspaceDescriptor::getId)
-               .findFirst()
-               .orElse(null);
-  }
-
-  public List<String> getAllWorkspaces() {
-    return new ArrayList<>(this.workspaceMap.keySet());
   }
 
   public String getUri(final String name) {

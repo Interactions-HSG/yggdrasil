@@ -21,14 +21,12 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
               js:propertyName "artifactClass";
-              js:enum <http://example.org/Body>, <http://example.org/Adder>, <http://example.org/Counter>,
-                <http://example.org/Console>
+              js:enum <http://example.org/Adder>, <http://example.org/Counter>
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;
               js:propertyName "artifactName";
-              js:enum <http://example.org/Body>, <http://example.org/Adder>, <http://example.org/Counter>,
-                <http://example.org/Console>
+              js:enum <http://example.org/Adder>, <http://example.org/Counter>
             ];
           js:required "artifactClass", "artifactName"
         ]

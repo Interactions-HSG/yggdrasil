@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import cartago.AgentBodyArtifact;
 import cartago.AgentCredential;
 import cartago.AgentId;
 import cartago.AgentIdCredential;
@@ -12,7 +11,6 @@ import cartago.OpFeedbackParam;
 import cartago.WorkspaceId;
 import cartago.events.ActionFailedEvent;
 import cartago.events.ActionSucceededEvent;
-import cartago.tools.Console;
 import cartago.utils.BasicLogger;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
@@ -27,16 +25,9 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperagents.yggdrasil.cartago.entities.HypermediaInterfaceFactory;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -47,6 +38,12 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public class CartagoVerticle extends AbstractVerticle {
@@ -61,8 +58,6 @@ public class CartagoVerticle extends AbstractVerticle {
   @Override
   public void start() {
     final var registry = HypermediaArtifactRegistry.getInstance();
-    registry.addArtifactTemplate("http://example.org/Body", AgentBodyArtifact.class.getCanonicalName());
-    registry.addArtifactTemplate("http://example.org/Console", Console.class.getCanonicalName());
     JsonObjectUtils
         .getJsonObject(this.config(), "known-artifacts", LOGGER)
         .ifPresent(registry::addArtifactTemplates);
@@ -98,10 +93,10 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply(this.instantiateWorkspace(workspaceName));
         case CartagoMessage.CreateSubWorkspace(String workspaceName, String subWorkspaceName) ->
           message.reply(this.instantiateSubWorkspace(workspaceName, subWorkspaceName));
-        case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) ->
-          message.reply(HypermediaArtifactRegistry.getInstance().getArtifactDescription(
-            this.joinWorkspace(agentId, workspaceName)
-          ));
+        case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) -> {
+          this.joinWorkspace(agentId, workspaceName);
+          message.reply(String.valueOf(HttpStatus.SC_OK));
+        }
         case CartagoMessage.LeaveWorkspace(String agentId, String workspaceName) -> {
           this.leaveWorkspace(agentId, workspaceName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
@@ -257,7 +252,7 @@ public class CartagoVerticle extends AbstractVerticle {
     .write();
   }
 
-  private String joinWorkspace(final String agentUri, final String workspaceName)
+  private void joinWorkspace(final String agentUri, final String workspaceName)
       throws CartagoException {
     LOGGER.info(agentUri + " joins workspace " + workspaceName);
     final var workspace = WorkspaceRegistry.getInstance()
@@ -265,35 +260,6 @@ public class CartagoVerticle extends AbstractVerticle {
                                            .orElseThrow();
     final var agentCredential = this.getAgentCredential(agentUri);
     workspace.joinWorkspace(agentCredential, e -> {});
-    final var workspaceId = workspace.getId();
-    final var agentId = this.getAgentId(agentCredential, workspaceId);
-    final var registry = HypermediaAgentBodyArtifactRegistry.getInstance();
-    if (registry.hasArtifact(agentId, workspaceId)) {
-      return registry.getHypermediaName(registry.getArtifact(agentId, workspaceId));
-    } else {
-      LOGGER.info("create body for agent: " + agentUri);
-      final var bodyName = "body_" + agentUri;
-      final var hypermediaInterface = HypermediaInterfaceFactory.createBodyInterface(
-          workspace,
-          workspace.getArtifactDescriptor(bodyName),
-          workspace.getArtifact(bodyName),
-          agentUri
-      );
-      HypermediaArtifactRegistry.getInstance().register(hypermediaInterface);
-      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
-          hypermediaInterface.getActualArtifactName(),
-          hypermediaInterface.getHypermediaDescription()
-      ));
-      final var hypermediaBodyName = registry.getHypermediaName(bodyName);
-      registry.setArtifact(agentId, workspaceId, bodyName);
-      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceId.getName()),
-          hypermediaBodyName,
-          HypermediaArtifactRegistry.getInstance().getArtifactDescription(hypermediaBodyName)
-      ));
-      return hypermediaBodyName;
-    }
   }
 
   private void focus(
@@ -327,15 +293,7 @@ public class CartagoVerticle extends AbstractVerticle {
   private void leaveWorkspace(final String agentUri, final String workspaceName)
       throws CartagoException {
     final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
-    final var workspaceId = workspace.getId();
-    final var agentId = this.getAgentId(this.getAgentCredential(agentUri), workspaceId);
-    final var bodyName = HypermediaAgentBodyArtifactRegistry.getInstance()
-                                                            .getArtifact(agentId, workspaceId);
-    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-        HypermediaArtifactRegistry.getInstance().getHttpArtifactsPrefix(workspaceName)
-        + HypermediaAgentBodyArtifactRegistry.getInstance().getHypermediaName(bodyName)
-    ));
-    workspace.quitAgent(agentId);
+    workspace.quitAgent(this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()));
   }
 
   private void instantiateArtifact(
@@ -348,32 +306,19 @@ public class CartagoVerticle extends AbstractVerticle {
     this.joinWorkspace(agentUri, workspaceName);
     LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
     final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
-    final var artifactId = workspace.makeArtifact(
+    workspace.makeArtifact(
         this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
         artifactName,
         artifactClass,
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
-    final var artifactDescriptor = workspace.getArtifactDescriptor(artifactName);
     LOGGER.info("Done!");
     final var registry = HypermediaArtifactRegistry.getInstance();
-    if (registry.hasInterfaceConstructor(artifactClass)) {
-      final var hypermediaInterface =
-          registry.getInterfaceConstructor(artifactClass)
-                  .createHypermediaInterface(workspace, artifactDescriptor, artifactId);
-      registry.register(hypermediaInterface);
-      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
-          hypermediaInterface.getActualArtifactName(),
-          hypermediaInterface.getHypermediaDescription()
-      ));
-    } else {
-      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-          WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
-          artifactName,
-          registry.getArtifactDescription(artifactName)
-      ));
-    }
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
+        WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
+        artifactName,
+        registry.getArtifactDescription(artifactName)
+    ));
   }
 
   private Future<Optional<String>> doAction(
@@ -390,16 +335,13 @@ public class CartagoVerticle extends AbstractVerticle {
         payload
           .map(p -> {
             final var params = CartagoDataBundle.fromJson(payload.get());
-            final var convertedParams =
-                registry.hasHypermediaInterface(artifactName)
-                ? registry.getHypermediaInterface(artifactName).convert(action, params)
-                : params;
-            final var completeParams =
-                registry.hasFeedbackParam(artifactName, action)
-                ? Stream.concat(Arrays.stream(convertedParams), Stream.of(feedbackParameter))
-                        .toArray()
-                : convertedParams;
-            return new Op(action, completeParams);
+            return new Op(
+              action,
+              registry.hasFeedbackParam(artifactName, action)
+              ? Stream.concat(Arrays.stream(params), Stream.of(feedbackParameter))
+                      .toArray()
+              : params
+            );
           })
           .orElseGet(() -> new Op(action));
     LOGGER.info(

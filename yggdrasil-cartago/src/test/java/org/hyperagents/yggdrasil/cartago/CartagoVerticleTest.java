@@ -138,22 +138,11 @@ public class CartagoVerticleTest {
   public void testJoinWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
-        .onSuccess(r -> {
-          try {
-            assertWorkspaceJoined(
-                MAIN_WORKSPACE_NAME,
-                TEST_AGENT_IRI,
-                "hypermedia_body_1",
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("test_agent_test_workspace_body_td.ttl")
-                                     .toURI()),
-                  StandardCharsets.UTF_8
-                )
-            );
-          } catch (final Exception e) {
-            ctx.failNow(e);
-          }
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+          String.valueOf(HttpStatus.SC_OK),
+          r.body(),
+          OPERATION_SUCCESS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -336,16 +325,6 @@ public class CartagoVerticleTest {
               TDS_EQUAL_MESSAGE
           );
           try {
-            assertWorkspaceJoined(
-                SUB_WORKSPACE_NAME,
-                TEST_AGENT_IRI,
-                "hypermedia_body_2",
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("test_agent_sub_workspace_body_td.ttl")
-                                     .toURI()),
-                  StandardCharsets.UTF_8
-                )
-            );
             assertArtifactCreated(
                 SUB_WORKSPACE_NAME,
                 "c1",
@@ -473,16 +452,6 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            assertWorkspaceJoined(
-                MAIN_WORKSPACE_NAME,
-                FOCUSING_AGENT_IRI,
-                "hypermedia_body_3",
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("focus_agent_test_workspace_body_td.ttl")
-                                     .toURI()),
-                  StandardCharsets.UTF_8
-                )
-            );
             assertNotificationReceived(
                 MAIN_WORKSPACE_NAME,
                 "c0",
@@ -596,16 +565,6 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
-            assertWorkspaceJoined(
-                SUB_WORKSPACE_NAME,
-                FOCUSING_AGENT_IRI,
-                "hypermedia_body_4",
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("focus_agent_sub_workspace_body_td.ttl")
-                                     .toURI()),
-                  StandardCharsets.UTF_8
-                )
-            );
             assertNotificationReceived(
                 SUB_WORKSPACE_NAME,
                 "c1",
@@ -734,24 +693,6 @@ public class CartagoVerticleTest {
           OPERATION_FAIL_MESSAGE
         ))
         .onComplete(ctx.failingThenComplete());
-  }
-
-  private void assertWorkspaceJoined(
-      final String workspace,
-      final String agentIri,
-      final String hypermediaBodyName,
-      final String expectedBodyArtifactThingDescription
-  ) throws InterruptedException {
-    assertArtifactCreated(
-        workspace,
-        "body_" + agentIri,
-        expectedBodyArtifactThingDescription
-    );
-    assertArtifactCreated(
-        workspace,
-        hypermediaBodyName,
-        expectedBodyArtifactThingDescription
-    );
   }
 
   private void assertArtifactCreated(
