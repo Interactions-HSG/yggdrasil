@@ -278,14 +278,12 @@ public final class HttpServerVerticleTestHelper {
       final VertxTestContext ctx,
       final HttpMethod method,
       final String resourceUri,
-      final String resourceRepresentationFileName
+      final Buffer content
   ) {
     try {
       this.client.request(method, TEST_PORT, TEST_HOST, resourceUri)
                  .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                 .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                   ClassLoader.getSystemResource(resourceRepresentationFileName).toURI()
-                 ))))
+                 .sendBuffer(content)
                  .onSuccess(r -> {
                    Assertions.assertEquals(
                        HttpStatus.SC_BAD_REQUEST,

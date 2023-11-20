@@ -2,7 +2,11 @@ package org.hyperagents.yggdrasil.http;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -11,6 +15,7 @@ import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -32,11 +37,20 @@ public class CartagoHttpHandlersTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String WORKSPACES_PATH = "/workspaces/";
   private static final String MAIN_WORKSPACE_PATH = WORKSPACES_PATH + MAIN_WORKSPACE_NAME;
+  private static final String ARTIFACTS_PATH = "/artifacts/";
+  private static final String MAIN_ARTIFACTS_PATH = MAIN_WORKSPACE_PATH + ARTIFACTS_PATH;
+  private static final String COUNTER_ARTIFACT_NAME = "c0";
+  private static final String COUNTER_ARTIFACT_PATH = MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME;
+  private static final String CALLBACK_IRI = "http://localhost:8080/callback";
   private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
+  private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
-  private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
+  private static final String RESPONSE_BODY_STATUS_CODE_MESSAGE =
+      "The response body should contain the status code description";
+  private static final String INTERNAL_SERVER_ERROR_STATUS_MESSAGE =
+      "The status code should be INTERNAL SERVER ERROR";
 
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
   private final BlockingQueue<Message<CartagoMessage>> cartagoMessageQueue;
@@ -137,7 +151,7 @@ public class CartagoHttpHandlersTest {
   }
 
   @Test
-  public void testPostSubWorkspace(final VertxTestContext ctx) {
+  public void testPostSubWorkspaceSucceeds(final VertxTestContext ctx) {
     try {
       final var expectedWorkspaceRepresentation =
           Files.readString(
@@ -224,12 +238,12 @@ public class CartagoHttpHandlersTest {
             Assertions.assertEquals(
                 HttpStatus.SC_INTERNAL_SERVER_ERROR,
                 r.statusCode(),
-                "The status code should be INTERNAL SERVER ERROR"
+                INTERNAL_SERVER_ERROR_STATUS_MESSAGE
             );
             Assertions.assertEquals(
                 "Internal Server Error",
                 r.bodyAsString(),
-                RESPONSE_BODY_EMPTY_MESSAGE
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
             );
           })
           .onComplete(ctx.succeedingThenComplete());
@@ -265,74 +279,576 @@ public class CartagoHttpHandlersTest {
     }
   }
 
-  /*
   @Test
-  @Disabled
-  public void testCartagoArtifact(final VertxTestContext tc) {
-    // Register artifact template for this test
-    final var knownArtifacts =
-        new JsonObject()
-          .put("http://example.org/Counter", "org.hyperagents.yggdrasil.cartago.artifacts.Counter");
-
-    this.vertx.deployVerticle(
-        CartagoVerticle.class.getName(),
-        new DeploymentOptions().setWorker(true)
-                               .setConfig(new JsonObject().put("known-artifacts", knownArtifacts)),
-        tc.succeedingThenComplete()
-    );
-
-    final var checkpoint = tc.checkpoint();
-
-    // TODO: This test seems wrong. Why would there be a localhost:8080/workspaces path?
-    this.client
-        .post(TEST_PORT, TEST_HOST, "/workspaces/")
-        .putHeader(AGENT_WEBID, "http://andreiciortea.ro/#me")
-        .putHeader(SLUG_HEADER, "wksp1")
-        .sendBuffer(Buffer.buffer(""), wkspAR -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_CREATED,
-              wkspAR.result().statusCode(),
-              CREATED_STATUS_MESSAGE
+  public void testPostArtifactSucceeds(final VertxTestContext ctx) {
+    try {
+      final var expectedArtifactRepresentation =
+          Files.readString(
+            Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI())
           );
-
-          this.client
-              .post(TEST_PORT, TEST_HOST, TEST_WORKSPACE_PATH + "/artifacts/")
-              .putHeader(AGENT_WEBID, "http://andreiciortea.ro/#me")
-              .putHeader(SLUG_HEADER, "c0")
-              .putHeader(CONTENT_TYPE_HEADER, ContentType.APPLICATION_JSON.getMimeType())
-              .sendBuffer(
-                Buffer.buffer("{\"artifactClass\" : \"http://example.org/Counter\"}"),
-                ar -> {
-                  System.out.println("artifact created");
-                  Assertions.assertEquals(
-                      HttpStatus.SC_CREATED,
-                      ar.result().statusCode(),
-                      CREATED_STATUS_MESSAGE
-                  );
-
-                  this.client
-                      .post(
-                          TEST_PORT,
-                          TEST_HOST,
-                          TEST_WORKSPACE_PATH + "/artifacts/c0/increment"
-                      )
-                      .putHeader(AGENT_WEBID, "http://andreiciortea.ro/#me")
-                      .putHeader(CONTENT_TYPE_HEADER, ContentType.APPLICATION_JSON.getMimeType())
-                      .sendBuffer(
-                        Buffer.buffer("[1]"),
-                        actionAr -> {
-                          System.out.println("operation executed");
-                          Assertions.assertEquals(
-                              HttpStatus.SC_OK,
-                              actionAr.result().statusCode(),
-                              OK_STATUS_MESSAGE
-                          );
-                          checkpoint.flag();
-                        }
-                      );
-                }
-              );
-        });
+      final var artifactInitialization =
+          JsonObject.of(
+            "artifactName",
+            COUNTER_ARTIFACT_NAME,
+            "artifactClass",
+            "org.hyperagents.yggdrasil.cartago.artifacts.Counter",
+            "initParams",
+            JsonArray.of(5)
+          );
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_ARTIFACTS_PATH)
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .putHeader(
+                                       HttpHeaders.CONTENT_TYPE.toString(),
+                                       ContentType.APPLICATION_JSON.getMimeType()
+                                     )
+                                     .sendBuffer(artifactInitialization.toBuffer());
+      final var cartagoMessage = this.cartagoMessageQueue.take();
+      final var createArtifactMessage =
+          (CartagoMessage.CreateArtifact) cartagoMessage.body();
+      Assertions.assertEquals(
+          COUNTER_ARTIFACT_NAME,
+          createArtifactMessage.artifactName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          createArtifactMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          artifactInitialization,
+          Json.decodeValue(createArtifactMessage.representation()),
+          "The initialization parameters should be the same"
+      );
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          createArtifactMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      cartagoMessage.reply(expectedArtifactRepresentation);
+      final var storeMessage = this.storeMessageQueue.take();
+      final var createEntityMessage = (RdfStoreMessage.CreateEntity) storeMessage.body();
+      Assertions.assertEquals(
+          COUNTER_ARTIFACT_NAME,
+          createEntityMessage.entityName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          "http://" + TEST_HOST + ":" + TEST_PORT + MAIN_ARTIFACTS_PATH,
+          createEntityMessage.requestUri(),
+          URIS_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          expectedArtifactRepresentation,
+          createEntityMessage.entityRepresentation(),
+          TDS_EQUAL_MESSAGE
+      );
+      storeMessage.reply(expectedArtifactRepresentation);
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_CREATED,
+                r.statusCode(),
+                CREATED_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                expectedArtifactRepresentation,
+                r.bodyAsString(),
+                TDS_EQUAL_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
   }
- */
+
+  @Test
+  public void testPostArtifactWithWorkspaceNotFound(final VertxTestContext ctx) {
+    try {
+      final var artifactInitialization =
+          JsonObject.of(
+            "artifactName",
+            COUNTER_ARTIFACT_NAME,
+            "artifactClass",
+            "org.hyperagents.yggdrasil.cartago.artifacts.Counter",
+            "initParams",
+            JsonArray.of(5)
+          );
+      final var request = this.client.post(
+                                       TEST_PORT,
+                                       TEST_HOST,
+                                       WORKSPACES_PATH + "nonexistent" + ARTIFACTS_PATH
+                                     )
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
+                                     .putHeader(
+                                       HttpHeaders.CONTENT_TYPE.toString(),
+                                       ContentType.APPLICATION_JSON.getMimeType()
+                                     )
+                                     .sendBuffer(artifactInitialization.toBuffer());
+      final var message = this.cartagoMessageQueue.take();
+      final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
+      Assertions.assertEquals(
+          "nonexistent",
+          createArtifactMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          COUNTER_ARTIFACT_NAME,
+          createArtifactMessage.artifactName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          createArtifactMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          artifactInitialization,
+          Json.decodeValue(createArtifactMessage.representation()),
+          "The initialization parameters should be the same"
+      );
+      message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The workspace was not found");
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                r.statusCode(),
+                INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                "Internal Server Error",
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostArtifactFailsWithoutWebId(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutWebId(
+          ctx,
+          this.client.post(TEST_PORT, TEST_HOST, MAIN_ARTIFACTS_PATH)
+                     .putHeader(
+                       HttpHeaders.CONTENT_TYPE.toString(),
+                       ContentType.APPLICATION_JSON.getMimeType()
+                     )
+                     .sendBuffer(
+                       JsonObject
+                         .of(
+                           "artifactName",
+                           COUNTER_ARTIFACT_NAME,
+                           "artifactClass",
+                           "org.hyperagents.yggdrasil.cartago.artifacts.Counter",
+                           "initParams",
+                           JsonArray.of(5)
+                         )
+                         .toBuffer()
+                     )
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostArtifactFailsWithoutContentType(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutContentType(
+          ctx,
+          HttpMethod.POST,
+          MAIN_ARTIFACTS_PATH,
+          JsonObject
+              .of(
+                "artifactName",
+                COUNTER_ARTIFACT_NAME,
+                "artifactClass",
+                "org.hyperagents.yggdrasil.cartago.artifacts.Counter",
+                "initParams",
+                JsonArray.of(5)
+              )
+              .toBuffer()
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostJoinWorkspaceSucceeds(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .send();
+      final var cartagoMessage = this.cartagoMessageQueue.take();
+      final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) cartagoMessage.body();
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          joinWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          joinWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_OK,
+                r.statusCode(),
+                OK_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                String.valueOf(HttpStatus.SC_OK),
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostJoinWorkspaceFails(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .send();
+      final var message = this.cartagoMessageQueue.take();
+      final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) message.body();
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          joinWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          joinWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                r.statusCode(),
+                INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                "Internal Server Error",
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostJoinWorkspaceFailsWithoutWebId(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutWebId(
+          ctx,
+          this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join").send()
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostJoinWorkspaceRedirectsWithSlash(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestRedirectsWithAddedSlash(
+          ctx,
+          HttpMethod.POST,
+          MAIN_WORKSPACE_PATH + "/join/"
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostLeaveWorkspaceSucceeds(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .send();
+      final var cartagoMessage = this.cartagoMessageQueue.take();
+      final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) cartagoMessage.body();
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          leaveWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          leaveWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_OK,
+                r.statusCode(),
+                OK_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                String.valueOf(HttpStatus.SC_OK),
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostLeaveWorkspaceFails(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .send();
+      final var message = this.cartagoMessageQueue.take();
+      final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) message.body();
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          leaveWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          leaveWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                r.statusCode(),
+                INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                "Internal Server Error",
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostLeaveWorkspaceFailsWithoutWebId(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutWebId(
+          ctx,
+          this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave").send()
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostLeaveWorkspaceRedirectsWithSlash(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestRedirectsWithAddedSlash(
+          ctx,
+          HttpMethod.POST,
+          MAIN_WORKSPACE_PATH + "/leave/"
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostFocusArtifactSucceeds(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/focus")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .putHeader(
+                                       HttpHeaders.CONTENT_TYPE.toString(),
+                                       ContentType.APPLICATION_JSON.getMimeType()
+                                     )
+                                     .sendBuffer(JsonObject.of(
+                                       "artifactName",
+                                       COUNTER_ARTIFACT_NAME,
+                                       "callbackIri",
+                                       CALLBACK_IRI
+                                     ).toBuffer());
+      final var cartagoMessage = this.cartagoMessageQueue.take();
+      final var leaveWorkspaceMessage = (CartagoMessage.Focus) cartagoMessage.body();
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          leaveWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          leaveWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          COUNTER_ARTIFACT_NAME,
+          leaveWorkspaceMessage.artifactName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          CALLBACK_IRI,
+          leaveWorkspaceMessage.callbackIri(),
+          URIS_EQUAL_MESSAGE
+      );
+      cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_OK,
+                r.statusCode(),
+                OK_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                String.valueOf(HttpStatus.SC_OK),
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostFocusArtifactFails(final VertxTestContext ctx) {
+    try {
+      final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/focus")
+                                     .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+                                     .putHeader(
+                                       HttpHeaders.CONTENT_TYPE.toString(),
+                                       ContentType.APPLICATION_JSON.getMimeType()
+                                     )
+                                     .sendBuffer(JsonObject.of(
+                                       "artifactName",
+                                       "c1",
+                                       "callbackIri",
+                                       CALLBACK_IRI
+                                     ).toBuffer());
+      final var message = this.cartagoMessageQueue.take();
+      final var leaveWorkspaceMessage = (CartagoMessage.Focus) message.body();
+      Assertions.assertEquals(
+          TEST_AGENT_ID,
+          leaveWorkspaceMessage.agentId(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          MAIN_WORKSPACE_NAME,
+          leaveWorkspaceMessage.workspaceName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          "c1",
+          leaveWorkspaceMessage.artifactName(),
+          NAMES_EQUAL_MESSAGE
+      );
+      Assertions.assertEquals(
+          CALLBACK_IRI,
+          leaveWorkspaceMessage.callbackIri(),
+          URIS_EQUAL_MESSAGE
+      );
+      message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
+      request
+          .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                r.statusCode(),
+                INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+            );
+            Assertions.assertEquals(
+                "Internal Server Error",
+                r.bodyAsString(),
+                RESPONSE_BODY_STATUS_CODE_MESSAGE
+            );
+          })
+          .onComplete(ctx.succeedingThenComplete());
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostFocusArtifactFailsWithoutWebId(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutWebId(
+          ctx,
+          this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/focus")
+                     .putHeader(
+                       HttpHeaders.CONTENT_TYPE.toString(),
+                       ContentType.APPLICATION_JSON.getMimeType()
+                     )
+                     .sendBuffer(JsonObject.of(
+                       "artifactName",
+                       COUNTER_ARTIFACT_NAME,
+                       "callbackIri",
+                       CALLBACK_IRI
+                     ).toBuffer())
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostFocusArtifactRedirectsWithSlash(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestRedirectsWithAddedSlash(
+          ctx,
+          HttpMethod.POST,
+          MAIN_WORKSPACE_PATH + "/focus/"
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
+
+  @Test
+  public void testPostFocusWorkspaceFailsWithoutContentType(final VertxTestContext ctx) {
+    try {
+      this.helper.testResourceRequestFailsWithoutContentType(
+          ctx,
+          HttpMethod.POST,
+          MAIN_WORKSPACE_PATH + "/focus",
+          JsonObject
+              .of(
+                "artifactName",
+                COUNTER_ARTIFACT_NAME,
+                "callbackIri",
+                CALLBACK_IRI
+              )
+              .toBuffer()
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
+  }
 }

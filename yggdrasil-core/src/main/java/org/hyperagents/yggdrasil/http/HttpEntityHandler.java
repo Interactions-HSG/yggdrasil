@@ -151,7 +151,7 @@ public class HttpEntityHandler {
           representation.getString("artifactName"),
           representation.getString("callbackIri")
         ))
-        .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end())
+        .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
         .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 

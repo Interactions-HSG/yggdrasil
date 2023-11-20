@@ -239,12 +239,18 @@ public class DefaultHttpHandlersTest {
 
   @Test
   public void testPutTurtleWorkspaceFailsWithoutContentType(final VertxTestContext ctx) {
-    this.helper.testResourceRequestFailsWithoutContentType(
-        ctx,
-        HttpMethod.PUT,
-        MAIN_WORKSPACE_PATH,
-        "test_workspace_td.ttl"
-    );
+    try {
+      this.helper.testResourceRequestFailsWithoutContentType(
+          ctx,
+          HttpMethod.PUT,
+          MAIN_WORKSPACE_PATH,
+          Buffer.buffer(Files.readString(Path.of(
+            ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
+          )))
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
   }
 
   @Test
@@ -301,12 +307,18 @@ public class DefaultHttpHandlersTest {
 
   @Test
   public void testPutTurtleArtifactFailsWithoutContentType(final VertxTestContext ctx) {
-    this.helper.testResourceRequestFailsWithoutContentType(
-        ctx,
-        HttpMethod.PUT,
-        COUNTER_ARTIFACT_PATH,
-        "c0_counter_artifact_td.ttl"
-    );
+    try {
+      this.helper.testResourceRequestFailsWithoutContentType(
+          ctx,
+          HttpMethod.PUT,
+          COUNTER_ARTIFACT_PATH,
+          Buffer.buffer(Files.readString(Path.of(
+            ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()
+          )))
+      );
+    } catch (final Exception e) {
+      ctx.failNow(e);
+    }
   }
 
   @Test

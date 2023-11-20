@@ -6,6 +6,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import org.apache.http.entity.ContentType;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
 /**
@@ -82,15 +83,20 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(WORKSPACE_PATH).handler(handler::handleDeleteEntity);
 
+    router.post(WORKSPACE_PATH + "/join/").handler(handler::handleRedirectWithoutSlash);
     router.post(WORKSPACE_PATH + "/join").handler(handler::handleJoinWorkspace);
+    router.post(WORKSPACE_PATH + "/leave/").handler(handler::handleRedirectWithoutSlash);
     router.post(WORKSPACE_PATH + "/leave").handler(handler::handleLeaveWorkspace);
-    router.post(WORKSPACE_PATH + "/focus").handler(handler::handleFocus);
+    router.post(WORKSPACE_PATH + "/focus/").handler(handler::handleRedirectWithoutSlash);
+    router.post(WORKSPACE_PATH + "/focus")
+          .consumes(ContentType.APPLICATION_JSON.getMimeType())
+          .handler(handler::handleFocus);
 
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes("text/turtle")
           .handler(handler::handleCreateEntity);
     router.post("/workspaces/:wkspid/artifacts/")
-          .consumes("application/json")
+          .consumes(ContentType.APPLICATION_JSON.getMimeType())
           .handler(handler::handleCreateArtifact);
 
     router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
