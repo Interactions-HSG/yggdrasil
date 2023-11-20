@@ -97,7 +97,6 @@ is_working(false).
     !send_message_goal_interface("rejected", "The text width is superior to 500.").
 
 -!check_goal: true <-
-    .print("Width: ", Width)
     !send_message_goal_interface("failed", "check_goal failed").
 
 +!start: is_working(B) & not B <-
