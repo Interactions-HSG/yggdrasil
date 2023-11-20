@@ -8,16 +8,21 @@ import java.util.Arrays;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 
 public class NotificationCallback implements ICartagoCallback {
   private static final Logger LOGGER = LogManager.getLogger(NotificationCallback.class);
 
+  private final HttpInterfaceConfig httpConfig;
   private final HttpNotificationDispatcherMessagebox messagebox;
 
-  public NotificationCallback(final HttpNotificationDispatcherMessagebox messagebox) {
+  public NotificationCallback(
+      final HttpInterfaceConfig httpConfig,
+      final HttpNotificationDispatcherMessagebox messagebox
+  ) {
+    this.httpConfig = httpConfig;
     this.messagebox = messagebox;
   }
 
@@ -39,11 +44,10 @@ public class NotificationCallback implements ICartagoCallback {
                 LOGGER.info("percept: " + p.toString());
                 this.messagebox.sendMessage(
                     new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                      HypermediaArtifactRegistry.getInstance()
-                                                          .getHttpArtifactsPrefix(
-                                                            source.getWorkspaceId().getName()
-                                                          )
-                      + source.getName(),
+                      this.httpConfig.getArtifactUri(
+                        source.getWorkspaceId().getName(),
+                        source.getName()
+                      ),
                       p.toString()
                     )
                 );

@@ -12,19 +12,18 @@ import cartago.WorkspaceId;
 import cartago.events.ActionFailedEvent;
 import cartago.events.ActionSucceededEvent;
 import cartago.utils.BasicLogger;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
+import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Stream;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,22 +34,19 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
+import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
-  private static final String ARTIFACT_NAME_PARAM = "artifactName";
-  private static final String ARTIFACTS_URI_SUFFIX = "/artifacts/";
 
+  private HttpInterfaceConfig httpConfig;
+  private RepresentationFactory representationFactory;
   private Map<String, AgentCredential> agentCredentials;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
   private RdfStoreMessagebox rdfStoreMessagebox;
@@ -62,8 +58,8 @@ public class CartagoVerticle extends AbstractVerticle {
         .getJsonObject(this.config(), "known-artifacts", LOGGER)
         .ifPresent(registry::addArtifactTemplates);
 
-    registry.setHttpPrefix(new HttpInterfaceConfigImpl(this.context.config()).getBaseUri());
-
+    this.httpConfig = new HttpInterfaceConfigImpl(this.context.config());
+    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
     this.agentCredentials = new Hashtable<>();
 
     final var eventBus = this.vertx.eventBus();
@@ -148,108 +144,31 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private String instantiateWorkspace(final String workspaceName) throws CartagoException {
     LOGGER.info("Creating workspace " + workspaceName);
-    final var workspaceId =
-        HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix() + workspaceName;
     WorkspaceRegistry.getInstance()
                      .registerWorkspace(CartagoEnvironment.getInstance()
                                                           .getRootWSP()
                                                           .getWorkspace()
                                                           .createWorkspace(workspaceName),
-                                        workspaceId);
-    return this.createWorkspaceRepresentation(workspaceId, workspaceName);
+                                        this.httpConfig.getWorkspaceUri(workspaceName));
+    return this.representationFactory.createWorkspaceRepresentation(
+      workspaceName,
+      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+    );
   }
 
   private String instantiateSubWorkspace(final String workspaceName, final String subWorkspaceName)
       throws CartagoException {
     LOGGER.info("Creating workspace " + subWorkspaceName + " under " + workspaceName);
-    final var subWorkspaceId =
-        HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix() + subWorkspaceName;
     WorkspaceRegistry.getInstance()
                      .registerWorkspace(WorkspaceRegistry.getInstance()
                                                          .getWorkspace(workspaceName)
                                                          .orElseThrow()
                                                          .createWorkspace(subWorkspaceName),
-                                        subWorkspaceId);
-    return this.createWorkspaceRepresentation(subWorkspaceId, subWorkspaceName);
-  }
-
-  private String createWorkspaceRepresentation(
-      final String workspaceId,
-      final String workspaceName
-  ) {
-    return new TDGraphWriter(
-        new ThingDescription
-          .Builder(workspaceName)
-          .addThingURI(workspaceId)
-          .addSemanticType("https://purl.org/hmas/core/Workspace")
-          .addAction(
-            new ActionAffordance.Builder(
-                "makeArtifact",
-                new Form.Builder(workspaceId + ARTIFACTS_URI_SUFFIX).build()
-            )
-            .addInputSchema(
-              new ObjectSchema
-                .Builder()
-                .addProperty(
-                  "artifactClass",
-                  new StringSchema
-                    .Builder()
-                    .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
-                    .build()
-                )
-                .addProperty(
-                  ARTIFACT_NAME_PARAM,
-                  new StringSchema
-                    .Builder()
-                    .addEnum(HypermediaArtifactRegistry.getInstance().getArtifactTemplates())
-                    .build()
-                )
-                .addProperty("initParams", new ArraySchema.Builder().build())
-                .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
-                .build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "joinWorkspace",
-                new Form.Builder(workspaceId + "/join").setMethodName("PUT").build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "leaveWorkspace",
-                new Form.Builder(workspaceId + "/leave").setMethodName("DELETE").build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "focus",
-                new Form.Builder(workspaceId + "/focus").setMethodName("POST").build()
-            )
-            .addInputSchema(
-              new ObjectSchema
-                .Builder()
-                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
-                .addProperty("artifactIri", new StringSchema.Builder().build())
-                .addProperty("callbackIri", new StringSchema.Builder().build())
-                .addRequiredProperties(ARTIFACT_NAME_PARAM, "artifactIri", "callbackIri")
-                .build()
-            )
-            .build()
-          )
-          .build()
-    )
-    .setNamespace("td", "https://www.w3.org/2019/wot/td#")
-    .setNamespace("htv", "http://www.w3.org/2011/http#")
-    .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
-    .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
-    .setNamespace("dct", "http://purl.org/dc/terms/")
-    .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-    .setNamespace("hmas", "https://purl.org/hmas/core/")
-    .write();
+                                        this.httpConfig.getWorkspaceUri(subWorkspaceName));
+    return this.representationFactory.createWorkspaceRepresentation(
+      subWorkspaceName,
+      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+    );
   }
 
   private void joinWorkspace(final String agentUri, final String workspaceName)
@@ -270,8 +189,7 @@ public class CartagoVerticle extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = WorkspaceRegistry.getInstance().getWorkspace(workspaceName).orElseThrow();
-    final var artifactIri =
-        HypermediaArtifactRegistry.getInstance().getArtifactUri(workspaceName, artifactName);
+    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
     LOGGER.info("artifact IRI: " + artifactIri);
     LOGGER.info("callback IRI: " + callbackIri);
     NotificationSubscriberRegistry.getInstance().addCallbackIri(artifactIri, callbackIri);
@@ -279,7 +197,7 @@ public class CartagoVerticle extends AbstractVerticle {
         .focus(
           this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
           p -> true,
-          new NotificationCallback(this.dispatcherMessagebox),
+          new NotificationCallback(this.httpConfig, this.dispatcherMessagebox),
           Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
         )
         .forEach(p -> this.dispatcherMessagebox.sendMessage(
@@ -315,7 +233,7 @@ public class CartagoVerticle extends AbstractVerticle {
     LOGGER.info("Done!");
     final var registry = HypermediaArtifactRegistry.getInstance();
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
-        WorkspaceRegistry.getInstance().getUri(workspaceName) + ARTIFACTS_URI_SUFFIX,
+        WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts/",
         artifactName,
         registry.getArtifactDescription(artifactName)
     ));

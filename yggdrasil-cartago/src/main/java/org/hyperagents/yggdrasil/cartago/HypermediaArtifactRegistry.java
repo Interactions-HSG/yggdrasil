@@ -136,18 +136,6 @@ public final class HypermediaArtifactRegistry {
     return this.artifactApiKeys.get(artifactId);
   }
 
-  public void setHttpPrefix(final String prefix) {
-    this.httpPrefix = prefix;
-  }
-
-  public String getHttpWorkspacesPrefix() {
-    return this.httpPrefix + "/workspaces/";
-  }
-
-  public String getHttpArtifactsPrefix(final String workspaceName) {
-    return this.httpPrefix + "/workspaces/" + workspaceName + "/artifacts/";
-  }
-
   public boolean hasOtherName(final String hypermediaArtifactName) {
     return this.artifactNames.containsKey(hypermediaArtifactName);
   }
@@ -174,9 +162,5 @@ public final class HypermediaArtifactRegistry {
       final String action
   ) {
     return this.feedbackResponseConverters.get(artifactName).get(action);
-  }
-
-  public String getArtifactUri(final String workspaceName, final String artifactName) {
-    return this.httpPrefix + "/workspaces/" + workspaceName + "/artifacts/" + artifactName;
   }
 }

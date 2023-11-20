@@ -85,7 +85,7 @@ public class HttpEntityHandler {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
     this.cartagoMessagebox
@@ -95,7 +95,8 @@ public class HttpEntityHandler {
           this.httpConfig.getBaseUri() + context.request().path(),
           workspaceName,
           response.body()
-        ));
+        ))
+        .onFailure(context::fail);
   }
 
   public void handleCreateArtifact(final RoutingContext context) {
@@ -104,7 +105,7 @@ public class HttpEntityHandler {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
     final var artifactName =
@@ -122,13 +123,14 @@ public class HttpEntityHandler {
           this.httpConfig.getBaseUri() + context.request().path(),
           artifactName,
           response.body()
-        ));
+        ))
+        .onFailure(context::fail);
   }
 
   // TODO: add payload validation
   public void handleCreateEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
-      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
     }
     this.createEntity(routingContext, routingContext.body().asString());
   }
@@ -139,7 +141,7 @@ public class HttpEntityHandler {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
     this.cartagoMessagebox
@@ -158,13 +160,13 @@ public class HttpEntityHandler {
     final var agentId = request.getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     final var registry = HypermediaArtifactRegistry.getInstance();
-    final var artifactIri = registry.getHttpArtifactsPrefix(workspaceName) + artifactName;
+    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
     final var actionName =
         registry.getActionName(request.method().name(), request.absoluteURI());
 
@@ -213,6 +215,9 @@ public class HttpEntityHandler {
 
   // TODO: add payload validation
   public void handleUpdateEntity(final RoutingContext routingContext) {
+    if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
+      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+    }
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.UpdateEntity(
             routingContext.request().absoluteURI(),
@@ -222,6 +227,9 @@ public class HttpEntityHandler {
   }
 
   public void handleDeleteEntity(final RoutingContext routingContext) {
+    if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
+      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+    }
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
         .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
@@ -304,10 +312,11 @@ public class HttpEntityHandler {
         ))
         .compose(r -> this.storeEntity(
             routingContext,
-            HypermediaArtifactRegistry.getInstance().getHttpWorkspacesPrefix(),
+            this.httpConfig.getWorkspacesUri() + "/",
             subWorkspaceName,
             r.body()
-        ));
+        ))
+        .onFailure(routingContext::fail);
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {

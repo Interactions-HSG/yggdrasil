@@ -1,9 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
-import io.vertx.ext.web.client.WebClient;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,6 +20,10 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
@@ -35,8 +37,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start() {
+    HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(this.config());
+    RepresentationFactory representationFactory = new RepresentationFactoryImpl(httpConfig);
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     this.store = RdfStoreFactory.createStore(this.config().getJsonObject("rdf-store", null));
+    try {
+      final var platformIri = this.store.createIri(httpConfig.getBaseUri() + "/");
+      this.store.addEntityGraph(
+          platformIri,
+          this.store.stringToGraph(
+            representationFactory.createPlatformRepresentation(),
+            platformIri,
+            RDFSyntax.TURTLE
+          )
+      );
+    } catch (final IOException e) {
+      LOGGER.error(e.getMessage());
+    }
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
@@ -153,36 +170,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
         this.store.createIri(RDF.TYPE.stringValue()),
         this.store.createIri(("https://purl.org/hmas/core/Workspace"))
     )) {
-      final var workspaceIri = entityIri.getIRIString();
-      final var environmentIri =
-          this.store.createIri(workspaceIri.substring(0, workspaceIri.indexOf("/workspaces")));
-
-      LOGGER.info("Found env IRI: " + workspaceIri);
-
-      final var optEnvironmentGraph = this.store.getEntityGraph(environmentIri);
-      if (optEnvironmentGraph.isPresent()) {
-        try (var environmentGraph = optEnvironmentGraph.get()) {
-          LOGGER.info("Found env graph: " + environmentGraph);
-          environmentGraph.add(
-              environmentIri,
-              this.store.createIri("https://purl.org/hmas/core/directlyContains"),
-              entityIri
-          );
-          environmentGraph.add(
-              entityIri,
-              this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://purl.org/hmas/core/Workspace")
-          );
-          // TODO: updateEntityGraph would yield 404, to be investigated
-          this.store.createEntityGraph(environmentIri, environmentGraph);
-          this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
-              environmentIri.getIRIString(),
-              this.store.graphToString(environmentGraph, RDFSyntax.TURTLE)
-          ));
-        } catch (final Exception e) {
-          LOGGER.error(e.getMessage());
-        }
-      }
       final var optParentUri =
           WorkspaceRegistry.getInstance().getParentWorkspaceUriFromUri(entityIri.getIRIString());
       if (optParentUri.isPresent()) {
@@ -209,44 +196,38 @@ public class RdfStoreVerticle extends AbstractVerticle {
             LOGGER.error(e.getMessage());
           }
         }
-      }
-    } else if (
-        entityGraph.contains(
-          entityIri,
-          this.store.createIri(RDF.TYPE.stringValue()),
-          this.store.createIri(("https://purl.org/hmas/core/Artifact"))
-        )
-        && !entityIri.getIRIString().contains("/artifacts")
-    ) {
-      LOGGER.info("entity created is an artifact");
-      final var artifactIri = entityIri.getIRIString();
-      final var workspaceIri =
-          this.store.createIri(artifactIri.substring(0, artifactIri.indexOf("/bodies")));
+      } else {
+        final var workspaceIri = entityIri.getIRIString();
+        final var platformIri =
+            this.store.createIri(workspaceIri.substring(0, workspaceIri.indexOf("/workspaces")));
 
-      LOGGER.info("Found workspace IRI: " + workspaceIri);
+        LOGGER.info("Found platform IRI: " + workspaceIri);
 
-      final var optWorkspaceGraph = store.getEntityGraph(workspaceIri);
-      if (optWorkspaceGraph.isPresent()) {
-        try (var workspaceGraph = optWorkspaceGraph.get()) {
-          LOGGER.info("Found workspace graph: " + workspaceGraph);
-          workspaceGraph.add(
-              workspaceIri,
-              this.store.createIri("https://purl.org/hmas/core/contains"),
-              entityIri
-          );
-          workspaceGraph.add(
-              entityIri,
-              this.store.createIri(RDF.TYPE.toString()),
-              this.store.createIri("https://purl.org/hmas/core/Artifact")
-          );
-          // TODO: updateEntityGraph would yield 404, to be investigated
-          this.store.createEntityGraph(workspaceIri, workspaceGraph);
-          this.dispatcherMessagebox.sendMessage(new HttpNotificationDispatcherMessage.EntityChanged(
-              workspaceIri.getIRIString(),
-              this.store.graphToString(workspaceGraph, RDFSyntax.TURTLE)
-          ));
-        } catch (final Exception e) {
-          LOGGER.error(e.getMessage());
+        final var optPlatformGraph = this.store.getEntityGraph(platformIri);
+        if (optPlatformGraph.isPresent()) {
+          try (var platformGraph = optPlatformGraph.get()) {
+            LOGGER.info("Found platform graph: " + platformGraph);
+            platformGraph.add(
+                platformIri,
+                this.store.createIri("https://purl.org/hmas/core/hosts"),
+                entityIri
+            );
+            platformGraph.add(
+                entityIri,
+                this.store.createIri(RDF.TYPE.toString()),
+                this.store.createIri("https://purl.org/hmas/core/Workspace")
+            );
+            // TODO: updateEntityGraph would yield 404, to be investigated
+            this.store.createEntityGraph(platformIri, platformGraph);
+            this.dispatcherMessagebox.sendMessage(
+              new HttpNotificationDispatcherMessage.EntityChanged(
+                platformIri.getIRIString(),
+                this.store.graphToString(platformGraph, RDFSyntax.TURTLE)
+              )
+            );
+          } catch (final Exception e) {
+            LOGGER.error(e.getMessage());
+          }
         }
       }
     } else {

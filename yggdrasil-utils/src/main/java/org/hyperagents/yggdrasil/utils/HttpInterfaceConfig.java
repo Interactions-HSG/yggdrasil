@@ -10,4 +10,12 @@ public interface HttpInterfaceConfig {
   String getBaseUri();
 
   Optional<String> getWebSubHubUri();
+
+  String getWorkspacesUri();
+
+  String getWorkspaceUri(String workspaceName);
+
+  String getArtifactsUri(String workspaceName);
+
+  String getArtifactUri(String workspaceName, String artifactName);
 }

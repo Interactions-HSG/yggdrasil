@@ -1,10 +1,11 @@
 package org.hyperagents.yggdrasil.http;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 
 /**
@@ -12,14 +13,27 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
  * corresponding handler.
  */
 public class HttpServerVerticle extends AbstractVerticle {
+  private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
+
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
 
+  private HttpServer server;
+
   @Override
-  public void start() {
+  public void start(final Promise<Void> startPromise) {
     final var httpConfig = new HttpInterfaceConfigImpl(this.context.config());
-    this.vertx.createHttpServer()
-              .requestHandler(createRouter())
-              .listen(httpConfig.getPort(), httpConfig.getHost());
+    this.server = this.vertx.createHttpServer()
+                            .requestHandler(this.createRouter())
+                            .listen(
+                              httpConfig.getPort(),
+                              httpConfig.getHost(),
+                              r -> startPromise.handle(r.mapEmpty())
+                            );
+  }
+
+  @Override
+  public void stop(final Promise<Void> stopPromise) {
+    this.server.close(stopPromise);
   }
 
   /**
@@ -42,41 +56,56 @@ public class HttpServerVerticle extends AbstractVerticle {
                               .allowedHeader("Access-Control-Allow-Credentials")
                               .allowedHeader("Content-Type")
                               .allowedHeader("Expires")
-                              .allowedHeader("Origin"));
-    router.route().handler(BodyHandler.create());
-    router.get("/").handler(ctx -> ctx.response()
-                                      .setStatusCode(HttpStatus.SC_OK)
-                                      .end("Yggdrasil v0.0.0"));
+                              .allowedHeader("Origin"))
+          .handler(BodyHandler.create());
+
     final var handler = new HttpEntityHandler(this.vertx, this.context);
-    router.get("/workspaces/:wkspid/").handler(handler::handleRedirectWithoutSlash);
-    router.get("/workspaces/:wkspid").handler(handler::handleGetEntity);
+
+    router.get("/").handler(handler::handleGetEntity);
+
     router.post("/workspaces/")
           .consumes("text/turtle")
           .handler(handler::handleCreateEntity);
     router.post("/workspaces/").handler(handler::handleCreateWorkspace);
-    router.put("/workspaces/:wkspid").handler(handler::handleUpdateEntity);
-    router.delete("/workspaces/:wkspid").handler(handler::handleDeleteEntity);
-    router.put("/workspaces/:wkspid/join").handler(handler::handleJoinWorkspace);
-    router.delete("/workspaces/:wkspid/leave").handler(handler::handleLeaveWorkspace);
-    router.post("/workspaces/:wkspid/sub").handler(handler::handleCreateSubWorkspace);
-    router.post("/workspaces/:wkspid/focus").handler(handler::handleFocus);
-    router.get("/workspaces/:wkspid/artifacts/:artid/")
-          .handler(handler::handleRedirectWithoutSlash);
-    router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
-    router.put(ARTIFACT_PATH).handler(handler::handleUpdateEntity);
+
+    router.get(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.get(WORKSPACE_PATH).handler(handler::handleGetEntity);
+    router.post(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.post(WORKSPACE_PATH)
+          .consumes("text/turtle")
+          .handler(handler::handleCreateEntity);
+    router.post(WORKSPACE_PATH).handler(handler::handleCreateSubWorkspace);
+    router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.put(WORKSPACE_PATH)
+          .consumes("text/turtle")
+          .handler(handler::handleUpdateEntity);
+    router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.delete(WORKSPACE_PATH).handler(handler::handleDeleteEntity);
+
+    router.post(WORKSPACE_PATH + "/join").handler(handler::handleJoinWorkspace);
+    router.post(WORKSPACE_PATH + "/leave").handler(handler::handleLeaveWorkspace);
+    router.post(WORKSPACE_PATH + "/focus").handler(handler::handleFocus);
+
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes("text/turtle")
           .handler(handler::handleCreateEntity);
     router.post("/workspaces/:wkspid/artifacts/")
-          .consumes("application/ld+json")
-          .handler(handler::handleCreateEntity);
-    router.post("/workspaces/:wkspid/artifacts/")
           .consumes("application/json")
           .handler(handler::handleCreateArtifact);
-    router.put(ARTIFACT_PATH).handler(handler::handleUpdateEntity);
+
+    router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
+    router.put(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.put(ARTIFACT_PATH)
+          .consumes("text/turtle")
+          .handler(handler::handleUpdateEntity);
+    router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
-    router.route("/workspaces/:wkspid/artifacts/:artid/*").handler(handler::handleAction);
+
+    router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
+
     router.post("/hub/").handler(handler::handleEntitySubscription);
+
     return router;
   }
 }

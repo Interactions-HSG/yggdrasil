@@ -46,4 +46,24 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   public Optional<String> getWebSubHubUri() {
     return this.webSubHubUri;
   }
+
+  @Override
+  public String getWorkspacesUri() {
+    return this.baseUri + "/workspaces";
+  }
+
+  @Override
+  public String getWorkspaceUri(final String workspaceName) {
+    return this.getWorkspacesUri() + "/" + workspaceName;
+  }
+
+  @Override
+  public String getArtifactsUri(final String workspaceName) {
+    return this.getWorkspaceUri(workspaceName) + "/artifacts";
+  }
+
+  @Override
+  public String getArtifactUri(final String workspaceName, final String artifactName) {
+    return this.getArtifactsUri(workspaceName) + "/" + artifactName;
+  }
 }

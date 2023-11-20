@@ -4,15 +4,14 @@ import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
 import cartago.WorkspaceId;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import io.vertx.core.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +24,10 @@ import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
   private final ListMultimap<String, ActionAffordance> actionAffordances =
@@ -32,7 +35,22 @@ public abstract class HypermediaArtifact extends Artifact {
   private final Model metadata = new LinkedHashModel();
   private final Set<String> feedbackActions = new HashSet<>();
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
+  private HttpInterfaceConfig httpConfig;
+  private RepresentationFactory representationFactory;
   private SecurityScheme securityScheme = new NoSecurityScheme();
+
+  protected void init(final String host, final int port) {
+    this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
+      "http-config",
+      JsonObject.of("host", host, "port", port)
+    ));
+    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+  }
+
+  protected void init() {
+    this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+  }
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -41,24 +59,14 @@ public abstract class HypermediaArtifact extends Artifact {
    * @return An RDF description of the artifact and its interface.
    */
   public String getHypermediaDescription() {
-    final var tdBuilder =
-        new ThingDescription.Builder(this.getArtifactName())
-                            .addSecurityScheme(this.securityScheme)
-                            .addSemanticType("https://purl.org/hmas/core/Artifact")
-                            .addSemanticType(this.getSemanticType())
-                            .addThingURI(this.getArtifactUri())
-                            .addGraph(this.metadata);
-    this.actionAffordances.values().forEach(tdBuilder::addAction);
-
-    return new TDGraphWriter(tdBuilder.build())
-      .setNamespace("td", "https://www.w3.org/2019/wot/td#")
-      .setNamespace("htv", "http://www.w3.org/2011/http#")
-      .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
-      .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
-      .setNamespace("dct", "http://purl.org/dc/terms/")
-      .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-      .setNamespace("hmas", "https://purl.org/hmas/core/")
-      .write();
+    return this.representationFactory.createArtifactRepresentation(
+      this.getWorkspaceId().getName(),
+      this.getArtifactName(),
+      this.securityScheme,
+      this.getSemanticType(),
+      this.metadata,
+      this.actionAffordances
+    );
   }
 
   /**
@@ -81,15 +89,11 @@ public abstract class HypermediaArtifact extends Artifact {
   protected abstract void registerInteractionAffordances();
 
   protected String getArtifactName() {
-    return this.getId().getName();
+    return this.getArtifactId().getName();
   }
 
   protected String getArtifactUri() {
-    return HypermediaArtifactRegistry.getInstance()
-                                     .getHttpArtifactsPrefix(
-                                       this.getId().getWorkspaceId().getName()
-                                     )
-           + this.getArtifactName();
+    return this.httpConfig.getArtifactUri(this.getWorkspaceId().getName(), this.getArtifactName());
   }
 
   protected WorkspaceId getWorkspaceId() {

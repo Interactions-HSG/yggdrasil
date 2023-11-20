@@ -163,6 +163,7 @@ public class Rdf4jStore implements RdfStore {
     }
   }
 
+  @Override
   public void addEntityGraph(final IRI entityIri, final Graph entityGraph) {
     try (var stream = ((RDF4JGraph) entityGraph).stream()) {
       stream.forEach(triple -> this.dataset.add(
