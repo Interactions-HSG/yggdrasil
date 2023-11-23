@@ -232,7 +232,7 @@ public class CartagoVerticle extends AbstractVerticle {
     );
     LOGGER.info("Done!");
     final var registry = HypermediaArtifactRegistry.getInstance();
-    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateEntity(
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
         WorkspaceRegistry.getInstance().getUri(workspaceName) + "/artifacts/",
         artifactName,
         registry.getArtifactDescription(artifactName)

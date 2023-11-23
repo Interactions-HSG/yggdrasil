@@ -8,7 +8,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -24,10 +23,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.rdf.api.IRI;
+import org.apache.commons.rdf.api.RDFSyntax;
+import org.apache.commons.rdf.api.Triple;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -35,6 +38,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.GraphUtils;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
@@ -90,12 +94,17 @@ public class HttpEntityHandler {
 
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(workspaceName))
-        .compose(response -> this.storeEntity(
-          context,
-          this.httpConfig.getBaseUri() + context.request().path(),
-          workspaceName,
-          response.body()
-        ))
+        .compose(response ->
+          this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                this.httpConfig.getBaseUri() + context.request().path(),
+                workspaceName,
+                Optional.empty(),
+                response.body()
+              ))
+              .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+              .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+        )
         .onFailure(context::fail);
   }
 
@@ -118,12 +127,16 @@ public class HttpEntityHandler {
             artifactName,
             representation
         ))
-        .compose(response -> this.storeEntity(
-          context,
-          this.httpConfig.getBaseUri() + context.request().path(),
-          artifactName,
-          response.body()
-        ))
+        .compose(response ->
+          this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateArtifact(
+                this.httpConfig.getBaseUri() + context.request().path(),
+                artifactName,
+                response.body()
+              ))
+              .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+              .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+        )
         .onFailure(context::fail);
   }
 
@@ -297,26 +310,31 @@ public class HttpEntityHandler {
         .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 
-  public void handleCreateSubWorkspace(final RoutingContext routingContext) {
-    final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
+  public void handleCreateSubWorkspace(final RoutingContext context) {
+    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
     }
 
-    final var subWorkspaceName = routingContext.request().getHeader("Slug");
+    final var subWorkspaceName = context.request().getHeader("Slug");
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(
-          routingContext.pathParam(WORKSPACE_ID_PARAM),
+          context.pathParam(WORKSPACE_ID_PARAM),
           subWorkspaceName
         ))
-        .compose(r -> this.storeEntity(
-            routingContext,
-            this.httpConfig.getWorkspacesUri() + "/",
-            subWorkspaceName,
-            r.body()
-        ))
-        .onFailure(routingContext::fail);
+        .compose(response ->
+          this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                this.httpConfig.getWorkspacesUri() + "/",
+                subWorkspaceName,
+                Optional.of(context.pathParam(WORKSPACE_ID_PARAM)),
+                response.body()
+              ))
+              .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+              .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+        )
+        .onFailure(context::fail);
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {
@@ -353,31 +371,65 @@ public class HttpEntityHandler {
     );
   }
 
-  private Future<Message<String>> storeEntity(
-      final RoutingContext context,
-      final String requestUri,
-      final String entityName,
-      final String representation
-  ) {
-    return this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.CreateEntity(
-          requestUri,
-          entityName,
-          representation
-        ))
-        .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(representation))
-        .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end());
-  }
-
   // TODO: support different content types
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
-    this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.CreateEntity(
-          this.httpConfig.getBaseUri() + context.request().path(),
-          context.request().getHeader("Slug"),
-          entityRepresentation
-        ))
-        .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+    final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
+    final var hint = context.request().getHeader("Slug");
+    final var entityIri = GraphUtils.createIri(requestUri);
+    try (var entityGraph = GraphUtils.stringToGraph(
+      entityRepresentation,
+      entityIri,
+      RDFSyntax.TURTLE
+    )) {
+      if (
+        entityGraph.contains(
+          entityIri,
+          GraphUtils.createIri(RDF.TYPE.stringValue()),
+          GraphUtils.createIri("https://purl.org/hmas/core/Artifact")
+        )
+      ) {
+        this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateArtifact(
+              requestUri,
+              hint,
+              entityRepresentation
+            ))
+            .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+      } else if (
+        entityGraph.contains(
+          entityIri,
+          GraphUtils.createIri(RDF.TYPE.stringValue()),
+          GraphUtils.createIri("https://purl.org/hmas/core/Workspace")
+        )
+      ) {
+        this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateWorkspace(
+              requestUri,
+              hint,
+              entityGraph.stream()
+                         .filter(t ->
+                           t.getSubject().equals(entityIri)
+                           && t.getPredicate().equals(GraphUtils.createIri(
+                             "https://purl.org/hmas/core/isContainedBy"
+                           ))
+                         )
+                         .map(Triple::getObject)
+                         .flatMap(t ->
+                           (t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty()).stream()
+                         )
+                         .map(IRI::getIRIString)
+                         .findFirst(),
+              entityRepresentation
+            ))
+            .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+      } else {
+        LOGGER.error("Unacceptable representation.");
+        context.fail(HttpStatus.SC_BAD_REQUEST);
+      }
+    } catch (final Exception e) {
+      LOGGER.error(e);
+      context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+    }
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(

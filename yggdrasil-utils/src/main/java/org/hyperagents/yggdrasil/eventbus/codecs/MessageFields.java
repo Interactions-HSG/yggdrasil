@@ -11,7 +11,8 @@ enum MessageFields {
   ACTION_NAME("actionName"),
   ENTITY_REPRESENTATION("entityRepresentation"),
   ACTION_CONTENT("actionContent"),
-  NOTIFICATION_CONTENT("notificationContent");
+  NOTIFICATION_CONTENT("notificationContent"),
+  PARENT_WORKSPACE_URI("parentWorkspaceUri");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 

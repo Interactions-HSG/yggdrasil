@@ -18,11 +18,4 @@ public interface RdfStore {
   void deleteEntityGraph(IRI entityIri);
 
   void addEntityGraph(IRI entityIri, Graph entityGraph);
-
-  IRI createIri(String iriString) throws IllegalArgumentException;
-
-  String graphToString(Graph graph, RDFSyntax syntax) throws IllegalArgumentException, IOException;
-
-  Graph stringToGraph(String graphString, IRI baseIri, RDFSyntax syntax)
-      throws IllegalArgumentException, IOException;
 }

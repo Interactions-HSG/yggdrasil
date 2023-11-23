@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
+import java.util.Optional;
+
 public sealed interface RdfStoreMessage {
 
   String requestUri();
@@ -10,9 +12,16 @@ public sealed interface RdfStoreMessage {
 
   record DeleteEntity(String requestUri) implements RdfStoreMessage {}
 
-  record CreateEntity(
+  record CreateArtifact(
       String requestUri,
-      String entityName,
-      String entityRepresentation
+      String artifactName,
+      String artifactRepresentation
+  ) implements RdfStoreMessage {}
+
+  record CreateWorkspace(
+      String requestUri,
+      String workspaceName,
+      Optional<String> parentWorkspaceUri,
+      String workspaceRepresentation
   ) implements RdfStoreMessage {}
 }
