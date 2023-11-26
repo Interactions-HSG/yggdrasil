@@ -29,14 +29,10 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 public class CartagoVerticleTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
@@ -101,7 +97,6 @@ public class CartagoVerticleTest {
     vertx.close(ctx.succeedingThenComplete());
   }
 
-  @Order(1)
   @Test
   public void testCreateWorkspaceSucceeds(final VertxTestContext ctx)
       throws IOException, URISyntaxException {
@@ -120,11 +115,12 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(2)
   @Test
   public void testCreateWorkspaceFailsWithAlreadyCreatedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME)))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -133,11 +129,14 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(3)
   @Test
   public void testJoinWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.JoinWorkspace(
+                            TEST_AGENT_IRI, MAIN_WORKSPACE_NAME
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
           r.body(),
@@ -146,15 +145,23 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(4)
   @Test
   public void testJoinWorkspaceIsIdempotent(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.JoinWorkspace(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.JoinWorkspace(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME
+                          )))
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(5)
   @Test
   public void testJoinWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
@@ -167,7 +174,6 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(6)
   @Test
   public void testCreateSubWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -177,16 +183,20 @@ public class CartagoVerticleTest {
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateSubWorkspace(MAIN_WORKSPACE_NAME, SUB_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
             expectedWorkspaceThingDescription,
             r.body(),
-            OPERATION_FAIL_MESSAGE
+            TDS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(7)
   @Test
   public void testCreateSubWorkspaceOfSubWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -196,16 +206,25 @@ public class CartagoVerticleTest {
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateSubWorkspace(SUB_WORKSPACE_NAME, "sub2"))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            SUB_WORKSPACE_NAME,
+                            "sub2"
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
             expectedWorkspaceThingDescription,
             r.body(),
-          TDS_EQUAL_MESSAGE
+            TDS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(8)
   @Test
   public void testCreateSubWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
@@ -218,11 +237,20 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(9)
   @Test
   public void testCreateSubWorkspaceFailsOnAlreadyCreatedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateSubWorkspace(MAIN_WORKSPACE_NAME, SUB_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -231,11 +259,20 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(10)
   @Test
   public void testLeaveWorkspaceSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.LeaveWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.JoinWorkspace(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.LeaveWorkspace(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
           r.body(),
@@ -244,7 +281,6 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(11)
   @Test
   public void testLeaveWorkspaceFailsOnNotJoinedOne(final VertxTestContext ctx) {
     this.cartagoMessagebox
@@ -257,7 +293,6 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(12)
   @Test
   public void testCreateArtifactWithoutParametersSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -267,17 +302,19 @@ public class CartagoVerticleTest {
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "c0",
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            COUNTER_SEMANTIC_TYPE,
-            ARTIFACT_INIT_PARAMS,
-            List.of()
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
         .onSuccess(r -> {
           Assertions.assertEquals(
               expectedCounterArtifactThingDescription,
@@ -297,7 +334,6 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(13)
   @Test
   public void testCreateArtifactWithParametersSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -307,17 +343,24 @@ public class CartagoVerticleTest {
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          SUB_WORKSPACE_NAME,
-          "c1",
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            COUNTER_SEMANTIC_TYPE,
-            ARTIFACT_INIT_PARAMS,
-            List.of(5)
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            SUB_WORKSPACE_NAME,
+                            "c1",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of(5)
+                            ))
+                          )))
         .onSuccess(r -> {
           Assertions.assertEquals(
               expectedCounterArtifactThingDescription,
@@ -337,7 +380,6 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(14)
   @Test
   public void testCreateArtifactWithFeedbackParameterSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -347,17 +389,19 @@ public class CartagoVerticleTest {
           StandardCharsets.UTF_8
         );
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            ADDER_SEMANTIC_TYPE,
-            ARTIFACT_INIT_PARAMS,
-            List.of()
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
           expectedAdderArtifactThingDescription,
           r.body(),
@@ -366,21 +410,22 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(15)
   @Test
   public void testCreateArtifactFailsWithUnknownClass(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          NONEXISTENT_NAME,
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            "http://www.example.org/NonExistentArtifact",
-            ARTIFACT_INIT_PARAMS,
-            List.of()
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            NONEXISTENT_NAME,
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              "http://www.example.org/NonExistentArtifact",
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -389,21 +434,22 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(16)
   @Test
   public void testCreateArtifactFailsWithUnknownWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          NONEXISTENT_NAME,
-          "a1",
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            ADDER_SEMANTIC_TYPE,
-            ARTIFACT_INIT_PARAMS,
-            List.of()
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            NONEXISTENT_NAME,
+                            "a1",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -412,21 +458,22 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(17)
   @Test
   public void testCreateArtifactFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a1",
-          Json.encode(Map.of(
-            ARTIFACT_SEMANTIC_TYPE_PARAM,
-            ADDER_SEMANTIC_TYPE,
-            ARTIFACT_INIT_PARAMS,
-            List.of(2, 2)
-          ))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a1",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of(2, 2)
+                            ))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -435,16 +482,29 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(18)
   @Test
   public void testFocusSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "c0",
-          CALLBACK_IRI
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            CALLBACK_IRI
+                          )))
         .onSuccess(r -> {
           Assertions.assertEquals(
               String.valueOf(HttpStatus.SC_OK),
@@ -464,16 +524,29 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(19)
   @Test
   public void testFocusFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          NONEXISTENT_NAME,
-          "c0",
-          CALLBACK_IRI
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            NONEXISTENT_NAME,
+                            "c0",
+                            CALLBACK_IRI
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -482,16 +555,29 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(20)
   @Test
   public void testFocusFailsWithNonexistentArtifactName(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          NONEXISTENT_NAME,
-          CALLBACK_IRI
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            NONEXISTENT_NAME,
+                            CALLBACK_IRI
+                          )))
         .onFailure(t -> Assertions.assertEquals(
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
             ((ReplyException) t).failureCode(),
@@ -500,16 +586,36 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(21)
   @Test
   public void testFocusIsIdempotent(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "c0",
-          CALLBACK_IRI
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            CALLBACK_IRI
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            CALLBACK_IRI
+                          )))
         .onSuccess(r -> {
           Assertions.assertEquals(
               String.valueOf(HttpStatus.SC_OK),
@@ -529,17 +635,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(22)
   @Test
   public void testDoActionSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "c0",
-          "inc",
-          Optional.empty()
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "c0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+      .compose(r -> this.cartagoMessagebox
+                        .sendMessage(new CartagoMessage.DoAction(
+                          TEST_AGENT_IRI,
+                          MAIN_WORKSPACE_NAME,
+                          "c0",
+                          "inc",
+                          Optional.empty()
+                        )))
         .onSuccess(r -> Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
           r.body(),
@@ -548,16 +667,34 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(23)
   @Test
   public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          SUB_WORKSPACE_NAME,
-          "c1",
-          CALLBACK_IRI
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateSubWorkspace(
+                            MAIN_WORKSPACE_NAME,
+                            SUB_WORKSPACE_NAME
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            SUB_WORKSPACE_NAME,
+                            "c1",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              COUNTER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of(5)
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.Focus(
+                            FOCUSING_AGENT_IRI,
+                            SUB_WORKSPACE_NAME,
+                            "c1",
+                            CALLBACK_IRI
+                          )))
         .compose(r -> {
           Assertions.assertEquals(
               String.valueOf(HttpStatus.SC_OK),
@@ -600,17 +737,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(24)
   @Test
   public void testDoActionWithFeedbackParameterSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          ADD_OPERATION,
-          Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.DoAction(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            ADD_OPERATION,
+                            Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
+                          )))
         .onSuccess(r -> Assertions.assertEquals(
           String.valueOf(4),
           r.body(),
@@ -619,17 +769,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  @Order(25)
   @Test
   public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          NONEXISTENT_NAME,
-          "a0",
-          ADD_OPERATION,
-          Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.DoAction(
+                            TEST_AGENT_IRI,
+                            NONEXISTENT_NAME,
+                            "a0",
+                            ADD_OPERATION,
+                            Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -638,17 +801,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(26)
   @Test
   public void testDoActionFailsWithNonexistentArtifact(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          NONEXISTENT_NAME,
-          ADD_OPERATION,
-          Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.DoAction(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            NONEXISTENT_NAME,
+                            ADD_OPERATION,
+                            Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -657,17 +833,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(27)
   @Test
   public void testDoActionFailsWithNonexistentOperation(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          NONEXISTENT_NAME,
-          Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.DoAction(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            NONEXISTENT_NAME,
+                            Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -676,17 +865,30 @@ public class CartagoVerticleTest {
         .onComplete(ctx.failingThenComplete());
   }
 
-  @Order(28)
   @Test
   public void testDoActionFailsWithWrongParameters(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          ADD_OPERATION,
-          Optional.of(CartagoDataBundle.toJson(List.of(2, "2", 5.0)))
-        ))
+        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.CreateArtifact(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            Json.encode(Map.of(
+                              ARTIFACT_SEMANTIC_TYPE_PARAM,
+                              ADDER_SEMANTIC_TYPE,
+                              ARTIFACT_INIT_PARAMS,
+                              List.of()
+                            ))
+                          )))
+        .compose(r -> this.cartagoMessagebox
+                          .sendMessage(new CartagoMessage.DoAction(
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME,
+                            "a0",
+                            ADD_OPERATION,
+                            Optional.of(CartagoDataBundle.toJson(List.of(2, "2", 5.0)))
+                          )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
           ((ReplyException) t).failureCode(),
@@ -701,7 +903,7 @@ public class CartagoVerticleTest {
       final String expectedCounterArtifactThingDescription
   ) throws InterruptedException {
     final var artifactCreationMessage =
-        (RdfStoreMessage.CreateEntity) this.storeMessageQueue.take();
+        (RdfStoreMessage.CreateArtifact) this.storeMessageQueue.take();
     Assertions.assertEquals(
         getArtifactsIriFromWorkspace(workspace),
         artifactCreationMessage.requestUri(),
@@ -709,12 +911,12 @@ public class CartagoVerticleTest {
     );
     Assertions.assertEquals(
         artifact,
-        artifactCreationMessage.entityName(),
+        artifactCreationMessage.artifactName(),
         "The names should be equal"
     );
     Assertions.assertEquals(
         expectedCounterArtifactThingDescription,
-        artifactCreationMessage.entityRepresentation(),
+        artifactCreationMessage.artifactRepresentation(),
         TDS_EQUAL_MESSAGE
     );
   }
