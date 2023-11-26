@@ -30,7 +30,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       new ThingDescription
         .Builder("yggdrasil")
         .addThingURI(this.httpConfig.getBaseUri() + "/")
-        .addSemanticType("https://purl.org/hmas/core/Platform")
+        .addSemanticType("https://purl.org/hmas/core/HypermediaMASPlatform")
         .addAction(
           new ActionAffordance.Builder(
               "createWorkspace",

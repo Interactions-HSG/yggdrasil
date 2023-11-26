@@ -3,13 +3,14 @@ package org.hyperagents.yggdrasil.store.impl;
 import io.vertx.core.json.JsonObject;
 import java.io.File;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.rdf.api.Dataset;
-import org.apache.commons.rdf.api.Graph;
-import org.apache.commons.rdf.api.IRI;
 import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.apache.commons.rdf.rdf4j.RDF4JGraph;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
@@ -20,9 +21,11 @@ public class Rdf4jStore implements RdfStore {
   private static final Logger LOGGER = LogManager.getLogger(RdfStore.class);
 
   private final Dataset dataset;
+  private final RDF4J rdf4j;
 
   Rdf4jStore(final JsonObject config) {
-    this.dataset = new RDF4J().asDataset(
+    this.rdf4j = new RDF4J();
+    this.dataset = this.rdf4j.asDataset(
       Optional.ofNullable(config)
               .flatMap(c -> JsonObjectUtils.getBoolean(c, "in-memory", LOGGER))
               .orElse(false)
@@ -35,48 +38,47 @@ public class Rdf4jStore implements RdfStore {
   }
 
   @Override
-  public boolean containsEntityGraph(final IRI entityIri) {
-    return this.dataset.contains(Optional.of(entityIri), null, null, null);
+  public boolean containsEntityModel(final IRI entityIri) {
+    return this.dataset.contains(
+      Optional.of(this.rdf4j.asRDFTerm(entityIri)),
+      null,
+      null,
+      null
+    );
   }
 
   @Override
-  public Optional<Graph> getEntityGraph(final IRI entityIri) {
-    return this.dataset.getGraph(entityIri);
+  public Optional<Model> getEntityModel(final IRI entityIri) {
+    return !this.containsEntityModel(entityIri)
+           ? Optional.empty()
+           : this.dataset
+                 .getGraph(this.rdf4j.asRDFTerm(entityIri))
+                 .map(g -> new LinkedHashModel(g.stream()
+                                                .map(this.rdf4j::asStatement)
+                                                .collect(Collectors.toSet())));
   }
 
   @Override
-  public void createEntityGraph(final IRI entityIri, final Graph entityGraph) {
-    if (entityGraph instanceof RDF4JGraph) {
-      this.addEntityGraph(entityIri, entityGraph);
-    } else {
-      throw new IllegalArgumentException("Unsupported RDF graph implementation");
-    }
-  }
-
-  @Override
-  public void updateEntityGraph(final IRI entityIri, final Graph entityGraph) {
-    if (entityGraph instanceof RDF4JGraph) {
-      this.deleteEntityGraph(entityIri);
-      this.addEntityGraph(entityIri, entityGraph);
-    } else {
-      throw new IllegalArgumentException("Unsupported RDF graph implementation");
-    }
-  }
-
-  @Override
-  public void deleteEntityGraph(final IRI entityIri) {
-    this.dataset.remove(Optional.of(entityIri), null, null, null);
-  }
-
-  @Override
-  public void addEntityGraph(final IRI entityIri, final Graph entityGraph) {
-    try (var stream = ((RDF4JGraph) entityGraph).stream()) {
-      stream.forEach(triple -> this.dataset.add(
-          entityIri,
+  public void addEntityModel(final IRI entityIri, final Model entityModel) {
+    entityModel.forEach(t -> {
+      final var triple = this.rdf4j.asTriple(t);
+      this.dataset.add(
+          this.rdf4j.asRDFTerm(entityIri),
           triple.getSubject(),
           triple.getPredicate(),
           triple.getObject()
-      ));
-    }
+      );
+    });
+  }
+
+  @Override
+  public void replaceEntityModel(final IRI entityIri, final Model entityModel) {
+    this.removeEntityModel(entityIri);
+    this.addEntityModel(entityIri, entityModel);
+  }
+
+  @Override
+  public void removeEntityModel(final IRI entityIri) {
+    this.dataset.remove(Optional.of(this.rdf4j.asRDFTerm(entityIri)), null, null, null);
   }
 }

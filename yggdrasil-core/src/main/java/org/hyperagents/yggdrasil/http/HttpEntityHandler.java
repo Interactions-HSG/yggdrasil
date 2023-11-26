@@ -23,14 +23,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.commons.rdf.api.IRI;
-import org.apache.commons.rdf.api.RDFSyntax;
-import org.apache.commons.rdf.api.Triple;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -328,7 +328,7 @@ public class HttpEntityHandler {
               .sendMessage(new RdfStoreMessage.CreateWorkspace(
                 this.httpConfig.getWorkspacesUri() + "/",
                 subWorkspaceName,
-                Optional.of(context.pathParam(WORKSPACE_ID_PARAM)),
+                Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
                 response.body()
               ))
               .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
@@ -375,12 +375,13 @@ public class HttpEntityHandler {
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
-    final var entityIri = GraphUtils.createIri(requestUri);
-    try (var entityGraph = GraphUtils.stringToGraph(
-      entityRepresentation,
-      entityIri,
-      RDFSyntax.TURTLE
-    )) {
+    final var entityIri = GraphUtils.createIri(requestUri + hint);
+    try {
+      final var entityGraph = GraphUtils.stringToModel(
+        entityRepresentation,
+        entityIri,
+        RDFFormat.TURTLE
+      );
       if (
         entityGraph.contains(
           entityIri,
@@ -410,14 +411,13 @@ public class HttpEntityHandler {
                          .filter(t ->
                            t.getSubject().equals(entityIri)
                            && t.getPredicate().equals(GraphUtils.createIri(
-                             "https://purl.org/hmas/core/isContainedBy"
+                             "https://purl.org/hmas/core/isContainedIn"
                            ))
                          )
-                         .map(Triple::getObject)
-                         .flatMap(t ->
-                           (t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty()).stream()
-                         )
-                         .map(IRI::getIRIString)
+                         .map(Statement::getObject)
+                         .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                         .flatMap(Optional::stream)
+                         .map(IRI::toString)
                          .findFirst(),
               entityRepresentation
             ))
