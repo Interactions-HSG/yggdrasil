@@ -97,7 +97,6 @@ tasks {
     useJUnitPlatform()
   }
 
-
   spotbugsMain {
     reports.create("html") {
         required.set(true)
