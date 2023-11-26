@@ -66,3 +66,5 @@
         ]
     ] ;
   hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+
+<http://localhost:8080/workspaces/test> a hmas:Workspace .

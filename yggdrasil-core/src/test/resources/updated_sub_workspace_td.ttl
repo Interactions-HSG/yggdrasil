@@ -7,7 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/core/> .
 
 <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
-  td:title "sub";
+  td:title "subWorkspace";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance;
@@ -65,4 +65,9 @@
           js:required "artifactName", "artifactIri", "callbackIri"
         ]
     ] ;
-  hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+  hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+
+<http://localhost:8080/workspaces/test> a hmas:Workspace .
+
+<http://localhost:8080/workspaces/sub/artifacts/c0> a hmas:Artifact .

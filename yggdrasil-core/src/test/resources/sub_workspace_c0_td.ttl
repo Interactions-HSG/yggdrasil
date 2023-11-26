@@ -65,4 +65,9 @@
           js:required "artifactName", "artifactIri", "callbackIri"
         ]
     ] ;
-  hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+  hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+
+<http://localhost:8080/workspaces/test> a hmas:Workspace .
+
+<http://localhost:8080/workspaces/sub/artifacts/c0> a hmas:Artifact .
