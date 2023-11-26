@@ -3,7 +3,6 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
-import cartago.WorkspaceId;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
@@ -11,7 +10,7 @@ import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
-import io.vertx.core.json.JsonObject;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
@@ -30,26 +30,33 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
-  private final ListMultimap<String, ActionAffordance> actionAffordances =
-      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
-  private final Model metadata = new LinkedHashModel();
-  private final Set<String> feedbackActions = new HashSet<>();
-  private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
-  private HttpInterfaceConfig httpConfig;
-  private RepresentationFactory representationFactory;
-  private SecurityScheme securityScheme = new NoSecurityScheme();
+  private final ListMultimap<String, ActionAffordance> actionAffordances;
+  private final Model metadata;
+  private final Set<String> feedbackActions;
+  private final Map<String, UnaryOperator<Object>> responseConverterMap;
+  private final HttpInterfaceConfig httpConfig;
+  private final RepresentationFactory representationFactory;
+  private SecurityScheme securityScheme;
 
-  protected void init(final String host, final int port) {
+  protected HypermediaArtifact() {
+    super();
+    this.actionAffordances = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+    this.metadata = new LinkedHashModel();
+    this.feedbackActions = new HashSet<>();
+    this.responseConverterMap = new HashMap<>();
     this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
       "http-config",
-      JsonObject.of("host", host, "port", port)
+      JsonObject.of(
+        "host",
+        this.getBaseUri().getHost(),
+        "port",
+        this.getBaseUri().getPort(),
+        "base-uri",
+        this.getBaseUri().toString()
+      )
     ));
     this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
-  }
-
-  protected void init() {
-    this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+    this.securityScheme = new NoSecurityScheme();
   }
 
   /**
@@ -58,12 +65,16 @@ public abstract class HypermediaArtifact extends Artifact {
    *
    * @return An RDF description of the artifact and its interface.
    */
-  public String getHypermediaDescription() {
+  public final String getHypermediaDescription() {
     return this.representationFactory.createArtifactRepresentation(
-      this.getWorkspaceId().getName(),
-      this.getArtifactName(),
+      this.getId().getWorkspaceId().getName(),
+      this.getId().getName(),
       this.securityScheme,
-      this.getSemanticType(),
+      HypermediaArtifactRegistry.getInstance()
+                                .getArtifactSemanticType(this.getClass().getCanonicalName())
+                                .orElseThrow(
+                                  () -> new RuntimeException("Artifact was not registered!")
+                                ),
       this.metadata,
       this.actionAffordances
     );
@@ -74,30 +85,44 @@ public abstract class HypermediaArtifact extends Artifact {
    *
    * @return A CArtAgO ArtifactId
    */
-  public ArtifactId getArtifactId() {
+  public final ArtifactId getArtifactId() {
     return this.getId();
+  }
+
+  public final Map<String, UnaryOperator<Object>> getResponseConverterMap() {
+    return new HashMap<>(this.responseConverterMap);
+  }
+
+  public final Set<String> getFeedbackActions() {
+    return new HashSet<>(this.feedbackActions);
+  }
+
+  public final Map<String, List<ActionAffordance>> getActionAffordances() {
+    return this.actionAffordances
+               .asMap()
+               .entrySet()
+               .stream()
+               .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
+  }
+
+  protected abstract void registerInteractionAffordances();
+
+  protected URI getBaseUri() {
+    return URI.create("http://localhost:8080");
   }
 
   @Override
   protected void setupOperations() throws CartagoException {
     super.setupOperations();
-
     this.registerInteractionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);
   }
 
-  protected abstract void registerInteractionAffordances();
-
-  protected String getArtifactName() {
-    return this.getArtifactId().getName();
-  }
-
-  protected String getArtifactUri() {
-    return this.httpConfig.getArtifactUri(this.getWorkspaceId().getName(), this.getArtifactName());
-  }
-
-  protected WorkspaceId getWorkspaceId() {
-    return this.getArtifactId().getWorkspaceId();
+  protected final String getArtifactUri() {
+    return this.httpConfig.getArtifactUri(
+      this.getId().getWorkspaceId().getName(),
+      this.getId().getName()
+    );
   }
 
   protected final void registerActionAffordance(
@@ -134,7 +159,6 @@ public abstract class HypermediaArtifact extends Artifact {
           )
           .addSemanticType(actionClass)
           .addTitle(actionName);
-
     this.registerActionAffordance(
         actionName,
         Optional.ofNullable(inputSchema)
@@ -163,35 +187,11 @@ public abstract class HypermediaArtifact extends Artifact {
     this.responseConverterMap.put(actionName, responseConverter);
   }
 
-  public Map<String, UnaryOperator<Object>> getResponseConverterMap() {
-    return new HashMap<>(this.responseConverterMap);
-  }
-
-  public Set<String> getFeedbackActions() {
-    return new HashSet<>(this.feedbackActions);
-  }
-
   protected final void setSecurityScheme(final SecurityScheme scheme) {
     this.securityScheme = scheme;
   }
 
   protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
-  }
-
-  public Map<String, List<ActionAffordance>> getActionAffordances() {
-    return this.actionAffordances
-               .asMap()
-               .entrySet()
-               .stream()
-               .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
-  }
-
-  private String getSemanticType() {
-    return HypermediaArtifactRegistry.getInstance()
-                                     .getArtifactSemanticType(this.getClass().getCanonicalName())
-                                     .orElseThrow(
-                                       () -> new RuntimeException("Artifact was not registered!")
-                                     );
   }
 }

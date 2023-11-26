@@ -1,10 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import cartago.AgentId;
-import cartago.CartagoEnvironment;
-import cartago.Workspace;
-import cartago.WorkspaceDescriptor;
-import cartago.WorkspaceId;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -14,12 +9,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 
 /**
@@ -46,7 +38,6 @@ public final class HypermediaArtifactRegistry {
   private final SetMultimap<String, String> feedbackActions;
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
-  private String httpPrefix = "http://localhost:8080";
 
   private HypermediaArtifactRegistry() {
     this.artifactSemanticTypes = new Hashtable<>();
