@@ -7,6 +7,7 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
 }
 
 defaultTasks = mutableListOf("shadowJar")
@@ -23,6 +24,10 @@ pmd {
 
 spotbugs {
   toolVersion = libs.versions.spotbugs
+}
+
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
 }
 
 java {
@@ -95,6 +100,7 @@ tasks {
 
   test {
     useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
   }
 
   spotbugsMain {

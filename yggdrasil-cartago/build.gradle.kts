@@ -4,6 +4,7 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
 }
 
 checkstyle {
@@ -20,6 +21,10 @@ spotbugs {
   toolVersion = libs.versions.spotbugs
 }
 
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
+}
+
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
@@ -34,7 +39,7 @@ dependencies {
 
   implementation(libs.httpcomponents.core)
 
-  implementation(files("libs/cartago-3.1.jar"))
+  implementation(files("${rootProject.projectDir}/libs/cartago-3.1.jar"))
   implementation(libs.wot.td.java)
 
   implementation(libs.apache.commons.lang3)
@@ -61,6 +66,7 @@ dependencies {
 tasks {
   test {
     useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
   }
 
   spotbugsMain {

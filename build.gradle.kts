@@ -7,6 +7,8 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
+  id("jacoco-report-aggregation")
 }
 
 defaultTasks = mutableListOf("shadowJar")
@@ -23,6 +25,10 @@ pmd {
 
 spotbugs {
   toolVersion = libs.versions.spotbugs
+}
+
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
 }
 
 java {
@@ -57,6 +63,12 @@ dependencies {
   testImplementation(platform(libs.junit.platform))
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.vertx.junit5)
+  testImplementation(libs.vertx.web)
+  testImplementation(libs.vertx.web.client)
+  testImplementation(libs.httpcomponents.core)
+  testImplementation(libs.wot.td.java)
+  testImplementation(libs.rdf4j.model)
+  testImplementation(files("libs/cartago-3.1.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)
 }
@@ -89,6 +101,11 @@ tasks {
 
   test {
     useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
+  }
+
+  check {
+    dependsOn(named<JacocoReport>("testCodeCoverageReport"))
   }
 
   spotbugsMain {

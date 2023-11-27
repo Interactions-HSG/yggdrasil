@@ -6,6 +6,7 @@ httpcomponents-client5 = "5.2.1"
 checkstyle = "10.12.4"
 spotbugs = "4.8.0"
 pmd = "7.0.0-rc4"
+jacoco = "0.8.11"
 
 [libraries]
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }

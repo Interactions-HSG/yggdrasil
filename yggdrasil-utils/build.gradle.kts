@@ -4,6 +4,7 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
 }
 
 checkstyle {
@@ -18,6 +19,10 @@ pmd {
 
 spotbugs {
   toolVersion = libs.versions.spotbugs
+}
+
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
 }
 
 java {
@@ -55,6 +60,7 @@ dependencies {
 tasks {
   test {
     useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
   }
 
   spotbugsMain {
