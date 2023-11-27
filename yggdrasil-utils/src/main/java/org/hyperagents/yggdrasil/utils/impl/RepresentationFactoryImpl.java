@@ -101,9 +101,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               new ObjectSchema
                 .Builder()
                 .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
-                .addProperty("artifactIri", new StringSchema.Builder().build())
                 .addProperty("callbackIri", new StringSchema.Builder().build())
-                .addRequiredProperties(ARTIFACT_NAME_PARAM, "artifactIri", "callbackIri")
+                .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
                 .build()
             )
             .build()

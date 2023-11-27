@@ -33,10 +33,8 @@ import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
-import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
@@ -52,7 +50,6 @@ public class CartagoVerticle extends AbstractVerticle {
   private RepresentationFactory representationFactory;
   private Map<String, AgentCredential> agentCredentials;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
-  private RdfStoreMessagebox rdfStoreMessagebox;
 
   @Override
   public void start(final Promise<Void> startPromise) {
@@ -71,31 +68,33 @@ public class CartagoVerticle extends AbstractVerticle {
     ownMessagebox.init();
     ownMessagebox.receiveMessages(this::handleCartagoRequest);
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
-    this.rdfStoreMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
 
-    try {
-      CartagoEnvironment.getInstance().init(new BasicLogger());
-      startPromise.complete();
-    } catch (final CartagoException e) {
-      startPromise.fail(e);
-    }
+    this.vertx
+        .<Void>executeBlocking(() -> {
+          final var cartagoEnvironment = CartagoEnvironment.getInstance();
+          cartagoEnvironment.init(new BasicLogger());
+          cartagoEnvironment.installInfrastructureLayer("web");
+          cartagoEnvironment.startInfrastructureService("web");
+          return null;
+        })
+        .onComplete(startPromise);
   }
 
   @Override
   public void stop(final Promise<Void> stopPromise) {
-    try {
-      CartagoEnvironment.getInstance().shutdown();
-      // Resetting CArtAgO root workspace before shutting down to ensure system is fully reset
-      final var rootWorkspace = CartagoEnvironment.getInstance().getRootWSP();
-      rootWorkspace.setWorkspace(new Workspace(
-          rootWorkspace.getId(),
-          rootWorkspace,
-          new BasicLogger()
-      ));
-      stopPromise.complete();
-    } catch (final CartagoException e) {
-      stopPromise.fail(e);
-    }
+    this.vertx
+        .<Void>executeBlocking(() -> {
+          CartagoEnvironment.getInstance().shutdown();
+          // Resetting CArtAgO root workspace before shutting down to ensure system is fully reset
+          final var rootWorkspace = CartagoEnvironment.getInstance().getRootWSP();
+          rootWorkspace.setWorkspace(new Workspace(
+              rootWorkspace.getId(),
+              rootWorkspace,
+              new BasicLogger()
+          ));
+          return null;
+        })
+        .onComplete(stopPromise);
   }
 
   @SuppressWarnings({
@@ -251,12 +250,6 @@ public class CartagoVerticle extends AbstractVerticle {
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
     LOGGER.info("Done!");
-    final var registry = HypermediaArtifactRegistry.getInstance();
-    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-        this.httpConfig.getArtifactsUri(workspaceName) + "/",
-        artifactName,
-        registry.getArtifactDescription(artifactName)
-    ));
   }
 
   private Future<Optional<String>> doAction(

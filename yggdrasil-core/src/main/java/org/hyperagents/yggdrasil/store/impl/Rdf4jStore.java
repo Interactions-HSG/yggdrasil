@@ -81,4 +81,13 @@ public class Rdf4jStore implements RdfStore {
   public void removeEntityModel(final IRI entityIri) {
     this.dataset.remove(Optional.of(this.rdf4j.asRDFTerm(entityIri)), null, null, null);
   }
+
+  @Override
+  public void close() {
+    try {
+      this.dataset.close();
+    } catch (final Exception e) {
+      LOGGER.error(e);
+    }
+  }
 }

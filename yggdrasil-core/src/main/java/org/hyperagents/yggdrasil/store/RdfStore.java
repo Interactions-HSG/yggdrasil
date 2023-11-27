@@ -14,4 +14,6 @@ public interface RdfStore {
   void replaceEntityModel(IRI entityIri, Model entityModel);
 
   void removeEntityModel(IRI entityIri);
+
+  void close();
 }

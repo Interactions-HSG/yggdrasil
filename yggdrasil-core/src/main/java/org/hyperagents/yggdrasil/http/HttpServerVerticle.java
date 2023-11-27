@@ -23,13 +23,11 @@ public class HttpServerVerticle extends AbstractVerticle {
   @Override
   public void start(final Promise<Void> startPromise) {
     final var httpConfig = new HttpInterfaceConfigImpl(this.context.config());
-    this.server = this.vertx.createHttpServer()
-                            .requestHandler(this.createRouter())
-                            .listen(
-                              httpConfig.getPort(),
-                              httpConfig.getHost(),
-                              r -> startPromise.handle(r.mapEmpty())
-                            );
+    this.server = this.vertx.createHttpServer();
+    this.server.requestHandler(this.createRouter())
+               .listen(httpConfig.getPort(), httpConfig.getHost())
+               .<Void>mapEmpty()
+               .onComplete(startPromise);
   }
 
   @Override

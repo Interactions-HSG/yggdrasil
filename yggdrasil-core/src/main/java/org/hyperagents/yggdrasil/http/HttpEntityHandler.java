@@ -38,8 +38,8 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
-import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
@@ -256,17 +256,8 @@ public class HttpEntityHandler {
 
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
-        this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
-            .onSuccess(response -> {
-              NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
-              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
-            })
-            .onFailure(t -> routingContext.fail(
-              t instanceof ReplyException e && e.failureCode() == HttpStatus.SC_NOT_FOUND
-              ? HttpStatus.SC_NOT_FOUND
-              : HttpStatus.SC_INTERNAL_SERVER_ERROR
-            ));
+        NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
+        routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
         break;
       case "unsubscribe":
         NotificationSubscriberRegistry.getInstance().removeCallbackIri(entityIri, callbackIri);

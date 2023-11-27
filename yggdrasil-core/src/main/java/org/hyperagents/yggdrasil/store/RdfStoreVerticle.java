@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,23 +39,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
-  public void start() {
+  public void start(final Promise<Void> startPromise) {
     final var httpConfig = new HttpInterfaceConfigImpl(this.config());
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
-    this.store = RdfStoreFactory.createStore(this.config().getJsonObject("rdf-store", null));
-    try {
-      final var platformIri = RdfModelUtils.createIri(httpConfig.getBaseUri() + "/");
-      this.store.addEntityModel(
-          platformIri,
-          RdfModelUtils.stringToModel(
-            new RepresentationFactoryImpl(httpConfig).createPlatformRepresentation(),
-            platformIri,
-            RDFFormat.TURTLE
-          )
-      );
-    } catch (final IOException e) {
-      LOGGER.error(e.getMessage());
-    }
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
@@ -77,6 +64,31 @@ public class RdfStoreVerticle extends AbstractVerticle {
         this.replyFailed(message);
       }
     });
+    this.vertx
+        .<Void>executeBlocking(() -> {
+          this.store = RdfStoreFactory.createStore(this.config().getJsonObject("rdf-store", null));
+          final var platformIri = RdfModelUtils.createIri(httpConfig.getBaseUri() + "/");
+          this.store.addEntityModel(
+              platformIri,
+              RdfModelUtils.stringToModel(
+                new RepresentationFactoryImpl(httpConfig).createPlatformRepresentation(),
+                platformIri,
+                RDFFormat.TURTLE
+              )
+          );
+          return null;
+        })
+        .onComplete(startPromise);
+  }
+
+  @Override
+  public void stop(final Promise<Void> stopPromise) {
+    this.vertx
+        .<Void>executeBlocking(() -> {
+          this.store.close();
+          return null;
+        })
+        .onComplete(stopPromise);
   }
 
   private void handleGetEntity(
@@ -118,8 +130,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
               LOGGER.info("entity created is an artifact");
               final var artifactIri = entityIri.toString();
               final var workspaceIri =
-                  RdfModelUtils.createIri(artifactIri.substring(0, artifactIri.indexOf("/artifacts")));
-
+                  RdfModelUtils.createIri(
+                    artifactIri.substring(0, artifactIri.indexOf("/artifacts"))
+                  );
               LOGGER.info("Found workspace IRI: " + workspaceIri);
               entityModel.add(
                   entityIri,
@@ -158,7 +171,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     }
                   });
               this.store.addEntityModel(entityIri, entityModel);
-              final var stringGraphResult = RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+              final var stringGraphResult =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
               this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.EntityCreated(
                   requestIri.toString(),
@@ -282,7 +296,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     });
               }
               this.store.addEntityModel(entityIri, entityModel);
-              final var stringGraphResult = RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+              final var stringGraphResult =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
               this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.EntityCreated(
                   requestIri.toString(),
@@ -339,7 +354,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
           entityModel -> {
             try {
-              final var entityModelString = RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+              final var entityModelString =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
               if (entityModel.contains(
                   requestIri,
                   RdfModelUtils.createIri(RDF.TYPE.stringValue()),

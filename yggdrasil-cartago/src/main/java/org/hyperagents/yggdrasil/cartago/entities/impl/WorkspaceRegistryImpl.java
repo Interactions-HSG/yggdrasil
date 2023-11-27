@@ -2,10 +2,10 @@ package org.hyperagents.yggdrasil.cartago.entities.impl;
 
 import cartago.Workspace;
 import cartago.WorkspaceDescriptor;
-import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 
 public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
   private final Map<String, WorkspaceDescriptor> workspaceDescriptors;
