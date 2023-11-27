@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.http;
 
 import com.google.common.net.HttpHeaders;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.Future;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
@@ -10,6 +11,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
@@ -17,6 +19,8 @@ import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.junit.jupiter.api.Assertions;
 
+@SuppressFBWarnings("EI_EXPOSE_REP2")
+@SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation")
 public final class HttpServerVerticleTestHelper {
   public static final int TEST_PORT = 8080;
   public static final String TEST_HOST = "localhost";
@@ -47,14 +51,16 @@ public final class HttpServerVerticleTestHelper {
   ) throws URISyntaxException, IOException, InterruptedException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI())
+          Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
+          StandardCharsets.UTF_8
         );
     final var request = this.client.get(TEST_PORT, TEST_HOST, resourceUri).send();
     final var message = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + resourceUri,
-        getEntityMessage.requestUri()
+        this.getUri(resourceUri),
+        getEntityMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
     );
     message.reply(expectedRepresentation);
     request
@@ -85,7 +91,7 @@ public final class HttpServerVerticleTestHelper {
   ) throws InterruptedException {
     final var message = this.storeMessageQueue.take();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + resourceUri,
+        this.getUri(resourceUri),
         message.body().requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -120,7 +126,7 @@ public final class HttpServerVerticleTestHelper {
                      "The status code should be MOVED PERMANENTLY"
                  );
                  Assertions.assertEquals(
-                     "http://" + TEST_HOST + ":" + TEST_PORT + resourceUri,
+                     this.getUri(resourceUri),
                      r.getHeader(HttpHeaders.LOCATION),
                      "The location should be the same but missing the trailing slash"
                  );
@@ -158,9 +164,10 @@ public final class HttpServerVerticleTestHelper {
       final String resourceRepresentationFilePath
   ) throws InterruptedException, URISyntaxException, IOException {
     final var expectedRepresentation =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
+          StandardCharsets.UTF_8
+        );
     final var request = this.client.put(TEST_PORT, TEST_HOST, resourceUri)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -168,7 +175,7 @@ public final class HttpServerVerticleTestHelper {
     final var message = this.storeMessageQueue.take();
     final var updateResourceMessage = (RdfStoreMessage.UpdateEntity) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + resourceUri,
+        this.getUri(resourceUri),
         updateResourceMessage.requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -228,9 +235,10 @@ public final class HttpServerVerticleTestHelper {
       final String entityRepresentationFileName
   ) throws InterruptedException, URISyntaxException, IOException {
     final var expectedRepresentation =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource(entityRepresentationFileName).toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource(entityRepresentationFileName).toURI()),
+          StandardCharsets.UTF_8
+        );
     final var request = this.client.delete(TEST_PORT, TEST_HOST, resourceUri)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -238,7 +246,7 @@ public final class HttpServerVerticleTestHelper {
     final var message = this.storeMessageQueue.take();
     final var updateResourceMessage = (RdfStoreMessage.DeleteEntity) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + resourceUri,
+        this.getUri(resourceUri),
         updateResourceMessage.requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -257,5 +265,9 @@ public final class HttpServerVerticleTestHelper {
           );
         })
         .onComplete(ctx.succeedingThenComplete());
+  }
+
+  public String getUri(final String path) {
+    return "http://" + TEST_HOST + ":" + TEST_PORT + path;
   }
 }

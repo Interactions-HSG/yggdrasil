@@ -5,6 +5,14 @@ import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
@@ -14,14 +22,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleUpdateTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
@@ -53,9 +55,10 @@ public class RdfStoreVerticleUpdateTest {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.UpdateEntity(
           "http://yggdrasil:8080/",
-          Files.readString(Path.of(
-            ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()
-          ))
+          Files.readString(
+            Path.of(ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+          )
         ))
         .onFailure(RdfStoreVerticleTestHelpers::assertNotFound)
         .onComplete(ctx.failingThenComplete());
@@ -67,9 +70,10 @@ public class RdfStoreVerticleUpdateTest {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.UpdateEntity(
           "nonexistent",
-          Files.readString(Path.of(
-            ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()
-          ))
+          Files.readString(
+            Path.of(ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+          )
         ))
         .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
         .onComplete(ctx.failingThenComplete());
@@ -79,9 +83,10 @@ public class RdfStoreVerticleUpdateTest {
   public void testUpdateAndGetWorkspace(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var updatedWorkspaceDescription =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("updated_test_workspace_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
           "http://localhost:8080/workspaces/test",
@@ -89,20 +94,20 @@ public class RdfStoreVerticleUpdateTest {
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-            updatedWorkspaceDescription,
-            r.body()
+              updatedWorkspaceDescription,
+              r.body()
           );
           try {
             final var updateMessage =
-              (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-              updatedWorkspaceDescription,
-              updateMessage.content()
+                updatedWorkspaceDescription,
+                updateMessage.content()
             );
             Assertions.assertEquals(
-              "http://localhost:8080/workspaces/test",
-              updateMessage.requestIri(),
-              URIS_EQUAL_MESSAGE
+                "http://localhost:8080/workspaces/test",
+                updateMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
             );
           } catch (final Exception e) {
             ctx.failNow(e);
@@ -115,9 +120,10 @@ public class RdfStoreVerticleUpdateTest {
   public void testDeleteAndGetSubWorkspace(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var updatedWorkspaceDescription =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("updated_sub_workspace_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("updated_sub_workspace_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
           "http://localhost:8080/workspaces/sub",
@@ -125,20 +131,20 @@ public class RdfStoreVerticleUpdateTest {
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-            updatedWorkspaceDescription,
-            r.body()
+              updatedWorkspaceDescription,
+              r.body()
           );
           try {
             final var updateMessage =
-              (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-              updatedWorkspaceDescription,
-              updateMessage.content()
+                updatedWorkspaceDescription,
+                updateMessage.content()
             );
             Assertions.assertEquals(
-              "http://localhost:8080/workspaces/sub",
-              updateMessage.requestIri(),
-              URIS_EQUAL_MESSAGE
+                "http://localhost:8080/workspaces/sub",
+                updateMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
             );
           } catch (final Exception e) {
             ctx.failNow(e);
@@ -151,9 +157,10 @@ public class RdfStoreVerticleUpdateTest {
   public void testDeleteAndGetArtifact(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var updatedArtifactDescription =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("updated_counter_artifact_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("updated_counter_artifact_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
           "http://localhost:8080/workspaces/sub/artifacts/c0",
@@ -161,20 +168,20 @@ public class RdfStoreVerticleUpdateTest {
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-            updatedArtifactDescription,
-            r.body()
+              updatedArtifactDescription,
+              r.body()
           );
           try {
             final var updateMessage =
-              (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-              updatedArtifactDescription,
-              updateMessage.content()
+                updatedArtifactDescription,
+                updateMessage.content()
             );
             Assertions.assertEquals(
-              "http://localhost:8080/workspaces/sub/artifacts/c0",
-              updateMessage.requestIri(),
-              URIS_EQUAL_MESSAGE
+                "http://localhost:8080/workspaces/sub/artifacts/c0",
+                updateMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
             );
           } catch (final Exception e) {
             ctx.failNow(e);
@@ -186,17 +193,20 @@ public class RdfStoreVerticleUpdateTest {
   private Future<Message<String>> assertWorkspaceTreeCreated(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var inputWorkspaceRepresentation =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     final var inputSubWorkspaceRepresentation =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     final var inputArtifactRepresentation =
-        Files.readString(Path.of(
-          ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()
-        ));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     return this.storeMessagebox
                .sendMessage(new RdfStoreMessage.CreateWorkspace(
                  "http://localhost:8080/workspaces/",

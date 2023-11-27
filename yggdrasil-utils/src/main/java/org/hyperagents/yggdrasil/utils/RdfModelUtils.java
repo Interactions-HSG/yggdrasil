@@ -18,7 +18,9 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
-public class GraphUtils {
+public final class RdfModelUtils {
+  private RdfModelUtils() {}
+
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
@@ -60,9 +62,9 @@ public class GraphUtils {
   }
 
   public static Model stringToModel(
-    final String graphString,
-    final IRI baseIri,
-    final RDFFormat format
+      final String graphString,
+      final IRI baseIri,
+      final RDFFormat format
   ) throws IllegalArgumentException, IOException {
     try (var stringReader = new StringReader(graphString)) {
       final var rdfParser = Rio.createParser(format);

@@ -27,24 +27,32 @@ public final class RdfStoreVerticleTestHelpers {
   }
 
   public static void assertNotFound(final Throwable t) {
+    if (t instanceof ReplyException r) {
+      Assertions.assertEquals(
+          HttpStatus.SC_NOT_FOUND,
+          r.failureCode(),
+          "Status code should be NOT FOUND"
+      );
+    } else {
+      Assertions.fail("The exception was not of the right type");
+    }
     Assertions.assertEquals(
-      HttpStatus.SC_NOT_FOUND,
-      ((ReplyException) t).failureCode(),
-      "Status code should be NOT FOUND"
-    );
-    Assertions.assertEquals(
-      "Entity not found.",
-      t.getMessage(),
-      "The messages should be the same"
+        "Entity not found.",
+        t.getMessage(),
+        "The messages should be the same"
     );
   }
 
   public static void assertInternalServerError(final Throwable t) {
-    Assertions.assertEquals(
-        HttpStatus.SC_INTERNAL_SERVER_ERROR,
-        ((ReplyException) t).failureCode(),
-        "Status code should be INTERNAL SERVER ERROR"
-    );
+    if (t instanceof ReplyException r) {
+      Assertions.assertEquals(
+          HttpStatus.SC_INTERNAL_SERVER_ERROR,
+          r.failureCode(),
+          "Status code should be INTERNAL SERVER ERROR"
+      );
+    } else {
+      Assertions.fail("The exception was not of the right type");
+    }
     Assertions.assertEquals(
         "Store request failed.",
         t.getMessage(),

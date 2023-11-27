@@ -1,8 +1,8 @@
 package org.hyperagents.yggdrasil.store;
 
+import java.util.Optional;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import java.util.Optional;
 
 public interface RdfStore {
   boolean containsEntityModel(IRI entityIri);

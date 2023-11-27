@@ -86,9 +86,9 @@ public class CartagoVerticle extends AbstractVerticle {
       // Resetting CArtAgO root workspace before shutting down to ensure system is fully reset
       final var rootWorkspace = CartagoEnvironment.getInstance().getRootWSP();
       rootWorkspace.setWorkspace(new Workspace(
-        rootWorkspace.getId(),
-        rootWorkspace,
-        new BasicLogger()
+          rootWorkspace.getId(),
+          rootWorkspace,
+          new BasicLogger()
       ));
       stopPromise.complete();
     } catch (final CartagoException e) {
@@ -293,11 +293,11 @@ public class CartagoVerticle extends AbstractVerticle {
     workspace.execOp(0L,
                      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
                      e -> {
-                        if (e instanceof ActionSucceededEvent) {
-                          promise.complete();
-                        } else if (e instanceof ActionFailedEvent f) {
-                          promise.fail(f.getFailureMsg());
-                        }
+                       if (e instanceof ActionSucceededEvent) {
+                         promise.complete();
+                       } else if (e instanceof ActionFailedEvent f) {
+                         promise.fail(f.getFailureMsg());
+                       }
                      },
                      artifactName,
                      operation,

@@ -38,7 +38,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
-import org.hyperagents.yggdrasil.utils.GraphUtils;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
@@ -375,19 +375,19 @@ public class HttpEntityHandler {
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
-    final var entityIri = GraphUtils.createIri(requestUri + hint);
+    final var entityIri = RdfModelUtils.createIri(requestUri + hint);
     try {
-      final var entityGraph = GraphUtils.stringToModel(
-        entityRepresentation,
-        entityIri,
-        RDFFormat.TURTLE
+      final var entityGraph = RdfModelUtils.stringToModel(
+          entityRepresentation,
+          entityIri,
+          RDFFormat.TURTLE
       );
       if (
-        entityGraph.contains(
-          entityIri,
-          GraphUtils.createIri(RDF.TYPE.stringValue()),
-          GraphUtils.createIri("https://purl.org/hmas/core/Artifact")
-        )
+          entityGraph.contains(
+            entityIri,
+            RdfModelUtils.createIri(RDF.TYPE.stringValue()),
+            RdfModelUtils.createIri("https://purl.org/hmas/core/Artifact")
+          )
       ) {
         this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
@@ -397,29 +397,29 @@ public class HttpEntityHandler {
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
       } else if (
-        entityGraph.contains(
-          entityIri,
-          GraphUtils.createIri(RDF.TYPE.stringValue()),
-          GraphUtils.createIri("https://purl.org/hmas/core/Workspace")
-        )
+          entityGraph.contains(
+            entityIri,
+            RdfModelUtils.createIri(RDF.TYPE.stringValue()),
+            RdfModelUtils.createIri("https://purl.org/hmas/core/Workspace")
+          )
       ) {
         this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              requestUri,
-              hint,
-              entityGraph.stream()
-                         .filter(t ->
-                           t.getSubject().equals(entityIri)
-                           && t.getPredicate().equals(GraphUtils.createIri(
-                             "https://purl.org/hmas/core/isContainedIn"
-                           ))
-                         )
-                         .map(Statement::getObject)
-                         .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                         .flatMap(Optional::stream)
-                         .map(IRI::toString)
-                         .findFirst(),
-              entityRepresentation
+                requestUri,
+                hint,
+                entityGraph.stream()
+                           .filter(t ->
+                             t.getSubject().equals(entityIri)
+                             && t.getPredicate().equals(RdfModelUtils.createIri(
+                               "https://purl.org/hmas/core/isContainedIn"
+                             ))
+                           )
+                           .map(Statement::getObject)
+                           .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                           .flatMap(Optional::stream)
+                           .map(IRI::toString)
+                           .findFirst(),
+                entityRepresentation
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
       } else {

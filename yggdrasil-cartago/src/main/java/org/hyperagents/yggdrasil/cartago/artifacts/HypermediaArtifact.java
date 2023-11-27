@@ -10,6 +10,7 @@ import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import io.vertx.core.json.JsonObject;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
-import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
@@ -30,34 +30,15 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
-  private final ListMultimap<String, ActionAffordance> actionAffordances;
-  private final Model metadata;
-  private final Set<String> feedbackActions;
-  private final Map<String, UnaryOperator<Object>> responseConverterMap;
-  private final HttpInterfaceConfig httpConfig;
-  private final RepresentationFactory representationFactory;
-  private SecurityScheme securityScheme;
-
-  protected HypermediaArtifact() {
-    super();
-    this.actionAffordances = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
-    this.metadata = new LinkedHashModel();
-    this.feedbackActions = new HashSet<>();
-    this.responseConverterMap = new HashMap<>();
-    this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
-      "http-config",
-      JsonObject.of(
-        "host",
-        this.getBaseUri().getHost(),
-        "port",
-        this.getBaseUri().getPort(),
-        "base-uri",
-        this.getBaseUri().toString()
-      )
-    ));
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
-    this.securityScheme = new NoSecurityScheme();
-  }
+  private final ListMultimap<String, ActionAffordance> actionAffordances =
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+  private final Model metadata = new LinkedHashModel();
+  private final Set<String> feedbackActions = new HashSet<>();
+  private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
+  private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+  private RepresentationFactory representationFactory =
+      new RepresentationFactoryImpl(this.httpConfig);
+  private SecurityScheme securityScheme = new NoSecurityScheme();
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -108,12 +89,27 @@ public abstract class HypermediaArtifact extends Artifact {
   protected abstract void registerInteractionAffordances();
 
   protected URI getBaseUri() {
-    return URI.create("http://localhost:8080");
+    return URI.create(this.httpConfig.getBaseUri());
   }
 
   @Override
   protected void setupOperations() throws CartagoException {
     super.setupOperations();
+    final var baseUri = this.getBaseUri();
+    if (!baseUri.toString().equals(this.httpConfig.getBaseUri())) {
+      this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
+        "http-config",
+        JsonObject.of(
+          "host",
+          baseUri.getHost(),
+          "port",
+          baseUri.getPort(),
+          "base-uri",
+          baseUri.toString()
+        )
+      ));
+      this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+    }
     this.registerInteractionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);
   }

@@ -7,6 +7,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class CartagoArtifactActionHandlerTest {
   private static final int TEST_PORT = 8080;
@@ -33,10 +35,8 @@ public class CartagoArtifactActionHandlerTest {
   private static final String AGENT_WEBID = "X-Agent-WebID";
   private static final String TEST_AGENT_ID = "test_agent";
   private static final String MAIN_WORKSPACE_NAME = "test";
-  private static final String WORKSPACES_PATH = "/workspaces/";
-  private static final String MAIN_WORKSPACE_PATH = WORKSPACES_PATH + MAIN_WORKSPACE_NAME;
-  private static final String ARTIFACTS_PATH = "/artifacts/";
-  private static final String MAIN_ARTIFACTS_PATH = MAIN_WORKSPACE_PATH + ARTIFACTS_PATH;
+  private static final String MAIN_ARTIFACTS_PATH =
+      "/workspaces/" + MAIN_WORKSPACE_NAME + "/artifacts/";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_PATH = MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME;
   private static final String INCREMENT_ACTION_NAME = "inc";
@@ -46,12 +46,12 @@ public class CartagoArtifactActionHandlerTest {
   private static final List<Object> ADD_PARAMS = List.of(2, 3);
   private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
   private static final String CONTENTS_EQUAL_MESSAGE = "The contents should be equal";
+  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String RESPONSE_BODY_STATUS_CODE_MESSAGE =
       "The response body should contain the status code description";
   private static final String INTERNAL_SERVER_ERROR_STATUS_MESSAGE =
       "The status code should be INTERNAL SERVER ERROR";
-  public static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
 
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
   private final BlockingQueue<Message<CartagoMessage>> cartagoMessageQueue;
@@ -85,9 +85,10 @@ public class CartagoArtifactActionHandlerTest {
   @Disabled
   public void testPostArtifactActionSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    final var artifactRepresentation = Files.readString(Path.of(
-        ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()
-    ));
+    final var artifactRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
+        StandardCharsets.UTF_8
+    );
     final var request = this.client.post(
                                      TEST_PORT,
                                      TEST_HOST,
@@ -98,8 +99,9 @@ public class CartagoArtifactActionHandlerTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + ADDER_ARTIFACT_PATH,
-        getEntityMessage.requestUri()
+        this.helper.getUri(ADDER_ARTIFACT_PATH),
+        getEntityMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
     );
     storeMessage.reply(artifactRepresentation);
     final var cartagoMessage = this.cartagoMessageQueue.take();
@@ -150,9 +152,10 @@ public class CartagoArtifactActionHandlerTest {
   @Disabled
   public void testPostArtifactActionWithoutFeedbackSucceeds(final VertxTestContext ctx)
       throws InterruptedException, URISyntaxException, IOException {
-    final var artifactRepresentation = Files.readString(Path.of(
-        ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()
-    ));
+    final var artifactRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
+        StandardCharsets.UTF_8
+    );
     final var request = this.client.post(
                                      TEST_PORT,
                                      TEST_HOST,
@@ -163,8 +166,9 @@ public class CartagoArtifactActionHandlerTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + COUNTER_ARTIFACT_PATH,
-        getEntityMessage.requestUri()
+        this.helper.getUri(COUNTER_ARTIFACT_PATH),
+        getEntityMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
     );
     storeMessage.reply(artifactRepresentation);
     final var cartagoMessage = this.cartagoMessageQueue.take();
@@ -204,7 +208,7 @@ public class CartagoArtifactActionHandlerTest {
           );
           Assertions.assertNull(
               r.bodyAsString(),
-              RESPONSE_BODY_EMPTY_MESSAGE
+              "The response body should be empty"
           );
         })
         .onComplete(ctx.succeedingThenComplete());
@@ -220,8 +224,9 @@ public class CartagoArtifactActionHandlerTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + wrongUri,
-        getEntityMessage.requestUri()
+        this.helper.getUri(wrongUri),
+        getEntityMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
     );
     storeMessage.fail(HttpStatus.SC_NOT_FOUND, "The requested entity was not found");
     request
@@ -243,9 +248,10 @@ public class CartagoArtifactActionHandlerTest {
   @Test
   public void testPostArtifactActionFailsWithWrongActionName(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    final var artifactRepresentation = Files.readString(Path.of(
-        ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()
-    ));
+    final var artifactRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
+        StandardCharsets.UTF_8
+    );
     final var request = this.client.post(
                                      TEST_PORT,
                                      TEST_HOST,
@@ -256,8 +262,9 @@ public class CartagoArtifactActionHandlerTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + ADDER_ARTIFACT_PATH,
-        getEntityMessage.requestUri()
+        this.helper.getUri(ADDER_ARTIFACT_PATH),
+        getEntityMessage.requestUri(),
+        URIS_EQUAL_MESSAGE
     );
     storeMessage.reply(artifactRepresentation);
     final var cartagoMessage = this.cartagoMessageQueue.take();

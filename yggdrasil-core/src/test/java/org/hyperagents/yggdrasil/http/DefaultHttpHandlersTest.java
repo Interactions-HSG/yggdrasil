@@ -10,6 +10,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class DefaultHttpHandlersTest {
   private static final int TEST_PORT = 8080;
@@ -39,11 +41,13 @@ public class DefaultHttpHandlersTest {
   private static final String ARTIFACTS_PATH = MAIN_WORKSPACE_PATH + "/artifacts/";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_PATH = ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME;
-  private static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  public static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
-  public static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
-  public static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
-  public static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
+  private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
+  private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
+  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
+  private static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
+  private static final String TEST_WORKSPACE_FILE = "test_workspace_td.ttl";
+  private static final String NONEXISTENT_NAME = "nonexistent";
+  private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_td.ttl";
 
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
   private WebClient client;
@@ -77,7 +81,7 @@ public class DefaultHttpHandlersTest {
   @Test
   public void testGetWorkspaceSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    this.helper.testGetResourceSucceeds(ctx, "test_workspace_td.ttl", MAIN_WORKSPACE_PATH);
+    this.helper.testGetResourceSucceeds(ctx, TEST_WORKSPACE_FILE, MAIN_WORKSPACE_PATH);
   }
 
   @Test
@@ -94,15 +98,15 @@ public class DefaultHttpHandlersTest {
       throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        WORKSPACES_PATH + "nonexistent",
-        this.client.get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + "nonexistent").send()
+        WORKSPACES_PATH + NONEXISTENT_NAME,
+        this.client.get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME).send()
     );
   }
 
   @Test
   public void testGetArtifactSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    this.helper.testGetResourceSucceeds(ctx, "c0_counter_artifact_td.ttl", COUNTER_ARTIFACT_PATH);
+    this.helper.testGetResourceSucceeds(ctx, COUNTER_ARTIFACT_FILE, COUNTER_ARTIFACT_PATH);
   }
 
   @Test
@@ -119,8 +123,8 @@ public class DefaultHttpHandlersTest {
       throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        ARTIFACTS_PATH + "nonexistent",
-        this.client.get(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + "nonexistent").send()
+        ARTIFACTS_PATH + NONEXISTENT_NAME,
+        this.client.get(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME).send()
     );
   }
 
@@ -129,7 +133,8 @@ public class DefaultHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI())
+            Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
@@ -139,7 +144,7 @@ public class DefaultHttpHandlersTest {
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + WORKSPACES_PATH,
+        this.helper.getUri(WORKSPACES_PATH),
         createResourceMessage.requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -189,7 +194,8 @@ public class DefaultHttpHandlersTest {
                    .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                    .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("test_workspace_td.ttl").toURI())
+                     ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                     StandardCharsets.UTF_8
                    )))
     );
   }
@@ -199,7 +205,8 @@ public class DefaultHttpHandlersTest {
       throws URISyntaxException, IOException, InterruptedException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI())
+          Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+          StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
@@ -209,7 +216,7 @@ public class DefaultHttpHandlersTest {
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + WORKSPACES_PATH,
+        this.helper.getUri(WORKSPACES_PATH),
         createResourceMessage.requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -219,8 +226,9 @@ public class DefaultHttpHandlersTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-      Optional.of("http://" + TEST_HOST + ":" + TEST_PORT +  MAIN_WORKSPACE_PATH),
-      createResourceMessage.parentWorkspaceUri()
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
+        createResourceMessage.parentWorkspaceUri(),
+        URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         expectedRepresentation,
@@ -258,7 +266,8 @@ public class DefaultHttpHandlersTest {
                    .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                    .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI())
+                     ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+                     StandardCharsets.UTF_8
                    )))
     );
   }
@@ -268,7 +277,8 @@ public class DefaultHttpHandlersTest {
       throws URISyntaxException, IOException, InterruptedException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI())
+          Path.of(ClassLoader.getSystemResource(COUNTER_ARTIFACT_FILE).toURI()),
+          StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, ARTIFACTS_PATH)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
@@ -278,7 +288,7 @@ public class DefaultHttpHandlersTest {
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateArtifact) message.body();
     Assertions.assertEquals(
-        "http://" + TEST_HOST + ":" + TEST_PORT + ARTIFACTS_PATH,
+        this.helper.getUri(ARTIFACTS_PATH),
         createResourceMessage.requestUri(),
         URIS_EQUAL_MESSAGE
     );
@@ -323,7 +333,8 @@ public class DefaultHttpHandlersTest {
                    .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                    .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI())
+                     ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+                     StandardCharsets.UTF_8
                    )))
     );
   }
@@ -334,7 +345,7 @@ public class DefaultHttpHandlersTest {
     this.helper.testPutTurtleResourceSucceeds(
         ctx,
         MAIN_WORKSPACE_PATH,
-        "test_workspace_td.ttl"
+        TEST_WORKSPACE_FILE
     );
   }
 
@@ -343,26 +354,28 @@ public class DefaultHttpHandlersTest {
       throws URISyntaxException, IOException, InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        WORKSPACES_PATH + "nonexistent",
-        this.client.put(TEST_PORT, TEST_HOST, WORKSPACES_PATH + "nonexistent")
+        WORKSPACES_PATH + NONEXISTENT_NAME,
+        this.client.put(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
-                   ))))
+                   .sendBuffer(Buffer.buffer(Files.readString(
+                     Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                     StandardCharsets.UTF_8
+                   )))
     );
   }
 
   @Test
   public void testPutTurtleWorkspaceFailsWithoutWebId(final VertxTestContext ctx)
-    throws URISyntaxException, IOException {
+      throws URISyntaxException, IOException {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.put(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
-                   ))))
+                   .sendBuffer(Buffer.buffer(Files.readString(
+                     Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                     StandardCharsets.UTF_8
+                   )))
     );
   }
 
@@ -373,9 +386,10 @@ public class DefaultHttpHandlersTest {
         ctx,
         HttpMethod.PUT,
         MAIN_WORKSPACE_PATH,
-        Buffer.buffer(Files.readString(Path.of(
-          ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
-        )))
+        Buffer.buffer(Files.readString(
+          Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+          StandardCharsets.UTF_8
+        ))
     );
   }
 
@@ -394,7 +408,7 @@ public class DefaultHttpHandlersTest {
     this.helper.testPutTurtleResourceSucceeds(
         ctx,
         COUNTER_ARTIFACT_PATH,
-        "c0_counter_artifact_td.ttl"
+        COUNTER_ARTIFACT_FILE
     );
   }
 
@@ -403,13 +417,14 @@ public class DefaultHttpHandlersTest {
       throws URISyntaxException, IOException, InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        ARTIFACTS_PATH + "nonexistent",
-        this.client.put(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + "nonexistent")
+        ARTIFACTS_PATH + NONEXISTENT_NAME,
+        this.client.put(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()
-                   ))))
+                   .sendBuffer(Buffer.buffer(Files.readString(
+                     Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                     StandardCharsets.UTF_8
+                   )))
     );
   }
 
@@ -420,9 +435,10 @@ public class DefaultHttpHandlersTest {
         ctx,
         this.client.put(TEST_PORT, TEST_HOST, COUNTER_ARTIFACT_PATH)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(Path.of(
-                     ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()
-                   ))))
+                   .sendBuffer(Buffer.buffer(Files.readString(
+                     Path.of(ClassLoader.getSystemResource(COUNTER_ARTIFACT_FILE).toURI()),
+                     StandardCharsets.UTF_8
+                   )))
     );
   }
 
@@ -433,9 +449,10 @@ public class DefaultHttpHandlersTest {
         ctx,
         HttpMethod.PUT,
         COUNTER_ARTIFACT_PATH,
-        Buffer.buffer(Files.readString(Path.of(
-          ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()
-        )))
+        Buffer.buffer(Files.readString(
+          Path.of(ClassLoader.getSystemResource(COUNTER_ARTIFACT_FILE).toURI()),
+          StandardCharsets.UTF_8
+        ))
     );
   }
 
@@ -454,7 +471,7 @@ public class DefaultHttpHandlersTest {
     this.helper.testDeleteTurtleResourceSucceeds(
         ctx,
         MAIN_WORKSPACE_PATH,
-        "test_workspace_td.ttl"
+        TEST_WORKSPACE_FILE
     );
   }
 
@@ -463,8 +480,8 @@ public class DefaultHttpHandlersTest {
       throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        WORKSPACES_PATH + "nonexistent",
-        this.client.delete(TEST_PORT, TEST_HOST, WORKSPACES_PATH + "nonexistent")
+        WORKSPACES_PATH + NONEXISTENT_NAME,
+        this.client.delete(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                    .send()
     );
@@ -493,7 +510,7 @@ public class DefaultHttpHandlersTest {
     this.helper.testDeleteTurtleResourceSucceeds(
         ctx,
         COUNTER_ARTIFACT_PATH,
-        "c0_counter_artifact_td.ttl"
+        COUNTER_ARTIFACT_FILE
     );
   }
 
@@ -502,8 +519,8 @@ public class DefaultHttpHandlersTest {
       throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
-        ARTIFACTS_PATH + "nonexistent",
-        this.client.delete(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + "nonexistent")
+        ARTIFACTS_PATH + NONEXISTENT_NAME,
+        this.client.delete(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                    .send()
     );
@@ -535,7 +552,7 @@ public class DefaultHttpHandlersTest {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
               r.statusCode(),
-              OK_STATUS_MESSAGE
+              "Status code should be OK"
           );
           Assertions.assertEquals(
               "*",

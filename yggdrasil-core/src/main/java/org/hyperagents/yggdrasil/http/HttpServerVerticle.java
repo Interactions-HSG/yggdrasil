@@ -15,8 +15,8 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
  */
 public class HttpServerVerticle extends AbstractVerticle {
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
-
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
+  private static final String TURTLE_CONTENT_TYPE = "text/turtle";
 
   private HttpServer server;
 
@@ -65,7 +65,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.get("/").handler(handler::handleGetEntity);
 
     router.post("/workspaces/")
-          .consumes("text/turtle")
+          .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleCreateEntity);
     router.post("/workspaces/").handler(handler::handleCreateWorkspace);
 
@@ -73,12 +73,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.get(WORKSPACE_PATH).handler(handler::handleGetEntity);
     router.post(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.post(WORKSPACE_PATH)
-          .consumes("text/turtle")
+          .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleCreateEntity);
     router.post(WORKSPACE_PATH).handler(handler::handleCreateSubWorkspace);
     router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.put(WORKSPACE_PATH)
-          .consumes("text/turtle")
+          .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
     router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(WORKSPACE_PATH).handler(handler::handleDeleteEntity);
@@ -93,7 +93,7 @@ public class HttpServerVerticle extends AbstractVerticle {
           .handler(handler::handleFocus);
 
     router.post("/workspaces/:wkspid/artifacts/")
-          .consumes("text/turtle")
+          .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleCreateEntity);
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes(ContentType.APPLICATION_JSON.getMimeType())
@@ -103,7 +103,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
     router.put(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.put(ARTIFACT_PATH)
-          .consumes("text/turtle")
+          .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
     router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
