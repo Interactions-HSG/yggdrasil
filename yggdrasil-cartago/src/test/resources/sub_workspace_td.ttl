@@ -57,11 +57,9 @@
           js:properties [ a js:StringSchema;
               js:propertyName "artifactName"
             ], [ a js:StringSchema;
-              js:propertyName "artifactIri"
-            ], [ a js:StringSchema;
               js:propertyName "callbackIri"
             ];
-          js:required "artifactName", "artifactIri", "callbackIri"
+          js:required "artifactName", "callbackIri"
         ]
     ], [ a td:ActionAffordance;
       td:name "createSubWorkspace";

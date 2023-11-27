@@ -11,7 +11,7 @@
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "joinWorkspace";
       td:hasForm [
-          htv:methodName "PUT";
+          htv:methodName "POST";
           hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
@@ -25,8 +25,7 @@
         ];
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
-              js:propertyName "artifactName";
-              js:enum <http://example.org/Adder>, <http://example.org/Counter>
+              js:propertyName "artifactName"
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;
@@ -48,21 +47,27 @@
           js:properties [ a js:StringSchema;
               js:propertyName "artifactName"
             ], [ a js:StringSchema;
-              js:propertyName "artifactIri"
-            ], [ a js:StringSchema;
               js:propertyName "callbackIri"
             ];
-          js:required "artifactName", "artifactIri", "callbackIri"
+          js:required "artifactName", "callbackIri"
         ]
     ], [ a td:ActionAffordance;
-      td:name "leaveWorkspace";
+      td:name "quitWorkspace";
       td:hasForm [
-          htv:methodName "DELETE";
+          htv:methodName "POST";
           hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ];
+    ], [ a td:ActionAffordance;
+      td:name "createSubWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/test>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ] ;
   td:title "main";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];

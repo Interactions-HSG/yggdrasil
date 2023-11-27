@@ -22,10 +22,8 @@ import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
 import org.hyperagents.yggdrasil.cartago.artifacts.Counter;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
-import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,12 +51,10 @@ public class CartagoVerticleTest {
       "The operation should have succeeded with an Ok status code";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
 
-  private final BlockingQueue<RdfStoreMessage> storeMessageQueue;
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private CartagoMessagebox cartagoMessagebox;
 
   public CartagoVerticleTest() {
-    this.storeMessageQueue = new LinkedBlockingQueue<>();
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
@@ -69,9 +65,6 @@ public class CartagoVerticleTest {
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
-    final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
-    storeMessagebox.init();
-    storeMessagebox.receiveMessages(m -> this.storeMessageQueue.add(m.body()));
     final var notificationMessagebox =
         new HttpNotificationDispatcherMessagebox(vertx.eventBus());
     notificationMessagebox.init();
@@ -315,22 +308,11 @@ public class CartagoVerticleTest {
                               List.of()
                             ))
                           )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              expectedCounterArtifactThingDescription,
-              r.body(),
-              TDS_EQUAL_MESSAGE
-          );
-          try {
-            assertArtifactCreated(
-                MAIN_WORKSPACE_NAME,
-                "c0",
-                expectedCounterArtifactThingDescription
-            );
-          } catch (final Exception e) {
-            ctx.failNow(e);
-          }
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            expectedCounterArtifactThingDescription,
+            r.body(),
+            TDS_EQUAL_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -361,22 +343,11 @@ public class CartagoVerticleTest {
                               List.of(5)
                             ))
                           )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              expectedCounterArtifactThingDescription,
-              r.body(),
-              TDS_EQUAL_MESSAGE
-          );
-          try {
-            assertArtifactCreated(
-                SUB_WORKSPACE_NAME,
-                "c1",
-                expectedCounterArtifactThingDescription
-            );
-          } catch (final Exception e) {
-            ctx.failNow(e);
-          }
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            expectedCounterArtifactThingDescription,
+            r.body(),
+            TDS_EQUAL_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -895,30 +866,6 @@ public class CartagoVerticleTest {
           OPERATION_FAIL_MESSAGE
         ))
         .onComplete(ctx.failingThenComplete());
-  }
-
-  private void assertArtifactCreated(
-      final String workspace,
-      final String artifact,
-      final String expectedCounterArtifactThingDescription
-  ) throws InterruptedException {
-    final var artifactCreationMessage =
-        (RdfStoreMessage.CreateArtifact) this.storeMessageQueue.take();
-    Assertions.assertEquals(
-        getArtifactsIriFromWorkspace(workspace),
-        artifactCreationMessage.requestUri(),
-        URIS_EQUAL_MESSAGE
-    );
-    Assertions.assertEquals(
-        artifact,
-        artifactCreationMessage.artifactName(),
-        "The names should be equal"
-    );
-    Assertions.assertEquals(
-        expectedCounterArtifactThingDescription,
-        artifactCreationMessage.artifactRepresentation(),
-        TDS_EQUAL_MESSAGE
-    );
   }
 
   private void assertNotificationReceived(

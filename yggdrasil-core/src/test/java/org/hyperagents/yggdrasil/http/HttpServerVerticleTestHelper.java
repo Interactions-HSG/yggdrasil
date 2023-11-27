@@ -22,16 +22,16 @@ import org.junit.jupiter.api.Assertions;
 @SuppressFBWarnings("EI_EXPOSE_REP2")
 @SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation")
 public final class HttpServerVerticleTestHelper {
-  public static final int TEST_PORT = 8080;
-  public static final String TEST_HOST = "localhost";
-  public static final String AGENT_WEBID = "X-Agent-WebID";
-  public static final String TEST_AGENT_ID = "test_agent";
-  public static final String TURTLE_CONTENT_TYPE = "text/turtle";
-  public static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
-  public static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
-  public static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  public static final String UNAUTHORIZED_STATUS_MESSAGE = "Status code should be UNAUTHORIZED";
-  public static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
+  private static final int TEST_PORT = 8080;
+  private static final String TEST_HOST = "localhost";
+  private static final String AGENT_WEBID = "X-Agent-WebID";
+  private static final String TEST_AGENT_ID = "test_agent";
+  private static final String TURTLE_CONTENT_TYPE = "text/turtle";
+  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
+  private static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
+  private static final String OK_STATUS_MESSAGE = "Status code should be OK";
+  private static final String UNAUTHORIZED_STATUS_MESSAGE = "Status code should be UNAUTHORIZED";
+  private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
 
   private final WebClient client;
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
