@@ -29,6 +29,8 @@ import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
+import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
+import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -60,7 +62,7 @@ public class CartagoVerticle extends AbstractVerticle {
         .ifPresent(registry::addArtifactTemplates);
 
     this.httpConfig = new HttpInterfaceConfigImpl(this.context.config());
-    this.workspaceRegistry = new WorkspaceRegistry();
+    this.workspaceRegistry = new WorkspaceRegistryImpl();
     this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
     this.agentCredentials = new HashMap<>();
 
@@ -251,7 +253,7 @@ public class CartagoVerticle extends AbstractVerticle {
     LOGGER.info("Done!");
     final var registry = HypermediaArtifactRegistry.getInstance();
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-        this.workspaceRegistry.getUri(workspaceName) + "/artifacts/",
+        this.httpConfig.getArtifactsUri(workspaceName) + "/",
         artifactName,
         registry.getArtifactDescription(artifactName)
     ));

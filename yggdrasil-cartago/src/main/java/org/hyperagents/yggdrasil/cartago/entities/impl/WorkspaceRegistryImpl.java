@@ -1,32 +1,28 @@
-package org.hyperagents.yggdrasil.cartago;
+package org.hyperagents.yggdrasil.cartago.entities.impl;
 
 import cartago.Workspace;
 import cartago.WorkspaceDescriptor;
+import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public final class WorkspaceRegistry {
+public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
   private final Map<String, WorkspaceDescriptor> workspaceDescriptors;
-  private final Map<String, String> workspaceUris;
 
-  public WorkspaceRegistry() {
+  public WorkspaceRegistryImpl() {
     this.workspaceDescriptors = new HashMap<>();
-    this.workspaceUris = new HashMap<>();
   }
 
+  @Override
   public void registerWorkspace(final WorkspaceDescriptor descriptor, final String uri) {
     final var name = descriptor.getWorkspace().getId().getName();
     this.workspaceDescriptors.put(name, descriptor);
-    this.workspaceUris.put(name, uri);
   }
 
+  @Override
   public Optional<Workspace> getWorkspace(final String name) {
     return Optional.ofNullable(this.workspaceDescriptors.get(name))
                    .map(WorkspaceDescriptor::getWorkspace);
-  }
-
-  public String getUri(final String name) {
-    return this.workspaceUris.get(name);
   }
 }
