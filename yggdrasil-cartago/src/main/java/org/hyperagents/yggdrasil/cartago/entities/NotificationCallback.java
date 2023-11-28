@@ -6,6 +6,8 @@ import cartago.events.ArtifactObsEvent;
 import cartago.util.agent.Percept;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -33,18 +35,23 @@ public class NotificationCallback implements ICartagoCallback {
       }
 
       final var source = percept.getArtifactSource();
-      Optional.ofNullable(percept.getPropChanged())
-              .stream()
-              .flatMap(Arrays::stream)
-              .forEach(p -> this.messagebox.sendMessage(
-                  new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                    this.httpConfig.getArtifactUri(
-                      source.getWorkspaceId().getName(),
-                      source.getName()
-                    ),
-                    p.toString()
-                  )
-              ));
+      Stream
+          .of(
+            Optional.ofNullable(percept.getPropChanged()),
+            Optional.ofNullable(percept.getAddedProperties()),
+            Optional.ofNullable(percept.getRemovedProperties())
+          )
+          .flatMap(Optional::stream)
+          .flatMap(Arrays::stream)
+          .forEach(p -> this.messagebox.sendMessage(
+            new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+              this.httpConfig.getArtifactUri(
+                source.getWorkspaceId().getName(),
+                source.getName()
+              ),
+              p.toString()
+            )
+          ));
     }
   }
 }
