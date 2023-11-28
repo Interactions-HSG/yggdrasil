@@ -92,7 +92,9 @@ public class TestMainVerticle {
               "port",
               TEST_PORT,
               "websub-hub-uri",
-              this.getUrl(HUB_PATH)
+              this.getUrl(HUB_PATH),
+              "cartago-port",
+              8088
             ),
             "known-artifacts",
             JsonObject.of(

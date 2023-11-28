@@ -7,6 +7,8 @@ public interface HttpInterfaceConfig {
 
   int getPort();
 
+  int getCartagoPort();
+
   String getBaseUri();
 
   Optional<String> getWebSubHubUri();
