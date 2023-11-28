@@ -74,7 +74,7 @@ public class CartagoVerticle extends AbstractVerticle {
           final var cartagoEnvironment = CartagoEnvironment.getInstance();
           cartagoEnvironment.init(new BasicLogger());
           cartagoEnvironment.installInfrastructureLayer("web");
-          cartagoEnvironment.startInfrastructureService("web");
+          cartagoEnvironment.startInfrastructureService("web", "localhost:3000");
           return null;
         })
         .onComplete(startPromise);
