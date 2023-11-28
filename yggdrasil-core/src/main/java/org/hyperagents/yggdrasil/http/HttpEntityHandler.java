@@ -252,8 +252,26 @@ public class HttpEntityHandler {
 
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
-        NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
-        routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+        if (entityIri.matches("^https?://.*?:[0-9]+/workspaces/$")) {
+          NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
+          routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+        } else {
+          final var actualEntityIri =
+            entityIri.matches("^https?://.*?:[0-9]+/workspaces/.*?/artifacts/$")
+            ? entityIri.substring(0, entityIri.indexOf("/artifacts/"))
+            : entityIri;
+          this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
+            .onSuccess(response -> {
+              NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
+              routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+            })
+            .onFailure(t -> routingContext.fail(
+              t instanceof ReplyException e && e.failureCode() == HttpStatus.SC_NOT_FOUND
+              ? HttpStatus.SC_NOT_FOUND
+              : HttpStatus.SC_INTERNAL_SERVER_ERROR
+            ));
+        }
         break;
       case "unsubscribe":
         NotificationSubscriberRegistry.getInstance().removeCallbackIri(entityIri, callbackIri);
