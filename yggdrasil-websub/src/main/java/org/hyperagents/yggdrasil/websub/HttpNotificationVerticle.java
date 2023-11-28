@@ -28,12 +28,6 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       if (webSubHubUri.isPresent() && !message.body().requestIri().isEmpty()) {
         final var entityIri = message.body().requestIri();
         final var changes = message.body().content();
-        LOGGER.info(
-            "Dispatching notifications for: "
-            + entityIri
-            + ", changes: "
-            + changes
-        );
         final var client = WebClient.create(this.vertx);
 
         NotificationSubscriberRegistry.getInstance().getCallbackIris(entityIri).forEach(
@@ -45,15 +39,11 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                     .putHeader("Link", "<" + entityIri + ">; rel=\"self\"");
 
               if (message.body() instanceof HttpNotificationDispatcherMessage.EntityDeleted) {
-                LOGGER.info(
-                    "Sending notification to: " + callbackIRI + "; changes: entity deleted"
-                );
                 request.send(this.reponseHandler(callbackIRI));
               } else if (
                   message.body()
                     instanceof HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated
               ) {
-                LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
                 request
                     .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
                     .sendBuffer(
@@ -71,7 +61,6 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                       this.reponseHandler(callbackIRI)
                     );
               } else if (!changes.isEmpty()) {
-                LOGGER.info("Sending notification to: " + callbackIRI + "; changes: " + changes);
                 request
                   .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
                   .sendBuffer(Buffer.buffer(changes), this.reponseHandler(callbackIRI));

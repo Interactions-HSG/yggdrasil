@@ -6,15 +6,11 @@ import cartago.events.ArtifactObsEvent;
 import cartago.util.agent.Percept;
 import java.util.Arrays;
 import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 
 public class NotificationCallback implements ICartagoCallback {
-  private static final Logger LOGGER = LogManager.getLogger(NotificationCallback.class);
-
   private final HttpInterfaceConfig httpConfig;
   private final HttpNotificationDispatcherMessagebox messagebox;
 
@@ -40,19 +36,15 @@ public class NotificationCallback implements ICartagoCallback {
       Optional.ofNullable(percept.getPropChanged())
               .stream()
               .flatMap(Arrays::stream)
-              .forEach(p -> {
-                LOGGER.info("percept: " + p.toString());
-                this.messagebox.sendMessage(
-                    new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                      this.httpConfig.getArtifactUri(
-                        source.getWorkspaceId().getName(),
-                        source.getName()
-                      ),
-                      p.toString()
-                    )
-                );
-                LOGGER.info("message sent to notification verticle");
-              });
+              .forEach(p -> this.messagebox.sendMessage(
+                  new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+                    this.httpConfig.getArtifactUri(
+                      source.getWorkspaceId().getName(),
+                      source.getName()
+                    ),
+                    p.toString()
+                  )
+              ));
     }
   }
 }

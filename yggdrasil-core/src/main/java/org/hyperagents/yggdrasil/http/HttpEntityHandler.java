@@ -76,7 +76,6 @@ public class HttpEntityHandler {
 
   public void handleGetEntity(final RoutingContext routingContext) {
     final var entityIri = this.httpConfig.getBaseUri() + routingContext.request().path();
-    LOGGER.info("GET request: " + entityIri);
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
         .onComplete(
@@ -109,7 +108,6 @@ public class HttpEntityHandler {
   }
 
   public void handleCreateArtifact(final RoutingContext context) {
-    LOGGER.info("Received create artifact request");
     final var representation = context.body().asString();
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
@@ -149,7 +147,6 @@ public class HttpEntityHandler {
   }
 
   public void handleFocus(final RoutingContext context) {
-    LOGGER.info("handle focus");
     final var representation = ((JsonObject) Json.decodeValue(context.body().asString()));
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
@@ -213,7 +210,6 @@ public class HttpEntityHandler {
                   ))
               ))
               .onSuccess(cartagoResponse -> {
-                LOGGER.info("CArtAgO operation succeeded: " + artifactName + ", " + actionName);
                 final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
                 if (registry.hasFeedbackParam(artifactName, actionName)) {
                   httpResponse.end(cartagoResponse.body());
@@ -414,7 +410,6 @@ public class HttpEntityHandler {
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
       } else {
-        LOGGER.error("Unacceptable representation.");
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }
     } catch (final Exception e) {
@@ -437,8 +432,6 @@ public class HttpEntityHandler {
   ) {
     return reply -> {
       if (reply.succeeded()) {
-        LOGGER.info("Creating Response");
-
         final var httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
         httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
@@ -457,7 +450,7 @@ public class HttpEntityHandler {
       } else {
         final var exception = ((ReplyException) reply.cause());
 
-        LOGGER.info(exception.getMessage());
+        LOGGER.error(exception);
 
         if (exception.failureCode() == HttpStatus.SC_NOT_FOUND) {
           routingContext.response().setStatusCode(HttpStatus.SC_NOT_FOUND).end();

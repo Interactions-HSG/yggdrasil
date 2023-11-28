@@ -60,7 +60,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             this.handleDeleteEntity(requestIri, message);
         }
       } catch (final IOException | IllegalArgumentException e) {
-        LOGGER.error(e.getMessage());
+        LOGGER.error(e);
         this.replyFailed(message);
       }
     });
@@ -127,13 +127,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
           s -> {
             try {
               final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
-              LOGGER.info("entity created is an artifact");
               final var artifactIri = entityIri.toString();
               final var workspaceIri =
                   RdfModelUtils.createIri(
                     artifactIri.substring(0, artifactIri.indexOf("/artifacts"))
                   );
-              LOGGER.info("Found workspace IRI: " + workspaceIri);
               entityModel.add(
                   entityIri,
                   RdfModelUtils.createIri("https://purl.org/hmas/core/isContainedIn"),
@@ -148,7 +146,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   .getEntityModel(workspaceIri)
                   .ifPresent(workspaceModel -> {
                     try {
-                      LOGGER.info("Found workspace graph: " + workspaceModel);
                       workspaceModel.add(
                           workspaceIri,
                           RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
@@ -247,7 +244,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           )
                         );
                       } catch (final Exception e) {
-                        LOGGER.error(e.getMessage());
+                        LOGGER.error(e);
                       }
                     });
               } else {
@@ -265,14 +262,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     RdfModelUtils.createIri(RDF.TYPE.toString()),
                     RdfModelUtils.createIri("https://purl.org/hmas/core/HypermediaMASPlatform")
                 );
-
-                LOGGER.info("Found platform IRI: " + workspaceIri);
-
                 this.store
                     .getEntityModel(platformIri)
                     .ifPresent(platformModel -> {
                       try {
-                        LOGGER.info("Found platform graph: " + platformModel);
                         platformModel.add(
                             platformIri,
                             RdfModelUtils.createIri("https://purl.org/hmas/core/hosts"),
@@ -291,7 +284,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           )
                         );
                       } catch (final Exception e) {
-                        LOGGER.error(e.getMessage());
+                        LOGGER.error(e);
                       }
                     });
               }
@@ -306,7 +299,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               );
               this.replyWithPayload(message, stringGraphResult);
             } catch (final Exception e) {
-              LOGGER.error(e.getMessage());
+              LOGGER.error(e);
               this.replyFailed(message);
             }
           },
@@ -329,9 +322,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RDFFormat.TURTLE
             );
             this.store.replaceEntityModel(requestIri, replacingModel);
-
-            LOGGER.info("Sending update notification for " + requestIri);
-
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityChanged(
                 requestIri.toString(),
@@ -370,7 +360,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     .getEntityModel(workspaceIri)
                     .ifPresent(workspaceModel -> {
                       try {
-                        LOGGER.info("Found workspace graph: " + workspaceModel);
                         workspaceModel.remove(
                             workspaceIri,
                             RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
@@ -389,7 +378,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           )
                         );
                       } catch (final Exception e) {
-                        LOGGER.error(e.getMessage());
+                        LOGGER.error(e);
                       }
                     });
                 this.store.removeEntityModel(requestIri);
@@ -482,7 +471,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               }
               this.replyWithPayload(message, entityModelString);
             } catch (final IOException e) {
-              LOGGER.error(e.getMessage());
+              LOGGER.error(e);
             }
           },
           () -> this.replyEntityNotFound(message)

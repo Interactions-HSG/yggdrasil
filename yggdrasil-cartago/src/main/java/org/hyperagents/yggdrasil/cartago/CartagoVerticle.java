@@ -161,7 +161,6 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String instantiateWorkspace(final String workspaceName) throws CartagoException {
-    LOGGER.info("Creating workspace " + workspaceName);
     this.workspaceRegistry
         .registerWorkspace(CartagoEnvironment.getInstance()
                                              .getRootWSP()
@@ -176,7 +175,6 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private String instantiateSubWorkspace(final String workspaceName, final String subWorkspaceName)
       throws CartagoException {
-    LOGGER.info("Creating workspace " + subWorkspaceName + " under " + workspaceName);
     this.workspaceRegistry
         .registerWorkspace(this.workspaceRegistry
                                .getWorkspace(workspaceName)
@@ -191,7 +189,6 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private void joinWorkspace(final String agentUri, final String workspaceName)
       throws CartagoException {
-    LOGGER.info(agentUri + " joins workspace " + workspaceName);
     this.workspaceRegistry
         .getWorkspace(workspaceName)
         .orElseThrow()
@@ -207,8 +204,6 @@ public class CartagoVerticle extends AbstractVerticle {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
-    LOGGER.info("artifact IRI: " + artifactIri);
-    LOGGER.info("callback IRI: " + callbackIri);
     NotificationSubscriberRegistry.getInstance().addCallbackIri(artifactIri, callbackIri);
     workspace
         .focus(
@@ -239,7 +234,6 @@ public class CartagoVerticle extends AbstractVerticle {
       final Optional<Object[]> params
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
-    LOGGER.info("Creating artifact " + artifactName + " of class: " + artifactClass);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace.makeArtifact(
         this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
@@ -247,7 +241,6 @@ public class CartagoVerticle extends AbstractVerticle {
         artifactClass,
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
-    LOGGER.info("Done!");
   }
 
   private Future<Optional<String>> doAction(
@@ -273,14 +266,6 @@ public class CartagoVerticle extends AbstractVerticle {
             );
           })
           .orElseGet(() -> new Op(action));
-    LOGGER.info(
-        "Performing action "
-        + action
-        + " on artifact "
-        + artifactName
-        + " with params: "
-        + Arrays.asList(operation.getParamValues())
-    );
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace.execOp(0L,
