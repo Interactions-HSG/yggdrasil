@@ -14,20 +14,20 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
-import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 public final class RdfModelUtils {
   private RdfModelUtils() {}
 
+  @SuppressWarnings("removal")
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
       final var writer = Rio.createWriter(format, out);
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
-              .set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN)
+              .set(JSONLDSettings.JSONLD_MODE, org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
               .set(JSONLDSettings.USE_NATIVE_TYPES, true)
               .set(JSONLDSettings.OPTIMIZE, true);
       }

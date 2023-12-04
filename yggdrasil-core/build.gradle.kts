@@ -47,7 +47,7 @@ dependencies {
 
   implementation(libs.wot.td.java)
 
-  implementation(libs.httpcomponents.core)
+  implementation(libs.httpcomponents.core5)
 
   implementation(libs.guava)
   implementation(libs.gson)
@@ -56,9 +56,10 @@ dependencies {
   implementation(libs.rdf4j.repository.sail)
   implementation(libs.rdf4j.sail.memory)
   implementation(libs.rdf4j.sail.nativerdf)
+  implementation(libs.rdf4j.queryresultio.sparqljson)
+  implementation(libs.rdf4j.queryresultio.text)
 
-  implementation(libs.commons.rdf.api)
-  implementation(libs.commons.rdf.rdf4j)
+  implementation(libs.apache.commons.lang3)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
@@ -67,9 +68,6 @@ dependencies {
   testImplementation(platform(libs.junit.platform))
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.vertx.junit5)
-
-  testImplementation(libs.httpcomponents.httpclient5)
-  testImplementation(libs.httpcomponents.httpclient5.fluent)
 
   testCompileOnly(libs.spotbugs.annotations)
 }

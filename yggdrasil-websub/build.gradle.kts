@@ -37,7 +37,7 @@ dependencies {
   implementation(libs.vertx.core)
   implementation(libs.vertx.web.client)
 
-  implementation(libs.httpcomponents.core)
+  implementation(libs.httpcomponents.core5)
 
   implementation(libs.guava)
 
