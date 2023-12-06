@@ -51,7 +51,9 @@ public final class JsonObjectUtils {
     try {
       return Optional.ofNullable(valueExtractor.apply(jsonObject, key));
     } catch (final ClassCastException e) {
-      logger.accept("Exception raised while reading rdf-store config properties: " + e.getMessage());
+      logger.accept(
+          "Exception raised while reading rdf-store config properties: " + e.getMessage()
+      );
     }
     return Optional.empty();
   }

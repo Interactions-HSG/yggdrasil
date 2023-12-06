@@ -63,7 +63,7 @@ public class RdfStoreVerticleCreateTest {
             StandardCharsets.UTF_8
           )
         ))
-        .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
+        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 
@@ -80,7 +80,7 @@ public class RdfStoreVerticleCreateTest {
             StandardCharsets.UTF_8
           )
         ))
-        .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
+        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 

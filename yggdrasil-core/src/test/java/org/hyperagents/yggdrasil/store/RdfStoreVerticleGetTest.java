@@ -59,7 +59,7 @@ public class RdfStoreVerticleGetTest {
   public void testMalformedUri(final VertxTestContext ctx) {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity("nonexistent"))
-        .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
+        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 }

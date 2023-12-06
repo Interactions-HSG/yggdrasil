@@ -42,6 +42,17 @@ public class QueryHttpHandlersTest {
                        a hmas:Workspace.
         }
         """;
+  private static final String QUERY_ENDPOINT = "/query";
+  private static final String CSV_MIME_TYPE = "text/csv";
+  private static final String XML_MIME_TYPE = "application/sparql-results+xml";
+  private static final String QUERY_PARAM = "query";
+  private static final String DEFAULT_GRAPH_URI_PARAM = "default-graph-uri";
+  private static final String NAMED_GRAPH_URI_PARAM = "named-graph-uri";
+  private static final String CONTENT_TYPES_EQUAL_MESSAGE = "The content types should be equal";
+  private static final String BAD_REQUEST_STATUS_CODE_MESSAGE = "Status code should be BAD REQUEST";
+  private static final String BAD_REQUEST_CONTENT = "Bad Request";
+  private static final String RESULT_STATUS_CODE_MESSAGE =
+      "The query result should contain the status code";
 
   private final BlockingQueue<Message<RdfStoreMessage>> messageQueue;
   private WebClient client;
@@ -67,18 +78,18 @@ public class QueryHttpHandlersTest {
   @Test
   public void testGetQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
-      this.client.get(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "application/sparql-results+xml")
-                 .addQueryParam("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                 .addQueryParam(
-                   "default-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .addQueryParam(
-                   "named-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .send();
+        this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+                   .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+                   .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                   .addQueryParam(
+                     DEFAULT_GRAPH_URI_PARAM,
+                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                   )
+                   .addQueryParam(
+                     NAMED_GRAPH_URI_PARAM,
+                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                   )
+                   .send();
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(
@@ -97,9 +108,9 @@ public class QueryHttpHandlersTest {
         "The named graph URIs should be equal"
     );
     Assertions.assertEquals(
-        "application/sparql-results+xml",
+        XML_MIME_TYPE,
         queryMessage.responseContentType(),
-        "The content types should be equal"
+        CONTENT_TYPES_EQUAL_MESSAGE
     );
     final var result =
         """
@@ -119,9 +130,9 @@ public class QueryHttpHandlersTest {
               "Status code should be OK"
           );
           Assertions.assertEquals(
-            "application/sparql-results+xml",
-            r.getHeader(HttpHeaders.CONTENT_TYPE),
-            "The content types should be equal"
+              XML_MIME_TYPE,
+              r.getHeader(HttpHeaders.CONTENT_TYPE),
+              CONTENT_TYPES_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
               result,
@@ -134,108 +145,108 @@ public class QueryHttpHandlersTest {
 
   @Test
   public void testGetQueryRequestWithBody(final VertxTestContext ctx) {
-      this.client.get(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "application/sparql-results+xml")
-                 .addQueryParam("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                 .addQueryParam(
-                   "default-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .addQueryParam(
-                   "named-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .sendBuffer(Buffer.buffer(QUERY))
-                 .onSuccess(r -> {
-                   Assertions.assertEquals(
-                       HttpStatus.SC_BAD_REQUEST,
-                       r.statusCode(),
-                       "Status code should be BAD REQUEST"
-                   );
-                   Assertions.assertEquals(
-                       "Bad Request",
-                       r.bodyAsString(),
-                       "The query result should contain the status code"
-                   );
-                 })
-                 .onComplete(ctx.succeedingThenComplete());
+    this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+               .addQueryParam(
+                 DEFAULT_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .addQueryParam(
+                 NAMED_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .sendBuffer(Buffer.buffer(QUERY))
+               .onSuccess(r -> {
+                 Assertions.assertEquals(
+                     HttpStatus.SC_BAD_REQUEST,
+                     r.statusCode(),
+                     BAD_REQUEST_STATUS_CODE_MESSAGE
+                 );
+                 Assertions.assertEquals(
+                     BAD_REQUEST_CONTENT,
+                     r.bodyAsString(),
+                     RESULT_STATUS_CODE_MESSAGE
+                 );
+               })
+               .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testGetQueryRequestWithMultipleQueries(final VertxTestContext ctx) {
-      this.client.get(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "application/sparql-results+xml")
-                 .addQueryParam("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                 .addQueryParam("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                 .addQueryParam(
-                   "default-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .addQueryParam(
-                   "named-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .send()
-                 .onSuccess(r -> {
-                   Assertions.assertEquals(
-                       HttpStatus.SC_BAD_REQUEST,
-                       r.statusCode(),
-                       "Status code should be BAD REQUEST"
-                   );
-                   Assertions.assertEquals(
-                       "Bad Request",
-                       r.bodyAsString(),
-                       "The query result should contain the status code"
-                   );
-                 })
-                 .onComplete(ctx.succeedingThenComplete());
+    this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+               .addQueryParam(
+                 DEFAULT_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .addQueryParam(
+                 NAMED_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .send()
+               .onSuccess(r -> {
+                 Assertions.assertEquals(
+                     HttpStatus.SC_BAD_REQUEST,
+                     r.statusCode(),
+                     BAD_REQUEST_STATUS_CODE_MESSAGE
+                 );
+                 Assertions.assertEquals(
+                     BAD_REQUEST_CONTENT,
+                     r.bodyAsString(),
+                     RESULT_STATUS_CODE_MESSAGE
+                 );
+               })
+               .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testGetQueryRequestWithoutQuery(final VertxTestContext ctx) {
-      this.client.get(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "application/sparql-results+xml")
-                 .addQueryParam(
-                   "default-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .addQueryParam(
-                   "named-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .send()
-                 .onSuccess(r -> {
-                   Assertions.assertEquals(
-                       HttpStatus.SC_BAD_REQUEST,
-                       r.statusCode(),
-                       "Status code should be BAD REQUEST"
-                   );
-                   Assertions.assertEquals(
-                       "Bad Request",
-                       r.bodyAsString(),
-                       "The query result should contain the status code"
-                   );
-                 })
-                 .onComplete(ctx.succeedingThenComplete());
+    this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+               .addQueryParam(
+                 DEFAULT_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .addQueryParam(
+                 NAMED_GRAPH_URI_PARAM,
+                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+               )
+               .send()
+               .onSuccess(r -> {
+                 Assertions.assertEquals(
+                     HttpStatus.SC_BAD_REQUEST,
+                     r.statusCode(),
+                     BAD_REQUEST_STATUS_CODE_MESSAGE
+                 );
+                 Assertions.assertEquals(
+                     BAD_REQUEST_CONTENT,
+                     r.bodyAsString(),
+                     RESULT_STATUS_CODE_MESSAGE
+                 );
+               })
+               .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testPostFormQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
-      this.client.post(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "text/csv")
-                 .sendForm(
-                   MultiMap.caseInsensitiveMultiMap()
-                           .add("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                           .add(
-                             "default-graph-uri",
-                             URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                           )
-                           .add(
-                             "named-graph-uri",
-                             URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                           )
-                 );
+        this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+                   .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
+                   .sendForm(
+                     MultiMap.caseInsensitiveMultiMap()
+                             .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                             .add(
+                               DEFAULT_GRAPH_URI_PARAM,
+                               URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                             )
+                             .add(
+                               NAMED_GRAPH_URI_PARAM,
+                               URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                             )
+                   );
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(
@@ -254,9 +265,9 @@ public class QueryHttpHandlersTest {
         "The named graph URIs should be equal"
     );
     Assertions.assertEquals(
-        "text/csv",
+        CSV_MIME_TYPE,
         queryMessage.responseContentType(),
-        "The content types should be equal"
+        CONTENT_TYPES_EQUAL_MESSAGE
     );
     final var result = "true";
     message.reply(result);
@@ -268,9 +279,9 @@ public class QueryHttpHandlersTest {
               "Status code should be OK"
           );
           Assertions.assertEquals(
-            "text/csv",
-            r.getHeader(HttpHeaders.CONTENT_TYPE),
-            "The content types should be equal"
+              CSV_MIME_TYPE,
+              r.getHeader(HttpHeaders.CONTENT_TYPE),
+              CONTENT_TYPES_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
               result,
@@ -283,18 +294,18 @@ public class QueryHttpHandlersTest {
 
   @Test
   public void testPostFormQueryRequestWithMultipleQueries(final VertxTestContext ctx) {
-    this.client.post(TEST_PORT, TEST_HOST, "/query")
-               .putHeader(HttpHeaders.ACCEPT, "text/csv")
+    this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+               .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
                .sendForm(
                  MultiMap.caseInsensitiveMultiMap()
-                         .add("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                         .add("query", URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                         .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                         .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
                          .add(
-                           "default-graph-uri",
+                           DEFAULT_GRAPH_URI_PARAM,
                            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
                          )
                          .add(
-                           "named-graph-uri",
+                           NAMED_GRAPH_URI_PARAM,
                            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
                          )
                )
@@ -302,29 +313,29 @@ public class QueryHttpHandlersTest {
                  Assertions.assertEquals(
                      HttpStatus.SC_BAD_REQUEST,
                      r.statusCode(),
-                     "Status code should be BAD REQUEST"
+                     BAD_REQUEST_STATUS_CODE_MESSAGE
                  );
                  Assertions.assertEquals(
-                    "Bad Request",
-                    r.bodyAsString(),
-                    "The query result should contain the status code"
+                     BAD_REQUEST_CONTENT,
+                     r.bodyAsString(),
+                     RESULT_STATUS_CODE_MESSAGE
                  );
-              })
+               })
               .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testPostFormQueryRequestWithoutQuery(final VertxTestContext ctx) {
-    this.client.post(TEST_PORT, TEST_HOST, "/query")
-               .putHeader(HttpHeaders.ACCEPT, "text/csv")
+    this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+               .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
                .sendForm(
                  MultiMap.caseInsensitiveMultiMap()
                          .add(
-                           "default-graph-uri",
+                           DEFAULT_GRAPH_URI_PARAM,
                            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
                          )
                          .add(
-                           "named-graph-uri",
+                           NAMED_GRAPH_URI_PARAM,
                            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
                          )
                )
@@ -332,32 +343,32 @@ public class QueryHttpHandlersTest {
                  Assertions.assertEquals(
                      HttpStatus.SC_BAD_REQUEST,
                      r.statusCode(),
-                     "Status code should be BAD REQUEST"
+                     BAD_REQUEST_STATUS_CODE_MESSAGE
                  );
                  Assertions.assertEquals(
-                    "Bad Request",
-                    r.bodyAsString(),
-                    "The query result should contain the status code"
+                     BAD_REQUEST_CONTENT,
+                     r.bodyAsString(),
+                     RESULT_STATUS_CODE_MESSAGE
                  );
-              })
+               })
               .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testSimplePostQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
-      this.client.post(TEST_PORT, TEST_HOST, "/query")
-                 .putHeader(HttpHeaders.ACCEPT, "text/tab-separated-values")
-                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/sparql-query")
-                 .addQueryParam(
-                   "default-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .addQueryParam(
-                   "named-graph-uri",
-                   URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                 )
-                 .sendBuffer(Buffer.buffer(QUERY));
+        this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
+                   .putHeader(HttpHeaders.ACCEPT, "text/tab-separated-values")
+                   .putHeader(HttpHeaders.CONTENT_TYPE, "application/sparql-query")
+                   .addQueryParam(
+                     DEFAULT_GRAPH_URI_PARAM,
+                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                   )
+                   .addQueryParam(
+                     NAMED_GRAPH_URI_PARAM,
+                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                   )
+                   .sendBuffer(Buffer.buffer(QUERY));
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(
@@ -378,7 +389,7 @@ public class QueryHttpHandlersTest {
     Assertions.assertEquals(
         "text/tab-separated-values",
         queryMessage.responseContentType(),
-        "The content types should be equal"
+        CONTENT_TYPES_EQUAL_MESSAGE
     );
     final var result = "true";
     message.reply(result);
@@ -390,9 +401,9 @@ public class QueryHttpHandlersTest {
               "Status code should be OK"
           );
           Assertions.assertEquals(
-            "text/tab-separated-values",
-            r.getHeader(HttpHeaders.CONTENT_TYPE),
-            "The content types should be equal"
+              "text/tab-separated-values",
+              r.getHeader(HttpHeaders.CONTENT_TYPE),
+              CONTENT_TYPES_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
               result,

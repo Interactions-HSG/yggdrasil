@@ -35,14 +35,10 @@ public class Rdf4jStore implements RdfStore {
   private final Repository repository;
   private final RepositoryConnection connection;
 
-  Rdf4jStore(final Sail store) throws IOException {
+  Rdf4jStore(final Sail store) {
     this.repository = new SailRepository(store);
-    try {
-      this.repository.init();
-      this.connection = this.repository.getConnection();
-    } catch (final RepositoryException e) {
-      throw new IOException(e);
-    }
+    this.repository.init();
+    this.connection = this.repository.getConnection();
   }
 
   @Override

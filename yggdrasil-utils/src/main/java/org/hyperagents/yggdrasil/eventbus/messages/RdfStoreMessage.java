@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,5 +30,27 @@ public sealed interface RdfStoreMessage {
       List<String> defaultGraphUris,
       List<String> namedGraphUris,
       String responseContentType
-  ) implements RdfStoreMessage {}
+  ) implements RdfStoreMessage {
+    public QueryKnowledgeGraph(
+        final String query,
+        final List<String> defaultGraphUris,
+        final List<String> namedGraphUris,
+        final String responseContentType
+    ) {
+      this.query = query;
+      this.defaultGraphUris = new ArrayList<>(defaultGraphUris);
+      this.namedGraphUris = new ArrayList<>(namedGraphUris);
+      this.responseContentType = responseContentType;
+    }
+
+    @Override
+    public List<String> defaultGraphUris() {
+      return new ArrayList<>(this.defaultGraphUris);
+    }
+
+    @Override
+    public List<String> namedGraphUris() {
+      return new ArrayList<>(this.namedGraphUris);
+    }
+  }
 }

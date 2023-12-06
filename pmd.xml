@@ -157,7 +157,11 @@
 	<rule ref="category/java/bestpractices.xml/UnusedLocalVariable" />
 	<rule ref="category/java/errorprone.xml/UnusedNullCheckInEquals" />
 	<rule ref="category/java/bestpractices.xml/UnusedPrivateField" />
-	<rule ref="category/java/bestpractices.xml/UnusedPrivateMethod" />
+	<rule ref="category/java/bestpractices.xml/UnusedPrivateMethod">
+    <properties>
+      <property name="ignoredAnnotations" value="java.lang.Deprecated,cartago.OPERATION,cartago.INTERNAL_OPERATION,cartago.GUARD" />
+    </properties>
+  </rule>
 	<rule ref="category/java/performance.xml/UseArrayListInsteadOfVector" />
 	<rule ref="category/java/performance.xml/UseArraysAsList" />
 	<rule ref="category/java/bestpractices.xml/UseCollectionIsEmpty" />

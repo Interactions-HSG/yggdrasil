@@ -100,7 +100,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         return RdfStoreFactory.createFilesystemStore(
                           JsonObjectUtils
                               .getJsonObject(this.config(), "rdf-store", LOGGER::error)
-                              .flatMap(c -> JsonObjectUtils.getString(c, "store-path", LOGGER::error))
+                              .flatMap(c -> JsonObjectUtils.getString(
+                                c,
+                                "store-path",
+                                LOGGER::error
+                              ))
                               .orElse("data/")
                         );
                       }
