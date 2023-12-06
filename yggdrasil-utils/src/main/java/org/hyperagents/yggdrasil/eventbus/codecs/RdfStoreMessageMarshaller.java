@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.eventbus.codecs;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -8,7 +9,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
 public class RdfStoreMessageMarshaller
@@ -70,12 +73,24 @@ public class RdfStoreMessageMarshaller
         );
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
       }
-      case RdfStoreMessage.QueryKnowledgeGraph(String query) -> {
+      case RdfStoreMessage.QueryKnowledgeGraph(
+          String query,
+          List<String> defaultGraphUris,
+          List<String> namedGraphUris,
+          String responseContentType
+        ) -> {
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.QUERY.getName()
         );
-        json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), query);
+        json.addProperty(MessageFields.QUERY.getName(), query);
+        final var encodedDefaultGraphUris = new JsonArray();
+        defaultGraphUris.forEach(encodedDefaultGraphUris::add);
+        json.add(MessageFields.DEFAULT_GRAPH_URIS.getName(), encodedDefaultGraphUris);
+        final var encodedNamedGraphUris = new JsonArray();
+        namedGraphUris.forEach(encodedNamedGraphUris::add);
+        json.add(MessageFields.NAMED_GRAPH_URIS.getName(), encodedNamedGraphUris);
+        json.addProperty(MessageFields.CONTENT_TYPE.getName(), responseContentType);
       }
     }
     return json;
@@ -118,6 +133,22 @@ public class RdfStoreMessageMarshaller
       );
       case DELETE_ENTITY -> new RdfStoreMessage.DeleteEntity(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+      );
+      case QUERY -> new RdfStoreMessage.QueryKnowledgeGraph(
+        jsonObject.get(MessageFields.QUERY.getName()).getAsString(),
+        jsonObject.get(MessageFields.DEFAULT_GRAPH_URIS.getName())
+                  .getAsJsonArray()
+                  .asList()
+                  .stream()
+                  .map(JsonElement::getAsString)
+                  .collect(Collectors.toList()),
+        jsonObject.get(MessageFields.NAMED_GRAPH_URIS.getName())
+                  .getAsJsonArray()
+                  .asList()
+                  .stream()
+                  .map(JsonElement::getAsString)
+                  .collect(Collectors.toList()),
+        jsonObject.get(MessageFields.CONTENT_TYPE.getName()).getAsString()
       );
       default -> throw new JsonParseException("The request method is not valid");
     };

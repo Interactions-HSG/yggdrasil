@@ -16,6 +16,8 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
@@ -343,14 +346,78 @@ public class HttpEntityHandler {
   }
 
   public void handleQuery(final RoutingContext routingContext) {
+    final var request = routingContext.request();
+    if (request.method().equals(HttpMethod.GET)) {
+      final var queryParams = request.params();
+      final var queries = queryParams.getAll("query");
+      if (!routingContext.body().isEmpty() || queries.size() != 1) {
+        routingContext.fail(HttpStatus.SC_BAD_REQUEST);
+        return;
+      }
+      this.handleQueryMessage(
+          routingContext,
+          URLDecoder.decode(queries.getFirst(), StandardCharsets.UTF_8),
+          queryParams.getAll("default-graph-uri"),
+          queryParams.getAll("named-graph-uri"),
+          request.getHeader(HttpHeaders.ACCEPT)
+      );
+    } else if (request.getHeader(HttpHeaders.CONTENT_TYPE)
+                      .equals(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())) {
+      final var formParams = request.formAttributes();
+      final var queries = formParams.getAll("query");
+      if (queries.size() != 1) {
+        routingContext.fail(HttpStatus.SC_BAD_REQUEST);
+        return;
+      }
+      this.handleQueryMessage(
+          routingContext,
+          URLDecoder.decode(queries.getFirst(), StandardCharsets.UTF_8),
+          formParams.getAll("default-graph-uri"),
+          formParams.getAll("named-graph-uri"),
+          request.getHeader(HttpHeaders.ACCEPT)
+      );
+    } else {
+      final var queryParams = request.params();
+      this.handleQueryMessage(
+          routingContext,
+          routingContext.body().asString(),
+          queryParams.getAll("default-graph-uri"),
+          queryParams.getAll("named-graph-uri"),
+          request.getHeader(HttpHeaders.ACCEPT)
+      );
+    }
+  }
+
+  private void handleQueryMessage(
+      final RoutingContext routingContext,
+      final String query,
+      final List<String> defaultGraphUris,
+      final List<String> namedGraphUris,
+      final String resultContentType
+  ) {
     this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(routingContext.body().asString()))
+        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
+            query,
+            defaultGraphUris.stream()
+                            .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
+                            .toList(),
+            namedGraphUris.stream()
+                          .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
+                          .toList(),
+            Optional.ofNullable(resultContentType).orElse("application/sparql-results+json")
+        ))
         .onSuccess(r ->
           routingContext.response()
-                        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                        .putHeader(HttpHeaders.CONTENT_TYPE, resultContentType)
                         .end(r.body())
         )
-        .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+        .onFailure(t -> {
+          if (t instanceof ReplyException e) {
+            routingContext.fail(e.failureCode());
+          } else {
+            routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+          }
+        });
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {
