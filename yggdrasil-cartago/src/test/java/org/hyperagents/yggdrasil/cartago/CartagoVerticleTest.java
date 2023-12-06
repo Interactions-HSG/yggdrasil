@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
 import org.hyperagents.yggdrasil.cartago.artifacts.Counter;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
