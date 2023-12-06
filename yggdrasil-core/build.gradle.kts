@@ -89,7 +89,7 @@ tasks {
   }
 
   named<JavaExec>("run") {
-    args = mutableListOf("run", mainVerticleName, "--launcher-class=${application.mainClass}")
+    args = mutableListOf("run", mainVerticleName, "--launcher-class=${application.mainClass.get()}")
   }
 
   compileJava {
