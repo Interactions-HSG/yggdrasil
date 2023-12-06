@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
+import java.util.List;
 import java.util.Optional;
 
 public sealed interface RdfStoreMessage {
@@ -23,5 +24,10 @@ public sealed interface RdfStoreMessage {
       String workspaceRepresentation
   ) implements RdfStoreMessage {}
 
-  record QueryKnowledgeGraph(String query) implements RdfStoreMessage {}
+  record QueryKnowledgeGraph(
+      String query,
+      List<String> defaultGraphUris,
+      List<String> namedGraphUris,
+      String responseContentType
+  ) implements RdfStoreMessage {}
 }

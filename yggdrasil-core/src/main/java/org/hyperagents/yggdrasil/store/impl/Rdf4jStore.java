@@ -1,133 +1,173 @@
 package org.hyperagents.yggdrasil.store.impl;
 
-import io.vertx.core.json.JsonObject;
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import org.apache.commons.rdf.api.Dataset;
-import org.apache.commons.rdf.rdf4j.RDF4J;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.query.BooleanQuery;
+import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResultHandlerException;
+import org.eclipse.rdf4j.query.impl.SimpleDataset;
+import org.eclipse.rdf4j.query.resultio.sparqljson.SPARQLBooleanJSONWriter;
+import org.eclipse.rdf4j.query.resultio.sparqljson.SPARQLResultsJSONWriter;
+import org.eclipse.rdf4j.query.resultio.sparqlxml.SPARQLBooleanXMLWriter;
+import org.eclipse.rdf4j.query.resultio.sparqlxml.SPARQLResultsXMLWriter;
+import org.eclipse.rdf4j.query.resultio.text.BooleanTextWriter;
+import org.eclipse.rdf4j.query.resultio.text.csv.SPARQLResultsCSVWriter;
+import org.eclipse.rdf4j.query.resultio.text.tsv.SPARQLResultsTSVWriter;
 import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.sail.Sail;
 import org.hyperagents.yggdrasil.store.RdfStore;
-import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 
 public class Rdf4jStore implements RdfStore {
-  private static final Logger LOGGER = LogManager.getLogger(RdfStore.class);
-
   private final Repository repository;
-  private final Dataset dataset;
-  private final RDF4J rdf4j;
+  private final RepositoryConnection connection;
 
-  Rdf4jStore(final JsonObject config) {
-    this.rdf4j = new RDF4J();
-    this.repository =
-      Optional.ofNullable(config)
-              .flatMap(c -> JsonObjectUtils.getBoolean(c, "in-memory", LOGGER))
-              .orElse(false)
-      ? new SailRepository(new NativeStore(new File(
-          JsonObjectUtils.getString(config, "store-path", LOGGER).orElse("data/")
-        )))
-      : new SailRepository(new MemoryStore());
-    this.dataset = this.rdf4j.asDataset(
-      this.repository,
-      RDF4J.Option.handleInitAndShutdown
-    );
+  Rdf4jStore(final Sail store) throws IOException {
+    this.repository = new SailRepository(store);
+    try {
+      this.repository.init();
+      this.connection = this.repository.getConnection();
+    } catch (final RepositoryException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
-  public boolean containsEntityModel(final IRI entityIri) {
-    return this.dataset.contains(
-      Optional.of(this.rdf4j.asRDFTerm(entityIri)),
-      null,
-      null,
-      null
-    );
-  }
-
-  @Override
-  public Optional<Model> getEntityModel(final IRI entityIri) {
-    return !this.containsEntityModel(entityIri)
-           ? Optional.empty()
-           : this.dataset
-                 .getGraph(this.rdf4j.asRDFTerm(entityIri))
-                 .map(g -> new LinkedHashModel(g.stream()
-                                                .map(this.rdf4j::asStatement)
-                                                .collect(Collectors.toSet())));
-  }
-
-  @Override
-  public void addEntityModel(final IRI entityIri, final Model entityModel) {
-    entityModel.forEach(t -> {
-      final var triple = this.rdf4j.asTriple(t);
-      this.dataset.add(
-          this.rdf4j.asRDFTerm(entityIri),
-          triple.getSubject(),
-          triple.getPredicate(),
-          triple.getObject()
+  public boolean containsEntityModel(final IRI entityIri) throws IOException {
+    try {
+      return this.connection.hasStatement(
+        null,
+        null,
+        null,
+        false,
+        entityIri
       );
-    });
+    } catch (final RepositoryException e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
-  public void replaceEntityModel(final IRI entityIri, final Model entityModel) {
+  public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
+    try {
+      return Optional.of(QueryResults.asModel(
+                         this.connection.getStatements(null, null, null, entityIri)
+                     ))
+                     .filter(r -> !r.isEmpty());
+    } catch (final RepositoryException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public void addEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
+    try {
+      this.connection.add(entityModel, entityIri);
+    } catch (final RepositoryException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public void replaceEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
     this.removeEntityModel(entityIri);
     this.addEntityModel(entityIri, entityModel);
   }
 
   @Override
-  public void removeEntityModel(final IRI entityIri) {
-    this.dataset.remove(Optional.of(this.rdf4j.asRDFTerm(entityIri)), null, null, null);
-  }
-
-  @Override
-  public void close() {
+  public void removeEntityModel(final IRI entityIri) throws IOException {
     try {
-      this.dataset.close();
-    } catch (final Exception e) {
-      LOGGER.error(e);
+      this.connection.clear(entityIri);
+    } catch (final RepositoryException e) {
+      throw new IOException(e);
     }
   }
 
   @Override
-  public Set<Map<String, Optional<String>>> queryGraph(final String query)
-      throws IllegalArgumentException, IOException {
-    try (var connection = this.repository.getConnection()) {
-      try (var result = connection.prepareTupleQuery(query).evaluate()) {
-        return QueryResults.asSet(result)
-                           .stream()
-                           .map(s -> result.getBindingNames()
-                                           .stream()
-                                           .map(n -> Map.entry(
-                                             n,
-                                             Optional.ofNullable(s.getValue(n))
-                                                     .map(Value::stringValue)
-                                           ))
-                                           .collect(Collectors.toMap(
-                                             Map.Entry::getKey,
-                                             Map.Entry::getValue
-                                           )))
-                           .collect(Collectors.toSet());
-      } catch (final IllegalArgumentException | MalformedQueryException e) {
-        throw new IllegalArgumentException(e);
-      } catch (final QueryEvaluationException e) {
-        throw new IOException(e);
-      }
+  public void close() throws IOException {
+    try {
+      this.connection.close();
+      this.repository.shutDown();
     } catch (final RepositoryException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
+  public String queryGraph(
+      final String query,
+      final List<String> defaultGraphUris,
+      final List<String> namedGraphUris,
+      final String responseContentType
+  ) throws IllegalArgumentException, IOException {
+    try (var out = new ByteArrayOutputStream()) {
+      final var preparedQuery = this.connection.prepareQuery(query);
+      final var originalQueryDataset =
+          Optional.ofNullable(preparedQuery.getDataset()).orElse(new SimpleDataset());
+      final var queryDataset = new SimpleDataset();
+      originalQueryDataset
+          .getDefaultRemoveGraphs()
+          .forEach(queryDataset::addDefaultRemoveGraph);
+      queryDataset.setDefaultInsertGraph(originalQueryDataset.getDefaultInsertGraph());
+      if (!defaultGraphUris.isEmpty()) {
+        defaultGraphUris.forEach(s -> queryDataset.addDefaultGraph(RdfModelUtils.createIri(s)));
+      } else {
+        originalQueryDataset.getDefaultGraphs().forEach(queryDataset::addDefaultGraph);
+      }
+      if (!namedGraphUris.isEmpty()) {
+        namedGraphUris.forEach(s -> queryDataset.addNamedGraph(RdfModelUtils.createIri(s)));
+      } else {
+        originalQueryDataset.getNamedGraphs().forEach(queryDataset::addNamedGraph);
+      }
+      preparedQuery.setDataset(queryDataset);
+      if (preparedQuery instanceof TupleQuery preparedTupleQuery) {
+        preparedTupleQuery.evaluate(
+            responseContentType.equals("application/sparql-results+xml")
+            ? new SPARQLResultsXMLWriter(out)
+            : (responseContentType.equals("application/sparql-results+json")
+               ? new SPARQLResultsJSONWriter(out)
+               : (responseContentType.equals("text/tab-separated-values")
+                  ? new SPARQLResultsTSVWriter(out)
+                  : new SPARQLResultsCSVWriter(out)
+                 )
+              )
+        );
+      } else if (preparedQuery instanceof BooleanQuery preparedBooleanQuery) {
+        (
+          responseContentType.equals("application/sparql-results+xml")
+          ? new SPARQLBooleanXMLWriter(out)
+          : (responseContentType.equals("application/sparql-results+json")
+             ? new SPARQLBooleanJSONWriter(out)
+             : new BooleanTextWriter(out)
+            )
+        )
+        .handleBoolean(preparedBooleanQuery.evaluate());
+      } else if (preparedQuery instanceof GraphQuery preparedGraphQuery) {
+        out.writeBytes(
+            RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
+                                        RDFFormat.TURTLE)
+                         .getBytes(StandardCharsets.UTF_8)
+        );
+      }
+      return out.toString(StandardCharsets.UTF_8);
+    } catch (final MalformedQueryException e) {
+      throw new IllegalArgumentException(e);
+    } catch (final RepositoryException
+                   | QueryEvaluationException
+                   | TupleQueryResultHandlerException e) {
       throw new IOException(e);
     }
   }

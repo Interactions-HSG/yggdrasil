@@ -55,7 +55,7 @@ public class CartagoVerticle extends AbstractVerticle {
   public void start(final Promise<Void> startPromise) {
     final var registry = HypermediaArtifactRegistry.getInstance();
     JsonObjectUtils
-        .getJsonObject(this.config(), "known-artifacts", LOGGER)
+        .getJsonObject(this.config(), "known-artifacts", LOGGER::error)
         .ifPresent(registry::addArtifactTemplates);
 
     this.httpConfig = new HttpInterfaceConfigImpl(this.context.config());
@@ -78,6 +78,18 @@ public class CartagoVerticle extends AbstractVerticle {
               "web",
               this.httpConfig.getHost() + ":" + this.httpConfig.getCartagoPort()
           );
+          cartagoEnvironment
+              .getRootWSP()
+              .getWorkspace()
+              .makeArtifact(
+                this.getAgentId(
+                  this.getAgentCredential(this.httpConfig.getBaseUri() + "/agents/yggdrasil"),
+                  cartagoEnvironment.getRootWSP().getId()
+                ),
+                "knowledge_graph",
+                "org.hyperagents.yggdrasil.cartago.artifacts.KnowledgeGraph",
+                new ArtifactConfig()
+              );
           return null;
         })
         .onComplete(startPromise);
@@ -131,11 +143,11 @@ public class CartagoVerticle extends AbstractVerticle {
           this.instantiateArtifact(
               agentId,
               workspaceName,
-              JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER)
+              JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
                              .flatMap(registry::getArtifactTemplate)
                              .orElseThrow(),
               artifactName,
-              JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER)
+              JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
                              .map(i -> i.getList().toArray())
           );
           message.reply(registry.getArtifactDescription(artifactName));
