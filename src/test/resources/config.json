@@ -1,12 +1,9 @@
 {
   "http-config" : {
     "host" : "localhost",
-    "port" : 8080,
-    "base-uri" : "http://localhost:8080/",
-    "websub-hub-uri" : "http://localhost:8080/hub/",
-    "cartago-port": 8088
-  },
-  "known-artifacts" : {
-    "http://example.org/KnowledgeGraph": "org.hyperagents.yggdrasil.cartago.artifacts.KnowledgeGraph"
+    "port" : 3000,
+    "base-uri" : "http://localhost:3000/",
+    "websub-hub-uri" : "http://localhost:3000/hub/",
+    "cartago-port": 3001
   }
 }

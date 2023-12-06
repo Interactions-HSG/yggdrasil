@@ -33,6 +33,11 @@ public class RdfStoreVerticleQueryTest {
   private static final String PLATFORM_URI = "http://localhost:8080/";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
   private static final String CONTENTS_EQUAL_MESSAGE = "The contents should be equal";
+  private static final String CSV_MIME_TYPE = "text/csv";
+  private static final String JSON_MIME_TYPE = "application/sparql-results+json";
+  private static final String WORKSPACE_BINDING = "workspace";
+  private static final String SUB_WORKSPACE_URI = "http://localhost:8080/workspaces/sub";
+  private static final String C0_ARTIFACT_URI = "http://localhost:8080/workspaces/sub/artifacts/c0";
 
   private RdfStoreMessagebox messagebox;
 
@@ -84,7 +89,7 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testCsvTupleQueryRequest(final VertxTestContext ctx) {
-    this.testTupleQueryRequest(List.of(), List.of(), "text/csv")
+    this.testTupleQueryRequest(List.of(), List.of(), CSV_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
           """
             workspace,artifact\r
@@ -122,13 +127,13 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testJsonTupleQueryRequest(final VertxTestContext ctx) {
-    this.testTupleQueryRequest(List.of(), List.of(), "application/sparql-results+json")
+    this.testTupleQueryRequest(List.of(), List.of(), JSON_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
           JsonObject.of(
             "head",
             JsonObject.of(
               "vars",
-              JsonArray.of("workspace", "artifact")
+              JsonArray.of(WORKSPACE_BINDING, "artifact")
             ),
             "results",
             JsonObject.of(
@@ -143,12 +148,12 @@ public class RdfStoreVerticleQueryTest {
                              "value",
                              "c0"
                            ),
-                           "workspace",
+                           WORKSPACE_BINDING,
                            JsonObject.of(
                              "type",
                              "uri",
                              "value",
-                             "http://localhost:8080/workspaces/sub"
+                             SUB_WORKSPACE_URI
                            )
                          ))
                          .toArray()
@@ -162,68 +167,16 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
-  public void testXmlTupleQueryRequest(final VertxTestContext ctx) {
+  public void testXmlTupleQueryRequest(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var result =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("xml_tuple_query_result.xml").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.testTupleQueryRequest(List.of(), List.of(), "application/sparql-results+xml")
         .onSuccess(r -> Assertions.assertEquals(
-          """
-            <?xml version='1.0' encoding='UTF-8'?>
-            <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
-            	<head>
-            		<variable name='workspace'/>
-            		<variable name='artifact'/>
-            	</head>
-            	<results>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='artifact'>
-            				<literal>c0</literal>
-            			</binding>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            	</results>
-            </sparql>
-            """,
+          result,
           r.body(),
           CONTENTS_EQUAL_MESSAGE
         ))
@@ -234,11 +187,11 @@ public class RdfStoreVerticleQueryTest {
   public void testTupleQueryRequestWithDefaultUris(final VertxTestContext ctx) {
     this.testTupleQueryRequest(
             List.of(
-              "http://localhost:8080/workspaces/sub",
-              "http://localhost:8080/workspaces/sub/artifacts/c0"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             ),
             List.of(),
-            "text/csv"
+        CSV_MIME_TYPE
         )
         .onSuccess(r -> Assertions.assertEquals(
             """
@@ -259,10 +212,10 @@ public class RdfStoreVerticleQueryTest {
     this.testTupleQueryRequest(
             List.of(),
             List.of(
-              "http://localhost:8080/workspaces/sub",
-              "http://localhost:8080/workspaces/sub/artifacts/c0"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             ),
-            "text/csv"
+        CSV_MIME_TYPE
         )
         .onSuccess(r -> Assertions.assertEquals(
             "workspace,artifact\r\n",
@@ -301,7 +254,7 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testCsvBooleanQueryRequest(final VertxTestContext ctx) {
-    this.testBooleanQueryRequest(List.of(), List.of(), "text/csv")
+    this.testBooleanQueryRequest(List.of(), List.of(), CSV_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
             "true",
             r.body(),
@@ -323,7 +276,7 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testJsonBooleanQueryRequest(final VertxTestContext ctx) {
-    this.testBooleanQueryRequest(List.of(), List.of(), "application/sparql-results+json")
+    this.testBooleanQueryRequest(List.of(), List.of(), JSON_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
           JsonObject.of(
             "head",
@@ -338,17 +291,16 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
-  public void testXmlBooleanQueryRequest(final VertxTestContext ctx) {
+  public void testXmlBooleanQueryRequest(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var result =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("xml_boolean_query_result.xml").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.testBooleanQueryRequest(List.of(), List.of(), "application/sparql-results+xml")
         .onSuccess(r -> Assertions.assertEquals(
-          """
-            <?xml version='1.0' encoding='UTF-8'?>
-            <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
-            	<head>
-            	</head>
-            	<boolean>true</boolean>
-            </sparql>
-            """,
+          result,
           r.body(),
           CONTENTS_EQUAL_MESSAGE
         ))
@@ -357,7 +309,7 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testBooleanQueryRequestWithDefaultUris(final VertxTestContext ctx) {
-    this.testBooleanQueryRequest(List.of("http://localhost:8080/"), List.of(), "text/csv")
+    this.testBooleanQueryRequest(List.of("http://localhost:8080/"), List.of(), CSV_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
           "false",
           r.body(),
@@ -368,7 +320,7 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testBooleanQueryRequestWithNamedUris(final VertxTestContext ctx) {
-    this.testBooleanQueryRequest(List.of(), List.of("http://localhost:8080/"), "text/csv")
+    this.testBooleanQueryRequest(List.of(), List.of("http://localhost:8080/"), CSV_MIME_TYPE)
         .onSuccess(r -> Assertions.assertEquals(
           "false",
           r.body(),
@@ -404,10 +356,13 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
-  public void testGraphQueryRequest(final VertxTestContext ctx)
+  public void testSimpleGraphQueryRequest(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
-        Files.readString(Path.of(ClassLoader.getSystemResource("simple_query_result.ttl").toURI()));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("simple_query_result.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.testGraphQueryRequest(List.of(), List.of())
         .onSuccess(r -> Assertions.assertEquals(
             result,
@@ -421,11 +376,14 @@ public class RdfStoreVerticleQueryTest {
   public void testGraphQueryRequestWithDefaultUris(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
-        Files.readString(Path.of(ClassLoader.getSystemResource("default_query_result.ttl").toURI()));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("default_query_result.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.testGraphQueryRequest(
             List.of(
-              "http://localhost:8080/workspaces/sub",
-              "http://localhost:8080/workspaces/sub/artifacts/c0"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             ),
             List.of()
         )
@@ -441,12 +399,15 @@ public class RdfStoreVerticleQueryTest {
   public void testGraphQueryRequestWithNamedUris(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
-        Files.readString(Path.of(ClassLoader.getSystemResource("named_query_result.ttl").toURI()));
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("named_query_result.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.testGraphQueryRequest(
             List.of(),
             List.of(
-              "http://localhost:8080/workspaces/sub",
-              "http://localhost:8080/workspaces/sub/artifacts/c0"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             )
         )
         .onSuccess(r -> Assertions.assertEquals(
@@ -485,25 +446,11 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testCsvQueryRequestWithUnassignedBinding(final VertxTestContext ctx) {
-    this.messagebox
-        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
-          """
-            PREFIX td: <https://www.w3.org/2019/wot/td#>
-            PREFIX hmas: <https://purl.org/hmas/core/>
-            PREFIX ex: <http://example.org/>
-
-            SELECT ?workspace ?artifact
-            WHERE {
-                ?workspace hmas:contains [
-                               a hmas:Artifact, ex:Counter
-                           ];
-                           a hmas:Workspace.
-            }
-            """,
+    this.testQueryRequestWithUnassignedBinding(
             List.of(),
             List.of(),
-            "text/csv"
-        ))
+            CSV_MIME_TYPE
+        )
         .onSuccess(r -> Assertions.assertEquals(
           """
             workspace,artifact\r
@@ -522,31 +469,17 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testJsonQueryRequestWithUnassignedBinding(final VertxTestContext ctx) {
-    this.messagebox
-        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
-          """
-            PREFIX td: <https://www.w3.org/2019/wot/td#>
-            PREFIX hmas: <https://purl.org/hmas/core/>
-            PREFIX ex: <http://example.org/>
-
-            SELECT ?workspace ?artifact
-            WHERE {
-                ?workspace hmas:contains [
-                               a hmas:Artifact, ex:Counter
-                           ];
-                           a hmas:Workspace.
-            }
-            """,
+    this.testQueryRequestWithUnassignedBinding(
             List.of(),
             List.of(),
-            "application/sparql-results+json"
-        ))
+            JSON_MIME_TYPE
+        )
         .onSuccess(r -> Assertions.assertEquals(
           JsonObject.of(
             "head",
             JsonObject.of(
               "vars",
-              JsonArray.of("workspace", "artifact")
+              JsonArray.of(WORKSPACE_BINDING, "artifact")
             ),
             "results",
             JsonObject.of(
@@ -554,12 +487,12 @@ public class RdfStoreVerticleQueryTest {
               JsonArray.of(
                 IntStream.range(0, 6)
                          .mapToObj(i -> JsonObject.of(
-                           "workspace",
+                           WORKSPACE_BINDING,
                            JsonObject.of(
                              "type",
                              "uri",
                              "value",
-                             "http://localhost:8080/workspaces/sub"
+                             SUB_WORKSPACE_URI
                            )
                          ))
                          .toArray()
@@ -574,25 +507,11 @@ public class RdfStoreVerticleQueryTest {
 
   @Test
   public void testTsvQueryRequestWithUnassignedBinding(final VertxTestContext ctx) {
-    this.messagebox
-        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
-          """
-            PREFIX td: <https://www.w3.org/2019/wot/td#>
-            PREFIX hmas: <https://purl.org/hmas/core/>
-            PREFIX ex: <http://example.org/>
-
-            SELECT ?workspace ?artifact
-            WHERE {
-                ?workspace hmas:contains [
-                               a hmas:Artifact, ex:Counter
-                           ];
-                           a hmas:Workspace.
-            }
-            """,
+    this.testQueryRequestWithUnassignedBinding(
             List.of(),
             List.of(),
             "text/tab-separated-values"
-        ))
+        )
         .onSuccess(r -> Assertions.assertEquals(
           """
             ?workspace\t?artifact
@@ -610,72 +529,50 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
-  public void testXmlQueryRequestWithUnassignedBinding(final VertxTestContext ctx) {
-    this.messagebox
-        .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
-          """
-            PREFIX td: <https://www.w3.org/2019/wot/td#>
-            PREFIX hmas: <https://purl.org/hmas/core/>
-            PREFIX ex: <http://example.org/>
-
-            SELECT ?workspace ?artifact
-            WHERE {
-                ?workspace hmas:contains [
-                               a hmas:Artifact, ex:Counter
-                           ];
-                           a hmas:Workspace.
-            }
-            """,
+  public void testXmlQueryRequestWithUnassignedBinding(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var result =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("xml_unbinded_query_result.xml").toURI()),
+          StandardCharsets.UTF_8
+        );
+    this.testQueryRequestWithUnassignedBinding(
             List.of(),
             List.of(),
             "application/sparql-results+xml"
-        ))
+        )
         .onSuccess(r -> Assertions.assertEquals(
-          """
-            <?xml version='1.0' encoding='UTF-8'?>
-            <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
-            	<head>
-            		<variable name='workspace'/>
-            		<variable name='artifact'/>
-            	</head>
-            	<results>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            		<result>
-            			<binding name='workspace'>
-            				<uri>http://localhost:8080/workspaces/sub</uri>
-            			</binding>
-            		</result>
-            	</results>
-            </sparql>
-            """,
+          result,
           r.body(),
           CONTENTS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
+  }
+
+  private Future<Message<String>> testQueryRequestWithUnassignedBinding(
+      final List<String> defaultGraphUris,
+      final List<String> namedGraphUris,
+      final String responseContentType
+  ) {
+    return this.messagebox
+               .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
+                   """
+                     PREFIX td: <https://www.w3.org/2019/wot/td#>
+                     PREFIX hmas: <https://purl.org/hmas/core/>
+                     PREFIX ex: <http://example.org/>
+
+                     SELECT ?workspace ?artifact
+                     WHERE {
+                         ?workspace hmas:contains [
+                                        a hmas:Artifact, ex:Counter
+                                    ];
+                                    a hmas:Workspace.
+                     }
+                     """,
+                   defaultGraphUris,
+                   namedGraphUris,
+                   responseContentType
+               ));
   }
 
   @Test
@@ -689,7 +586,7 @@ public class RdfStoreVerticleQueryTest {
             """,
             List.of(),
             List.of(),
-            "application/sparql-results+json"
+          JSON_MIME_TYPE
         ))
         .onFailure(t -> Assertions.assertEquals(
             HttpStatus.SC_BAD_REQUEST,

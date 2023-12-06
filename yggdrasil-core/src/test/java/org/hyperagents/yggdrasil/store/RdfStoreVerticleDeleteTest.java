@@ -66,7 +66,7 @@ public class RdfStoreVerticleDeleteTest {
   public void testMalformedUri(final VertxTestContext ctx) {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.DeleteEntity("nonexistent"))
-        .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
+        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 

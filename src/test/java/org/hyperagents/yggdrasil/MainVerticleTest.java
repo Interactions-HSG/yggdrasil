@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class TestMainVerticle {
+public class MainVerticleTest {
   private static final String TEST_AGENT_ID = "test_agent";
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
   private static final String HINT_HEADER = "Slug";
@@ -60,7 +60,7 @@ public class TestMainVerticle {
   private WebClient client;
   private int promiseIndex;
 
-  public TestMainVerticle() {
+  public MainVerticleTest() {
     this.callbackMessages =
       Stream.generate(Promise::<Map.Entry<String, String>>promise)
             .limit(8)

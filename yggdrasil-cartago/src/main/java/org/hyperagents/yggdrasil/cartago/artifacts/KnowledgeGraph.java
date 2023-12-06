@@ -8,14 +8,14 @@ import cartago.OpFeedbackParam;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
-import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
-import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 public class KnowledgeGraph extends Artifact {
   private final Vertx vertx = Vertx.currentContext().owner();
@@ -28,27 +28,27 @@ public class KnowledgeGraph extends Artifact {
       final var response = (JsonObject) Json.decodeValue(this.executeQuery(query));
       final var bindings = this.getBindingsNames(response);
       result.set(
-        JsonObjectUtils.getJsonObject(response, "results", this::failed)
-                       .flatMap(rs -> JsonObjectUtils.getJsonArray(
-                         rs,
-                         "bindings",
-                         this::failed
-                       ))
-                       .stream()
-                       .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
-                       .map(r ->
-                         bindings.stream()
-                                 .flatMap(n ->
-                                   JsonObjectUtils.getJsonObject(r, n, this::failed)
-                                                  .flatMap(b ->
-                                                      JsonObjectUtils
-                                                        .getString(b, "value", this::failed)
-                                                  )
-                                                  .map(v -> new String[] {n, v})
-                                                  .stream())
-                                 .toArray(String[][]::new)
-                       )
-                       .toArray(String[][][]::new)
+          JsonObjectUtils.getJsonObject(response, "results", this::failed)
+                         .flatMap(rs -> JsonObjectUtils.getJsonArray(
+                           rs,
+                           "bindings",
+                           this::failed
+                         ))
+                         .stream()
+                         .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
+                         .map(r ->
+                           bindings.stream()
+                                   .flatMap(n ->
+                                     JsonObjectUtils.getJsonObject(r, n, this::failed)
+                                                    .flatMap(b ->
+                                                        JsonObjectUtils
+                                                          .getString(b, "value", this::failed)
+                                                    )
+                                                    .map(v -> new String[] {n, v})
+                                                    .stream())
+                                   .toArray(String[][]::new)
+                         )
+                         .toArray(String[][][]::new)
       );
     } catch (final Exception e) {
       this.failed(e.getMessage());

@@ -75,7 +75,7 @@ public class RdfStoreVerticleUpdateTest {
             StandardCharsets.UTF_8
           )
         ))
-        .onFailure(RdfStoreVerticleTestHelpers::assertInternalServerError)
+        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 
