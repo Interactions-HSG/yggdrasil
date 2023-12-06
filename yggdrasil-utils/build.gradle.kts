@@ -31,7 +31,6 @@ java {
 }
 
 dependencies {
-  implementation(libs.log4j.core)
   implementation(libs.vertx.core)
 
   implementation(libs.rdf4j.model)
