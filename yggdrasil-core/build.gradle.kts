@@ -42,6 +42,7 @@ dependencies {
 
   implementation(libs.log4j.core)
   implementation(libs.vertx.core)
+  implementation(libs.vertx.config)
   implementation(libs.vertx.web)
   implementation(libs.vertx.web.client)
 
