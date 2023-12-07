@@ -15,9 +15,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.hyperagents.yggdrasil.cartago.CartagoVerticle;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -139,18 +141,21 @@ public class KnowledgeGraphArtifactTest {
     this.completionPromises
         .get(1)
         .future()
-        .onSuccess(r -> Assertions.assertArrayEquals(
-          new String[][][] {
-            new String[][]{
-              new String[]{"name", TEST_WORKSPACE_NAME},
-              new String[]{"uri", "http://localhost:8080/workspaces/test"}
-            },
-            new String[][]{
-              new String[]{"name", "sub"},
-              new String[]{"uri", "http://localhost:8080/workspaces/sub"}
-            }
-          },
-          (String[][][]) r,
+        .onSuccess(r -> Assertions.assertEquals(
+          Set.of(
+            List.of(
+              List.of("name", TEST_WORKSPACE_NAME),
+              List.of("uri", "http://localhost:8080/workspaces/test")
+            ),
+            List.of(
+              List.of("name", "sub"),
+              List.of("uri", "http://localhost:8080/workspaces/sub")
+            )
+          ),
+          Arrays.stream((String[][][]) r)
+                .map(Arrays::asList)
+                .map(e -> e.stream().map(Arrays::asList).toList())
+                .collect(Collectors.toSet()),
           RESULTS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
