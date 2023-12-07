@@ -364,10 +364,9 @@ public class RdfStoreVerticleQueryTest {
           StandardCharsets.UTF_8
         );
     this.testGraphQueryRequest(List.of(), List.of())
-        .onSuccess(r -> Assertions.assertEquals(
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
             result,
-            r.body(),
-            CONTENTS_EQUAL_MESSAGE
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -387,10 +386,9 @@ public class RdfStoreVerticleQueryTest {
             ),
             List.of()
         )
-        .onSuccess(r -> Assertions.assertEquals(
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           result,
-          r.body(),
-          CONTENTS_EQUAL_MESSAGE
+          r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }

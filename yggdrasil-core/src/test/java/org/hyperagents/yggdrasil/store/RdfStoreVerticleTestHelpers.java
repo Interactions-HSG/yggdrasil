@@ -45,23 +45,6 @@ public final class RdfStoreVerticleTestHelpers {
     );
   }
 
-  public static void assertInternalServerError(final Throwable t) {
-    if (t instanceof ReplyException r) {
-      Assertions.assertEquals(
-          HttpStatus.SC_INTERNAL_SERVER_ERROR,
-          r.failureCode(),
-          "Status code should be INTERNAL SERVER ERROR"
-      );
-    } else {
-      Assertions.fail(BAD_EXCEPTION_MESSAGE);
-    }
-    Assertions.assertEquals(
-        "Store request failed.",
-        t.getMessage(),
-        MESSAGES_EQUAL_MESSAGE
-    );
-  }
-
   public static void assertBadRequest(final Throwable t) {
     if (t instanceof ReplyException r) {
       Assertions.assertEquals(
