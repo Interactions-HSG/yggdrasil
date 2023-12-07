@@ -1,17 +1,17 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.util.ArrayList;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-@RunWith(VertxUnitRunner.class)
 public class CartagoDataBundleTest {
   private static final String TEST_STRING = "bla";
+  private static final String VALUES_EQUAL = "The values should be equal";
+  private static final String TYPES_EQUAL = "The types should be equal";
+  private static final String LENGTHS_EQUAL = "The lengths should be equal";
 
   @Test
-  public void testDeserializeArrayOfPrimitives(final TestContext tc) {
+  public void testDeserializeArrayOfPrimitives() {
     final var payload =
         "[ [ \"java.lang.Integer\", \"1\" ], "
         + "[ \"java.lang.Double\", \"1.5\" ], "
@@ -19,50 +19,50 @@ public class CartagoDataBundleTest {
         + "[ \"java.lang.Boolean\", \"true\" ] ]";
 
     final var params = CartagoDataBundle.fromJson(payload);
-    tc.assertEquals(4, params.length);
+    Assertions.assertEquals(4, params.length, LENGTHS_EQUAL);
 
-    tc.assertTrue(params[0] instanceof Integer);
-    tc.assertEquals(1, params[0]);
+    Assertions.assertTrue(params[0] instanceof Integer, TYPES_EQUAL);
+    Assertions.assertEquals(1, params[0], VALUES_EQUAL);
 
-    tc.assertTrue(params[1] instanceof Double);
-    tc.assertInRange(1.5, (Double) params[1], 0.001);
+    Assertions.assertTrue(params[1] instanceof Double, TYPES_EQUAL);
+    Assertions.assertEquals(1.5, (Double) params[1], 0.001, VALUES_EQUAL);
 
-    tc.assertEquals("my_test", params[2]);
+    Assertions.assertEquals("my_test", params[2], VALUES_EQUAL);
 
-    tc.assertTrue(params[3] instanceof Boolean);
-    tc.assertTrue((Boolean) params[3]);
+    Assertions.assertTrue(params[3] instanceof Boolean, TYPES_EQUAL);
+    Assertions.assertTrue((Boolean) params[3], VALUES_EQUAL);
   }
 
   @Test
-  public void testDeserializeArrayIntegerDouble(final TestContext tc) {
+  public void testDeserializeArrayIntegerDouble() {
     final var payload = "[ [ \"java.lang.Integer\", \"2\" ], [ \"java.lang.Double\", \"2\" ] ]";
 
     final var params = CartagoDataBundle.fromJson(payload);
-    tc.assertEquals(2, params.length);
+    Assertions.assertEquals(2, params.length, LENGTHS_EQUAL);
 
-    tc.assertTrue(params[0] instanceof Integer);
-    tc.assertEquals(2, params[0]);
+    Assertions.assertTrue(params[0] instanceof Integer, TYPES_EQUAL);
+    Assertions.assertEquals(2, params[0], VALUES_EQUAL);
 
-    tc.assertTrue(params[1] instanceof Double);
-    tc.assertInRange(2, (Double) params[1], 0.001);
+    Assertions.assertTrue(params[1] instanceof Double, TYPES_EQUAL);
+    Assertions.assertEquals(2, (Double) params[1], 0.001, VALUES_EQUAL);
   }
 
   @Test
-  public void testDeserializeArrayDuplicateItems(final TestContext tc) {
+  public void testDeserializeArrayDuplicateItems() {
     final var payload = "[ [ \"java.lang.Integer\", \"2\" ], [ \"java.lang.Integer\", \"2\" ] ]";
 
     final var params = CartagoDataBundle.fromJson(payload);
-    tc.assertEquals(2, params.length);
+    Assertions.assertEquals(2, params.length, LENGTHS_EQUAL);
 
-    tc.assertTrue(params[0] instanceof Integer);
-    tc.assertEquals(2, params[0]);
+    Assertions.assertTrue(params[0] instanceof Integer, TYPES_EQUAL);
+    Assertions.assertEquals(2, params[0], VALUES_EQUAL);
 
-    tc.assertTrue(params[1] instanceof Integer);
-    tc.assertEquals(2, params[1]);
+    Assertions.assertTrue(params[1] instanceof Integer, TYPES_EQUAL);
+    Assertions.assertEquals(2, params[1], VALUES_EQUAL);
   }
 
   @Test
-  public void testDeserializeNestedArraysOneLevel(final TestContext tc) {
+  public void testDeserializeNestedArraysOneLevel() {
     final var payload =
         "[ [\"java.lang.Integer\", \"1\" ],"
         + "[\"java.util.List\", [[\"java.lang.Double\",\"1.5\"],[\"java.lang.Boolean\",\"true\"]]],"
@@ -71,25 +71,25 @@ public class CartagoDataBundleTest {
         + "\"] ]";
 
     final var params = CartagoDataBundle.fromJson(payload);
-    tc.assertEquals(3, params.length);
+    Assertions.assertEquals(3, params.length, LENGTHS_EQUAL);
 
-    tc.assertTrue(params[0] instanceof Integer);
-    tc.assertEquals(1, params[0]);
-    tc.assertEquals(TEST_STRING, params[2]);
+    Assertions.assertTrue(params[0] instanceof Integer, TYPES_EQUAL);
+    Assertions.assertEquals(1, params[0], VALUES_EQUAL);
+    Assertions.assertEquals(TEST_STRING, params[2], VALUES_EQUAL);
 
-    tc.assertTrue(params[1] instanceof Object[]);
+    Assertions.assertTrue(params[1] instanceof Object[], TYPES_EQUAL);
     final var innerArray = (Object[]) params[1];
-    tc.assertEquals(2, innerArray.length);
+    Assertions.assertEquals(2, innerArray.length, LENGTHS_EQUAL);
 
-    tc.assertTrue(innerArray[0] instanceof Double);
-    tc.assertInRange(1.5, (Double) innerArray[0], 0.001);
+    Assertions.assertTrue(innerArray[0] instanceof Double, TYPES_EQUAL);
+    Assertions.assertEquals(1.5, (Double) innerArray[0], 0.001, VALUES_EQUAL);
 
-    tc.assertTrue(innerArray[1] instanceof Boolean);
-    tc.assertTrue((Boolean) innerArray[1]);
+    Assertions.assertTrue(innerArray[1] instanceof Boolean, TYPES_EQUAL);
+    Assertions.assertTrue((Boolean) innerArray[1], VALUES_EQUAL);
   }
 
   @Test
-  public void testDeserializeNestedArraysThreeLevels(final TestContext tc) {
+  public void testDeserializeNestedArraysThreeLevels() {
     final var payload =
         "[[\"java.util.List\",[[\"java.util.List\",[[\"java.lang.Double\",\"2.5\"],"
         + "[\"java.lang.String\",\""
@@ -97,22 +97,22 @@ public class CartagoDataBundleTest {
         + "\"]]]]]]";
 
     final var level1 = CartagoDataBundle.fromJson(payload);
-    tc.assertEquals(1, level1.length);
-    tc.assertTrue(level1[0] instanceof Object[]);
+    Assertions.assertEquals(1, level1.length, LENGTHS_EQUAL);
+    Assertions.assertTrue(level1[0] instanceof Object[], TYPES_EQUAL);
 
     final var level2 = (Object[]) level1[0];
-    tc.assertEquals(1, level2.length);
-    tc.assertTrue(level2[0] instanceof Object[]);
+    Assertions.assertEquals(1, level2.length, LENGTHS_EQUAL);
+    Assertions.assertTrue(level2[0] instanceof Object[], TYPES_EQUAL);
 
     final var level3 = (Object[]) level2[0];
-    tc.assertEquals(2, level3.length);
-    tc.assertTrue(level3[0] instanceof Double);
-    tc.assertInRange(2.5, (Double) level3[0], 0.001);
-    tc.assertEquals(TEST_STRING, level3[1]);
+    Assertions.assertEquals(2, level3.length, LENGTHS_EQUAL);
+    Assertions.assertTrue(level3[0] instanceof Double, TYPES_EQUAL);
+    Assertions.assertEquals(2.5, (Double) level3[0], 0.001, VALUES_EQUAL);
+    Assertions.assertEquals(TEST_STRING, level3[1], VALUES_EQUAL);
   }
 
   @Test
-  public void testSerializeNestedArraysOneLevel(final TestContext tc) {
+  public void testSerializeNestedArraysOneLevel() {
     final var level2 = new ArrayList<>();
     level2.add(1.5);
     level2.add(true);
@@ -129,11 +129,15 @@ public class CartagoDataBundleTest {
         + TEST_STRING
         + "\"]]";
 
-    tc.assertEquals(expected, CartagoDataBundle.toJson(level1));
+    Assertions.assertEquals(
+        expected,
+        CartagoDataBundle.toJson(level1),
+        "The serialization should be correct"
+    );
   }
 
   @Test
-  public void testSerializeNestedArraysThreeLevels(final TestContext tc) {
+  public void testSerializeNestedArraysThreeLevels() {
     final var level3 = new ArrayList<>();
     level3.add(2.5);
     level3.add(TEST_STRING);
@@ -150,6 +154,10 @@ public class CartagoDataBundleTest {
         + TEST_STRING
         + "\"]]]]]]";
 
-    tc.assertEquals(expected, CartagoDataBundle.toJson(level1));
+    Assertions.assertEquals(
+        expected,
+        CartagoDataBundle.toJson(level1),
+        "The serialization should be correct"
+    );
   }
 }

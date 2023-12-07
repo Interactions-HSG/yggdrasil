@@ -7,9 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import java.lang.reflect.Type;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.lang.reflect.Type;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 
 public class HttpNotificationDispatcherMessageMarshaller

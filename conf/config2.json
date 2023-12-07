@@ -1,8 +1,0 @@
-{
-  "http-config" : {
-    "host" : "0.0.0.0",
-    "port" : 8085,
-    "base-uri" : "http://localhost:8085/",
-    "websub-hub-uri" : "http://localhost:8085/hub/"
-  }
-}

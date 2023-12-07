@@ -1,11 +1,18 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -15,33 +22,33 @@ import java.util.Set;
 public final class HypermediaArtifactRegistry {
   private static HypermediaArtifactRegistry REGISTRY;
 
-  // Maps a workspace name to the name of the hosting environment
-  private final Map<String, String> workspaceEnvironmentMap;
-
   // Maps an artifact type IRI to the canonical names of the corresponding CArtAgO artifact class
   // E.g.: "https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D" ->
   // "org.hyperagents.yggdrasil.cartago.artifacts.PhantomX3D"
   private final Map<String, String> artifactSemanticTypes;
-
   // Maps the Cname of a CArtAgO artifact to a semantic description of the artifact's HTTP interface
   // exposed by Yggdrasil
   private final Map<String, String> artifactTemplateDescriptions;
-
   // Maps an HTTP request to an action name. The HTTP request is currently identified by
   // [HTTP_Method] + [HTTP_Target_URI].
   private final Map<String, String> artifactActionRouter;
-
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactApiKeys;
-
-  private String httpPrefix = "http://localhost:8080";
+  private final Map<String, String> artifactNames;
+  private final SetMultimap<String, String> feedbackActions;
+  private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
+  private int counter;
 
   private HypermediaArtifactRegistry() {
-    this.workspaceEnvironmentMap = new Hashtable<>();
     this.artifactSemanticTypes = new Hashtable<>();
-    this.artifactTemplateDescriptions = new Hashtable<>();
-    this.artifactActionRouter = new Hashtable<>();
-    this.artifactApiKeys = new Hashtable<>();
+    this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
+    this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
+    this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
+    this.artifactNames = Collections.synchronizedMap(new HashMap<>());
+    this.feedbackActions =
+      Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
+    this.feedbackResponseConverters = Collections.synchronizedMap(new HashMap<>());
+    this.counter = 0;
   }
 
   @SuppressFBWarnings({"MS_EXPOSE_REP"})
@@ -49,40 +56,35 @@ public final class HypermediaArtifactRegistry {
     if (REGISTRY == null) {
       REGISTRY = new HypermediaArtifactRegistry();
     }
-
     return REGISTRY;
   }
 
   public void register(final HypermediaArtifact artifact) {
-    this.artifactTemplateDescriptions
-        .put(artifact.getArtifactId().getName(), artifact.getHypermediaDescription());
-
-    final var actions = artifact.getActionAffordances();
-
-    actions.entrySet()
-           .stream()
-           .flatMap(actionEntry -> actionEntry.getValue()
-                                              .stream()
-                                              .map(action -> Map.entry(
-                                                actionEntry.getKey(),
-                                                action
-                                              )))
-           .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
-             if (value.getMethodName().isPresent()) {
-               this.artifactActionRouter.put(
-                   value.getMethodName().get() + value.getTarget(),
-                   action.getKey()
-               );
-             }
-           }));
+    final var artifactTemplate = artifact.getArtifactId().getName();
+    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+    artifact.getActionAffordances()
+            .entrySet()
+            .stream()
+            .flatMap(actionEntry -> actionEntry.getValue()
+                                               .stream()
+                                               .map(action -> Map.entry(
+                                                 actionEntry.getKey(),
+                                                 action
+                                               )))
+            .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
+              if (value.getMethodName().isPresent()) {
+                this.artifactActionRouter.put(
+                    value.getMethodName().get() + value.getTarget(),
+                    action.getKey()
+                );
+              }
+            }));
+    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
 
-  public void addWorkspace(final String envName, final String workspaceName) {
-    this.workspaceEnvironmentMap.put(workspaceName, envName);
-  }
-
-  public Optional<String> getEnvironmentForWorkspace(final String workspaceName) {
-    return Optional.ofNullable(this.workspaceEnvironmentMap.get(workspaceName));
+  public void addArtifactTemplate(final String key, final String value) {
+    this.artifactSemanticTypes.put(key, value);
   }
 
   public void addArtifactTemplates(final JsonObject artifactTemplates) {
@@ -93,19 +95,20 @@ public final class HypermediaArtifactRegistry {
   }
 
   public Set<String> getArtifactTemplates() {
-    return this.artifactSemanticTypes.keySet();
+    return new HashSet<>(this.artifactSemanticTypes.keySet());
   }
 
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
-               .keySet()
+               .entrySet()
                .stream()
-               .filter(a -> this.artifactSemanticTypes.get(a).equals(artifactTemplate))
+               .filter(e -> e.getValue().equals(artifactTemplate))
+               .map(Map.Entry::getKey)
                .findFirst();
   }
 
-  public Optional<String> getArtifactTemplate(final String artifactClass) {
-    return Optional.ofNullable(this.artifactSemanticTypes.get(artifactClass));
+  public Optional<String> getArtifactTemplate(final String artifactSemanticType) {
+    return Optional.ofNullable(this.artifactSemanticTypes.get(artifactSemanticType));
   }
 
   public String getArtifactDescription(final String artifactName) {
@@ -124,27 +127,31 @@ public final class HypermediaArtifactRegistry {
     return this.artifactApiKeys.get(artifactId);
   }
 
-  public void setHttpPrefix(final String prefix) {
-    this.httpPrefix = prefix;
+  public boolean hasOtherName(final String hypermediaArtifactName) {
+    return this.artifactNames.containsKey(hypermediaArtifactName);
   }
 
-  public String getHttpPrefix() {
-    return this.httpPrefix;
+  public String getActualName(final String hypermediaArtifactName) {
+    return this.artifactNames.get(hypermediaArtifactName);
   }
 
-  public String getHttpEnvironmentsPrefix() {
-    return this.getHttpPrefix() + "/environments/";
+  public String getName() {
+    this.counter++;
+    return "hypermedia_body_" + this.counter;
   }
 
-  public String getHttpWorkspacesPrefix(final String envId) {
-    return this.getHttpEnvironmentsPrefix() + envId + "/workspaces/";
+  public boolean hasFeedbackParam(final String artifactName, final String action) {
+    return this.feedbackActions.get(artifactName).contains(action);
   }
 
-  public String getHttpArtifactsPrefix(final String workspaceName) {
-    return this.getEnvironmentForWorkspace(workspaceName)
-               .map(i -> this.getHttpWorkspacesPrefix(i) + workspaceName + "/artifacts/")
-               .orElseThrow(() -> new IllegalArgumentException(
-                 "Workspace " + workspaceName + " not found in any environment."
-               ));
+  public boolean hasFeedbackResponseConverter(final String artifactName, final String action) {
+    return this.feedbackResponseConverters.get(artifactName).containsKey(action);
+  }
+
+  public UnaryOperator<Object> getFeedbackResponseConverter(
+      final String artifactName,
+      final String action
+  ) {
+    return this.feedbackResponseConverters.get(artifactName).get(action);
   }
 }

@@ -4,15 +4,15 @@ enum MessageFields {
   REQUEST_METHOD("requestMethod"),
   REQUEST_URI("requestUri"),
   ENTITY_URI_HINT("slug"),
-  CONTENT_TYPE("contentType"),
   AGENT_ID("agentID"),
-  ENV_NAME("envName"),
   WORKSPACE_NAME("workspaceName"),
+  SUB_WORKSPACE_NAME("subWorkspaceName"),
   ARTIFACT_NAME("artifactName"),
   ACTION_NAME("actionName"),
   ENTITY_REPRESENTATION("entityRepresentation"),
   ACTION_CONTENT("actionContent"),
-  NOTIFICATION_CONTENT("notificationContent");
+  NOTIFICATION_CONTENT("notificationContent"),
+  PARENT_WORKSPACE_URI("parentWorkspaceUri");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 

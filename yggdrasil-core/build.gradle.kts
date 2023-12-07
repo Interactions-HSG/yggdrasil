@@ -7,6 +7,7 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
 }
 
 defaultTasks = mutableListOf("shadowJar")
@@ -25,6 +26,10 @@ spotbugs {
   toolVersion = libs.versions.spotbugs
 }
 
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
+}
+
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
@@ -35,6 +40,7 @@ dependencies {
   implementation(project(":yggdrasil-cartago"))
   implementation(project(":yggdrasil-websub"))
 
+  implementation(libs.log4j.core)
   implementation(libs.vertx.core)
   implementation(libs.vertx.web)
   implementation(libs.vertx.web.client)
@@ -58,8 +64,9 @@ dependencies {
   pmd(libs.pmd.java)
   pmd(libs.pmd.ant)
 
-  testImplementation(libs.junit)
-  testImplementation(libs.vertx.unit)
+  testImplementation(platform(libs.junit.platform))
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.vertx.junit5)
 
   testImplementation(libs.httpcomponents.httpclient5)
   testImplementation(libs.httpcomponents.httpclient5.fluent)
@@ -89,6 +96,11 @@ tasks {
 
   compileJava {
     options.compilerArgs.addAll(listOf("-parameters"))
+  }
+
+  test {
+    useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
   }
 
   spotbugsMain {

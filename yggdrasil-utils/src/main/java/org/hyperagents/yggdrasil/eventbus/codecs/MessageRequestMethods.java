@@ -5,12 +5,15 @@ import java.util.Optional;
 
 enum MessageRequestMethods {
   GET_ENTITY("getEntity"),
-  CREATE_ENTITY("createEntity"),
   UPDATE_ENTITY("updateEntity"),
   PATCH_ENTITY("patchEntity"),
   DELETE_ENTITY("deleteEntity"),
   CREATE_WORKSPACE("createWorkspace"),
-  CREATE_ARTIFACT("instantiateArtifact"),
+  CREATE_SUB_WORKSPACE("createSubWorkspace"),
+  JOIN_WORKSPACE("joinWorkspace"),
+  LEAVE_WORKSPACE("leaveWorkspace"),
+  FOCUS("focus"),
+  CREATE_ARTIFACT("createArtifact"),
   DO_ACTION("performAction");
 
 

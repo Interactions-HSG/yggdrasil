@@ -26,6 +26,34 @@ public class CartagoMessagebox implements Messagebox<CartagoMessage> {
         )
     );
     this.eventBus.registerDefaultCodec(
+        CartagoMessage.CreateSubWorkspace.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.CreateSubWorkspace.class,
+          new CartagoMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        CartagoMessage.JoinWorkspace.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.JoinWorkspace.class,
+          new CartagoMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        CartagoMessage.LeaveWorkspace.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.LeaveWorkspace.class,
+          new CartagoMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        CartagoMessage.Focus.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.Focus.class,
+          new CartagoMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
         CartagoMessage.CreateArtifact.class,
         new GenericMessageCodec<>(
           CartagoMessage.CreateArtifact.class,

@@ -7,7 +7,17 @@ public interface HttpInterfaceConfig {
 
   int getPort();
 
+  int getCartagoPort();
+
   String getBaseUri();
 
   Optional<String> getWebSubHubUri();
+
+  String getWorkspacesUri();
+
+  String getWorkspaceUri(String workspaceName);
+
+  String getArtifactsUri(String workspaceName);
+
+  String getArtifactUri(String workspaceName, String artifactName);
 }

@@ -4,6 +4,7 @@ plugins {
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
+  jacoco
 }
 
 checkstyle {
@@ -20,6 +21,10 @@ spotbugs {
   toolVersion = libs.versions.spotbugs
 }
 
+jacoco {
+  toolVersion = libs.versions.jacoco.get()
+}
+
 java {
   sourceCompatibility = JavaVersion.VERSION_21
   targetCompatibility = JavaVersion.VERSION_21
@@ -27,13 +32,17 @@ java {
 
 dependencies {
   implementation(project(":yggdrasil-utils"))
+  implementation(project(":yggdrasil-websub"))
 
+  implementation(libs.log4j.core)
   implementation(libs.vertx.core)
 
   implementation(libs.httpcomponents.core)
 
-  implementation(files("libs/cartago-2.5.jar"))
+  implementation(files("${rootProject.projectDir}/libs/cartago-3.1.jar"))
   implementation(libs.wot.td.java)
+
+  implementation(libs.apache.commons.lang3)
 
   implementation(libs.rdf4j.model)
 
@@ -44,8 +53,9 @@ dependencies {
   pmd(libs.pmd.java)
   pmd(libs.pmd.ant)
 
-  testImplementation(libs.junit)
-  testImplementation(libs.vertx.unit)
+  testImplementation(platform(libs.junit.platform))
+  testImplementation(libs.junit.jupiter)
+  testImplementation(libs.vertx.junit5)
 
   testImplementation(libs.httpcomponents.httpclient5)
   testImplementation(libs.httpcomponents.httpclient5.fluent)
@@ -54,6 +64,11 @@ dependencies {
 }
 
 tasks {
+  test {
+    useJUnitPlatform()
+    finalizedBy(jacocoTestReport)
+  }
+
   spotbugsMain {
     reports.create("html") {
         required.set(true)

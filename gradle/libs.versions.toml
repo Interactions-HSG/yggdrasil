@@ -1,19 +1,21 @@
 [versions]
-vertx = "3.9.7"
+vertx = "4.5.0"
 commons-rdf = "0.5.0"
 rdf4j = "2.4.2"
 httpcomponents-client5 = "5.2.1"
 checkstyle = "10.12.4"
 spotbugs = "4.8.0"
 pmd = "7.0.0-rc4"
+jacoco = "0.8.11"
 
 [libraries]
 vertx-core = { module = "io.vertx:vertx-core", version.ref = "vertx" }
 vertx-config = { module = "io.vertx:vertx-config", version.ref = "vertx" }
 vertx-web = { module = "io.vertx:vertx-web", version.ref = "vertx" }
 vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx" }
-vertx-unit = { module = "io.vertx:vertx-unit", version.ref = "vertx" }
-wot-td-java = "com.github.Interactions-HSG:wot-td-java:v0.1.1"
+vertx-junit5 = { module = "io.vertx:vertx-junit5", version.ref = "vertx" }
+log4j-core = "org.apache.logging.log4j:log4j-core:2.21.1"
+wot-td-java = "com.github.Interactions-HSG:wot-td-java:v0.1.2"
 httpcomponents-core = "org.apache.httpcomponents:httpcore:4.4.16"
 rdf4j-model = { module = "org.eclipse.rdf4j:rdf4j-model", version.ref = "rdf4j" }
 rdf4j-repository-sail = { module = "org.eclipse.rdf4j:rdf4j-repository-sail", version.ref = "rdf4j" }
@@ -25,10 +27,12 @@ httpcomponents-httpclient5 = { module = "org.apache.httpcomponents.client5:httpc
 httpcomponents-httpclient5-fluent = { module = "org.apache.httpcomponents.client5:httpclient5-fluent", version.ref = "httpcomponents-client5" }
 guava = "com.google.guava:guava:31.1-jre"
 gson = "com.google.code.gson:gson:2.10.1"
-junit = "junit:junit:4.13.2"
+junit-platform = "org.junit:junit-bom:5.10.1"
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 spotbugs-annotations = { module = "com.github.spotbugs:spotbugs-annotations", version.ref = "spotbugs" }
 pmd-java = { module = "net.sourceforge.pmd:pmd-java", version.ref = "pmd" }
 pmd-ant = { module = "net.sourceforge.pmd:pmd-ant", version.ref = "pmd" }
+apache-commons-lang3 = "org.apache.commons:commons-lang3:3.13.0"
 
 [plugins]
 shadowJar = "com.github.johnrengelman.shadow:8.1.1"
