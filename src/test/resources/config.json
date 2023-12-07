@@ -1,0 +1,9 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 3000,
+    "base-uri" : "http://localhost:3000/",
+    "websub-hub-uri" : "http://localhost:3000/hub/",
+    "cartago-port": 3001
+  }
+}

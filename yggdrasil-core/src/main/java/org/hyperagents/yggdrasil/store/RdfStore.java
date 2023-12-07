@@ -1,19 +1,28 @@
 package org.hyperagents.yggdrasil.store;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 
 public interface RdfStore {
-  boolean containsEntityModel(IRI entityIri);
+  boolean containsEntityModel(IRI entityIri) throws IOException;
 
-  Optional<Model> getEntityModel(IRI entityIri);
+  Optional<Model> getEntityModel(IRI entityIri) throws IOException;
 
-  void addEntityModel(IRI entityIri, Model entityModel);
+  void addEntityModel(IRI entityIri, Model entityModel) throws IOException;
 
-  void replaceEntityModel(IRI entityIri, Model entityModel);
+  void replaceEntityModel(IRI entityIri, Model entityModel) throws IOException;
 
-  void removeEntityModel(IRI entityIri);
+  void removeEntityModel(IRI entityIri) throws IOException;
 
-  void close();
+  void close() throws IOException;
+
+  String queryGraph(
+      String query,
+      List<String> defaultGraphUris,
+      List<String> namedGraphUris,
+      String responseContentType
+  ) throws IllegalArgumentException, IOException;
 }

@@ -90,11 +90,27 @@ public final class HttpServerVerticleTestHelper {
       final Future<HttpResponse<Buffer>> request
   ) throws InterruptedException {
     final var message = this.storeMessageQueue.take();
-    Assertions.assertEquals(
-        this.getUri(resourceUri),
-        message.body().requestUri(),
-        URIS_EQUAL_MESSAGE
-    );
+    if (message.body() instanceof RdfStoreMessage.GetEntity m) {
+      Assertions.assertEquals(
+          this.getUri(resourceUri),
+          m.requestUri(),
+          URIS_EQUAL_MESSAGE
+      );
+    } else if (message.body() instanceof RdfStoreMessage.UpdateEntity m) {
+      Assertions.assertEquals(
+          this.getUri(resourceUri),
+          m.requestUri(),
+          URIS_EQUAL_MESSAGE
+      );
+    } else if (message.body() instanceof RdfStoreMessage.DeleteEntity m) {
+      Assertions.assertEquals(
+          this.getUri(resourceUri),
+          m.requestUri(),
+          URIS_EQUAL_MESSAGE
+      );
+    } else {
+      Assertions.fail("Not an intended use of the helper method");
+    }
     message.fail(HttpStatus.SC_NOT_FOUND, "The entity was not found");
     request
         .onSuccess(r -> {

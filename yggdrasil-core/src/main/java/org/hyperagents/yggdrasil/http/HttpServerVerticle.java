@@ -110,6 +110,14 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.post("/hub/").handler(handler::handleEntitySubscription);
 
+    router.get("/query").handler(handler::handleQuery);
+    router.post("/query")
+          .consumes(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
+          .handler(handler::handleQuery);
+    router.post("/query")
+          .consumes("application/sparql-query")
+          .handler(handler::handleQuery);
+
     return router;
   }
 }

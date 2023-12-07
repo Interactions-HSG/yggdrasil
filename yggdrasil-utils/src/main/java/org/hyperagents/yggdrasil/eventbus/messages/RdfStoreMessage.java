@@ -1,10 +1,10 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public sealed interface RdfStoreMessage {
-
-  String requestUri();
 
   record GetEntity(String requestUri) implements RdfStoreMessage {}
 
@@ -24,4 +24,33 @@ public sealed interface RdfStoreMessage {
       Optional<String> parentWorkspaceUri,
       String workspaceRepresentation
   ) implements RdfStoreMessage {}
+
+  record QueryKnowledgeGraph(
+      String query,
+      List<String> defaultGraphUris,
+      List<String> namedGraphUris,
+      String responseContentType
+  ) implements RdfStoreMessage {
+    public QueryKnowledgeGraph(
+        final String query,
+        final List<String> defaultGraphUris,
+        final List<String> namedGraphUris,
+        final String responseContentType
+    ) {
+      this.query = query;
+      this.defaultGraphUris = new ArrayList<>(defaultGraphUris);
+      this.namedGraphUris = new ArrayList<>(namedGraphUris);
+      this.responseContentType = responseContentType;
+    }
+
+    @Override
+    public List<String> defaultGraphUris() {
+      return new ArrayList<>(this.defaultGraphUris);
+    }
+
+    @Override
+    public List<String> namedGraphUris() {
+      return new ArrayList<>(this.namedGraphUris);
+    }
+  }
 }

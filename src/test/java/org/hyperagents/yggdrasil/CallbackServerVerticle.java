@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import java.util.Optional;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 public class CallbackServerVerticle extends AbstractVerticle {
   private HttpServer server;

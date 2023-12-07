@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Assertions;
 
 public final class RdfStoreVerticleTestHelpers {
   private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
+  private static final String BAD_EXCEPTION_MESSAGE = "The exception was not of the right type";
+  private static final String MESSAGES_EQUAL_MESSAGE = "The messages should be the same";
 
   private RdfStoreVerticleTestHelpers() {}
 
@@ -34,29 +36,29 @@ public final class RdfStoreVerticleTestHelpers {
           "Status code should be NOT FOUND"
       );
     } else {
-      Assertions.fail("The exception was not of the right type");
+      Assertions.fail(BAD_EXCEPTION_MESSAGE);
     }
     Assertions.assertEquals(
         "Entity not found.",
         t.getMessage(),
-        "The messages should be the same"
+        MESSAGES_EQUAL_MESSAGE
     );
   }
 
-  public static void assertInternalServerError(final Throwable t) {
+  public static void assertBadRequest(final Throwable t) {
     if (t instanceof ReplyException r) {
       Assertions.assertEquals(
-          HttpStatus.SC_INTERNAL_SERVER_ERROR,
+          HttpStatus.SC_BAD_REQUEST,
           r.failureCode(),
-          "Status code should be INTERNAL SERVER ERROR"
+          "Status code should be BAD REQUEST"
       );
     } else {
-      Assertions.fail("The exception was not of the right type");
+      Assertions.fail(BAD_EXCEPTION_MESSAGE);
     }
     Assertions.assertEquals(
-        "Store request failed.",
+        "Arguments badly formatted.",
         t.getMessage(),
-        "The messages should be the same"
+        MESSAGES_EQUAL_MESSAGE
     );
   }
 }

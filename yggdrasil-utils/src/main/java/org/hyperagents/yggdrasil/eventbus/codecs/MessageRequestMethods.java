@@ -14,8 +14,8 @@ enum MessageRequestMethods {
   LEAVE_WORKSPACE("leaveWorkspace"),
   FOCUS("focus"),
   CREATE_ARTIFACT("createArtifact"),
-  DO_ACTION("performAction");
-
+  DO_ACTION("performAction"),
+  QUERY("query");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.methods.";
 

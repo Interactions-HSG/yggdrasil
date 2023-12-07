@@ -50,6 +50,13 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
           new RdfStoreMessageMarshaller()
         )
     );
+    this.eventBus.registerDefaultCodec(
+        RdfStoreMessage.QueryKnowledgeGraph.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.QueryKnowledgeGraph.class,
+          new RdfStoreMessageMarshaller()
+        )
+    );
   }
 
   @Override

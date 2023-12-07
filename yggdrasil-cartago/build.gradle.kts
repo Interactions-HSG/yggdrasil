@@ -37,17 +37,12 @@ dependencies {
   implementation(libs.log4j.core)
   implementation(libs.vertx.core)
 
-  implementation(libs.httpcomponents.core)
+  implementation(libs.httpcomponents.core5)
 
   implementation(files("${rootProject.projectDir}/libs/cartago-3.1.jar"))
   implementation(libs.wot.td.java)
 
-  implementation(libs.apache.commons.lang3)
-
   implementation(libs.rdf4j.model)
-
-  implementation(libs.commons.rdf.api)
-  implementation(libs.commons.rdf.rdf4j)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)

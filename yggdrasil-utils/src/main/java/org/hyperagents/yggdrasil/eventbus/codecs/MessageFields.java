@@ -12,7 +12,11 @@ enum MessageFields {
   ENTITY_REPRESENTATION("entityRepresentation"),
   ACTION_CONTENT("actionContent"),
   NOTIFICATION_CONTENT("notificationContent"),
-  PARENT_WORKSPACE_URI("parentWorkspaceUri");
+  PARENT_WORKSPACE_URI("parentWorkspaceUri"),
+  QUERY("query"),
+  NAMED_GRAPH_URIS("namedGraphUris"),
+  DEFAULT_GRAPH_URIS("defaultGraphUris"),
+  CONTENT_TYPE("contentType");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 
