@@ -92,6 +92,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     this.cartagoMessagebox
@@ -116,6 +117,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     final var artifactName =
@@ -145,6 +147,7 @@ public class HttpEntityHandler {
   public void handleCreateEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
     this.createEntity(routingContext, routingContext.body().asString());
   }
@@ -155,6 +158,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     this.cartagoMessagebox
@@ -174,6 +178,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     final var artifactName = context.pathParam("artid");
@@ -229,6 +234,7 @@ public class HttpEntityHandler {
   public void handleUpdateEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.UpdateEntity(
@@ -241,6 +247,7 @@ public class HttpEntityHandler {
   public void handleDeleteEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
@@ -291,6 +298,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     this.cartagoMessagebox
@@ -307,6 +315,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     this.cartagoMessagebox
@@ -323,6 +332,7 @@ public class HttpEntityHandler {
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
     }
 
     final var subWorkspaceName = context.request().getHeader("Slug");
