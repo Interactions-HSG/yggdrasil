@@ -68,6 +68,20 @@ public class HttpNotificationDispatcherMessagebox
           new HttpNotificationDispatcherMessageMarshaller()
         )
     );
+    this.eventBus.registerDefaultCodec(
+        HttpNotificationDispatcherMessage.AddCallback.class,
+        new GenericMessageCodec<>(
+          HttpNotificationDispatcherMessage.AddCallback.class,
+          new HttpNotificationDispatcherMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        HttpNotificationDispatcherMessage.RemoveCallback.class,
+        new GenericMessageCodec<>(
+          HttpNotificationDispatcherMessage.RemoveCallback.class,
+          new HttpNotificationDispatcherMessageMarshaller()
+        )
+    );
   }
 
   @Override

@@ -4,8 +4,6 @@ public sealed interface HttpNotificationDispatcherMessage {
 
   String requestIri();
 
-  String content();
-
   record EntityCreated(String requestIri, String content)
       implements HttpNotificationDispatcherMessage {}
 
@@ -25,5 +23,11 @@ public sealed interface HttpNotificationDispatcherMessage {
       implements HttpNotificationDispatcherMessage {}
 
   record ActionFailed(String requestIri, String content)
+      implements HttpNotificationDispatcherMessage {}
+
+  record AddCallback(String requestIri, String callbackIri)
+      implements HttpNotificationDispatcherMessage {}
+
+  record RemoveCallback(String requestIri, String callbackIri)
       implements HttpNotificationDispatcherMessage {}
 }

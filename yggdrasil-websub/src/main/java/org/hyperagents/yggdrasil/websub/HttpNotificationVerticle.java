@@ -7,8 +7,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -20,90 +22,123 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
 
+  private final NotificationSubscriberRegistry registry;
+
+  public HttpNotificationVerticle() {
+    super();
+    this.registry = new NotificationSubscriberRegistry();
+  }
+
+  @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start() {
+    final var client = WebClient.create(this.vertx);
     final var webSubHubUri = new HttpInterfaceConfigImpl(this.context.config()).getWebSubHubUri();
 
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
-      if (webSubHubUri.isPresent() && !message.body().requestIri().isEmpty()) {
-        final var entityIri = message.body().requestIri();
-        final var changes = message.body().content();
-        final var client = WebClient.create(this.vertx);
-
-        NotificationSubscriberRegistry.getInstance().getCallbackIris(entityIri).forEach(
-            callbackIRI -> {
-              final var request =
-                  client
-                    .postAbs(callbackIRI)
-                    .putHeader("Link", "<" + webSubHubUri.get() + ">; rel=\"hub\"")
-                    .putHeader("Link", "<" + entityIri + ">; rel=\"self\"");
-
-              if (message.body() instanceof HttpNotificationDispatcherMessage.EntityDeleted) {
-                request.send(this.reponseHandler(callbackIRI));
-              } else if (
-                  message.body()
-                    instanceof HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated
-              ) {
-                request
-                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                    .sendBuffer(
-                      Buffer.buffer(
-                        Pattern.compile(
-                          "https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]"
-                        )
-                        .matcher(changes)
-                        .replaceAll(r ->
-                          changes.charAt(r.start() - 1) == '"' && changes.charAt(r.end()) == '"'
-                          ? r.group()
-                          : "\"" + r.group() + "\""
-                        )
-                      ),
-                      this.reponseHandler(callbackIRI)
-                    );
-              } else if (
-                  message.body()
-                    instanceof HttpNotificationDispatcherMessage.ActionRequested
-              ) {
-                request
-                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                    .sendJsonObject(
-                      ((JsonObject) Json.decodeValue(changes))
-                        .put("eventType", "actionRequested"),
-                      this.reponseHandler(callbackIRI)
-                    );
-              } else if (
-                  message.body()
-                    instanceof HttpNotificationDispatcherMessage.ActionSucceeded
-              ) {
-                request
-                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                    .sendJsonObject(
-                      ((JsonObject) Json.decodeValue(changes))
-                        .put("eventType", "actionSucceeded"),
-                      this.reponseHandler(callbackIRI)
-                    );
-              } else if (
-                  message.body()
-                    instanceof HttpNotificationDispatcherMessage.ActionFailed
-              ) {
-                request
-                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                    .sendJsonObject(
-                      ((JsonObject) Json.decodeValue(changes))
-                        .put("eventType", "actionFailed"),
-                      this.reponseHandler(callbackIRI)
-                    );
-              } else if (!changes.isEmpty()) {
-                request
-                  .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
-                  .sendBuffer(Buffer.buffer(changes), this.reponseHandler(callbackIRI));
-              }
-            }
-        );
+      switch (message.body()) {
+        case HttpNotificationDispatcherMessage.AddCallback(String requestIri, String callbackIri) ->
+          this.registry.addCallbackIri(requestIri, callbackIri);
+        case HttpNotificationDispatcherMessage.RemoveCallback(
+            String requestIri,
+            String callbackIri
+          ) -> this.registry.removeCallbackIri(requestIri, callbackIri);
+        case HttpNotificationDispatcherMessage.EntityDeleted m -> webSubHubUri.ifPresent(w -> {
+          final var entityIri = m.requestIri();
+          this.registry.getCallbackIris(entityIri).forEach(c ->
+              this.createNotificationRequest(client, w, c, entityIri).send(this.reponseHandler(c))
+          );
+        });
+        case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+            String requestIri,
+            String content
+          ) -> this.handleNotificationSending(
+            client,
+            webSubHubUri,
+            requestIri,
+            Pattern.compile(
+              "https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]"
+              )
+              .matcher(content)
+              .replaceAll(r ->
+                  content.charAt(r.start() - 1) == '"' && content.charAt(r.end()) == '"'
+                  ? r.group()
+                  : "\"" + r.group() + "\""
+              )
+          );
+        case HttpNotificationDispatcherMessage.EntityCreated(String requestIri, String content) ->
+          this.handleNotificationSending(client, webSubHubUri, requestIri, content);
+        case HttpNotificationDispatcherMessage.EntityChanged(String requestIri, String content) ->
+          this.handleNotificationSending(client, webSubHubUri, requestIri, content);
+        case HttpNotificationDispatcherMessage.ActionFailed(String requestIri, String content) ->
+          this.handleActionNotificationSending(
+            client,
+            webSubHubUri,
+            requestIri,
+            content,
+            "actionFailed"
+          );
+        case HttpNotificationDispatcherMessage.ActionRequested(String requestIri, String content) ->
+          this.handleActionNotificationSending(
+            client,
+            webSubHubUri,
+            requestIri,
+            content,
+            "actionRequested"
+          );
+        case HttpNotificationDispatcherMessage.ActionSucceeded(String requestIri, String content) ->
+          this.handleActionNotificationSending(
+            client,
+            webSubHubUri,
+            requestIri,
+            content,
+            "actionSucceeded"
+          );
       }
     });
+  }
+
+  private void handleActionNotificationSending(
+      final WebClient client,
+      final Optional<String> webSubHubUri,
+      final String requestIri,
+      final String content,
+      final String eventType
+  ) {
+    webSubHubUri.ifPresent(w -> this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, w, c, requestIri)
+            .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .sendJsonObject(
+              ((JsonObject) Json.decodeValue(content)).put("eventType", eventType),
+              this.reponseHandler(c)
+            )
+    ));
+  }
+
+  private void handleNotificationSending(
+      final WebClient client,
+      final Optional<String> webSubHubUri,
+      final String requestIri,
+      final String content
+  ) {
+    webSubHubUri.ifPresent(w -> this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, w, c, requestIri)
+            .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .sendBuffer(Buffer.buffer(content), this.reponseHandler(c))
+    ));
+  }
+
+  private HttpRequest<Buffer> createNotificationRequest(
+      final WebClient client,
+      final String webSubHubUri,
+      final String callbackIri,
+      final String entityIri
+  ) {
+    return client.postAbs(callbackIri)
+                 .putHeader("Link", "<" + webSubHubUri + ">; rel=\"hub\"")
+                 .putHeader("Link", "<" + entityIri + ">; rel=\"self\"");
   }
 
   private Handler<AsyncResult<HttpResponse<Buffer>>> reponseHandler(final String callbackIri) {

@@ -43,7 +43,6 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
-import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
 
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
@@ -139,10 +138,9 @@ public class CartagoVerticle extends AbstractVerticle {
         case CartagoMessage.Focus(
           String agentId,
           String workspaceName,
-          String artifactName,
-          String callbackIri
+          String artifactName
           ) -> {
-          this.focus(agentId, workspaceName, artifactName, callbackIri);
+          this.focus(agentId, workspaceName, artifactName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
         }
         case CartagoMessage.DoAction(
@@ -205,13 +203,10 @@ public class CartagoVerticle extends AbstractVerticle {
   private void focus(
       final String agentUri,
       final String workspaceName,
-      final String artifactName,
-      final String callbackIri
+      final String artifactName
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
-    NotificationSubscriberRegistry.getInstance().addCallbackIri(artifactIri, callbackIri);
     workspace
         .focus(
           this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
@@ -221,7 +216,7 @@ public class CartagoVerticle extends AbstractVerticle {
         )
         .forEach(p -> this.dispatcherMessagebox.sendMessage(
           new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-            artifactIri,
+            this.httpConfig.getArtifactUri(workspaceName, artifactName),
             p.toString()
           )
         ));

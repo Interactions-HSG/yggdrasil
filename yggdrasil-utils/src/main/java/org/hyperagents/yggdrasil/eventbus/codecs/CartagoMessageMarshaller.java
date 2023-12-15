@@ -47,8 +47,7 @@ public class CartagoMessageMarshaller
       case FOCUS -> new CartagoMessage.Focus(
         jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
-        jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString(),
-        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+        jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString()
       );
       case CREATE_ARTIFACT -> new CartagoMessage.CreateArtifact(
         jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
@@ -112,7 +111,6 @@ public class CartagoMessageMarshaller
             MessageRequestMethods.FOCUS.getName()
         );
         json.addProperty(MessageFields.AGENT_ID.getName(), m.agentId());
-        json.addProperty(MessageFields.REQUEST_URI.getName(), m.callbackIri());
         json.addProperty(MessageFields.ARTIFACT_NAME.getName(), m.artifactName());
       }
       case CartagoMessage.CreateArtifact m -> {

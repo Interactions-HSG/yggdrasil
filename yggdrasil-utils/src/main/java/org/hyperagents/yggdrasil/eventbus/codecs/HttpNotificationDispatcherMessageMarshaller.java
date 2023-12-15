@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 
@@ -57,11 +56,18 @@ public class HttpNotificationDispatcherMessageMarshaller
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
         jsonObject.get(MessageFields.NOTIFICATION_CONTENT.getName()).getAsString()
       );
+      case ADD_CALLBACK -> new HttpNotificationDispatcherMessage.AddCallback(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.CALLBACK_IRI.getName()).getAsString()
+      );
+      case REMOVE_CALLBACK -> new HttpNotificationDispatcherMessage.RemoveCallback(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.CALLBACK_IRI.getName()).getAsString()
+      );
     };
   }
 
-  @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
-  @SuppressFBWarnings("DLS_DEAD_LOCAL_STORE")
+  @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
   @Override
   public JsonElement serialize(
       final HttpNotificationDispatcherMessage message,
@@ -70,28 +76,35 @@ public class HttpNotificationDispatcherMessageMarshaller
   ) {
     final var json = new JsonObject();
     json.addProperty(MessageFields.REQUEST_URI.getName(), message.requestIri());
-    json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), message.content());
     switch (message) {
-      case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated ignored ->
+      case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ARTIFACT_OBS_PROP.getName()
         );
-      case HttpNotificationDispatcherMessage.EntityChanged ignored ->
+      }
+      case HttpNotificationDispatcherMessage.EntityChanged m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ENTITY_CHANGED.getName()
         );
-      case HttpNotificationDispatcherMessage.EntityCreated ignored ->
+      }
+      case HttpNotificationDispatcherMessage.EntityCreated m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ENTITY_CREATED.getName()
         );
-      case HttpNotificationDispatcherMessage.EntityDeleted ignored ->
+      }
+      case HttpNotificationDispatcherMessage.EntityDeleted m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ENTITY_DELETED.getName()
         );
+      }
       case HttpNotificationDispatcherMessage.ActionFailed ignored ->
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
@@ -107,6 +120,20 @@ public class HttpNotificationDispatcherMessageMarshaller
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ACTION_SUCCEEDED.getName()
         );
+      case HttpNotificationDispatcherMessage.AddCallback m -> {
+        json.addProperty(MessageFields.CALLBACK_IRI.getName(), m.callbackIri());
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageNotifications.ADD_CALLBACK.getName()
+        );
+      }
+      case HttpNotificationDispatcherMessage.RemoveCallback m -> {
+        json.addProperty(MessageFields.CALLBACK_IRI.getName(), m.callbackIri());
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageNotifications.REMOVE_CALLBACK.getName()
+        );
+      }
     }
     return json;
   }

@@ -1,35 +1,21 @@
 package org.hyperagents.yggdrasil.websub;
 
-import com.google.common.collect.Multimaps;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A singleton used to manage WebSub subscribers. An equivalent implementation can be obtained with
- * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster.
+ * A class used to manage WebSub subscribers.
  *
  * @author Andrei Ciortea
  *
  */
 public final class NotificationSubscriberRegistry {
-  private static NotificationSubscriberRegistry REGISTRY;
-
   private final SetMultimap<String, String> subscriptions;
 
-  private NotificationSubscriberRegistry() {
-    this.subscriptions =
-      Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
-  }
-
-  @SuppressFBWarnings("MS_EXPOSE_REP")
-  public static synchronized NotificationSubscriberRegistry getInstance() {
-    if (REGISTRY == null) {
-      REGISTRY = new NotificationSubscriberRegistry();
-    }
-    return REGISTRY;
+  NotificationSubscriberRegistry() {
+    this.subscriptions = HashMultimap.create();
   }
 
   public Set<String> getCallbackIris(final String entityIri) {
