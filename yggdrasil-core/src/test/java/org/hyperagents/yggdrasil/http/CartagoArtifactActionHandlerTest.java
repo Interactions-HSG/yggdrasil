@@ -17,6 +17,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
@@ -73,6 +74,7 @@ public class CartagoArtifactActionHandlerTest {
     final var cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
     cartagoMessagebox.init();
     cartagoMessagebox.receiveMessages(this.cartagoMessageQueue::add);
+    new HttpNotificationDispatcherMessagebox(vertx.eventBus()).init();
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
   }
 

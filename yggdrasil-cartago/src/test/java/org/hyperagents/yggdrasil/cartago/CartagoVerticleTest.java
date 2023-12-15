@@ -483,8 +483,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -525,8 +524,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             NONEXISTENT_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -556,8 +554,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            NONEXISTENT_NAME,
-                            CALLBACK_IRI
+                            NONEXISTENT_NAME
                           )))
         .onFailure(t -> Assertions.assertEquals(
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -587,15 +584,13 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .compose(r -> this.cartagoMessagebox
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -673,8 +668,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             SUB_WORKSPACE_NAME,
-                            "c1",
-                            CALLBACK_IRI
+                            "c1"
                           )))
         .compose(r -> {
           Assertions.assertEquals(

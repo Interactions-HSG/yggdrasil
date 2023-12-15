@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.junit.jupiter.api.AfterEach;
@@ -68,6 +70,8 @@ public class QueryHttpHandlersTest {
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.messageQueue::add);
+    new CartagoMessagebox(vertx.eventBus()).init();
+    new HttpNotificationDispatcherMessagebox(vertx.eventBus()).init();
   }
 
   @AfterEach
