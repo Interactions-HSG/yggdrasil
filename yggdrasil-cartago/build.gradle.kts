@@ -32,7 +32,6 @@ java {
 
 dependencies {
   implementation(project(":yggdrasil-utils"))
-  implementation(project(":yggdrasil-websub"))
 
   implementation(libs.log4j.core)
   implementation(libs.vertx.core)
