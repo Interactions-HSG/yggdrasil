@@ -90,11 +90,17 @@ public class MainVerticleTest {
               "host",
               TEST_HOST,
               "port",
-              TEST_PORT,
-              "websub-hub-uri",
-              this.getUrl(HUB_PATH),
-              "cartago-port",
-              8088
+              TEST_PORT
+            ),
+            "notification-config",
+            JsonObject.of(
+              "enabled",
+              true
+            ),
+            "environment-config",
+            JsonObject.of(
+              "enabled",
+              true
             ),
             "known-artifacts",
             JsonObject.of(

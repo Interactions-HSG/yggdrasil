@@ -10,6 +10,14 @@ public final class JsonObjectUtils {
 
   private JsonObjectUtils() {}
 
+  public static Optional<Integer> getInteger(
+      final JsonObject jsonObject,
+      final String key,
+      final Consumer<String> logger
+  ) {
+    return getValue(jsonObject, key, JsonObject::getInteger, logger);
+  }
+
   public static Optional<String> getString(
       final JsonObject jsonObject,
       final String key,

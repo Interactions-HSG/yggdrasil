@@ -10,7 +10,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
-import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -18,22 +17,24 @@ import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
 
-  private final NotificationSubscriberRegistry registry;
+  private NotificationSubscriberRegistry registry;
 
-  public HttpNotificationVerticle() {
-    super();
-    this.registry = new NotificationSubscriberRegistry();
-  }
-
-  @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
+  @SuppressWarnings({"PMD.SwitchStmtsShouldHaveDefault", "PMD.SwitchDensity"})
   @Override
   public void start() {
+    this.registry = new NotificationSubscriberRegistry();
     final var client = WebClient.create(this.vertx);
-    final var webSubHubUri = new HttpInterfaceConfigImpl(this.context.config()).getWebSubHubUri();
+    final var webSubHubUri =
+        new WebSubConfigImpl(
+            this.context.config(),
+            new HttpInterfaceConfigImpl(this.context.config())
+        )
+        .getWebSubHubUri();
 
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
@@ -45,12 +46,13 @@ public class HttpNotificationVerticle extends AbstractVerticle {
             String requestIri,
             String callbackIri
           ) -> this.registry.removeCallbackIri(requestIri, callbackIri);
-        case HttpNotificationDispatcherMessage.EntityDeleted m -> webSubHubUri.ifPresent(w -> {
+        case HttpNotificationDispatcherMessage.EntityDeleted m -> {
           final var entityIri = m.requestIri();
           this.registry.getCallbackIris(entityIri).forEach(c ->
-              this.createNotificationRequest(client, w, c, entityIri).send(this.reponseHandler(c))
+              this.createNotificationRequest(client, webSubHubUri, c, entityIri)
+                  .send(this.reponseHandler(c))
           );
-        });
+        }
         case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
             String requestIri,
             String content
@@ -119,15 +121,15 @@ public class HttpNotificationVerticle extends AbstractVerticle {
 
   private void handleNotificationSending(
       final WebClient client,
-      final Optional<String> webSubHubUri,
+      final String webSubHubUri,
       final String requestIri,
       final String content
   ) {
-    webSubHubUri.ifPresent(w -> this.registry.getCallbackIris(requestIri).forEach(c ->
-        this.createNotificationRequest(client, w, c, requestIri)
+    this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, webSubHubUri, c, requestIri)
             .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
             .sendBuffer(Buffer.buffer(content), this.reponseHandler(c))
-    ));
+    );
   }
 
   private HttpRequest<Buffer> createNotificationRequest(

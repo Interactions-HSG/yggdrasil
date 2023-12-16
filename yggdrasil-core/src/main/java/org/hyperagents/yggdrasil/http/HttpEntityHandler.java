@@ -46,7 +46,9 @@ import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMes
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
@@ -62,12 +64,14 @@ public class HttpEntityHandler {
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
   private final Messagebox<HttpNotificationDispatcherMessage> notificationMessagebox;
   private final HttpInterfaceConfig httpConfig;
+  private final WebSubConfig webSubConfig;
 
   public HttpEntityHandler(final Vertx vertx, final Context context) {
     this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
     this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     this.notificationMessagebox = new HttpNotificationDispatcherMessagebox(vertx.eventBus());
     this.httpConfig = new HttpInterfaceConfigImpl(context.config());
+    this.webSubConfig = new WebSubConfigImpl(context.config(), this.httpConfig);
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -483,13 +487,15 @@ public class HttpEntityHandler {
   }
 
   private Map<String, List<String>> getWebSubHeaders(final String entityIri) {
-    return this.httpConfig
-               .getWebSubHubUri()
-               .map(hubIRI -> Map.of(
-                 "Link",
-                 Arrays.asList("<" + hubIRI + ">; rel=\"hub\"", "<" + entityIri + ">; rel=\"self\"")
-               ))
-               .orElse(Collections.emptyMap());
+    return this.webSubConfig.isEnabled()
+           ? Map.of(
+               "Link",
+               Arrays.asList(
+                 "<" + this.webSubConfig.getWebSubHubUri() + ">; rel=\"hub\"",
+                 "<" + entityIri + ">; rel=\"self\""
+               )
+             )
+           : Collections.emptyMap();
   }
 
   private Map<String, List<String>> getCorsHeaders() {
