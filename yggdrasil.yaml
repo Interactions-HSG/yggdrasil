@@ -1,0 +1,2202 @@
+openapi: 3.1.0
+info:
+  title: Yggdrasil
+  description: |-
+    A platform for [Hypermedia Multi-Agent Systems (MAS)](https://hyperagents.org/) (1) built with [Vert.x](https://vertx.io/). The current implementation provides two core functionalities:
+
+    * it allows to program and deploy hypermedia environments for autonomous agents that conform to the
+      _Agents & Artifacts_ meta-model (2)
+    * it partially implements the [W3C WebSub recommendation](https://www.w3.org/TR/2018/REC-websub-20180123/)
+      and can act as a WebSub hub
+
+    References:
+    1. Andrei Ciortea, Olivier Boissier, Alessandro Ricci. 2019. Engineering World-Wide Multi-Agent Systems with Hypermedia. In: Weyns D., Mascardi V., Ricci A. (eds) Engineering Multi-Agent Systems. EMAS 2018. Lecture Notes in Computer Science, vol 11375. Springer, Cham. [https://doi.org/10.1007/978-3-030-25693-7_15](https://doi.org/10.1007/978-3-030-25693-7_15)
+    2. Alessandro Ricci, Michele Piunti, and Mirko Viroli. 2011. Environment Programming in multi-agent systems: an artifact-based perspective. Autonomous Agents and Multi-Agent Systems, 23(2):158-192.
+
+    Some useful links:
+    - [The Yggdrasil repository](https://github.com/Interactions-HSG/yggdrasil)
+    - [The Architecture file](https://github.com/Interactions-HSG/yggdrasil/blob/main/docs/ARCHITECTURE.md)
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.0
+tags:
+  - name: platform
+    description: All operations concering the Yggdrasil platform
+  - name: workspace
+    description: All operations concering workspaces
+  - name: artifact
+    description: All operations concerning artifacts
+paths:
+  /:
+    get:
+      tags:
+        - platform
+      summary: Gets the representation of this Hypermedia MAS Platform
+      description: Gets the representation of this Hypermedia MAS Platform as a TURTLE formatted string. It contains all possible operations for it along with the top-level workspaces in it.
+      operationId: getPlatform
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples: 
+                  - |
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix saref: <https://w3id.org/saref#> .
+
+                      <http://localhost:8080/> a hmas:HypermediaMASPlatform, td:Thing;
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "createWorkspace";
+                            td:hasForm [
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction;
+                                hctl:hasTarget <http://localhost:8080/workspaces/>;
+                                htv:methodName "POST"
+                              ]
+                          ];
+                        td:title "yggdrasil";
+                        hmas:hosts <http://localhost:8080/workspaces/test> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /hub/:
+    post:
+      tags: 
+        - platform
+      summary: Handles registration to the WebSub Hub for getting notifications about the platform
+      description: Handles registration to the WebSub Hub for getting notifications about the platform. It needs to be specified the topic for which subscribing, i.e., the URI of the resource to be observed, and the callback to which the notifications should be sent. It can be specified to subscribe or to revoke the subscription.
+      operationId: subscribeEntity
+      requestBody:
+        description: Handles registration to the WebSub Hub
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                "hub.topic":
+                  type: string
+                  format: url
+                  examples:
+                    - "http://localhost:8080/workspaces/test/artifacts"
+                "hub.callback":
+                  type: string
+                  format: url
+                  examples:
+                    - "http://localhost:8080/callback"
+                "hub.mode":
+                  type: string
+                  enum:
+                    - "subscribe"
+                    - "unsubscribe"
+      responses:
+        '200':
+          description: Subscription or unsubscription successful
+        '404':
+          description: Topic resource not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /query:
+    get:
+      tags:
+        - platform
+      summary: Perform a query through the SPARQL endpoint
+      description: Perform a query through the SPARQL endpoint. The query needs to be specified as a query parameter, along with the URIs of the graphs that make the default graph and the named graphs to be included in the query. The query can be specified exactly once, while default and named graph URI parameters can be specified zero or more times. All query parameters must be URL encoded. If the query is an "ASK" or "SELECT" one, all four accepted MIME types for responses can be specified in the request. If the query is a "DESCRIBE" or a "CONSTRUCT" one the MIME type can only be "text/turtle".
+      operationId: getQuery
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
+            examples:
+              - |
+                 PREFIX td: <https://www.w3.org/2019/wot/td#>
+                 PREFIX hmas: <https://purl.org/hmas/core/>
+                 PREFIX ex: <http://example.org/>
+
+                 SELECT ?workspace ?artifact
+                 WHERE {
+                     ?workspace hmas:contains [
+                                    a hmas:Artifact, ex:Counter;
+                                    td:title ?artifact;
+                                ];
+                                a hmas:Workspace.
+                 }
+          required: true
+        - in: query
+          name: default-graph-uri
+          schema:
+            type: string
+            format: url
+            examples:
+              - "http://example.org/graph"
+          required: false
+        - in: query
+          name: named-graph-uri
+          schema:
+            type: string
+            format: url
+            examples:
+              - "http://example.org/graph"
+          required: false
+      responses:
+        '200':
+          description: Query completed successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+                examples:
+                  - |
+                    workspace,artifact
+                    http://localhost:8080/workspaces/sub,c0
+                    http://localhost:8080/workspaces/sub,c0
+            text/tab-separated-values:
+              schema:
+                type: string
+                examples:
+                  - |
+                    ?workspace	?artifact
+                    <http://localhost:8080/workspaces/sub>	c0
+                    <http://localhost:8080/workspaces/sub>	c0
+            application/sparql-results+xml:
+              schema:
+                type: object
+                xml:
+                  name: sparql
+                examples:
+                  - |
+                    <?xml version='1.0' encoding='UTF-8'?>
+                    <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
+                      <head>
+                        <variable name='workspace'/>
+                        <variable name='artifact'/>
+                      </head>
+                      <results>
+                        <result>
+                          <binding name='artifact'>
+                            <literal>c0</literal>
+                          </binding>
+                          <binding name='workspace'>
+                            <uri>http://localhost:8080/workspaces/sub</uri>
+                          </binding>
+                        </result>
+                        <result>
+                          <binding name='artifact'>
+                            <literal>c0</literal>
+                          </binding>
+                          <binding name='workspace'>
+                            <uri>http://localhost:8080/workspaces/sub</uri>
+                          </binding>
+                        </result>
+                      </results>
+                    </sparql>
+            application/sparql-results+json:
+              schema:
+                type: object
+                properties:
+                  head:
+                    type: object
+                    properties:
+                      vars:
+                        type: array
+                        items:
+                          type: string
+                        examples:
+                          - ["workspace", "artifact"]
+                  results:
+                    type: object
+                    properties:
+                      bindings:
+                        type: array
+                        items:
+                          type: object
+                          examples:
+                            - {
+                                "workspace": {
+                                  "type": "uri",
+                                  "value": "http://localhost:8080/workspaces/sub"
+                                },
+                                "artifact": {
+                                  "type": "literal",
+                                  "value": "c0"
+                                }
+                              }
+
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                    @prefix hmas: <https://purl.org/hmas/core/> .
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                    @prefix htv: <http://www.w3.org/2011/http#> .
+                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                    @prefix dct: <http://purl.org/dc/terms/> .
+                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                    @prefix saref: <https://w3id.org/saref#> .
+
+                    <http://localhost:8080/workspaces/sub> a hmas:Workspace, td:Thing;
+                      td:title "sub";
+                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                        ];
+                      td:hasActionAffordance [ a td:ActionAffordance;
+                          td:name "makeArtifact";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactClass";
+                                  js:enum <http://example.org/Adder>, <http://example.org/Counter>
+                                ], [ a js:ArraySchema;
+                                  js:propertyName "initParams"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ];
+                              js:required "artifactClass", "artifactName"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "joinWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "quitWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "focus";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "callbackIri"
+                                ];
+                              js:required "artifactName", "callbackIri"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "createSubWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ];
+                      hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+                      hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+
+                    <http://localhost:8080/workspaces/test> hmas:contains <http://localhost:8080/workspaces/sub> .
+
+                    <http://localhost:8080/workspaces/sub/artifacts/c0> hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
+                      td:title "c0" .
+
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    post:
+      tags:
+        - platform
+      summary: Perform a query through the SPARQL endpoint
+      description: Perform a query through the SPARQL endpoint. The query needs to be specified as a form parameter if the content type of the request is "application/x-www-form-urlencoded", along with the URIs of the graphs that make the default graph and the named graphs to be included in the query. All parameters need to be URL encoded. If "application/sparql-query" is specified as the request content type, the query should constitute the request body, left unencoded. The default and named graph URIs need to be added to the request as query parameters, URL encoded. The query as a form parameter can be specified exactly once, while default and named graph URI parameters can be specified zero or more times in both cases. If the query is an "ASK" or "SELECT" one, all four accepted MIME types for responses can be specified in the request. If the query is a "DESCRIBE" or a "CONSTRUCT" one the MIME type can only be "text/turtle".
+      operationId: postQuery
+      parameters:
+        - in: query
+          name: default-graph-uri
+          schema:
+            type: string
+            format: url
+            examples:
+              - "http://example.org/graph"
+          required: false
+        - in: query
+          name: named-graph-uri
+          schema:
+            type: string
+            format: url
+            examples:
+              - "http://example.org/graph"
+          required: false
+      requestBody:
+        description: Define a query and its parameters
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  examples: 
+                    - |
+                      PREFIX td: <https://www.w3.org/2019/wot/td#>
+                      PREFIX hmas: <https://purl.org/hmas/core/>
+                      PREFIX ex: <http://example.org/>
+
+                      SELECT ?workspace ?artifact
+                      WHERE {
+                          ?workspace hmas:contains [
+                                         a hmas:Artifact, ex:Counter;
+                                         td:title ?artifact;
+                                     ];
+                                     a hmas:Workspace.
+                      }
+                default-graph-uri:
+                  type: string
+                  examples:
+                    - "http://example.org/graph"
+                named-graph-uri:
+                  type: string
+                  examples:
+                    - "http://example.org/graph"
+          application/sparql-query:
+            schema:
+              type: string
+              examples:
+                - |
+                  PREFIX td: <https://www.w3.org/2019/wot/td#>
+                  PREFIX hmas: <https://purl.org/hmas/core/>
+                  PREFIX ex: <http://example.org/>
+
+                  SELECT ?workspace ?artifact
+                  WHERE {
+                      ?workspace hmas:contains [
+                                     a hmas:Artifact, ex:Counter;
+                                     td:title ?artifact;
+                                 ];
+                                 a hmas:Workspace.
+                  }
+      responses:
+        '200':
+          description: Query completed successfully
+          content:
+            text/csv:
+              schema:
+                type: string
+                examples:
+                  - |
+                    workspace,artifact
+                    http://localhost:8080/workspaces/sub,c0
+                    http://localhost:8080/workspaces/sub,c0
+            text/tab-separated-values:
+              schema:
+                type: string
+                examples:
+                  - |
+                    ?workspace	?artifact
+                    <http://localhost:8080/workspaces/sub>	c0
+                    <http://localhost:8080/workspaces/sub>	c0
+            application/sparql-results+xml:
+              schema:
+                type: object
+                xml:
+                  name: sparql
+                examples:
+                  - |
+                    <?xml version='1.0' encoding='UTF-8'?>
+                    <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
+                      <head>
+                        <variable name='workspace'/>
+                        <variable name='artifact'/>
+                      </head>
+                      <results>
+                        <result>
+                          <binding name='artifact'>
+                            <literal>c0</literal>
+                          </binding>
+                          <binding name='workspace'>
+                            <uri>http://localhost:8080/workspaces/sub</uri>
+                          </binding>
+                        </result>
+                        <result>
+                          <binding name='artifact'>
+                            <literal>c0</literal>
+                          </binding>
+                          <binding name='workspace'>
+                            <uri>http://localhost:8080/workspaces/sub</uri>
+                          </binding>
+                        </result>
+                      </results>
+                    </sparql>
+            application/sparql-results+json:
+              schema:
+                type: object
+                properties:
+                  head:
+                    type: object
+                    properties:
+                      vars:
+                        type: array
+                        items:
+                          type: string
+                        examples:
+                          - ["workspace", "artifact"]
+                  results:
+                    type: object
+                    properties:
+                      bindings:
+                        type: array
+                        items:
+                          type: object
+                          examples:
+                            - {
+                                "workspace": {
+                                  "type": "uri",
+                                  "value": "http://localhost:8080/workspaces/sub"
+                                },
+                                "artifact": {
+                                  "type": "literal",
+                                  "value": "c0"
+                                }
+                              }
+
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                    @prefix hmas: <https://purl.org/hmas/core/> .
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                    @prefix htv: <http://www.w3.org/2011/http#> .
+                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                    @prefix dct: <http://purl.org/dc/terms/> .
+                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                    @prefix saref: <https://w3id.org/saref#> .
+
+                    <http://localhost:8080/workspaces/sub> a hmas:Workspace, td:Thing;
+                      td:title "sub";
+                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                        ];
+                      td:hasActionAffordance [ a td:ActionAffordance;
+                          td:name "makeArtifact";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactClass";
+                                  js:enum <http://example.org/Adder>, <http://example.org/Counter>
+                                ], [ a js:ArraySchema;
+                                  js:propertyName "initParams"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ];
+                              js:required "artifactClass", "artifactName"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "joinWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "quitWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "focus";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "callbackIri"
+                                ];
+                              js:required "artifactName", "callbackIri"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "createSubWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ];
+                      hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+                      hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+
+                    <http://localhost:8080/workspaces/test> hmas:contains <http://localhost:8080/workspaces/sub> .
+
+                    <http://localhost:8080/workspaces/sub/artifacts/c0> hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
+                      td:title "c0" .
+
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/:
+    post:
+      tags:
+        - workspace
+      summary: Create a new top-level workspace
+      description: Create a new empty top-level workspace, directly hosted on the platform. It could be created by the platform itself or supplied as a TURTLE formatted body in the request.
+      operationId: createWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: header
+          name: Slug
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      requestBody:
+        description: Create a new top-level workspace
+        content:
+          none:
+          text/turtle:
+            schema:
+              type: string
+              examples:
+                - |
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                    @prefix htv: <http://www.w3.org/2011/http#> .
+                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                    @prefix dct: <http://purl.org/dc/terms/> .
+                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                    @prefix hmas: <https://purl.org/hmas/core/> .
+
+                    <http://localhost:8080/workspaces/test> a td:Thing, hmas:Workspace;
+                      td:title "test";
+                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                        ];
+                      td:hasActionAffordance [ a td:ActionAffordance;
+                          td:name "makeArtifact";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactClass";
+                                  js:enum <http://example.org/Adder>, <http://example.org/Counter>
+                                ], [ a js:ArraySchema;
+                                  js:propertyName "initParams"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ];
+                              js:required "artifactClass", "artifactName"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "joinWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "quitWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "focus";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "callbackIri"
+                                ];
+                              js:required "artifactName", "callbackIri"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "createSubWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ] .
+      responses:
+        '201':
+          description: Entity successfully created
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix saref: <https://w3id.org/saref#> .
+
+                      <http://localhost:8080/workspaces/test> a td:Thing, hmas:Workspace;
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ];
+                            td:name "makeArtifact"
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/test>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        td:title "test";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        hmas:isHostedOn <http://localhost:8080/> .
+
+                      <http://localhost:8080/> a hmas:HypermediaMASPlatform .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}:
+    get:
+      tags:
+        - workspace
+      summary: Get the representation for this workspace
+      description: Get the representation for this workspace as a TURTLE formatted string. It describes all subworkspaces in it, along with the artifacts in it.
+      operationId: getWorkspace
+      parameters:
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples: 
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                        td:title "sub";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "makeArtifact";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+                        hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a hmas:Artifact .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '404':
+          description: Workspace not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    post:
+      tags:
+        - workspace
+      summary: Create a new sub-workspace of this workspace
+      description: Create a new empty sub-workspace of this workspace. It could be created by the platform itself or supplied as a TURTLE formatted body in the request.
+      operationId: createSubWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: header
+          name: Slug
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      requestBody:
+        description: Create a new sub-workspace
+        content:
+          none:
+          text/turtle:
+            schema:
+              type: string
+              examples:
+                - |
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                    @prefix htv: <http://www.w3.org/2011/http#> .
+                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                    @prefix dct: <http://purl.org/dc/terms/> .
+                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                    @prefix hmas: <https://purl.org/hmas/core/> .
+
+                    <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                      td:title "sub";
+                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                        ];
+                      td:hasActionAffordance [ a td:ActionAffordance;
+                          td:name "makeArtifact";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactClass";
+                                  js:enum <http://example.org/Adder>, <http://example.org/Counter>
+                                ], [ a js:ArraySchema;
+                                  js:propertyName "initParams"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ];
+                              js:required "artifactClass", "artifactName"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "joinWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "quitWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "focus";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ];
+                          td:hasInputSchema [ a js:ObjectSchema;
+                              js:properties [ a js:StringSchema;
+                                  js:propertyName "artifactName"
+                                ], [ a js:StringSchema;
+                                  js:propertyName "callbackIri"
+                                ];
+                              js:required "artifactName", "callbackIri"
+                            ]
+                        ], [ a td:ActionAffordance;
+                          td:name "createSubWorkspace";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ] ;
+                      hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+      responses:
+        '201':
+          description: Entity successfully created
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                        td:title "sub";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "makeArtifact";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    put:
+      tags:
+        - workspace
+      summary: Update this workspace
+      description: Update this workspace. The new representation must be given as a TURTLE formatted body in the request.
+      operationId: updateWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      requestBody:
+        description: Update this workspace
+        content:
+          text/turtle:
+            schema:
+              type: string
+              examples:
+                - |
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                        td:title "sub";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "makeArtifact";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+      responses:
+        '200':
+          description: Entity successfully updated
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                        td:title "sub";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "makeArtifact";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '404':
+          description: Workspace not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    delete:
+      tags:
+        - workspace
+      summary: Delete this workspace
+      description: Delete this workspace. It deletes recursively all contained resources and removes the reference to this workspace from the parent workspace, if it exists.
+      operationId: deleteWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      responses:
+        '200':
+          description: Entity successfully deleted
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+                        td:title "sub";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance;
+                            td:name "makeArtifact";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactClass";
+                                    js:enum <http://example.org/Counter>
+                                  ], [ a js:ArraySchema;
+                                    js:propertyName "initParams"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ];
+                                js:required "artifactName", "artifactClass"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "joinWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "quitWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "focus";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ];
+                            td:hasInputSchema [ a js:ObjectSchema;
+                                js:properties [ a js:StringSchema;
+                                    js:propertyName "artifactName"
+                                  ], [ a js:StringSchema;
+                                    js:propertyName "callbackIri"
+                                  ];
+                                js:required "artifactName", "callbackIri"
+                              ]
+                          ], [ a td:ActionAffordance;
+                            td:name "createSubWorkspace";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ] ;
+                        hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+
+                      <http://localhost:8080/workspaces/test> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '404':
+          description: Workspace not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/join:
+    post:
+      tags:
+        - workspace
+      summary: Join this workspace
+      description: Join this workspace. The agent joining the workspace will have access to all artifacts in this workspace.
+      operationId: joinWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      responses:
+        '200':
+          description: Join successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "200"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/leave:
+    post:
+      tags:
+        - workspace
+      summary: Leave this workspace
+      description: Leave this workspace. The agent leaving the workspace will no longer have access to all artifacts in this workspace.
+      operationId: leaveWorkspace
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+      responses:
+        '200':
+          description: Leave successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "200"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/focus:
+    post:
+      tags:
+        - workspace
+      summary: Focus an artifact in the given workspace
+      description: Focus an artifact in the given workspace. The name of the artifact in the workspace must be given, along with the IRI that should be used as a callback for notifying changes in observable properties.
+      operationId: focusArtifact
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+      requestBody:
+        description: Focus an artifact
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FocusParams'
+      responses:
+        '200':
+          description: Focus successful
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "200"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/artifacts/:
+    post:
+      tags:
+        - artifact
+      summary: Create a new artifact in the given workspace
+      description: Create a new artifact in the given workspace. It can be created by the platform with the correct parameters or it representation can be supplied as a TURTLE formatted string.
+      operationId: createArtifact
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "test"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+      requestBody:
+        description: Create a new artifact
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactsParams'
+          text/turtle:
+            schema:
+              type: string
+              examples:
+                - |
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                    @prefix htv: <http://www.w3.org/2011/http#> .
+                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                    @prefix dct: <http://purl.org/dc/terms/> .
+                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                    @prefix hmas: <https://purl.org/hmas/core/> .
+
+                    <http://localhost:8080/workspaces/test/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                        hmas:Artifact;
+                      td:title "c0";
+                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                        ];
+                      td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                          td:name "inc";
+                          td:title "inc";
+                          td:hasForm [
+                              htv:methodName "POST";
+                              hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/c0/increment>;
+                              hctl:forContentType "application/json";
+                              hctl:hasOperationType td:invokeAction
+                            ]
+                        ] .
+      responses:
+        '201':
+          description: Entity successfully created
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                          hmas:Artifact;
+                        td:title "c0";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                            td:name "inc";
+                            td:title "inc";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c0/increment>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ];
+                        hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+
+                      <http://localhost:8080/workspaces/sub> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '404':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/artifacts/{artifactName}:
+    get:
+      tags:
+        - artifact
+      summary: Get the representation for this artifact
+      description: Get the representation for this artifact as a TURTLE formatted string. It describes its operations.
+      operationId: getArtifact
+      parameters:
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+        - in: path
+          name: artifactName
+          schema:
+            type: string
+            examples:
+              - "c0"
+          required: true
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples: 
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                          hmas:Artifact;
+                        td:title "c0";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                            td:name "inc";
+                            td:title "inc";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c0/increment>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ];
+                        hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+
+                      <http://localhost:8080/workspaces/sub> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '404':
+          description: Artifact not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    put:
+      tags:
+        - artifact
+      summary: Update this artifact
+      description: Update this artifact. The new representation must be given as a TURTLE formatted body in the request.
+      operationId: updateArtifact
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+        - in: path
+          name: artifactName
+          schema:
+            type: string
+            examples:
+              - "c0"
+          required: true
+      requestBody:
+        description: Update this artifact
+        content:
+          text/turtle:
+            schema:
+              type: string
+              examples:
+                - |
+                    @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                          hmas:Artifact;
+                        td:title "c0";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                            td:name "inc";
+                            td:title "inc";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c0/increment>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ];
+                        hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+
+                      <http://localhost:8080/workspaces/sub> a hmas:Workspace .
+      responses:
+        '200':
+          description: Entity successfully updated
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                          hmas:Artifact;
+                        td:title "c0";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                            td:name "inc";
+                            td:title "inc";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c0/increment>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ];
+                        hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+
+                      <http://localhost:8080/workspaces/sub> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '404':
+          description: Artifact not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+    delete:
+      tags:
+        - artifact
+      summary: Delete this artifact
+      description: Delete this artifact. It removes the reference to this artifact from the containing workspace.
+      operationId: deleteArtifact
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+        - in: path
+          name: artifactName
+          schema:
+            type: string
+            examples:
+              - "c0"
+          required: true
+      responses:
+        '200':
+          description: Entity successfully deleted
+          content:
+            text/turtle:
+              schema:
+                type: string
+                examples:
+                  - |
+                      @prefix td: <https://www.w3.org/2019/wot/td#> .
+                      @prefix htv: <http://www.w3.org/2011/http#> .
+                      @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+                      @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+                      @prefix dct: <http://purl.org/dc/terms/> .
+                      @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+                      @prefix hmas: <https://purl.org/hmas/core/> .
+
+                      <http://localhost:8080/workspaces/sub/artifacts/c0> a td:Thing, <http://example.org/Counter>,
+                          hmas:Artifact;
+                        td:title "c0";
+                        td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+                          ];
+                        td:hasActionAffordance [ a td:ActionAffordance, <http://example.org/Increment>;
+                            td:name "inc";
+                            td:title "inc";
+                            td:hasForm [
+                                htv:methodName "POST";
+                                hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c0/increment>;
+                                hctl:forContentType "application/json";
+                                hctl:hasOperationType td:invokeAction
+                              ]
+                          ];
+                        hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+
+                      <http://localhost:8080/workspaces/sub> a hmas:Workspace .
+        '400':
+          description: Malformed parameters given
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Bad Request"
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '404':
+          description: Artifact not found
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Not Found"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+  /workspaces/{workspaceName}/artifacts/{artifactName}/{actionName}:
+    post:
+      tags:
+        - artifact
+      summary: Do an action with this artifact
+      description: Do an action with this artifact. If the action has a result it is returned, otherwise the successful status code is returned. The action parameters can be passed as a JSON array in the request body.
+      operationId: doAction
+      parameters:
+        - in: header
+          name: X-Agent-WebID
+          schema:
+            type: string
+            examples:
+              - "agent"
+          required: true
+        - in: path
+          name: workspaceName
+          schema:
+            type: string
+            examples:
+              - "sub"
+          required: true
+        - in: path
+          name: artifactName
+          schema:
+            type: string
+            examples:
+              - "c0"
+          required: true
+        - in: path
+          name: actionName
+          schema:
+            type: string
+            examples:
+              - "inc"
+          required: true
+      requestBody:
+        description: Parameters for the action to be done
+        content:
+          application/json:
+            schema:
+              type: array
+              examples:
+                - [1]
+      responses:
+        '200':
+          description: Action completed with success
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - 6
+        '401':
+          description: No WebID header supplied
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Unauthorized"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                examples:
+                  - "Internal Server Error"
+components:
+  schemas:
+    ArtifactsParams:
+      type: object
+      properties:
+        artifactName:
+          type: string
+          examples:
+            - "c0"
+        artifactClass:
+          type: string
+          format: url
+          examples:
+            - "http://example.org/Counter"
+        initParams:
+          type: array
+          examples:
+            - [5]
+    FocusParams:
+      type: object
+      properties:
+        artifactName:
+          type: string
+          examples:
+            - "c0"
+        callbackIri:
+          type: string
+          format: url
+          examples:
+            - "http://localhost:8080/"
+  requestBodies:
