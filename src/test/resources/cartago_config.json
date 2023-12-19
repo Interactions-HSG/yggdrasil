@@ -12,16 +12,13 @@
     "known-artifacts" : [
       {
         "class" : "http://example.org/Counter",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
+        "template" : "org.hyperagents.yggdrasil.artifacts.Counter"
       }
     ],
     "workspaces" : [
       {
-        "name" : "w1"
-      },
-      {
-        "name" : "w0",
-        "parent-name" : "w1",
+        "name" : "sub",
+        "parent-name" : "test",
         "artifacts" : [
           {
             "name" : "c0",
@@ -40,6 +37,9 @@
         "agents" : [
           "http://localhost:8080/agents/test"
         ]
+      },
+      {
+        "name" : "test"
       }
     ],
     "enabled" : true
