@@ -16,8 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
-import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
@@ -29,14 +28,16 @@ public class HttpNotificationVerticle extends AbstractVerticle {
   public void start() {
     this.registry = new NotificationSubscriberRegistry();
     final var client = WebClient.create(this.vertx);
-    final var webSubHubUri =
-        new WebSubConfigImpl(
-            this.context.config(),
-            new HttpInterfaceConfigImpl(this.context.config())
-        )
-        .getWebSubHubUri();
+    final var notificationConfig = this.vertx
+                                       .sharedData()
+                                       .<String, WebSubConfig>getLocalMap("notification-config")
+                                       .get("default");
+    final var webSubHubUri = notificationConfig.getWebSubHubUri();
 
-    final var ownMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
+    final var ownMessagebox = new HttpNotificationDispatcherMessagebox(
+        this.vertx.eventBus(),
+        notificationConfig
+    );
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
       switch (message.body()) {
@@ -104,19 +105,19 @@ public class HttpNotificationVerticle extends AbstractVerticle {
 
   private void handleActionNotificationSending(
       final WebClient client,
-      final Optional<String> webSubHubUri,
+      final String webSubHubUri,
       final String requestIri,
       final String content,
       final String eventType
   ) {
-    webSubHubUri.ifPresent(w -> this.registry.getCallbackIris(requestIri).forEach(c ->
-        this.createNotificationRequest(client, w, c, requestIri)
+    this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, webSubHubUri, c, requestIri)
             .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
             .sendJsonObject(
               ((JsonObject) Json.decodeValue(content)).put("eventType", eventType),
               this.reponseHandler(c)
             )
-    ));
+    );
   }
 
   private void handleNotificationSending(

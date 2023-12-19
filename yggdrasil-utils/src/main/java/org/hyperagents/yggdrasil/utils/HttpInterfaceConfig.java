@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.utils;
 
-public interface HttpInterfaceConfig {
+import io.vertx.core.shareddata.Shareable;
+
+public interface HttpInterfaceConfig extends Shareable {
   String getHost();
 
   int getPort();

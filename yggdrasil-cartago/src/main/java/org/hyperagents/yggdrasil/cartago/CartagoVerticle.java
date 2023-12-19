@@ -22,11 +22,13 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.function.Failable;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,15 +40,18 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
+  private static final String DEFAULT_CONFIG_VALUE = "default";
 
   private HttpInterfaceConfig httpConfig;
   private WorkspaceRegistry workspaceRegistry;
@@ -56,22 +61,33 @@ public class CartagoVerticle extends AbstractVerticle {
 
   @Override
   public void start(final Promise<Void> startPromise) {
-    final var registry = HypermediaArtifactRegistry.getInstance();
-    JsonObjectUtils
-        .getJsonObject(this.config(), "known-artifacts", LOGGER::error)
-        .ifPresent(registry::addArtifactTemplates);
-
-    this.httpConfig = new HttpInterfaceConfigImpl(this.context.config());
+    this.httpConfig = this.vertx
+                          .sharedData()
+                          .<String, HttpInterfaceConfig>getLocalMap("http-config")
+                          .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
     this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
     this.agentCredentials = new HashMap<>();
 
     final var eventBus = this.vertx.eventBus();
-    final var ownMessagebox = new CartagoMessagebox(eventBus);
+    final var ownMessagebox = new CartagoMessagebox(
+        eventBus,
+        this.vertx
+            .sharedData()
+            .<String, EnvironmentConfig>getLocalMap("environment-config")
+            .get(DEFAULT_CONFIG_VALUE)
+    );
     ownMessagebox.init();
     ownMessagebox.receiveMessages(this::handleCartagoRequest);
-    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
-
+    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
+      eventBus,
+      this.vertx
+          .sharedData()
+          .<String, WebSubConfig>getLocalMap("notification-config")
+          .get(DEFAULT_CONFIG_VALUE)
+    );
+    final var yggdrasilAgent = this.httpConfig.getBaseUri() + "/agents/yggdrasil";
+    this.initializeFromConfiguration(yggdrasilAgent);
     this.vertx
         .<Void>executeBlocking(() -> {
           CartagoEnvironment.getInstance().init(new BasicLogger());
@@ -95,6 +111,41 @@ public class CartagoVerticle extends AbstractVerticle {
           return null;
         })
         .onComplete(stopPromise);
+  }
+
+  private void initializeFromConfiguration(final String yggdrasilAgent) {
+    final var registry = HypermediaArtifactRegistry.getInstance();
+    final var environment = this.vertx
+                                .sharedData()
+                                .<String, Environment>getLocalMap("environment")
+                                .get(DEFAULT_CONFIG_VALUE);
+    environment.getKnownArtifacts()
+               .forEach(a -> registry.addArtifactTemplate(a.getClazz(), a.getTemplate()));
+    environment
+        .getWorkspaces()
+        .forEach(w -> {
+          w.getParentName().ifPresentOrElse(
+              Failable.asConsumer(p -> this.instantiateSubWorkspace(p, w.getName())),
+              Failable.asRunnable(() -> this.instantiateWorkspace(w.getName()))
+          );
+          w.getAgents().forEach(
+              Failable.asConsumer(a -> this.joinWorkspace(a.getName(), w.getName()))
+          );
+          w.getArtifacts().forEach(Failable.asConsumer(a -> {
+            this.instantiateArtifact(
+                yggdrasilAgent,
+                w.getName(),
+                registry.getArtifactTemplate(a.getClazz()).orElseThrow(),
+                a.getName(),
+                Optional.of(a.getInitializationParameters())
+                        .filter(p -> !p.isEmpty())
+                        .map(List::toArray)
+            );
+            a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
+                this.focus(ag.getName(), w.getName(), a.getName())
+            ));
+          }));
+        });
   }
 
   @SuppressWarnings({

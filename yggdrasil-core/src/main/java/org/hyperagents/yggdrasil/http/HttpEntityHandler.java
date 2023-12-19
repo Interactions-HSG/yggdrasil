@@ -7,7 +7,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -44,11 +43,10 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
-import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
@@ -64,14 +62,23 @@ public class HttpEntityHandler {
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
   private final Messagebox<HttpNotificationDispatcherMessage> notificationMessagebox;
   private final HttpInterfaceConfig httpConfig;
-  private final WebSubConfig webSubConfig;
+  private final WebSubConfig notificationConfig;
 
-  public HttpEntityHandler(final Vertx vertx, final Context context) {
-    this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
+  public HttpEntityHandler(
+      final Vertx vertx,
+      final HttpInterfaceConfig httpConfig,
+      final EnvironmentConfig environmentConfig,
+      final WebSubConfig notificationConfig
+  ) {
+    this.httpConfig = httpConfig;
+    this.notificationConfig = notificationConfig;
+    this.cartagoMessagebox = new CartagoMessagebox(
+      vertx.eventBus(),
+      environmentConfig
+    );
     this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
-    this.notificationMessagebox = new HttpNotificationDispatcherMessagebox(vertx.eventBus());
-    this.httpConfig = new HttpInterfaceConfigImpl(context.config());
-    this.webSubConfig = new WebSubConfigImpl(context.config(), this.httpConfig);
+    this.notificationMessagebox =
+        new HttpNotificationDispatcherMessagebox(vertx.eventBus(), this.notificationConfig);
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -487,11 +494,11 @@ public class HttpEntityHandler {
   }
 
   private Map<String, List<String>> getWebSubHeaders(final String entityIri) {
-    return this.webSubConfig.isEnabled()
+    return this.notificationConfig.isEnabled()
            ? Map.of(
                "Link",
                Arrays.asList(
-                 "<" + this.webSubConfig.getWebSubHubUri() + ">; rel=\"hub\"",
+                 "<" + this.notificationConfig.getWebSubHubUri() + ">; rel=\"hub\"",
                  "<" + entityIri + ">; rel=\"self\""
                )
              )

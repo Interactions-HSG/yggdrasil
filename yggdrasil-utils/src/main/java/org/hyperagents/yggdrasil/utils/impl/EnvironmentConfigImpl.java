@@ -12,7 +12,7 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
 
   public EnvironmentConfigImpl(final JsonObject config) {
     final var environmentConfig =
-        JsonObjectUtils.getJsonObject(config, "notification-config", LOGGER::error);
+        JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
     this.enabled =
       environmentConfig.flatMap(c -> JsonObjectUtils.getBoolean(c, "enabled", LOGGER::error))
                        .orElse(false);

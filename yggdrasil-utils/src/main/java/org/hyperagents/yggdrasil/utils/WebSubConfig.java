@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.utils;
 
-public interface WebSubConfig {
+import io.vertx.core.shareddata.Shareable;
+
+public interface WebSubConfig extends Shareable {
   boolean isEnabled();
 
   String getWebSubHubUri();

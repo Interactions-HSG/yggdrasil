@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.eventbus.messageboxes;
 
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import java.util.function.Consumer;
@@ -68,9 +67,7 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
 
   @Override
   public Future<Message<String>> sendMessage(final RdfStoreMessage message) {
-    final var promise = Promise.<Message<String>>promise();
-    this.eventBus.request(MessageAddresses.RDF_STORE.getName(), message, promise);
-    return promise.future();
+    return this.eventBus.request(MessageAddresses.RDF_STORE.getName(), message);
   }
 
   @Override

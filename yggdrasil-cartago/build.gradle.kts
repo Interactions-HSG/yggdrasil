@@ -43,6 +43,8 @@ dependencies {
 
   implementation(libs.rdf4j.model)
 
+  implementation(libs.apache.commons.lang3)
+
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
   pmd(libs.pmd.ant)

@@ -28,7 +28,7 @@ import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 /**
@@ -46,8 +46,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start(final Promise<Void> startPromise) {
-    this.httpConfig = new HttpInterfaceConfigImpl(this.config());
-    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
+    this.httpConfig = this.vertx.sharedData()
+                                .<String, HttpInterfaceConfig>getLocalMap("http-config")
+                                .get("default");
+    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
+      this.vertx.eventBus(),
+      this.vertx.sharedData()
+                .<String, WebSubConfig>getLocalMap("notification-config")
+                .get("default")
+    );
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
