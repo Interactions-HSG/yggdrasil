@@ -21,6 +21,9 @@ import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,8 +47,25 @@ public class RdfStoreVerticleQueryTest {
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx)
       throws URISyntaxException, IOException {
+    final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put("default", httpConfig);
+    final var notificationConfig = new WebSubConfigImpl(
+      JsonObject.of(
+        "notification-config",
+        JsonObject.of("enabled", true)
+      ),
+      httpConfig
+    );
+    vertx.sharedData()
+         .getLocalMap("notification-config")
+         .put("default", notificationConfig);
     this.messagebox = new RdfStoreMessagebox(vertx.eventBus());
-    new HttpNotificationDispatcherMessagebox(vertx.eventBus()).init();
+    new HttpNotificationDispatcherMessagebox(
+      vertx.eventBus(),
+      notificationConfig
+    ).init();
     final var inputWorkspaceRepresentation =
         Files.readString(
           Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),

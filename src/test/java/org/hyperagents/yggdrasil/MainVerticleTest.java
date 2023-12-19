@@ -100,12 +100,16 @@ public class MainVerticleTest {
             "environment-config",
             JsonObject.of(
               "enabled",
-              true
-            ),
-            "known-artifacts",
-            JsonObject.of(
-              COUNTER_ARTIFACT_CLASS,
-              "org.hyperagents.yggdrasil.artifacts.Counter"
+              true,
+              "known-artifacts",
+              JsonArray.of(
+                JsonObject.of(
+                  "class",
+                  COUNTER_ARTIFACT_CLASS,
+                  "template",
+                  "org.hyperagents.yggdrasil.artifacts.Counter"
+                )
+              )
             )
           ))
         )
