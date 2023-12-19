@@ -2,11 +2,17 @@
   "http-config" : {
     "host" : "0.0.0.0",
     "port" : 8080,
-    "base-uri" : "http://localhost:8899/",
-    "websub-hub-uri" : "https://yggdrasil.interactions.ics.unisg.ch/hub/"
+    "base-uri" : "http://localhost:8899/"
   },
   "rdf-store" : {
     "in-memory" : false,
     "store-path" : "data/"
+  },
+  "notification-config" : {
+    "websub-hub-base-uri" : "https://yggdrasil.interactions.ics.unisg.ch/",
+    "enabled" : true
+  },
+  "environment-config" : {
+    "enabled" : true
   }
 }

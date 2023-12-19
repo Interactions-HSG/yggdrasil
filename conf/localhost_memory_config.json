@@ -2,7 +2,12 @@
   "http-config" : {
     "host" : "localhost",
     "port" : 8080,
-    "base-uri" : "http://localhost:8080/",
-    "websub-hub-uri" : "http://localhost:8080/hub/"
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "environment-config" : {
+    "enabled" : true
   }
 }
