@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,16 @@ public class RdfStoreVerticleGetTest {
     vertx.sharedData()
          .<String, HttpInterfaceConfig>getLocalMap("http-config")
          .put("default", new HttpInterfaceConfigImpl(JsonObject.of()));
+    vertx.sharedData()
+         .getLocalMap("environment-config")
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of(
+                  "enabled",
+                  true
+                )
+              )));
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
   }

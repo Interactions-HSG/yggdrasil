@@ -109,11 +109,11 @@ public class CartagoVerticleTest {
            )
          )));
     final var notificationConfig = new WebSubConfigImpl(
-      JsonObject.of(
-        "notification-config",
-        JsonObject.of("enabled", true)
-      ),
-      httpConfig
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
     );
     vertx.sharedData()
          .getLocalMap("notification-config")
@@ -123,8 +123,8 @@ public class CartagoVerticleTest {
       environmentConfig
     );
     final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
-      vertx.eventBus(),
-      notificationConfig
+        vertx.eventBus(),
+        notificationConfig
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));

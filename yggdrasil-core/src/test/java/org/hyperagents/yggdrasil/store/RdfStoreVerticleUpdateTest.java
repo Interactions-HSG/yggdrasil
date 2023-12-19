@@ -19,6 +19,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -45,20 +46,30 @@ public class RdfStoreVerticleUpdateTest {
     vertx.sharedData()
          .<String, HttpInterfaceConfig>getLocalMap("http-config")
          .put("default", httpConfig);
+    vertx.sharedData()
+         .getLocalMap("environment-config")
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of(
+                  "enabled",
+                  true
+                )
+              )));
     final var notificationConfig = new WebSubConfigImpl(
-      JsonObject.of(
-        "notification-config",
-        JsonObject.of("enabled", true)
-      ),
-      httpConfig
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
     );
     vertx.sharedData()
          .getLocalMap("notification-config")
          .put("default", notificationConfig);
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
-      vertx.eventBus(),
-      notificationConfig
+        vertx.eventBus(),
+        notificationConfig
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));

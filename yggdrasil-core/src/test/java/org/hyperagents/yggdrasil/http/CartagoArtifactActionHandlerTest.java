@@ -80,18 +80,18 @@ public class CartagoArtifactActionHandlerTest {
          .<String, HttpInterfaceConfig>getLocalMap("http-config")
          .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
-      "environment-config",
-      JsonObject.of("enabled", true)
+        "environment-config",
+        JsonObject.of("enabled", true)
     ));
     vertx.sharedData()
          .<String, EnvironmentConfig>getLocalMap("environment-config")
          .put("default", environmentConfig);
     final var notificationConfig = new WebSubConfigImpl(
-      JsonObject.of(
-        "notification-config",
-        JsonObject.of("enabled", true)
-      ),
-      httpConfig
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
     );
     vertx.sharedData()
          .<String, WebSubConfig>getLocalMap("notification-config")
