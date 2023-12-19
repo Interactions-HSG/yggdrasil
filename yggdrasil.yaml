@@ -2105,7 +2105,7 @@ paths:
       tags:
         - artifact
       summary: Do an action with this artifact
-      description: Do an action with this artifact. If the action has a result it is returned, otherwise the successful status code is returned. The action parameters can be passed as a JSON array in the request body.
+      description: Do an action with this artifact. If the action has a result it is returned as part of the reponse, otherwise the body will be empty. The action parameters can be passed as a JSON array in the request body.
       operationId: doAction
       parameters:
         - in: header
