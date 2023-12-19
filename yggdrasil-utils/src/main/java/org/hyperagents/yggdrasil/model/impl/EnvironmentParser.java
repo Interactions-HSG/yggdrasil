@@ -2,8 +2,10 @@ package org.hyperagents.yggdrasil.model.impl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,103 +59,166 @@ public final class EnvironmentParser {
     final var jsonWorkspaces =
         envConfig.flatMap(c -> JsonObjectUtils.getJsonArray(c, "workspaces", LOGGER::error))
                  .stream()
-                 .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
+                 .flatMap(a -> IntStream.range(0, a.size())
+                                        .mapToObj(a::getValue)
+                                        .flatMap(o ->
+                                          (
+                                            o instanceof JsonObject j
+                                            ? Optional.of(j)
+                                            : Optional.<JsonObject>empty()
+                                          )
+                                          .stream()
+                                        ))
                  .toList();
     final var workspaceNames =
         jsonWorkspaces.stream()
                       .flatMap(w -> JsonObjectUtils.getString(w, "name", LOGGER::error).stream())
                       .collect(Collectors.toSet());
     return new EnvironmentImpl(
-      jsonWorkspaces
-        .stream()
-        .<Workspace>flatMap(w -> {
-          final var name = JsonObjectUtils.getString(w, "name", LOGGER::error);
-          if (name.isEmpty()) {
-            LOGGER.warn("Workspace missing name, skipping");
-            return Stream.empty();
-          }
-          final var agentNames =
-              JsonObjectUtils.getJsonArray(w, "agents", LOGGER::error)
-                             .stream()
-                             .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getString))
-                             .collect(Collectors.toCollection(HashSet::new));
-          return Stream.of(new WorkspaceImpl(
-            name.get(),
-            JsonObjectUtils
-              .getString(w, "parent-name", LOGGER::error)
-              .filter(p -> {
-                if (!workspaceNames.contains(p)) {
-                  LOGGER.warn(
-                      "Workspace has an undefined parent without definition, ignoring parent name"
-                  );
-                }
-                return workspaceNames.contains(p);
-              }),
-            agentNames.stream().map(JoinedAgentImpl::new).collect(Collectors.toSet()),
-            JsonObjectUtils
-                .getJsonArray(w, "artifacts", LOGGER::error)
-                .stream()
-                .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
-                .<Artifact>flatMap(ar -> {
-                  final var artifactName = JsonObjectUtils.getString(ar, "name", LOGGER::error);
-                  final var artifactClass = JsonObjectUtils.getString(ar, "clazz", LOGGER::error);
-                  if (artifactName.isEmpty() || artifactClass.isEmpty()) {
-                    LOGGER.warn("Workspace artifact missing name or class, skipping");
-                    return Stream.empty();
+      reorderWorkspaces(
+        jsonWorkspaces
+          .stream()
+          .<Workspace>flatMap(w -> {
+            final var name = JsonObjectUtils.getString(w, "name", LOGGER::error);
+            if (name.isEmpty()) {
+              LOGGER.warn("Workspace missing name, skipping");
+              return Stream.empty();
+            }
+            final var agentNames =
+                JsonObjectUtils.getJsonArray(w, "agents", LOGGER::error)
+                               .stream()
+                               .flatMap(a -> IntStream.range(0, a.size())
+                                                      .mapToObj(a::getValue)
+                                                      .flatMap(o ->
+                                                        (
+                                                          o instanceof String s
+                                                          ? Optional.of(s)
+                                                          : Optional.<String>empty()
+                                                        )
+                                                        .stream()
+                                                      ))
+                               .collect(Collectors.toCollection(HashSet::new));
+            return Stream.of(new WorkspaceImpl(
+              name.get(),
+              JsonObjectUtils
+                .getString(w, "parent-name", LOGGER::error)
+                .filter(p -> {
+                  if (!workspaceNames.contains(p)) {
+                    LOGGER.warn(
+                        "Workspace has an undefined parent without definition, ignoring parent name"
+                    );
                   }
-                  if (!artifactClasses.contains(artifactClass.get())) {
-                    LOGGER.warn("Workspace artifact not having a known artifact class, skipping");
-                    return Stream.empty();
-                  }
-                  return Stream.of(new ArtifactImpl(
-                    artifactName.get(),
-                    artifactClass.get(),
-                    JsonObjectUtils
-                      .getJsonArray(ar, "init-params", LOGGER::error)
-                      .map(JsonArray::getList)
-                      .orElse(Collections.emptyList()),
-                    JsonObjectUtils
-                      .getJsonArray(ar, "focused-by", LOGGER::error)
-                      .stream()
-                      .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
-                      .<FocusingAgent>flatMap(ag -> {
-                        final var agentUri =
-                            JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
-                        final var callbackUri =
-                            JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
-                        if (agentUri.isEmpty() || callbackUri.isEmpty()) {
-                          LOGGER.warn("Focusing agent missing uri or callback, skipping");
-                          return Stream.empty();
-                        }
-                        if (!agentNames.contains(agentUri.get())) {
-                          LOGGER.warn(
-                              "Focusing agent not defined to join workspace, adding it"
-                          );
-                          agentNames.add(agentUri.get());
-                        }
-                        return Stream.of(new FocusingAgentImpl(
-                          agentUri.get(),
-                          callbackUri.get()
-                        ));
-                      })
-                      .collect(Collectors.toSet())
-                  ));
-                })
-                .collect(Collectors.toSet())
-          ));
-        })
-        .collect(Collectors.toSet()),
+                  return workspaceNames.contains(p);
+                }),
+              agentNames.stream().map(JoinedAgentImpl::new).collect(Collectors.toSet()),
+              JsonObjectUtils
+                  .getJsonArray(w, "artifacts", LOGGER::error)
+                  .stream()
+                  .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
+                  .<Artifact>flatMap(ar -> {
+                    final var artifactName = JsonObjectUtils.getString(ar, "name", LOGGER::error);
+                    final var artifactClass = JsonObjectUtils.getString(ar, "class", LOGGER::error);
+                    if (artifactName.isEmpty()) {
+                      LOGGER.warn("Artifact in workspace missing name, skipping");
+                      return Stream.empty();
+                    }
+                    if (artifactClass.map(c -> !artifactClasses.contains(c)).orElse(false)) {
+                      LOGGER.warn(
+                          "Artifact in workspace not having a known artifact class, skipping"
+                      );
+                      return Stream.empty();
+                    }
+                    final var representation =
+                        JsonObjectUtils.getString(ar, "representation", LOGGER::error);
+                    if (artifactClass.isEmpty() && representation.isEmpty()) {
+                      LOGGER.warn(
+                          "Artifact in workspace not having a class for creating it"
+                          + " or a static representation, skipping"
+                      );
+                      return Stream.empty();
+                    }
+                    return Stream.of(new ArtifactImpl(
+                      artifactName.get(),
+                      artifactClass,
+                      JsonObjectUtils
+                        .getJsonArray(ar, "init-params", LOGGER::error)
+                        .map(JsonArray::getList)
+                        .orElse(Collections.emptyList()),
+                      JsonObjectUtils
+                        .getJsonArray(ar, "focused-by", LOGGER::error)
+                        .stream()
+                        .flatMap(a -> IntStream.range(0, a.size())
+                                               .mapToObj(a::getValue)
+                                               .flatMap(o ->
+                                                 (
+                                                   o instanceof JsonObject j
+                                                   ? Optional.of(j)
+                                                   : Optional.<JsonObject>empty()
+                                                 )
+                                                 .stream()
+                                               ))
+                        .<FocusingAgent>flatMap(ag -> {
+                          final var agentUri =
+                              JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
+                          final var callbackUri =
+                              JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
+                          if (agentUri.isEmpty() || callbackUri.isEmpty()) {
+                            LOGGER.warn("Focusing agent missing uri or callback, skipping");
+                            return Stream.empty();
+                          }
+                          if (!agentNames.contains(agentUri.get())) {
+                            LOGGER.warn(
+                                "Focusing agent not defined to join workspace, adding it"
+                            );
+                            agentNames.add(agentUri.get());
+                          }
+                          return Stream.of(new FocusingAgentImpl(
+                            agentUri.get(),
+                            callbackUri.get()
+                          ));
+                        })
+                        .collect(Collectors.toSet()),
+                      representation
+                    ));
+                  })
+                  .collect(Collectors.toSet()),
+              JsonObjectUtils.getString(w, "representation", LOGGER::error)
+            ));
+          })
+          .toList()
+      ),
       knownArtifacts
     );
   }
 
+  private static List<Workspace> reorderWorkspaces(final List<Workspace> unorderedWorkspaces) {
+    final var workspacesToVisit =
+        unorderedWorkspaces.stream()
+                           .filter(w -> w.getParentName().isEmpty())
+                           .collect(Collectors.toCollection(LinkedList::new));
+    final var orderedWorkspaces = new ArrayList<>(workspacesToVisit);
+    while (!workspacesToVisit.isEmpty()) {
+      final var currentWorkspace = workspacesToVisit.remove();
+      final var childrenWorkspaces =
+          unorderedWorkspaces.stream()
+                             .filter(w ->
+                               w.getParentName().isPresent()
+                               && w.getParentName().get().equals(currentWorkspace.getName())
+                             )
+                             .toList();
+      workspacesToVisit.addAll(childrenWorkspaces);
+      orderedWorkspaces.addAll(childrenWorkspaces);
+    }
+    return orderedWorkspaces;
+  }
+
   private record EnvironmentImpl(
-      Set<Workspace> workspaces,
+      List<Workspace> workspaces,
       Set<KnownArtifact> knownArtifacts
   ) implements Environment {
 
     @Override
-    public Set<Workspace> getWorkspaces() {
+    public List<Workspace> getWorkspaces() {
       return this.workspaces();
     }
 
@@ -180,7 +245,8 @@ public final class EnvironmentParser {
       String name,
       Optional<String> parentName,
       Set<JoinedAgent> joinedAgents,
-      Set<Artifact> artifacts
+      Set<Artifact> artifacts,
+      Optional<String> representation
   ) implements Workspace {
     @Override
     public String getName() {
@@ -201,6 +267,11 @@ public final class EnvironmentParser {
     public Set<JoinedAgent> getAgents() {
       return this.joinedAgents();
     }
+
+    @Override
+    public Optional<String> getRepresentation() {
+      return this.representation();
+    }
   }
 
   private record JoinedAgentImpl(String name) implements JoinedAgent {
@@ -212,9 +283,10 @@ public final class EnvironmentParser {
 
   private record ArtifactImpl(
       String name,
-      String clazz,
+      Optional<String> clazz,
       List<?> initializationParameters,
-      Set<FocusingAgent> focusingAgents
+      Set<FocusingAgent> focusingAgents,
+      Optional<String> representation
   ) implements Artifact {
     @Override
     public String getName() {
@@ -222,7 +294,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public String getClazz() {
+    public Optional<String> getClazz() {
       return this.clazz();
     }
 
@@ -234,6 +306,11 @@ public final class EnvironmentParser {
     @Override
     public Set<FocusingAgent> getFocusingAgents() {
       return this.focusingAgents();
+    }
+
+    @Override
+    public Optional<String> getRepresentation() {
+      return this.representation();
     }
   }
 

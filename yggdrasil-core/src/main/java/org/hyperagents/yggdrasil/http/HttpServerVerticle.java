@@ -39,7 +39,9 @@ public class HttpServerVerticle extends AbstractVerticle {
                                   .<String, WebSubConfig>getLocalMap("notification-config")
                                   .get("default");
     this.server = this.vertx.createHttpServer();
-    this.server.requestHandler(this.createRouter(httpConfig, environmentConfig, notificationConfig))
+    this.server.requestHandler(
+                 this.createRouter(httpConfig, this.environmentConfig, this.notificationConfig)
+               )
                .listen(httpConfig.getPort(), httpConfig.getHost())
                .<Void>mapEmpty()
                .onComplete(startPromise);

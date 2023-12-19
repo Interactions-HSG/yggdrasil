@@ -11,4 +11,6 @@ public interface Workspace {
   Set<Artifact> getArtifacts();
 
   Set<JoinedAgent> getAgents();
+
+  Optional<String> getRepresentation();
 }

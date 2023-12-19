@@ -38,8 +38,10 @@ import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -57,6 +59,7 @@ public class CartagoVerticle extends AbstractVerticle {
   private WorkspaceRegistry workspaceRegistry;
   private RepresentationFactory representationFactory;
   private Map<String, AgentCredential> agentCredentials;
+  private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
 
   @Override
@@ -79,6 +82,7 @@ public class CartagoVerticle extends AbstractVerticle {
     );
     ownMessagebox.init();
     ownMessagebox.receiveMessages(this::handleCartagoRequest);
+    this.storeMessagebox = new RdfStoreMessagebox(eventBus);
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       eventBus,
       this.vertx
@@ -87,7 +91,6 @@ public class CartagoVerticle extends AbstractVerticle {
           .get(DEFAULT_CONFIG_VALUE)
     );
     final var yggdrasilAgent = this.httpConfig.getBaseUri() + "/agents/yggdrasil";
-    this.initializeFromConfiguration(yggdrasilAgent);
     this.vertx
         .<Void>executeBlocking(() -> {
           CartagoEnvironment.getInstance().init(new BasicLogger());
@@ -125,26 +128,44 @@ public class CartagoVerticle extends AbstractVerticle {
         .getWorkspaces()
         .forEach(w -> {
           w.getParentName().ifPresentOrElse(
-              Failable.asConsumer(p -> this.instantiateSubWorkspace(p, w.getName())),
-              Failable.asRunnable(() -> this.instantiateWorkspace(w.getName()))
+              Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
+                new RdfStoreMessage.CreateWorkspace(
+                  this.httpConfig.getWorkspacesUri() + "/",
+                  w.getName(),
+                  Optional.of(this.httpConfig.getWorkspaceUri(p)),
+                  this.instantiateSubWorkspace(p, w.getName())
+                )
+              )),
+              Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
+                new RdfStoreMessage.CreateWorkspace(
+                  this.httpConfig.getWorkspacesUri() + "/",
+                  w.getName(),
+                  Optional.empty(),
+                  this.instantiateWorkspace(w.getName())
+                )
+              ))
           );
           w.getAgents().forEach(
               Failable.asConsumer(a -> this.joinWorkspace(a.getName(), w.getName()))
           );
-          w.getArtifacts().forEach(Failable.asConsumer(a -> {
-            this.instantiateArtifact(
-                yggdrasilAgent,
-                w.getName(),
-                registry.getArtifactTemplate(a.getClazz()).orElseThrow(),
+          w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
+            this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                this.httpConfig.getArtifactsUri(w.getName()) + "/",
                 a.getName(),
-                Optional.of(a.getInitializationParameters())
-                        .filter(p -> !p.isEmpty())
-                        .map(List::toArray)
-            );
+                this.instantiateArtifact(
+                  yggdrasilAgent,
+                  w.getName(),
+                  registry.getArtifactTemplate(c).orElseThrow(),
+                  a.getName(),
+                  Optional.of(a.getInitializationParameters())
+                          .filter(p -> !p.isEmpty())
+                          .map(List::toArray)
+                )
+            ));
             a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
                 this.focus(ag.getName(), w.getName(), a.getName())
             ));
-          }));
+          })));
         });
   }
 
@@ -174,18 +195,16 @@ public class CartagoVerticle extends AbstractVerticle {
             String representation
           ) -> {
           final var artifactInit = new JsonObject(representation);
-          final var registry = HypermediaArtifactRegistry.getInstance();
-          this.instantiateArtifact(
+          message.reply(this.instantiateArtifact(
               agentId,
               workspaceName,
               JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-                             .flatMap(registry::getArtifactTemplate)
+                             .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
                              .orElseThrow(),
               artifactName,
               JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
                              .map(i -> i.getList().toArray())
-          );
-          message.reply(registry.getArtifactDescription(artifactName));
+          ));
         }
         case CartagoMessage.Focus(
           String agentId,
@@ -280,7 +299,7 @@ public class CartagoVerticle extends AbstractVerticle {
     workspace.quitAgent(this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()));
   }
 
-  private void instantiateArtifact(
+  private String instantiateArtifact(
       final String agentUri,
       final String workspaceName,
       final String artifactClass,
@@ -295,6 +314,7 @@ public class CartagoVerticle extends AbstractVerticle {
         artifactClass,
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
+    return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
   }
 
   private Future<Optional<String>> doAction(
