@@ -1,0 +1,21 @@
+version: '3.9'
+
+services:
+  yggdrasil:
+    image: yggdrasil:dev
+    build:
+      context: .
+      dockerfile: Dockerfile_Dev
+    tty: true
+    container_name: yggdrasil
+    volumes:
+      - .:/opt/app/:cached
+#      # create a project volume to keep work
+#      # check if git can change line endings automatically
+#      - .:/opt/app/y:cached
+    environment:
+      - YGGDRASIL_VERSION=0.0.0
+      - GRADLE_TASK=${GRADLE_TASK}
+    ports:
+      - "8899:8080"
+      - "8900:8088"
