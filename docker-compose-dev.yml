@@ -1,21 +1,17 @@
 version: '3.9'
+# This file adds extensions needed for development and needs to be merged with docker-compose.yml
+# See https://docs.docker.com/compose/multiple-compose-files/merge/
 
 services:
   yggdrasil:
-    image: yggdrasil:dev
-    build:
-      context: .
-      dockerfile: Dockerfile_Dev
-    tty: true
-    container_name: yggdrasil
+    # overwrite entrypoint of productive image
+    entrypoint: ["tail", "-F", "anything"]
+    container_name: yggdrasil-dev
+    # Sync changes with host
     volumes:
-      - .:/opt/app/:cached
-#      # create a project volume to keep work
-#      # check if git can change line endings automatically
-#      - .:/opt/app/y:cached
-    environment:
-      - YGGDRASIL_VERSION=0.0.0
-      - GRADLE_TASK=${GRADLE_TASK}
-    ports:
-      - "8899:8080"
-      - "8900:8088"
+      - .:/opt/app/:cached # does already exist but https://stackoverflow.com/a/39647631
+    # restarting causes problems when using vscode's "Reopne in Container"
+    restart: "no"
+
+
+

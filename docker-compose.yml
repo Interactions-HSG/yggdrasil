@@ -5,9 +5,11 @@ services:
     image: yggdrasil:latest
     build:
       context: .
+      args:
+        - YGGDRASIL_VERSION=${YGGDRASIL_VERSION}
     container_name: yggdrasil
     environment:
-      - YGGDRASIL_VERSION=0.0.0
+      - YGGDRASIL_VERSION=${YGGDRASIL_VERSION}
     ports:
       - "8899:8080"
     restart: always
