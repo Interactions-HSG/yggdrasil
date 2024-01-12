@@ -17,7 +17,6 @@ Lecture Notes in Computer Science, vol 11375. Springer, Cham. https://doi.org/10
 [2] Alessandro Ricci, Michele Piunti, and Mirko Viroli. 2011. Environment Programming in multi-agent
 systems: an artifact-based perspective. Autonomous Agents and Multi-Agent Systems, 23(2):158-192.
 
-
 ## Prerequisites
 
 * JDK 21+
@@ -31,7 +30,6 @@ To build the project, just use:
 ```
 
 The default Gradle task `shadowJar` generates a fat-jar in the `build/libs` directory.
-
 
 ## Running Yggdrasil
 
@@ -56,6 +54,13 @@ Run with docker-compose (by default, it exposes the port `8899` of the host mach
 
 ```shell
 docker-compose up
+```
+
+Use `docker-compose-dev.yml` for an environment that contains both libraries and sources:
+
+```shell
+docker-compose -f docker-compose.yml -f docker-compose-dev.yml build
+docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
 ```
 
 ## HTTP API Overview
@@ -110,10 +115,9 @@ Using the discovered hub and topic IRIs, a client can subscribe for notification
 that contains a JSON payload with the following fields (see the
 [W3C WebSub recommendation](https://www.w3.org/TR/2018/REC-websub-20180123/)):
 
- * `hub.mode`
- * `hub.topic`
- * `hub.callback`
+* `hub.mode`
+* `hub.topic`
+* `hub.callback`
 
 When a resource is updated, Yggdrasil issues `POST` requests with the (updated) resource
 representation to all registered callbacks.
-
