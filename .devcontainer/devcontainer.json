@@ -1,0 +1,8 @@
+{
+    "name": "[Optional] Your project name here",
+    "dockerComposeFile": "../docker-compose-dev.yml",
+    "service": "yggdrasil",
+    "workspaceFolder": "/opt/app/yggdrasil",
+    "postCreateCommand": "./gradlew",
+    "shutdownAction": "stopCompose"
+}
