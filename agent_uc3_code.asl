@@ -7,6 +7,7 @@ milling_td_url("http://edge.fritz.box:8888/workspaces/uc3/artifacts/milling").
 dlt_client_td_url("http://edge.fritz.box:8888/workspaces/uc3/artifacts/dlt-client").
 iobox_td_url("http://edge.fritz.box:8888/workspaces/uc3/artifacts/iobox").
 goal_interface_td_url("http://edge.fritz.box:8888/workspaces/uc3/artifacts/goal-interface").
+playbook_td_url("http://edge.fritz.box:8888/workspaces/uc3/artifacts/playbook").
 
 camera_hostname("camera-storage.fritz.box").
 camera_id("workpieceStorage").
@@ -531,16 +532,16 @@ is_working(false).
     .print("mirocard id: ", DeviceId);
     ?get_temperature(DeviceId, Temperature);
     .print("temperature: ", Temperature);
-    .wait(10000);
+    .wait(10000); //TODO: adjust time.
     !test_temperature(DeviceId, Temperature, IntermediateTemperature, MaxTemperature).
 
 -!check_temperature(IntermediateTemperature,MaxTemperature): true <-
     .print("do nothing").
 
 +!test_temperature(DeviceId, Temperature, IntermediateTemperature,MaxTemperature): Temperature>MaxTemperature <-
-    !use_actuator(ActuatorsUrl, "open");
+    !notify_open;
     !wait_good_temperature(DeviceId, MaxTemperature);
-    !use_actuator(ActuatorsUrl, "close");
+    !notify_close;
     !use_actuator(ActuatorsUrl, "pushstart").
 
 +!wait_good_temperature(DeviceId, MaxTemperature): true <-
@@ -560,9 +561,9 @@ is_working(false).
 
 
 +!test_temperature(DeviceId, Temperature, IntermediateTemperature,MaxTemperature): Temperature<=MaxTemperature & Temperature>IntermediateTemperature <-
-    !send_warning(Temperature).
+    !notify_intermediate.
 
-+!test_temperature(DeviceId, Temperature, IntermediateTemperature, MaxTemperature): Temperature<=MaxIntermediateTemperature <-
++!test_temperature(DeviceId, Temperature, IntermediateTemperature, MaxTemperature): Temperature<=IntermediateTemperature <-
     .print("temperature is OK").
 
 +!send_warning(Temperature): true <-
@@ -585,6 +586,24 @@ is_working(false).
     ?read_property_with_DLT(IOBoxTDUrl, "getTemperature",Headers, UriVariables, Response);
     ?get_body_as_json(Response, ResponseBody);
     .map.get(ResponseBody, "temperature", Temperature).
+
++!notify_open: playbook_td_url(PlaybookUrl) <-
+    ?create_json([], [], Headers);
+    ?create_json(["action", "value"], ["OPEN", "The temperature is too high. The lid is opening"], InBody);
+    ?create_json(["rq_type", "caller", "in_data"], ["START", "EXTERNAL", InBody], Body);
+    ?invoke_action_with_DLT(PlaybookUrl, "notifyOpen", Body, Headers, UriVariables, Response).
+
++!notify_close: playbook_td_url(PlaybookUrl) <-
+    ?create_json([], [], Headers);
+    ?create_json(["action", "value"], ["CLOSE", "The temperature is appropriate now. The lid is closing."], InBody);
+    ?create_json(["rq_type", "caller", "in_data"], ["START", "EXTERNAL", InBody], Body);
+    ?invoke_action_with_DLT(PlaybookUrl, "notifyOpen", Body, Headers, UriVariables, Response).
+
++!notify_intermediate: playbook_td_url(PlaybookUrl) <-
+    ?create_json([], [], Headers);
+    ?create_json(["action", "value"], ["CLOSE", "The temperature is superior to 40."], InBody);
+    ?create_json(["rq_type", "caller", "in_data"], ["START", "EXTERNAL", InBody], Body);
+    ?invoke_action_with_DLT(PlaybookUrl, "notifyOpen", Body, Headers, UriVariables, Response).
 
 +?get_body_as_json(Response, Body): true <-
     .map.get(Response, "response", R);
