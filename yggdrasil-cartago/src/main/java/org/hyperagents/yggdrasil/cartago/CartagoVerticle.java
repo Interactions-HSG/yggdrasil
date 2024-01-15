@@ -78,18 +78,6 @@ public class CartagoVerticle extends AbstractVerticle {
               "web",
               this.httpConfig.getHost() + ":" + this.httpConfig.getCartagoPort()
           );
-          cartagoEnvironment
-              .getRootWSP()
-              .getWorkspace()
-              .makeArtifact(
-                this.getAgentId(
-                  this.getAgentCredential(this.httpConfig.getBaseUri() + "/agents/yggdrasil"),
-                  cartagoEnvironment.getRootWSP().getId()
-                ),
-                "knowledge_graph",
-                "org.hyperagents.yggdrasil.cartago.artifacts.KnowledgeGraph",
-                new ArtifactConfig()
-              );
           return null;
         })
         .onComplete(startPromise);
