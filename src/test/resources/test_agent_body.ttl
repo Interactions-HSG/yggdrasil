@@ -7,11 +7,11 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix saref: <https://w3id.org/saref#> .
 
-<http://localhost:8080/workspaces/sub/agents/test_agent> a td:Thing, hmas:Artifact;
+<http://localhost:8080/workspaces/test/agents/test_agent> a td:Thing, hmas:Artifact;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
-<http://localhost:8080/workspaces/sub/agents/test_agent> hmas:isContainedIn <http://localhost:8080/workspaces/sub> .
+<http://localhost:8080/workspaces/test/agents/test_agent> hmas:isContainedIn <http://localhost:8080/workspaces/test> .
 
-<http://localhost:8080/workspaces/sub> a hmas:Workspace .
+<http://localhost:8080/workspaces/test> a hmas:Workspace .
