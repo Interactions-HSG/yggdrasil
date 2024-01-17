@@ -146,7 +146,7 @@ public class MainVerticleTest {
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_agent_body_sub.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactAndBodyRepresentation =

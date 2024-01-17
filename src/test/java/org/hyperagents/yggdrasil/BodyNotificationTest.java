@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hc.core5.http.HttpStatus;
@@ -125,7 +126,7 @@ public class BodyNotificationTest {
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithArtifactAndBodyRepresentation =
@@ -301,60 +302,60 @@ public class BodyNotificationTest {
           );
           Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(2).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(
-                WORKSPACES_PATH
-                + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
-                + TEST_AGENT_NAME
-              ),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          Assertions.assertEquals(
-              JsonObject
-                .of(
-                  "artifactName",
-                  COUNTER_ARTIFACT_NAME,
-                  "actionName",
-                  "inc",
-                  "eventType",
-                  "actionRequested"
-                )
-                .encode(),
-              m.getValue(),
-              REPRESENTATIONS_EQUAL_MESSAGE
-          );
-        })
-        .compose(r -> this.callbackMessages.get(3).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(
-                WORKSPACES_PATH
-                + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
-                + TEST_AGENT_NAME
-              ),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          Assertions.assertEquals(
-              JsonObject
-                .of(
-                  "artifactName",
-                  COUNTER_ARTIFACT_NAME,
-                  "actionName",
-                  "inc",
-                  "eventType",
-                  "actionSucceeded"
-                )
-                .encode(),
-              m.getValue(),
-              REPRESENTATIONS_EQUAL_MESSAGE
-          );
-        })
+        .compose(r -> this.callbackMessages
+                          .get(2)
+                          .future()
+                          .compose(r1 -> this.callbackMessages
+                                             .get(3)
+                                             .future()
+                          .onSuccess(r2 -> {
+                            Assertions.assertEquals(
+                                this.getUrl(
+                                  WORKSPACES_PATH
+                                  + MAIN_WORKSPACE_NAME
+                                  + BODIES_PATH
+                                  + TEST_AGENT_NAME
+                                ),
+                                r1.getKey(),
+                                URIS_EQUAL_MESSAGE
+                            );
+                            Assertions.assertEquals(
+                                this.getUrl(
+                                  WORKSPACES_PATH
+                                  + MAIN_WORKSPACE_NAME
+                                  + BODIES_PATH
+                                  + TEST_AGENT_NAME
+                                ),
+                                r2.getKey(),
+                                URIS_EQUAL_MESSAGE
+                            );
+                            Assertions.assertEquals(
+                                Set.of(
+                                  JsonObject
+                                    .of(
+                                      "artifactName",
+                                      COUNTER_ARTIFACT_NAME,
+                                      "actionName",
+                                      "inc",
+                                      "eventType",
+                                      "actionRequested"
+                                    )
+                                    .encode(),
+                                  JsonObject
+                                    .of(
+                                      "artifactName",
+                                      COUNTER_ARTIFACT_NAME,
+                                      "actionName",
+                                      "inc",
+                                      "eventType",
+                                      "actionSucceeded"
+                                    )
+                                    .encode()
+                                ),
+                                Set.of(r1.getValue(), r2.getValue()),
+                                REPRESENTATIONS_EQUAL_MESSAGE
+                            );
+                          })))
         .onComplete(ctx.succeedingThenComplete());
   }
 
