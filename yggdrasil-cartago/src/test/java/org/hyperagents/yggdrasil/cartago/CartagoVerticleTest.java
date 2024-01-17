@@ -37,12 +37,15 @@ public class CartagoVerticleTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
+  private static final String TEST_AGENT_BODY_URI =
+      "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/agents/test";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String CALLBACK_IRI = "http://localhost:8080/callback";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
+  private static final String INCREMENT_OPERATION = "inc";
   private static final String ADD_OPERATION = "add";
   private static final String TDS_EQUAL_MESSAGE = "The Thing Descriptions should be equal";
   private static final String OPERATION_FAIL_MESSAGE =
@@ -123,17 +126,24 @@ public class CartagoVerticleTest {
   }
 
   @Test
-  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx) {
+  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var expectedBodyThingDescription =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
         .compose(r -> this.cartagoMessagebox
                           .sendMessage(new CartagoMessage.JoinWorkspace(
-                            TEST_AGENT_IRI, MAIN_WORKSPACE_NAME
+                            TEST_AGENT_IRI,
+                            MAIN_WORKSPACE_NAME
                           )))
         .onSuccess(r -> Assertions.assertEquals(
-          String.valueOf(HttpStatus.SC_OK),
+          expectedBodyThingDescription,
           r.body(),
-          OPERATION_SUCCESS_MESSAGE
+          TDS_EQUAL_MESSAGE
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -627,7 +637,7 @@ public class CartagoVerticleTest {
                           TEST_AGENT_IRI,
                           MAIN_WORKSPACE_NAME,
                           "c0",
-                          "inc",
+                          INCREMENT_OPERATION,
                           Optional.empty()
                         )))
         .onSuccess(r -> Assertions.assertEquals(
@@ -685,7 +695,7 @@ public class CartagoVerticleTest {
             TEST_AGENT_IRI,
             SUB_WORKSPACE_NAME,
             "c1",
-            "inc",
+            INCREMENT_OPERATION,
             Optional.empty()
           ));
         })
@@ -696,12 +706,52 @@ public class CartagoVerticleTest {
               OPERATION_SUCCESS_MESSAGE
           );
           try {
+            final var notifyActionRequestedMessage =
+                (HttpNotificationDispatcherMessage.ActionRequested)
+                  this.notificationQueue.take();
+            Assertions.assertEquals(
+                TEST_AGENT_BODY_URI,
+                notifyActionRequestedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            Assertions.assertEquals(
+                notifyActionRequestedMessage.content(),
+                JsonObject
+                  .of(
+                    "artifactName",
+                    "c1",
+                    "actionName",
+                    INCREMENT_OPERATION
+                  )
+                  .encode(),
+                "The properties should be equal"
+            );
             assertNotificationReceived(
                 SUB_WORKSPACE_NAME,
                 "c1",
                 "count(6)"
             );
-          } catch (Exception e) {
+            final var notifyActionCompletedMessage =
+                (HttpNotificationDispatcherMessage.ActionSucceeded)
+                  this.notificationQueue.take();
+            Assertions.assertEquals(
+                TEST_AGENT_BODY_URI,
+                notifyActionCompletedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            Assertions.assertEquals(
+                notifyActionCompletedMessage.content(),
+                JsonObject
+                  .of(
+                    "artifactName",
+                    "c1",
+                    "actionName",
+                    INCREMENT_OPERATION
+                  )
+                  .encode(),
+                "The properties should be equal"
+            );
+          } catch (final Exception e) {
             ctx.failNow(e);
           }
         })

@@ -30,7 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class MainVerticleTest {
-  private static final String TEST_AGENT_ID = "test_agent";
+  private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
   private static final String HINT_HEADER = "Slug";
   private static final String MAIN_WORKSPACE_NAME = "test";
@@ -63,7 +63,7 @@ public class MainVerticleTest {
   public MainVerticleTest() {
     this.callbackMessages =
       Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(8)
+            .limit(9)
             .collect(Collectors.toList());
   }
 
@@ -144,6 +144,16 @@ public class MainVerticleTest {
           Path.of(ClassLoader.getSystemResource("sub_workspace_c0_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
+    final var testAgentBodyRepresentation =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
+    final var subWorkspaceWithArtifactAndBodyRepresentation =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("sub_workspace_c0_body.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
                .sendJsonObject(JsonObject.of(
                  HUB_MODE_PARAM,
@@ -195,7 +205,7 @@ public class MainVerticleTest {
                      r.bodyAsString()
                  );
                })
-               .compose(r -> this.callbackMessages.get(0).future())
+               .compose(r -> this.callbackMessages.getFirst().future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
                      this.getUrl("/"),
@@ -381,10 +391,21 @@ public class MainVerticleTest {
                      r.statusCode(),
                      OK_STATUS_MESSAGE
                  );
+                 this.assertEqualsThingDescriptions(
+                     testAgentBodyRepresentation,
+                     r.bodyAsString()
+                 );
+               })
+               .compose(r -> this.callbackMessages.get(6).future())
+               .onSuccess(m -> {
                  Assertions.assertEquals(
-                     String.valueOf(HttpStatus.SC_OK),
-                     r.bodyAsString(),
-                     RESPONSE_BODY_OK_MESSAGE
+                     this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+                     m.getKey(),
+                     URIS_EQUAL_MESSAGE
+                 );
+                 this.assertEqualsThingDescriptions(
+                     subWorkspaceWithArtifactAndBodyRepresentation,
+                     m.getValue()
                  );
                })
                .compose(r -> this.client
@@ -412,7 +433,7 @@ public class MainVerticleTest {
                      RESPONSE_BODY_OK_MESSAGE
                  );
                })
-               .compose(r -> this.callbackMessages.get(6).future())
+               .compose(r -> this.callbackMessages.get(7).future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
                      this.getUrl(
@@ -450,7 +471,7 @@ public class MainVerticleTest {
                  );
                  Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
                })
-               .compose(r -> this.callbackMessages.get(7).future())
+               .compose(r -> this.callbackMessages.get(8).future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
                      this.getUrl(
