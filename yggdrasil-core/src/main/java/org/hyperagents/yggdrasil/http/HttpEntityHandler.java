@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -267,9 +268,12 @@ public class HttpEntityHandler {
           routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
         } else {
           final var actualEntityIri =
-              entityIri.matches("^https?://.*?:[0-9]+/workspaces/.*?/artifacts/$")
-              ? entityIri.substring(0, entityIri.indexOf("/artifacts/"))
-              : entityIri;
+              Pattern.compile("^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/$")
+                     .matcher(entityIri)
+                     .results()
+                     .map(r -> r.group(1))
+                     .findFirst()
+                     .orElse(entityIri);
           this.rdfStoreMessagebox
               .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
               .onSuccess(response -> {
@@ -301,11 +305,20 @@ public class HttpEntityHandler {
       return;
     }
 
+    final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           agentId,
-          routingContext.pathParam(WORKSPACE_ID_PARAM)
+          workspaceName
         ))
+        .compose(response ->
+          this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateArtifact(
+                this.httpConfig.getAgentBodiesUri(workspaceName) + "/",
+                this.getAgentNameFromId(agentId),
+                response.body()
+              ))
+        )
         .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
         .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
@@ -318,11 +331,19 @@ public class HttpEntityHandler {
       return;
     }
 
+    final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.LeaveWorkspace(
           agentId,
-          routingContext.pathParam(WORKSPACE_ID_PARAM)
+          workspaceName
         ))
+        .compose(r -> this.rdfStoreMessagebox
+                          .sendMessage(new RdfStoreMessage.DeleteEntity(
+                            this.httpConfig.getAgentBodyUri(
+                              workspaceName,
+                              this.getAgentNameFromId(agentId)
+                            )
+                          )))
         .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
         .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
@@ -428,6 +449,15 @@ public class HttpEntityHandler {
             routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
           }
         });
+  }
+
+  private String getAgentNameFromId(final String agentId) {
+    return Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
+                  .matcher(agentId)
+                  .results()
+                  .findFirst()
+                  .orElseThrow()
+                  .group(1);
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {

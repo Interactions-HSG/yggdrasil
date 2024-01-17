@@ -17,4 +17,13 @@ public sealed interface HttpNotificationDispatcherMessage {
 
   record ArtifactObsPropertyUpdated(String requestIri, String content)
       implements HttpNotificationDispatcherMessage {}
+
+  record ActionRequested(String requestIri, String content)
+      implements HttpNotificationDispatcherMessage {}
+
+  record ActionSucceeded(String requestIri, String content)
+      implements HttpNotificationDispatcherMessage {}
+
+  record ActionFailed(String requestIri, String content)
+      implements HttpNotificationDispatcherMessage {}
 }

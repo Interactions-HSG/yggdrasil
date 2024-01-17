@@ -45,6 +45,18 @@ public class HttpNotificationDispatcherMessageMarshaller
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
         jsonObject.get(MessageFields.NOTIFICATION_CONTENT.getName()).getAsString()
       );
+      case ACTION_REQUESTED -> new HttpNotificationDispatcherMessage.ActionRequested(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.NOTIFICATION_CONTENT.getName()).getAsString()
+      );
+      case ACTION_SUCCEEDED -> new HttpNotificationDispatcherMessage.ActionSucceeded(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.NOTIFICATION_CONTENT.getName()).getAsString()
+      );
+      case ACTION_FAILED -> new HttpNotificationDispatcherMessage.ActionFailed(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.NOTIFICATION_CONTENT.getName()).getAsString()
+      );
     };
   }
 
@@ -79,6 +91,21 @@ public class HttpNotificationDispatcherMessageMarshaller
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ENTITY_DELETED.getName()
+        );
+      case HttpNotificationDispatcherMessage.ActionFailed ignored ->
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageNotifications.ACTION_FAILED.getName()
+        );
+      case HttpNotificationDispatcherMessage.ActionRequested ignored ->
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageNotifications.ACTION_REQUESTED.getName()
+        );
+      case HttpNotificationDispatcherMessage.ActionSucceeded ignored ->
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageNotifications.ACTION_SUCCEEDED.getName()
         );
     }
     return json;

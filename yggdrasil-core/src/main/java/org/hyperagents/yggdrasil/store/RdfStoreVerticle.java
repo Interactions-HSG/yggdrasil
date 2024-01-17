@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.function.Failable;
 import org.apache.http.HttpStatus;
@@ -172,7 +173,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var artifactIri = entityIri.toString();
             final var workspaceIri =
                 RdfModelUtils.createIri(
-                  artifactIri.substring(0, artifactIri.indexOf("/artifacts"))
+                  Pattern.compile("^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/.*?$")
+                         .matcher(artifactIri)
+                         .results()
+                         .findFirst()
+                         .orElseThrow()
+                         .group(1)
                 );
             entityModel.add(
                 entityIri,

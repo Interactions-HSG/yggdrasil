@@ -66,4 +66,14 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   public String getArtifactUri(final String workspaceName, final String artifactName) {
     return this.getArtifactsUri(workspaceName) + "/" + artifactName;
   }
+
+  @Override
+  public String getAgentBodiesUri(final String workspaceName) {
+    return this.getWorkspaceUri(workspaceName) + "/agents";
+  }
+
+  @Override
+  public String getAgentBodyUri(final String workspaceName, final String agentName) {
+    return this.getAgentBodiesUri(workspaceName) + "/" + agentName;
+  }
 }
