@@ -313,8 +313,8 @@ public class HttpEntityHandler {
         ))
         .compose(response ->
           this.rdfStoreMessagebox
-              .sendMessage(new RdfStoreMessage.CreateArtifact(
-                this.httpConfig.getAgentBodiesUri(workspaceName) + "/",
+              .sendMessage(new RdfStoreMessage.CreateBody(
+                workspaceName,
                 this.getAgentNameFromId(agentId),
                 response.body()
               ))

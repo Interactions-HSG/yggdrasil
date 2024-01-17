@@ -22,4 +22,6 @@ public interface HttpInterfaceConfig {
   String getAgentBodiesUri(String workspaceName);
 
   String getAgentBodyUri(String workspaceName, String agentName);
+
+  String getAgentUri(String agentName);
 }

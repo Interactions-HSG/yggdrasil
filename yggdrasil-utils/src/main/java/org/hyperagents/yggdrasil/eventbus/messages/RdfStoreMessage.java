@@ -12,6 +12,12 @@ public sealed interface RdfStoreMessage {
 
   record DeleteEntity(String requestUri) implements RdfStoreMessage {}
 
+  record CreateBody(
+      String workspaceName,
+      String agentName,
+      String bodyRepresentation
+  ) implements RdfStoreMessage {}
+
   record CreateArtifact(
       String requestUri,
       String artifactName,

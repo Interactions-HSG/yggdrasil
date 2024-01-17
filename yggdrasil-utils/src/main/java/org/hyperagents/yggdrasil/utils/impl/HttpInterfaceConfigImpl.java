@@ -76,4 +76,9 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
     return this.getAgentBodiesUri(workspaceName) + "/" + agentName;
   }
+
+  @Override
+  public String getAgentUri(final String agentName) {
+    return this.baseUri + "/agents/" + agentName;
+  }
 }

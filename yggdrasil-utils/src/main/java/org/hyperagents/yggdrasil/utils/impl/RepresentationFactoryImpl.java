@@ -151,7 +151,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
         new ThingDescription
           .Builder(agentName)
           .addSecurityScheme(securityScheme)
-          .addSemanticType("https://purl.org/hmas/core/Artifact")
+          .addSemanticType("https://purl.org/hmas/Artifact")
+          .addSemanticType("https://example.org/Body")
           .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
           .addGraph(metadata);
     return serializeThingDescription(td);

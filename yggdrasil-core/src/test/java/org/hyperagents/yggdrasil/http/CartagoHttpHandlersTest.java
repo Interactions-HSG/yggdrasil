@@ -501,20 +501,20 @@ public class CartagoHttpHandlersTest {
     );
     cartagoMessage.reply(initialBodyRepresentation);
     final var storeMessage = this.storeMessageQueue.take();
-    final var createBodyMessage = (RdfStoreMessage.CreateArtifact) storeMessage.body();
+    final var createBodyMessage = (RdfStoreMessage.CreateBody) storeMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_WORKSPACE_PATH + "/agents/"),
-        createBodyMessage.requestUri(),
+        MAIN_WORKSPACE_NAME,
+        createBodyMessage.workspaceName(),
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         "test_agent",
-        createBodyMessage.artifactName(),
+        createBodyMessage.agentName(),
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         initialBodyRepresentation,
-        createBodyMessage.artifactRepresentation(),
+        createBodyMessage.bodyRepresentation(),
         NAMES_EQUAL_MESSAGE
     );
     storeMessage.reply(fullBodyRepresentation);
