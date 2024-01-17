@@ -276,6 +276,12 @@ public class CartagoVerticle extends AbstractVerticle {
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     final var agentName = this.getAgentNameFromAgentUri(agentUri);
+    this.dispatcherMessagebox.sendMessage(
+      new HttpNotificationDispatcherMessage.ActionRequested(
+        this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+        this.getActionNotificationContent(artifactName, action).encode()
+      )
+    );
     workspace.execOp(0L,
                      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
                      e -> {
@@ -283,7 +289,7 @@ public class CartagoVerticle extends AbstractVerticle {
                          this.dispatcherMessagebox.sendMessage(
                            new HttpNotificationDispatcherMessage.ActionSucceeded(
                              this.httpConfig.getAgentBodyUri(workspaceName, agentName),
-                             this.getActionNotificationContent(artifactName, action)
+                             this.getActionNotificationContent(artifactName, action).encode()
                            )
                          );
                          promise.complete();
@@ -292,6 +298,8 @@ public class CartagoVerticle extends AbstractVerticle {
                            new HttpNotificationDispatcherMessage.ActionFailed(
                              this.httpConfig.getAgentBodyUri(workspaceName, agentName),
                              this.getActionNotificationContent(artifactName, action)
+                                 .put("cause", f.getFailureMsg())
+                                 .encode()
                            )
                          );
                          promise.fail(f.getFailureMsg());
@@ -301,12 +309,6 @@ public class CartagoVerticle extends AbstractVerticle {
                      operation,
                      -1,
                      null);
-    this.dispatcherMessagebox.sendMessage(
-      new HttpNotificationDispatcherMessage.ActionRequested(
-        this.httpConfig.getAgentBodyUri(workspaceName, agentName),
-        this.getActionNotificationContent(artifactName, action)
-      )
-    );
     return promise.future()
                   .map(ignored ->
                     Optional.ofNullable(feedbackParameter.get())
@@ -320,15 +322,13 @@ public class CartagoVerticle extends AbstractVerticle {
                   );
   }
 
-  private String getActionNotificationContent(final String artifactName, final String action) {
-    return JsonObject
-      .of(
-        "artifactName",
-        artifactName,
-        "actionName",
-        action
-      )
-      .encode();
+  private JsonObject getActionNotificationContent(final String artifactName, final String action) {
+    return JsonObject.of(
+      "artifactName",
+      artifactName,
+      "actionName",
+      action
+    );
   }
 
   private String getAgentNameFromAgentUri(final String agentUri) {
