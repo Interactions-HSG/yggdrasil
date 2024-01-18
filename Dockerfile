@@ -15,7 +15,5 @@ COPY conf/docker_disk_config.json /opt/app/conf/config.json
 
 # The default http port
 EXPOSE 8080
-# The port for interacting with CArtAgO
-EXPOSE 8088
 
 ENTRYPOINT java -jar /opt/app/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar
