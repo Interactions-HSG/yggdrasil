@@ -3,8 +3,7 @@
     "host" : "0.0.0.0",
     "port" : 8080,
     "base-uri" : "http://localhost:8899/",
-    "websub-hub-uri" : "https://yggdrasil.interactions.ics.unisg.ch/hub/",
-    "cartago-port": 8088
+    "websub-hub-uri" : "https://yggdrasil.interactions.ics.unisg.ch/hub/"
   },
   "rdf-store" : {
     "in-memory" : false,
