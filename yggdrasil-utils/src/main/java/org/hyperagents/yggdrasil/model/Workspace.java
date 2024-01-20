@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.model;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,5 +13,5 @@ public interface Workspace {
 
   Set<JoinedAgent> getAgents();
 
-  Optional<String> getRepresentation();
+  Optional<Path> getRepresentation();
 }

@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.model;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -13,5 +14,5 @@ public interface Artifact {
 
   Set<FocusingAgent> getFocusingAgents();
 
-  Optional<String> getRepresentation();
+  Optional<Path> getRepresentation();
 }

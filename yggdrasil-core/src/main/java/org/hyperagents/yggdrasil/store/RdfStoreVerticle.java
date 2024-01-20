@@ -5,6 +5,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -145,21 +147,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           .<String, Environment>getLocalMap("environment")
                           .get(DEFAULT_CONFIG_VALUE);
             environment.getWorkspaces()
-                       .forEach(w -> w.getRepresentation().ifPresent(r -> {
+                       .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
                          ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
                              httpConfig.getWorkspacesUri() + "/",
                              w.getName(),
                              w.getParentName().map(httpConfig::getWorkspaceUri),
-                             r
+                             Files.readString(r, StandardCharsets.UTF_8)
                          ));
-                         w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(ar ->
-                             ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                               httpConfig.getArtifactsUri(w.getName()) + "/",
-                               a.getName(),
-                               ar
-                             ))
+                         w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
+                             Failable.asConsumer(ar ->
+                               ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                                 httpConfig.getArtifactsUri(w.getName()) + "/",
+                                 a.getName(),
+                                 Files.readString(ar, StandardCharsets.UTF_8)
+                               ))
+                             )
                          ));
-                       }));
+                       })));
           }
           return null;
         })

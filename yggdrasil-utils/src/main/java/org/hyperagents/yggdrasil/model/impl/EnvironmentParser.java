@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil.model.impl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -178,11 +179,11 @@ public final class EnvironmentParser {
                           ));
                         })
                         .collect(Collectors.toSet()),
-                      representation
+                      representation.map(Path::of)
                     ));
                   })
                   .collect(Collectors.toSet()),
-              JsonObjectUtils.getString(w, "representation", LOGGER::error)
+              JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of)
             ));
           })
           .toList()
@@ -246,7 +247,7 @@ public final class EnvironmentParser {
       Optional<String> parentName,
       Set<JoinedAgent> joinedAgents,
       Set<Artifact> artifacts,
-      Optional<String> representation
+      Optional<Path> representation
   ) implements Workspace {
     @Override
     public String getName() {
@@ -269,7 +270,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Optional<String> getRepresentation() {
+    public Optional<Path> getRepresentation() {
       return this.representation();
     }
   }
@@ -286,7 +287,7 @@ public final class EnvironmentParser {
       Optional<String> clazz,
       List<?> initializationParameters,
       Set<FocusingAgent> focusingAgents,
-      Optional<String> representation
+      Optional<Path> representation
   ) implements Artifact {
     @Override
     public String getName() {
@@ -309,7 +310,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Optional<String> getRepresentation() {
+    public Optional<Path> getRepresentation() {
       return this.representation();
     }
   }
