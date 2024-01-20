@@ -40,12 +40,10 @@ jobs:
       with:
         name: check-results
         path: |
-          cartago/build/reports
-          http/build/reports
-          messages/build/reports
-          store/build/reports
-          utils/build/reports
-          websub/build/reports
+          yggdrasil-cartago/build/reports
+          yggdrasil-core/build/reports
+          yggdrasil-utils/build/reports
+          yggdrasil-websub/build/reports
           build/reports
         if-no-files-found: error
     - name: Upload coverage to Codecov
