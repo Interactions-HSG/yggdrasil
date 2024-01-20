@@ -82,7 +82,7 @@ curl -i -X POST \
   http://localhost:8080/workspaces/ \
   -H 'content-type: text/turtle' \
   -H 'slug: wksp1' \
-  -d '<> a <https://purl.org/hmas/core/Workspace> .'
+  -d '<> a <https://purl.org/hmas/Workspace> .'
 ```
 
 When retrieving the representation of a resource from Yggdrasil, the HTTP response contains 2 `Link`
@@ -101,9 +101,9 @@ Link: <http://yggdrasil.andreiciortea.ro/hub>; rel="hub"
 Link: <http://yggdrasil.andreiciortea.ro/workspaces/wksp1>; rel="self"
 
 <http://yggdrasil.andreiciortea.ro/workspaces/wksp1>
-  a <https://purl.org/hmas/core/Workspace> ;
-  <https://purl.org/hmas/core/hasName> "wksp1" ;
-  <https://purl.org/hmas/core/contains>
+  a <https://purl.org/hmas/Workspace> ;
+  <https://purl.org/hmas/hasName> "wksp1" ;
+  <https://purl.org/hmas/contains>
     <http://85.204.10.233:8080/artifacts/hue1> ,
     <http://yggdrasil.andreiciortea.ro/artifacts/event-gen> .
 ```

@@ -234,7 +234,7 @@ public class RdfStoreVerticleQueryTest {
                .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
                  """
                    PREFIX td: <https://www.w3.org/2019/wot/td#>
-                   PREFIX hmas: <https://purl.org/hmas/core/>
+                   PREFIX hmas: <https://purl.org/hmas/>
                    PREFIX ex: <http://example.org/>
 
                    SELECT ?workspace ?artifact
@@ -338,7 +338,7 @@ public class RdfStoreVerticleQueryTest {
                .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
                    """
                    PREFIX td: <https://www.w3.org/2019/wot/td#>
-                   PREFIX hmas: <https://purl.org/hmas/core/>
+                   PREFIX hmas: <https://purl.org/hmas/>
                    PREFIX ex: <http://example.org/>
 
                    ASK WHERE {
@@ -424,7 +424,7 @@ public class RdfStoreVerticleQueryTest {
                .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
                    """
                    PREFIX td: <https://www.w3.org/2019/wot/td#>
-                   PREFIX hmas: <https://purl.org/hmas/core/>
+                   PREFIX hmas: <https://purl.org/hmas/>
                    PREFIX ex: <http://example.org/>
 
                    DESCRIBE ?workspace ?artifact
@@ -556,7 +556,7 @@ public class RdfStoreVerticleQueryTest {
                .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
                    """
                      PREFIX td: <https://www.w3.org/2019/wot/td#>
-                     PREFIX hmas: <https://purl.org/hmas/core/>
+                     PREFIX hmas: <https://purl.org/hmas/>
                      PREFIX ex: <http://example.org/>
 
                      SELECT ?workspace ?artifact

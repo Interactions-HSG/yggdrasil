@@ -34,8 +34,8 @@ import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
  */
 public class RdfStoreVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
-  private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/core/Workspace";
-  private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/core/contains";
+  private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
+  private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
 
   private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private RdfStore store;
@@ -176,7 +176,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 );
             entityModel.add(
                 entityIri,
-                RdfModelUtils.createIri("https://purl.org/hmas/core/isContainedIn"),
+                RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
                 workspaceIri
             );
             entityModel.add(
@@ -195,7 +195,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   workspaceModel.add(
                       entityIri,
                       RdfModelUtils.createIri(RDF.TYPE.toString()),
-                      RdfModelUtils.createIri("https://purl.org/hmas/core/Artifact")
+                      RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
                   );
                   this.store.replaceEntityModel(workspaceIri, workspaceModel);
                   this.dispatcherMessagebox.sendMessage(
@@ -247,7 +247,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get());
               entityModel.add(
                   entityIri,
-                  RdfModelUtils.createIri("https://purl.org/hmas/core/isContainedIn"),
+                  RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
                   parentIri
               );
               entityModel.add(
@@ -283,20 +283,20 @@ public class RdfStoreVerticle extends AbstractVerticle {
               );
               entityModel.add(
                   entityIri,
-                  RdfModelUtils.createIri("https://purl.org/hmas/core/isHostedOn"),
+                  RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
                   platformIri
               );
               entityModel.add(
                   platformIri,
                   RdfModelUtils.createIri(RDF.TYPE.toString()),
-                  RdfModelUtils.createIri("https://purl.org/hmas/core/HypermediaMASPlatform")
+                  RdfModelUtils.createIri("https://purl.org/hmas/HypermediaMASPlatform")
               );
               this.store
                   .getEntityModel(platformIri)
                   .ifPresent(Failable.asConsumer(platformModel -> {
                     platformModel.add(
                         platformIri,
-                        RdfModelUtils.createIri("https://purl.org/hmas/core/hosts"),
+                        RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
                         entityIri
                     );
                     platformModel.add(
@@ -365,7 +365,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             if (entityModel.contains(
                 requestIri,
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-                RdfModelUtils.createIri("https://purl.org/hmas/core/Artifact")
+                RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
             )) {
               final var artifactIri = requestIri.toString();
               final var workspaceIri =
@@ -383,7 +383,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     workspaceModel.remove(
                         requestIri,
                         RdfModelUtils.createIri(RDF.TYPE.toString()),
-                        RdfModelUtils.createIri("https://purl.org/hmas/core/Artifact")
+                        RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
                     );
                     this.store.replaceEntityModel(workspaceIri, workspaceModel);
                     this.dispatcherMessagebox.sendMessage(
@@ -411,7 +411,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               );
               if (entityModel.contains(
                   requestIri,
-                  RdfModelUtils.createIri("https://purl.org/hmas/core/isHostedOn"),
+                  RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
                   platformIri
               )) {
                 this.store
@@ -419,7 +419,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     .ifPresent(Failable.asConsumer(platformModel -> {
                       platformModel.remove(
                           platformIri,
-                          RdfModelUtils.createIri("https://purl.org/hmas/core/hosts"),
+                          RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
                           requestIri
                       );
                       platformModel.remove(
@@ -439,7 +439,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 entityModel
                     .filter(
                       requestIri,
-                      RdfModelUtils.createIri("https://purl.org/hmas/core/isContainedIn"),
+                      RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
                       null
                     )
                     .objects()

@@ -479,7 +479,7 @@ public class HttpEntityHandler {
           entityGraph.contains(
             entityIri,
             RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-            RdfModelUtils.createIri("https://purl.org/hmas/core/Artifact")
+            RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
           )
       ) {
         this.rdfStoreMessagebox
@@ -493,7 +493,7 @@ public class HttpEntityHandler {
           entityGraph.contains(
             entityIri,
             RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-            RdfModelUtils.createIri("https://purl.org/hmas/core/Workspace")
+            RdfModelUtils.createIri("https://purl.org/hmas/Workspace")
           )
       ) {
         this.rdfStoreMessagebox
@@ -504,7 +504,7 @@ public class HttpEntityHandler {
                            .filter(t ->
                              t.getSubject().equals(entityIri)
                              && t.getPredicate().equals(RdfModelUtils.createIri(
-                               "https://purl.org/hmas/core/isContainedIn"
+                               "https://purl.org/hmas/isContainedIn"
                              ))
                            )
                            .map(Statement::getObject)

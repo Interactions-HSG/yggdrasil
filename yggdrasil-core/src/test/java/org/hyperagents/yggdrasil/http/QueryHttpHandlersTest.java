@@ -31,7 +31,7 @@ public class QueryHttpHandlersTest {
   private static final String QUERY =
       """
         PREFIX td: <https://www.w3.org/2019/wot/td#>
-        PREFIX hmas: <https://purl.org/hmas/core/>
+        PREFIX hmas: <https://purl.org/hmas/>
         PREFIX ex: <http://example.org/>
 
         ASK WHERE {
