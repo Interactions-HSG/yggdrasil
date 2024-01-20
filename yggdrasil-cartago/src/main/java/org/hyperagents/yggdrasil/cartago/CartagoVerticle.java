@@ -90,11 +90,10 @@ public class CartagoVerticle extends AbstractVerticle {
           .<String, WebSubConfig>getLocalMap("notification-config")
           .get(DEFAULT_CONFIG_VALUE)
     );
-    final var yggdrasilAgent = this.httpConfig.getBaseUri() + "/agents/yggdrasil";
     this.vertx
         .<Void>executeBlocking(() -> {
           CartagoEnvironment.getInstance().init(new BasicLogger());
-          this.initializeFromConfiguration(yggdrasilAgent);
+          this.initializeFromConfiguration();
           return null;
         })
         .onComplete(startPromise);
@@ -117,7 +116,7 @@ public class CartagoVerticle extends AbstractVerticle {
         .onComplete(stopPromise);
   }
 
-  private void initializeFromConfiguration(final String yggdrasilAgent) {
+  private void initializeFromConfiguration() {
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
                                 .sharedData()
@@ -154,7 +153,7 @@ public class CartagoVerticle extends AbstractVerticle {
                 this.httpConfig.getArtifactsUri(w.getName()) + "/",
                 a.getName(),
                 this.instantiateArtifact(
-                  yggdrasilAgent,
+                  this.httpConfig.getBaseUri() + "/agents/yggdrasil",
                   w.getName(),
                   registry.getArtifactTemplate(c).orElseThrow(),
                   a.getName(),
