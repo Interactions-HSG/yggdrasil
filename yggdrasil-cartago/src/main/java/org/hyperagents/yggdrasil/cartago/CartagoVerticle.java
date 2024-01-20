@@ -94,6 +94,7 @@ public class CartagoVerticle extends AbstractVerticle {
     this.vertx
         .<Void>executeBlocking(() -> {
           CartagoEnvironment.getInstance().init(new BasicLogger());
+          this.initializeFromConfiguration(yggdrasilAgent);
           return null;
         })
         .onComplete(startPromise);
