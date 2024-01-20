@@ -1,6 +1,6 @@
 # Yggdrasil
 
-[![Codecov](https://codecov.io/gh/Interactions-HSG/yggdrasil/branch/main/graph/badge.svg?token=AAA)](https://codecov.io/gh/Interactions-HSG/yggdrasil)
+[![codecov](https://codecov.io/gh/Interactions-HSG/yggdrasil/graph/badge.svg?token=DhAW8ZB5zr)](https://codecov.io/gh/Interactions-HSG/yggdrasil)
 
 A platform for [Hypermedia Multi-Agent Systems (MAS)](https://hyperagents.org/) [1] built with
 [Vert.x](https://vertx.io/). The current implementation provides two core functionalities:
