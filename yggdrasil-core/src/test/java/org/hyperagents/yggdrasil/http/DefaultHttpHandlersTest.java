@@ -422,7 +422,7 @@ public class DefaultHttpHandlersTest {
                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                    .sendBuffer(Buffer.buffer(Files.readString(
-                     Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                     Path.of(ClassLoader.getSystemResource(COUNTER_ARTIFACT_FILE).toURI()),
                      StandardCharsets.UTF_8
                    )))
     );
