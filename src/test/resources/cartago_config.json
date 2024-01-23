@@ -8,7 +8,6 @@
     "enabled" : true
   },
   "environment-config" : {
-    "port" : 8088,
     "known-artifacts" : [
       {
         "class" : "http://example.org/Counter",
