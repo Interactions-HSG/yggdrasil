@@ -40,7 +40,7 @@ public final class RdfModelUtils {
       try {
         writer.startRDF();
 
-        writer.handleNamespace("hmas", "https://purl.org/hmas/core/");
+        writer.handleNamespace("hmas", "https://purl.org/hmas/");
         writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
         writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
         writer.handleNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#");

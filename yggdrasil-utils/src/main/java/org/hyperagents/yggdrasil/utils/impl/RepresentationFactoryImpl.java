@@ -30,7 +30,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       new ThingDescription
         .Builder("yggdrasil")
         .addThingURI(this.httpConfig.getBaseUri() + "/")
-        .addSemanticType("https://purl.org/hmas/core/HypermediaMASPlatform")
+        .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
         .addAction(
           new ActionAffordance.Builder(
               "createWorkspace",
@@ -52,7 +52,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       new ThingDescription
           .Builder(workspaceName)
           .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName))
-          .addSemanticType("https://purl.org/hmas/core/Workspace")
+          .addSemanticType("https://purl.org/hmas/Workspace")
           .addAction(
             new ActionAffordance.Builder(
                 "makeArtifact",
@@ -131,7 +131,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     final var td =
         new ThingDescription.Builder(artifactName)
                             .addSecurityScheme(securityScheme)
-                            .addSemanticType("https://purl.org/hmas/core/Artifact")
+                            .addSemanticType("https://purl.org/hmas/Artifact")
                             .addSemanticType(semanticType)
                             .addThingURI(this.httpConfig
                                              .getArtifactUri(workspaceName, artifactName))
@@ -148,7 +148,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
       .setNamespace("dct", "http://purl.org/dc/terms/")
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-      .setNamespace("hmas", "https://purl.org/hmas/core/")
+      .setNamespace("hmas", "https://purl.org/hmas/")
       .write();
   }
 }
