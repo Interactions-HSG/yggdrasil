@@ -49,10 +49,22 @@ jobs:
             utils/build/reports
             websub/build/reports
             build/reports
-            build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar
-            conf/docker_disk_config.json
           if-no-files-found: error
-  
+      - name: Upload app to GitHub
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: app
+          path: build/libs/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar
+          if-no-files-found: error
+      - name: Upload conf to GitHub
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: conf
+          path: conf/docker_disk_config.json
+          if-no-files-found: error
+
   build-container:
     runs-on: ubuntu-latest
     defaults:
@@ -72,6 +84,16 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      -
+        uses: actions/download-artifact@master
+        with:
+          name: app
+          path: /opt/app/yggdrasil-${YGGDRASIL_VERSION}-SNAPSHOT-all.jar
+      -
+        uses: actions/download-artifact@master
+        with:
+          name: conf
+          path: /opt/conf/docker_disk_config.json
       -
         name: Build and push
         uses: docker/build-push-action@v5
