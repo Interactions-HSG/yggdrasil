@@ -1,9 +1,9 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -24,6 +24,13 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.impl.EnvironmentParser;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +48,6 @@ public class CartagoVerticleTest {
       "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/agents/test";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
-  private static final String CALLBACK_IRI = "http://localhost:8080/callback";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
@@ -53,6 +59,7 @@ public class CartagoVerticleTest {
   private static final String OPERATION_SUCCESS_MESSAGE =
       "The operation should have succeeded with an Ok status code";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
+  private static final String DEFAULT_CONFIG_VALUE = "default";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private CartagoMessagebox cartagoMessagebox;
@@ -67,25 +74,61 @@ public class CartagoVerticleTest {
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
-    this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
-    final var notificationMessagebox =
-        new HttpNotificationDispatcherMessagebox(vertx.eventBus());
+    final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put(DEFAULT_CONFIG_VALUE, httpConfig);
+    final var environmentConfig =
+        new EnvironmentConfigImpl(JsonObject.of(
+          "environment-config",
+          JsonObject.of("enabled", true)
+        ));
+    vertx.sharedData()
+         .<String, EnvironmentConfig>getLocalMap("environment-config")
+         .put(DEFAULT_CONFIG_VALUE, environmentConfig);
+    vertx.sharedData()
+         .<String, Environment>getLocalMap("environment")
+         .put(DEFAULT_CONFIG_VALUE, EnvironmentParser.parse(JsonObject.of(
+           "environment-config",
+           JsonObject.of(
+             "known-artifacts",
+             JsonArray.of(
+               JsonObject.of(
+                 "class",
+                 ADDER_SEMANTIC_TYPE,
+                 "template",
+                 Adder.class.getCanonicalName()
+               ),
+               JsonObject.of(
+                 "class",
+                 COUNTER_SEMANTIC_TYPE,
+                 "template",
+                 Counter.class.getCanonicalName()
+               )
+             )
+           )
+         )));
+    final var notificationConfig = new WebSubConfigImpl(
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
+    );
+    vertx.sharedData()
+         .getLocalMap("notification-config")
+         .put(DEFAULT_CONFIG_VALUE, notificationConfig);
+    this.cartagoMessagebox = new CartagoMessagebox(
+      vertx.eventBus(),
+      environmentConfig
+    );
+    final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
+        vertx.eventBus(),
+        notificationConfig
+    );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
-    vertx.deployVerticle(
-        new CartagoVerticle(),
-        new DeploymentOptions()
-          .setConfig(new JsonObject(Map.of(
-            "known-artifacts",
-            Map.of(
-              ADDER_SEMANTIC_TYPE,
-              Adder.class.getCanonicalName(),
-              COUNTER_SEMANTIC_TYPE,
-              Counter.class.getCanonicalName()
-            )
-          ))),
-        ctx.succeedingThenComplete()
-    );
+    vertx.deployVerticle(new CartagoVerticle(), ctx.succeedingThenComplete());
   }
 
   @AfterEach
@@ -483,8 +526,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -525,8 +567,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             NONEXISTENT_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onFailure(t -> Assertions.assertEquals(
           HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -556,8 +597,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            NONEXISTENT_NAME,
-                            CALLBACK_IRI
+                            NONEXISTENT_NAME
                           )))
         .onFailure(t -> Assertions.assertEquals(
             HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -587,15 +627,13 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .compose(r -> this.cartagoMessagebox
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             MAIN_WORKSPACE_NAME,
-                            "c0",
-                            CALLBACK_IRI
+                            "c0"
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -673,8 +711,7 @@ public class CartagoVerticleTest {
                           .sendMessage(new CartagoMessage.Focus(
                             FOCUSING_AGENT_IRI,
                             SUB_WORKSPACE_NAME,
-                            "c1",
-                            CALLBACK_IRI
+                            "c1"
                           )))
         .compose(r -> {
           Assertions.assertEquals(

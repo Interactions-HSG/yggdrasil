@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
@@ -10,6 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +26,19 @@ public class RdfStoreVerticleGetTest {
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put("default", new HttpInterfaceConfigImpl(JsonObject.of()));
+    vertx.sharedData()
+         .getLocalMap("environment-config")
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of(
+                  "enabled",
+                  true
+                )
+              )));
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
   }

@@ -1,0 +1,46 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "environment-config" : {
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
+      }
+    ],
+    "workspaces" : [
+      {
+        "name" : "w1"
+      },
+      {
+        "name" : "w0",
+        "parent-name" : "w1",
+        "artifacts" : [
+          {
+            "name" : "c0",
+            "class" : "http://example.org/Counter",
+            "init-params" : [
+              5
+            ],
+            "focused-by" : [
+              {
+                "agent-uri" : "http://localhost:8080/agents/test",
+                "callback-uri" : "http://localhost:8081/"
+              }
+            ]
+          }
+        ],
+        "agents" : [
+          "http://localhost:8080/agents/test"
+        ]
+      }
+    ],
+    "enabled" : true
+  }
+}

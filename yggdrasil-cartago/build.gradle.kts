@@ -32,7 +32,6 @@ java {
 
 dependencies {
   implementation(project(":yggdrasil-utils"))
-  implementation(project(":yggdrasil-websub"))
 
   implementation(libs.log4j.core)
   implementation(libs.vertx.core)
@@ -43,6 +42,8 @@ dependencies {
   implementation(libs.wot.td.java)
 
   implementation(libs.rdf4j.model)
+
+  implementation(libs.apache.commons.lang3)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)

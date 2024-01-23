@@ -48,6 +48,7 @@ allprojects {
 }
 
 dependencies {
+  implementation(project(":yggdrasil-utils"))
   implementation(project(":yggdrasil-core"))
   implementation(project(":yggdrasil-cartago"))
   implementation(project(":yggdrasil-websub"))
@@ -68,7 +69,6 @@ dependencies {
   testImplementation(libs.wot.td.java)
   testImplementation(libs.rdf4j.model)
   testImplementation(files("libs/cartago-3.1.jar"))
-  testImplementation(project(":yggdrasil-utils"))
 
   testCompileOnly(libs.spotbugs.annotations)
 }

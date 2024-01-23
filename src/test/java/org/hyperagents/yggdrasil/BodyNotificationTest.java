@@ -33,12 +33,10 @@ public class BodyNotificationTest {
   private static final String TEST_AGENT_NAME = "test_agent";
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/" + TEST_AGENT_NAME;
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
-  private static final String HINT_HEADER = "Slug";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
   private static final int TEST_PORT = 8080;
-  private static final int CALLBACK_PORT = 8081;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
@@ -53,7 +51,7 @@ public class BodyNotificationTest {
   private static final String WORKSPACES_PATH = "/workspaces/";
   private static final String ARTIFACTS_PATH = "/artifacts/";
   private static final String BODIES_PATH = "/agents/";
-  private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + CALLBACK_PORT + "/";
+  private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
 
   private final List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
@@ -89,16 +87,26 @@ public class BodyNotificationTest {
               "host",
               TEST_HOST,
               "port",
-              TEST_PORT,
-              "websub-hub-uri",
-              this.getUrl(HUB_PATH),
-              "cartago-port",
-              8088
+              TEST_PORT
             ),
-            "known-artifacts",
+            "notification-config",
             JsonObject.of(
-              COUNTER_ARTIFACT_CLASS,
-              "org.hyperagents.yggdrasil.artifacts.Counter"
+              "enabled",
+              true
+            ),
+            "environment-config",
+            JsonObject.of(
+              "enabled",
+              true,
+              "known-artifacts",
+              JsonArray.of(
+                JsonObject.of(
+                  "class",
+                  COUNTER_ARTIFACT_CLASS,
+                  "template",
+                  "org.hyperagents.yggdrasil.artifacts.Counter"
+                )
+              )
             )
           ))
         )
@@ -136,7 +144,7 @@ public class BodyNotificationTest {
     this.client
         .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-        .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader("Slug", MAIN_WORKSPACE_NAME)
         .send()
         .onSuccess(r -> {
           Assertions.assertEquals(

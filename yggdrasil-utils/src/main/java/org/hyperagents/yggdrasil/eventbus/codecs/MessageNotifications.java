@@ -10,7 +10,9 @@ enum MessageNotifications {
   ARTIFACT_OBS_PROP("artifactObsProp"),
   ACTION_REQUESTED("actionRequested"),
   ACTION_SUCCEEDED("actionSucceeded"),
-  ACTION_FAILED("actionFailed");
+  ACTION_FAILED("actionFailed"),
+  ADD_CALLBACK("addCallback"),
+  REMOVE_CALLBACK("removeCallback");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.notifications.";
 

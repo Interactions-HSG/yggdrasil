@@ -17,8 +17,7 @@ public sealed interface CartagoMessage {
   record Focus(
       String agentId,
       String workspaceName,
-      String artifactName,
-      String callbackIri
+      String artifactName
   ) implements CartagoMessage {}
 
   record CreateArtifact(

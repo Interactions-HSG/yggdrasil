@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil.store;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import java.io.IOException;
@@ -17,6 +18,10 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatche
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +44,35 @@ public class RdfStoreVerticleCreateTest {
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
+    final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put("default", httpConfig);
+    final var notificationConfig = new WebSubConfigImpl(
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
+    );
+    vertx.sharedData()
+         .getLocalMap("environment-config")
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of(
+                  "enabled",
+                  true
+                )
+              )));
+    vertx.sharedData()
+         .getLocalMap("notification-config")
+         .put("default", notificationConfig);
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
-    final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(vertx.eventBus());
+    final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
+        vertx.eventBus(),
+        notificationConfig
+    );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
     vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());

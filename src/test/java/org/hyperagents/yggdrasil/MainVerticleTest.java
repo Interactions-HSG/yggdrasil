@@ -38,13 +38,10 @@ public class MainVerticleTest {
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
   private static final int TEST_PORT = 8080;
-  private static final int CALLBACK_PORT = 8081;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
   private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
-  private static final String RESPONSE_BODY_OK_MESSAGE =
-      "The response body should contain the OK status code";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
   private static final String HUB_MODE_PARAM = "hub.mode";
@@ -54,7 +51,7 @@ public class MainVerticleTest {
   private static final String HUB_PATH = "/hub/";
   private static final String WORKSPACES_PATH = "/workspaces/";
   private static final String ARTIFACTS_PATH = "/artifacts/";
-  public static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + CALLBACK_PORT + "/";
+  private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
 
   private final List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
@@ -90,16 +87,26 @@ public class MainVerticleTest {
               "host",
               TEST_HOST,
               "port",
-              TEST_PORT,
-              "websub-hub-uri",
-              this.getUrl(HUB_PATH),
-              "cartago-port",
-              8088
+              TEST_PORT
             ),
-            "known-artifacts",
+            "notification-config",
             JsonObject.of(
-              COUNTER_ARTIFACT_CLASS,
-              "org.hyperagents.yggdrasil.artifacts.Counter"
+              "enabled",
+              true
+            ),
+            "environment-config",
+            JsonObject.of(
+              "enabled",
+              true,
+              "known-artifacts",
+              JsonArray.of(
+                JsonObject.of(
+                  "class",
+                  COUNTER_ARTIFACT_CLASS,
+                  "template",
+                  "org.hyperagents.yggdrasil.artifacts.Counter"
+                )
+              )
             )
           ))
         )
@@ -430,7 +437,7 @@ public class MainVerticleTest {
                  Assertions.assertEquals(
                      String.valueOf(HttpStatus.SC_OK),
                      r.bodyAsString(),
-                     RESPONSE_BODY_OK_MESSAGE
+                     "The response body should contain the OK status code"
                  );
                })
                .compose(r -> this.callbackMessages.get(7).future())

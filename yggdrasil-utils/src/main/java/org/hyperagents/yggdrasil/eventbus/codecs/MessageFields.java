@@ -17,7 +17,8 @@ enum MessageFields {
   QUERY("query"),
   NAMED_GRAPH_URIS("namedGraphUris"),
   DEFAULT_GRAPH_URIS("defaultGraphUris"),
-  CONTENT_TYPE("contentType");
+  CONTENT_TYPE("contentType"),
+  CALLBACK_IRI("callbackIri");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 

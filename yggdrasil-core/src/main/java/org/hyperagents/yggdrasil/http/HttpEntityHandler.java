@@ -7,7 +7,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -38,14 +37,16 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
-import org.hyperagents.yggdrasil.websub.NotificationSubscriberRegistry;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
@@ -59,12 +60,25 @@ public class HttpEntityHandler {
 
   private final Messagebox<CartagoMessage> cartagoMessagebox;
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
+  private final Messagebox<HttpNotificationDispatcherMessage> notificationMessagebox;
   private final HttpInterfaceConfig httpConfig;
+  private final WebSubConfig notificationConfig;
 
-  public HttpEntityHandler(final Vertx vertx, final Context context) {
-    this.cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
+  public HttpEntityHandler(
+      final Vertx vertx,
+      final HttpInterfaceConfig httpConfig,
+      final EnvironmentConfig environmentConfig,
+      final WebSubConfig notificationConfig
+  ) {
+    this.httpConfig = httpConfig;
+    this.notificationConfig = notificationConfig;
+    this.cartagoMessagebox = new CartagoMessagebox(
+      vertx.eventBus(),
+      environmentConfig
+    );
     this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
-    this.httpConfig = new HttpInterfaceConfigImpl(context.config());
+    this.notificationMessagebox =
+        new HttpNotificationDispatcherMessagebox(vertx.eventBus(), this.notificationConfig);
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -162,13 +176,18 @@ public class HttpEntityHandler {
       return;
     }
 
-    this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          agentId,
-          context.pathParam(WORKSPACE_ID_PARAM),
-          representation.getString("artifactName"),
+    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
+    final var artifactName = representation.getString("artifactName");
+    this.notificationMessagebox
+        .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
+          this.httpConfig.getArtifactUri(workspaceName, artifactName),
           representation.getString("callbackIri")
         ))
+        .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
+          agentId,
+          workspaceName,
+          artifactName
+        )))
         .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
         .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
@@ -264,8 +283,12 @@ public class HttpEntityHandler {
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
         if (entityIri.matches("^https?://.*?:[0-9]+/workspaces/$")) {
-          NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
-          routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+          this.notificationMessagebox
+              .sendMessage(
+                new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
+              )
+              .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
+              .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
         } else {
           final var actualEntityIri =
               Pattern.compile("^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/$")
@@ -276,10 +299,10 @@ public class HttpEntityHandler {
                      .orElse(entityIri);
           this.rdfStoreMessagebox
               .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
-              .onSuccess(response -> {
-                NotificationSubscriberRegistry.getInstance().addCallbackIri(entityIri, callbackIri);
-                routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
-              })
+              .compose(r -> this.notificationMessagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
+              ))
+              .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
               .onFailure(t -> routingContext.fail(
                 t instanceof ReplyException e && e.failureCode() == HttpStatus.SC_NOT_FOUND
                 ? HttpStatus.SC_NOT_FOUND
@@ -288,8 +311,12 @@ public class HttpEntityHandler {
         }
         break;
       case "unsubscribe":
-        NotificationSubscriberRegistry.getInstance().removeCallbackIri(entityIri, callbackIri);
-        routingContext.response().setStatusCode(HttpStatus.SC_OK).end();
+        this.notificationMessagebox
+            .sendMessage(
+              new HttpNotificationDispatcherMessage.RemoveCallback(entityIri, callbackIri)
+            )
+            .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
+            .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
         break;
       default:
         routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
@@ -467,13 +494,15 @@ public class HttpEntityHandler {
   }
 
   private Map<String, List<String>> getWebSubHeaders(final String entityIri) {
-    return this.httpConfig
-               .getWebSubHubUri()
-               .map(hubIRI -> Map.of(
-                 "Link",
-                 Arrays.asList("<" + hubIRI + ">; rel=\"hub\"", "<" + entityIri + ">; rel=\"self\"")
-               ))
-               .orElse(Collections.emptyMap());
+    return this.notificationConfig.isEnabled()
+           ? Map.of(
+               "Link",
+               Arrays.asList(
+                 "<" + this.notificationConfig.getWebSubHubUri() + ">; rel=\"hub\"",
+                 "<" + entityIri + ">; rel=\"self\""
+               )
+             )
+           : Collections.emptyMap();
   }
 
   private Map<String, List<String>> getCorsHeaders() {

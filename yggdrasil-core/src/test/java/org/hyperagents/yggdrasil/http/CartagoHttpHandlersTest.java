@@ -21,9 +21,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
+import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,24 +75,53 @@ public class CartagoHttpHandlersTest {
 
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
   private final BlockingQueue<Message<CartagoMessage>> cartagoMessageQueue;
+  private final BlockingQueue<Message<HttpNotificationDispatcherMessage>> notificationMessageQueue;
   private WebClient client;
   private HttpServerVerticleTestHelper helper;
 
   public CartagoHttpHandlersTest() {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
     this.cartagoMessageQueue = new LinkedBlockingQueue<>();
+    this.notificationMessageQueue = new LinkedBlockingQueue<>();
   }
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.client = WebClient.create(vertx);
     this.helper = new HttpServerVerticleTestHelper(this.client, this.storeMessageQueue);
+    final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put("default", httpConfig);
+    final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
+        "environment-config",
+        JsonObject.of("enabled", true)
+    ));
+    vertx.sharedData()
+         .<String, EnvironmentConfig>getLocalMap("environment-config")
+         .put("default", environmentConfig);
+    final var notificationConfig = new WebSubConfigImpl(
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
+    );
+    vertx.sharedData()
+         .<String, WebSubConfig>getLocalMap("notification-config")
+         .put("default", notificationConfig);
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
-    final var cartagoMessagebox = new CartagoMessagebox(vertx.eventBus());
+    final var cartagoMessagebox = new CartagoMessagebox(vertx.eventBus(), environmentConfig);
     cartagoMessagebox.init();
     cartagoMessagebox.receiveMessages(this.cartagoMessageQueue::add);
+    final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
+        vertx.eventBus(),
+        notificationConfig
+    );
+    notificationMessagebox.init();
+    notificationMessagebox.receiveMessages(this.notificationMessageQueue::add);
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
   }
 
@@ -697,28 +734,37 @@ public class CartagoHttpHandlersTest {
                                      CALLBACK_IRI
                                    ).toBuffer());
     final var cartagoMessage = this.cartagoMessageQueue.take();
-    final var leaveWorkspaceMessage = (CartagoMessage.Focus) cartagoMessage.body();
+    final var focusMessage = (CartagoMessage.Focus) cartagoMessage.body();
     Assertions.assertEquals(
         TEST_AGENT_ID,
-        leaveWorkspaceMessage.agentId(),
+        focusMessage.agentId(),
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         MAIN_WORKSPACE_NAME,
-        leaveWorkspaceMessage.workspaceName(),
+        focusMessage.workspaceName(),
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         COUNTER_ARTIFACT_NAME,
-        leaveWorkspaceMessage.artifactName(),
+        focusMessage.artifactName(),
         NAMES_EQUAL_MESSAGE
+    );
+    cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+    final var notificationMessage = this.notificationMessageQueue.take();
+    final var addCallbackMessage =
+        (HttpNotificationDispatcherMessage.AddCallback) notificationMessage.body();
+    Assertions.assertEquals(
+        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME),
+        addCallbackMessage.requestIri(),
+        URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         CALLBACK_IRI,
-        leaveWorkspaceMessage.callbackIri(),
+        addCallbackMessage.callbackIri(),
         URIS_EQUAL_MESSAGE
     );
-    cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+    cartagoMessage.reply(null);
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -766,11 +812,6 @@ public class CartagoHttpHandlersTest {
         "c1",
         leaveWorkspaceMessage.artifactName(),
         NAMES_EQUAL_MESSAGE
-    );
-    Assertions.assertEquals(
-        CALLBACK_IRI,
-        leaveWorkspaceMessage.callbackIri(),
-        URIS_EQUAL_MESSAGE
     );
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
     request

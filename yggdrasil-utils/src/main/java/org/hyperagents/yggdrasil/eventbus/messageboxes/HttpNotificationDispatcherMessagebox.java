@@ -5,75 +5,103 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import java.util.function.Consumer;
+import org.apache.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.codecs.HttpNotificationDispatcherMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 public class HttpNotificationDispatcherMessagebox
     implements Messagebox<HttpNotificationDispatcherMessage> {
-  private final EventBus eventBus;
+  private static final Logger LOGGER = Logger.getLogger(HttpNotificationDispatcherMessagebox.class);
 
-  public HttpNotificationDispatcherMessagebox(final EventBus eventBus) {
+  private final EventBus eventBus;
+  private final WebSubConfig config;
+
+  public HttpNotificationDispatcherMessagebox(final EventBus eventBus, final WebSubConfig config) {
     this.eventBus = eventBus;
+    this.config = config;
   }
 
   @Override
   public void init() {
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated.class,
-        new GenericMessageCodec<>(
+    if (this.config.isEnabled()) {
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.EntityChanged.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.EntityChanged.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.EntityCreated.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.EntityChanged.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.EntityCreated.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.EntityDeleted.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.EntityCreated.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.EntityDeleted.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.ActionRequested.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.EntityDeleted.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.ActionRequested.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.ActionSucceeded.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.ActionRequested.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.ActionSucceeded.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
-    this.eventBus.registerDefaultCodec(
-        HttpNotificationDispatcherMessage.ActionFailed.class,
-        new GenericMessageCodec<>(
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.ActionSucceeded.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
           HttpNotificationDispatcherMessage.ActionFailed.class,
-          new HttpNotificationDispatcherMessageMarshaller()
-        )
-    );
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.ActionFailed.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
+          HttpNotificationDispatcherMessage.AddCallback.class,
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.AddCallback.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+      this.eventBus.registerDefaultCodec(
+          HttpNotificationDispatcherMessage.RemoveCallback.class,
+          new GenericMessageCodec<>(
+            HttpNotificationDispatcherMessage.RemoveCallback.class,
+            new HttpNotificationDispatcherMessageMarshaller()
+          )
+      );
+    } else {
+      LOGGER.warn("Notifications are not enabled, message exchange will not be initialized");
+    }
   }
 
   @Override
   public Future<Message<String>> sendMessage(final HttpNotificationDispatcherMessage message) {
+    if (this.config.isEnabled()) {
+      this.eventBus.send(MessageAddresses.HTTP_NOTIFICATION_DISPATCHER.getName(), message);
+    } else {
+      LOGGER.warn("Notifications are not enabled, this message will be a dead letter");
+    }
     final var promise = Promise.<Message<String>>promise();
-    this.eventBus.send(MessageAddresses.HTTP_NOTIFICATION_DISPATCHER.getName(), message);
     promise.complete();
     return promise.future();
   }
@@ -82,9 +110,13 @@ public class HttpNotificationDispatcherMessagebox
   public void receiveMessages(
       final Consumer<Message<HttpNotificationDispatcherMessage>> messageHandler
   ) {
-    this.eventBus.consumer(
-        MessageAddresses.HTTP_NOTIFICATION_DISPATCHER.getName(),
-        messageHandler::accept
-    );
+    if (this.config.isEnabled()) {
+      this.eventBus.consumer(
+          MessageAddresses.HTTP_NOTIFICATION_DISPATCHER.getName(),
+          messageHandler::accept
+      );
+    } else {
+      LOGGER.warn("Notifications are not enabled, no message will be received");
+    }
   }
 }

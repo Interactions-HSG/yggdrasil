@@ -1,16 +1,11 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
   java
-  application
-  alias(libs.plugins.shadowJar)
+  `java-library`
   checkstyle
   pmd
   alias(libs.plugins.spotbugs)
   jacoco
 }
-
-defaultTasks = mutableListOf("shadowJar")
 
 checkstyle {
   config = resources.text.fromFile("${rootProject.projectDir}/checkstyle.xml")
@@ -38,7 +33,6 @@ java {
 dependencies {
   implementation(project(":yggdrasil-utils"))
   implementation(project(":yggdrasil-cartago"))
-  implementation(project(":yggdrasil-websub"))
 
   implementation(libs.log4j.core)
   implementation(libs.vertx.core)
@@ -73,30 +67,7 @@ dependencies {
   testCompileOnly(libs.spotbugs.annotations)
 }
 
-application {
-  mainClass = "io.vertx.core.Launcher"
-}
-
-val mainVerticleName = "org.hyperagents.yggdrasil.DefaultMainVerticle"
-
 tasks {
-  named<ShadowJar>("shadowJar") {
-    manifest {
-      attributes(mapOf("Main-Verticle" to mainVerticleName))
-    }
-    mergeServiceFiles {
-      include("META-INF/services/io.vertx.core.spi.VerticleFactory")
-    }
-  }
-
-  named<JavaExec>("run") {
-    args = mutableListOf("run", mainVerticleName, "--launcher-class=${application.mainClass.get()}")
-  }
-
-  compileJava {
-    options.compilerArgs.addAll(listOf("-parameters"))
-  }
-
   test {
     useJUnitPlatform()
     finalizedBy(jacocoTestReport)

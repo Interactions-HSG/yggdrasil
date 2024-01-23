@@ -1,0 +1,26 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "environment-config" : {
+    "workspaces" : [
+      {
+        "name" : "test",
+        "representation" : "test_workspace_td.ttl"
+      },
+      {
+        "name" : "sub",
+        "parent-name" : "test",
+        "artifacts" : [
+          {
+            "name" : "c0",
+            "representation" : "c0_counter_artifact.ttl"
+          }
+        ],
+        "representation" : "sub_workspace_td.ttl"
+      }
+    ]
+  }
+}

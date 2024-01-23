@@ -5,6 +5,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,11 +26,13 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
-import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 /**
@@ -38,6 +42,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
   private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
+  private static final String DEFAULT_CONFIG_VALUE = "default";
 
   private Messagebox<HttpNotificationDispatcherMessage> dispatcherMessagebox;
   private HttpInterfaceConfig httpConfig;
@@ -46,8 +51,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start(final Promise<Void> startPromise) {
-    this.httpConfig = new HttpInterfaceConfigImpl(this.config());
-    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(this.vertx.eventBus());
+    this.httpConfig = this.vertx.sharedData()
+                                .<String, HttpInterfaceConfig>getLocalMap("http-config")
+                                .get("default");
+    this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
+      this.vertx.eventBus(),
+      this.vertx.sharedData()
+                .<String, WebSubConfig>getLocalMap("notification-config")
+                .get(DEFAULT_CONFIG_VALUE)
+    );
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
@@ -123,6 +135,36 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RDFFormat.TURTLE
               )
           );
+          if (
+              !this.vertx
+                   .sharedData()
+                   .<String, EnvironmentConfig>getLocalMap("environment-config")
+                   .get(DEFAULT_CONFIG_VALUE)
+                   .isEnabled()
+          ) {
+            final var environment =
+                this.vertx.sharedData()
+                          .<String, Environment>getLocalMap("environment")
+                          .get(DEFAULT_CONFIG_VALUE);
+            environment.getWorkspaces()
+                       .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
+                         ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
+                             httpConfig.getWorkspacesUri() + "/",
+                             w.getName(),
+                             w.getParentName().map(httpConfig::getWorkspaceUri),
+                             Files.readString(r, StandardCharsets.UTF_8)
+                         ));
+                         w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
+                             Failable.asConsumer(ar ->
+                               ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                                 httpConfig.getArtifactsUri(w.getName()) + "/",
+                                 a.getName(),
+                                 Files.readString(ar, StandardCharsets.UTF_8)
+                               ))
+                             )
+                         ));
+                       })));
+          }
           return null;
         })
         .onComplete(startPromise);
