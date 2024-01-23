@@ -123,3 +123,6 @@ that contains a JSON payload with the following fields (see the
 
 When a resource is updated, Yggdrasil issues `POST` requests with the (updated) resource
 representation to all registered callbacks.
+
+## CI/CD
+

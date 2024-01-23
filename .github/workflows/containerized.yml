@@ -1,0 +1,52 @@
+name: Run Tests in Container
+
+on:
+    push:
+      branches-ignore:
+        - main
+      paths-ignore:
+        - CHANGELOG.md
+        - CONTRIBUTING.md
+        - LICENSE
+        - renovate.json
+        - docker-compose.yml
+        - Dockerfile
+    workflow_dispatch:
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: eclipse-temurin:21
+      env:
+        YGGDRASIL_VERSION: 0.0.0
+        TERM: dumb
+      ports:
+        - "8899:8080"
+        - "8900:8088"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check for dockerenv file
+        run: ./gradlew
+      - name: Run checks and tests
+        run: ./gradlew check
+      - name: Upload analysis to GitHub
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: check-results
+          path: |
+            cartago/build/reports
+            http/build/reports
+            messages/build/reports
+            store/build/reports
+            utils/build/reports
+            websub/build/reports
+            build/reports
+          if-no-files-found: error
