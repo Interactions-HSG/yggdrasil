@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: app
+          name: yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar
           path: "build/libs/yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar"
           if-no-files-found: error
       - name: Upload conf to GitHub
@@ -93,15 +93,13 @@ jobs:
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       -
-        uses: actions/download-artifact@master
+        # WARNING: https://stackoverflow.com/a/57877438 is suggesting to use '@master'
+        # however due to change from "master" to "main", "master" is outdated
+        uses: actions/download-artifact@v3
+        id: download
         with:
-          name: app
-          path: /opt/app/yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar
-      -
-        uses: actions/download-artifact@master
-        with:
-          name: conf
-          path: /opt/conf/docker_disk_config.json
+          # Omitting name to download all artifacts
+          path: /opt/app/
       -
         name: Build and push
         uses: docker/build-push-action@v5
@@ -109,4 +107,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: galess/ics-hsg-yggdrasil:${{ vars.GITHUB_REF_NAME }}
+          tags: galess/ics-hsg-yggdrasil:${{ env.YGGDRASIL_VERSION }}
