@@ -6,15 +6,19 @@ on:
         - main
       paths-ignore:
         - CHANGELOG.md
+        - README.md
         - CONTRIBUTING.md
         - LICENSE
         - renovate.json
+        - ".github/workflows/**"
         - docker-compose.yml
-        # - Dockerfile
+        - Dockerfile
     workflow_dispatch:
 
 # This should be consistent in the whole workflow
 env:
+  # Maybe use https://stackoverflow.com/questions/67288526/github-actions-replace-character-in-string
+  # or https://github.com/orgs/community/discussions/45488
   YGGDRASIL_VERSION: 0.0.0
 
 jobs:
@@ -37,73 +41,66 @@ jobs:
           persist-credentials: false
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-      - 
-        name: yggdrasil is
-        run: echo ${{ env.YGGDRASIL_VERSION }}
       - name: Run checks and tests
-        run: ./gradlew # disable checks for development
-        # run: ./gradlew check
-      # - name: Upload analysis to GitHub
-      #   uses: actions/upload-artifact@v3
-      #   if: always()
-      #   with:
-      #     name: check-results
-      #     path: |
-      #       cartago/build/reports
-      #       http/build/reports
-      #       messages/build/reports
-      #       store/build/reports
-      #       utils/build/reports
-      #       websub/build/reports
-      #       build/reports
-      #     if-no-files-found: error
+        run: ./gradlew check
+      - name: Upload analysis to GitHub
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: check-results
+          path: |
+            cartago/build/reports
+            http/build/reports
+            messages/build/reports
+            store/build/reports
+            utils/build/reports
+            websub/build/reports
+            build/reports
+          if-no-files-found: error
+      - name: Make structure for app
+        run: cp build/libs/yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar .
       - name: Upload app to GitHub
         uses: actions/upload-artifact@v3
         if: always()
         with:
-          name: yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar
-          path: "build/libs/yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar"
-          if-no-files-found: error
-      - name: Upload conf to GitHub
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: conf
-          path: conf/docker_disk_config.json
+          name: app
+          path: |
+            conf/docker_disk_config.json
+            yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar
           if-no-files-found: error
 
   build-container:
     needs: build-app
+    environment: "containerized_debugging"
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      -
-        name: Login to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
+       
         # WARNING: https://stackoverflow.com/a/57877438 is suggesting to use '@master'
         # however due to change from "master" to "main", "master" is outdated
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v3
         id: download
         with:
           # Omitting name to download all artifacts
-          path: /opt/app/
-      -
-        name: Build and push
+          # Skipping '/' is on purpose since 'ADD' in Dockerfile cannot use abs path
+          path: opt/
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
+          build-args: |
+            YGGDRASIL_VERSION=${{ env.YGGDRASIL_VERSION }}
           push: true
           tags: galess/ics-hsg-yggdrasil:${{ env.YGGDRASIL_VERSION }}
