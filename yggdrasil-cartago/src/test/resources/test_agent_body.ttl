@@ -6,8 +6,7 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/test/agents/test> a td:Thing, <https://example.org/Body>,
-    hmas:Artifact;
+<http://localhost:8080/workspaces/test/agents/test> a td:Thing, hmas:Artifact, <https://example.org/Body>;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
