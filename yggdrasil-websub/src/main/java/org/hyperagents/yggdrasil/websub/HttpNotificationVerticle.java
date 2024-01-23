@@ -5,6 +5,8 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.regex.Pattern;
@@ -58,6 +60,39 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                           : "\"" + r.group() + "\""
                         )
                       ),
+                      this.reponseHandler(callbackIRI)
+                    );
+              } else if (
+                  message.body()
+                    instanceof HttpNotificationDispatcherMessage.ActionRequested
+              ) {
+                request
+                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
+                    .sendJsonObject(
+                      ((JsonObject) Json.decodeValue(changes))
+                        .put("eventType", "actionRequested"),
+                      this.reponseHandler(callbackIRI)
+                    );
+              } else if (
+                  message.body()
+                    instanceof HttpNotificationDispatcherMessage.ActionSucceeded
+              ) {
+                request
+                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
+                    .sendJsonObject(
+                      ((JsonObject) Json.decodeValue(changes))
+                        .put("eventType", "actionSucceeded"),
+                      this.reponseHandler(callbackIRI)
+                    );
+              } else if (
+                  message.body()
+                    instanceof HttpNotificationDispatcherMessage.ActionFailed
+              ) {
+                request
+                    .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(changes.length()))
+                    .sendJsonObject(
+                      ((JsonObject) Json.decodeValue(changes))
+                        .put("eventType", "actionFailed"),
                       this.reponseHandler(callbackIRI)
                     );
               } else if (!changes.isEmpty()) {

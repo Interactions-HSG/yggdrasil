@@ -1,0 +1,14 @@
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+
+<http://localhost:8080/workspaces/sub/agents/test> a td:Thing, <https://example.org/Body>,
+    hmas:Artifact;
+  td:title "test";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ] .
+

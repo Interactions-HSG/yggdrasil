@@ -13,11 +13,18 @@ public interface RepresentationFactory {
   String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates);
 
   String createArtifactRepresentation(
-      final String workspaceName,
-      final String artifactName,
-      final SecurityScheme securityScheme,
-      final String semanticType,
-      final Model metadata,
-      final ListMultimap<String, ActionAffordance> actionAffordances
+      String workspaceName,
+      String artifactName,
+      SecurityScheme securityScheme,
+      String semanticType,
+      Model metadata,
+      ListMultimap<String, ActionAffordance> actionAffordances
+  );
+
+  String createBodyRepresentation(
+      String workspaceName,
+      String agentId,
+      SecurityScheme securityScheme,
+      Model metadata
   );
 }

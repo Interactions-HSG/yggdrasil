@@ -92,6 +92,15 @@ public class RdfStoreMessageMarshaller
         json.add(MessageFields.NAMED_GRAPH_URIS.getName(), encodedNamedGraphUris);
         json.addProperty(MessageFields.CONTENT_TYPE.getName(), responseContentType);
       }
+      case RdfStoreMessage.CreateBody m -> {
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.CREATE_BODY.getName()
+        );
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), m.workspaceName());
+        json.addProperty(MessageFields.AGENT_NAME.getName(), m.agentName());
+        json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.bodyRepresentation());
+      }
     }
     return json;
   }
@@ -125,6 +134,11 @@ public class RdfStoreMessageMarshaller
         jsonObject.get(MessageFields.PARENT_WORKSPACE_URI.getName()).isJsonNull()
         ? Optional.empty()
         : Optional.of(jsonObject.get(MessageFields.PARENT_WORKSPACE_URI.getName()).getAsString()),
+        jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
+      );
+      case CREATE_BODY -> new RdfStoreMessage.CreateBody(
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.AGENT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
       case UPDATE_ENTITY -> new RdfStoreMessage.UpdateEntity(

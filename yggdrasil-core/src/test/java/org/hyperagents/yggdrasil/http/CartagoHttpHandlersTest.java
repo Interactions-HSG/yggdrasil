@@ -36,7 +36,7 @@ public class CartagoHttpHandlersTest {
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String AGENT_WEBID = "X-Agent-WebID";
-  private static final String TEST_AGENT_ID = "test_agent";
+  private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
   private static final String SLUG_HEADER = "Slug";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
@@ -473,7 +473,17 @@ public class CartagoHttpHandlersTest {
 
   @Test
   public void testPostJoinWorkspaceSucceeds(final VertxTestContext ctx)
-      throws InterruptedException {
+      throws InterruptedException, URISyntaxException, IOException {
+    final var initialBodyRepresentation =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
+    final var fullBodyRepresentation =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_agent_body_full.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .send();
@@ -489,7 +499,25 @@ public class CartagoHttpHandlersTest {
         joinWorkspaceMessage.workspaceName(),
         NAMES_EQUAL_MESSAGE
     );
-    cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+    cartagoMessage.reply(initialBodyRepresentation);
+    final var storeMessage = this.storeMessageQueue.take();
+    final var createBodyMessage = (RdfStoreMessage.CreateBody) storeMessage.body();
+    Assertions.assertEquals(
+        MAIN_WORKSPACE_NAME,
+        createBodyMessage.workspaceName(),
+        NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+        "test_agent",
+        createBodyMessage.agentName(),
+        NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+        initialBodyRepresentation,
+        createBodyMessage.bodyRepresentation(),
+        NAMES_EQUAL_MESSAGE
+    );
+    storeMessage.reply(fullBodyRepresentation);
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -498,9 +526,9 @@ public class CartagoHttpHandlersTest {
               OK_STATUS_MESSAGE
           );
           Assertions.assertEquals(
-              String.valueOf(HttpStatus.SC_OK),
+              fullBodyRepresentation,
               r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
+              TDS_EQUAL_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());
@@ -577,6 +605,14 @@ public class CartagoHttpHandlersTest {
         NAMES_EQUAL_MESSAGE
     );
     cartagoMessage.reply(String.valueOf(HttpStatus.SC_OK));
+    final var storeMessage = this.storeMessageQueue.take();
+    final var deleteBodyMessage = (RdfStoreMessage.DeleteEntity) storeMessage.body();
+    Assertions.assertEquals(
+        this.helper.getUri(MAIN_WORKSPACE_PATH + "/agents/test_agent"),
+        deleteBodyMessage.requestUri(),
+        NAMES_EQUAL_MESSAGE
+    );
+    storeMessage.reply(String.valueOf(HttpStatus.SC_OK));
     request
         .onSuccess(r -> {
           Assertions.assertEquals(

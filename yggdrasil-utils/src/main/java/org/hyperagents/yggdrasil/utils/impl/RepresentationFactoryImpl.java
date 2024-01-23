@@ -140,6 +140,24 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     return serializeThingDescription(td);
   }
 
+  @Override
+  public String createBodyRepresentation(
+      final String workspaceName,
+      final String agentName,
+      final SecurityScheme securityScheme,
+      final Model metadata
+  ) {
+    final var td =
+        new ThingDescription
+          .Builder(agentName)
+          .addSecurityScheme(securityScheme)
+          .addSemanticType("https://purl.org/hmas/Artifact")
+          .addSemanticType("https://example.org/Body")
+          .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
+          .addGraph(metadata);
+    return serializeThingDescription(td);
+  }
+
   private String serializeThingDescription(final ThingDescription.Builder td) {
     return new TDGraphWriter(td.build())
       .setNamespace("td", "https://www.w3.org/2019/wot/td#")

@@ -47,6 +47,27 @@ public class HttpNotificationDispatcherMessagebox
           new HttpNotificationDispatcherMessageMarshaller()
         )
     );
+    this.eventBus.registerDefaultCodec(
+        HttpNotificationDispatcherMessage.ActionRequested.class,
+        new GenericMessageCodec<>(
+          HttpNotificationDispatcherMessage.ActionRequested.class,
+          new HttpNotificationDispatcherMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        HttpNotificationDispatcherMessage.ActionSucceeded.class,
+        new GenericMessageCodec<>(
+          HttpNotificationDispatcherMessage.ActionSucceeded.class,
+          new HttpNotificationDispatcherMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        HttpNotificationDispatcherMessage.ActionFailed.class,
+        new GenericMessageCodec<>(
+          HttpNotificationDispatcherMessage.ActionFailed.class,
+          new HttpNotificationDispatcherMessageMarshaller()
+        )
+    );
   }
 
   @Override

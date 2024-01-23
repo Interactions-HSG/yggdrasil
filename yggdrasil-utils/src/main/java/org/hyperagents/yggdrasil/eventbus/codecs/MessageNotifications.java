@@ -7,7 +7,10 @@ enum MessageNotifications {
   ENTITY_CREATED("entityCreated"),
   ENTITY_CHANGED("entityChanged"),
   ENTITY_DELETED("entityDeleted"),
-  ARTIFACT_OBS_PROP("artifactObsProp");
+  ARTIFACT_OBS_PROP("artifactObsProp"),
+  ACTION_REQUESTED("actionRequested"),
+  ACTION_SUCCEEDED("actionSucceeded"),
+  ACTION_FAILED("actionFailed");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.notifications.";
 

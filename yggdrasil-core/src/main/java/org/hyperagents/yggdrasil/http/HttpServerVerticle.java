@@ -17,6 +17,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";
+  public static final String BODY_PATH = "/workspaces/:wkspid/agents/:agtname";
 
   private HttpServer server;
 
@@ -105,6 +106,13 @@ public class HttpServerVerticle extends AbstractVerticle {
           .handler(handler::handleUpdateEntity);
     router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
+
+    router.get(BODY_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.get(BODY_PATH).handler(handler::handleGetEntity);
+    router.put(BODY_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.put(BODY_PATH)
+          .consumes(TURTLE_CONTENT_TYPE)
+          .handler(handler::handleUpdateEntity);
 
     router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
 

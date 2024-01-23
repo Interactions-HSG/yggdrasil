@@ -13,6 +13,7 @@ import cartago.WorkspaceId;
 import cartago.events.ActionFailedEvent;
 import cartago.events.ActionSucceededEvent;
 import cartago.utils.BasicLogger;
+import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -24,10 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
@@ -107,8 +110,7 @@ public class CartagoVerticle extends AbstractVerticle {
         case CartagoMessage.CreateSubWorkspace(String workspaceName, String subWorkspaceName) ->
           message.reply(this.instantiateSubWorkspace(workspaceName, subWorkspaceName));
         case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) -> {
-          this.joinWorkspace(agentId, workspaceName);
-          message.reply(String.valueOf(HttpStatus.SC_OK));
+          message.reply(this.joinWorkspace(agentId, workspaceName));
         }
         case CartagoMessage.LeaveWorkspace(String agentId, String workspaceName) -> {
           this.leaveWorkspace(agentId, workspaceName);
@@ -186,12 +188,18 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private void joinWorkspace(final String agentUri, final String workspaceName)
+  private String joinWorkspace(final String agentUri, final String workspaceName)
       throws CartagoException {
     this.workspaceRegistry
         .getWorkspace(workspaceName)
         .orElseThrow()
         .joinWorkspace(this.getAgentCredential(agentUri), e -> {});
+    return this.representationFactory.createBodyRepresentation(
+      workspaceName,
+      this.getAgentNameFromAgentUri(agentUri),
+      new NoSecurityScheme(),
+      new LinkedHashModel()
+    );
   }
 
   private void focus(
@@ -267,12 +275,33 @@ public class CartagoVerticle extends AbstractVerticle {
           .orElseGet(() -> new Op(action));
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+    final var agentName = this.getAgentNameFromAgentUri(agentUri);
+    this.dispatcherMessagebox.sendMessage(
+      new HttpNotificationDispatcherMessage.ActionRequested(
+        this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+        this.getActionNotificationContent(artifactName, action).encode()
+      )
+    );
     workspace.execOp(0L,
                      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
                      e -> {
                        if (e instanceof ActionSucceededEvent) {
+                         this.dispatcherMessagebox.sendMessage(
+                           new HttpNotificationDispatcherMessage.ActionSucceeded(
+                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+                             this.getActionNotificationContent(artifactName, action).encode()
+                           )
+                         );
                          promise.complete();
                        } else if (e instanceof ActionFailedEvent f) {
+                         this.dispatcherMessagebox.sendMessage(
+                           new HttpNotificationDispatcherMessage.ActionFailed(
+                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+                             this.getActionNotificationContent(artifactName, action)
+                                 .put("cause", f.getFailureMsg())
+                                 .encode()
+                           )
+                         );
                          promise.fail(f.getFailureMsg());
                        }
                      },
@@ -291,6 +320,24 @@ public class CartagoVerticle extends AbstractVerticle {
                             )
                             .map(Object::toString)
                   );
+  }
+
+  private JsonObject getActionNotificationContent(final String artifactName, final String action) {
+    return JsonObject.of(
+      "artifactName",
+      artifactName,
+      "actionName",
+      action
+    );
+  }
+
+  private String getAgentNameFromAgentUri(final String agentUri) {
+    return Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
+                  .matcher(agentUri)
+                  .results()
+                  .findFirst()
+                  .orElseThrow()
+                  .group(1);
   }
 
   private AgentId getAgentId(final AgentCredential credential, final WorkspaceId workspaceId) {

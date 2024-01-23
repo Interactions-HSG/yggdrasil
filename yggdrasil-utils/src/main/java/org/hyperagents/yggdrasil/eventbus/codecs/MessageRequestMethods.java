@@ -14,6 +14,7 @@ enum MessageRequestMethods {
   LEAVE_WORKSPACE("leaveWorkspace"),
   FOCUS("focus"),
   CREATE_ARTIFACT("createArtifact"),
+  CREATE_BODY("createBody"),
   DO_ACTION("performAction"),
   QUERY("query");
 
