@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -15,8 +16,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
+import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
+import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
+import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,9 +54,31 @@ public class AgentBodyHttpHandlersTest {
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.client = WebClient.create(vertx);
     this.helper = new HttpServerVerticleTestHelper(this.client, this.storeMessageQueue);
+    final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+    vertx.sharedData()
+         .<String, HttpInterfaceConfig>getLocalMap("http-config")
+         .put("default", httpConfig);
+    vertx.sharedData()
+         .<String, EnvironmentConfig>getLocalMap("environment-config")
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of("enabled", true)
+              )));
+    final var notificationConfig = new WebSubConfigImpl(
+        JsonObject.of(
+          "notification-config",
+          JsonObject.of("enabled", true)
+        ),
+        httpConfig
+    );
+    vertx.sharedData()
+         .<String, WebSubConfig>getLocalMap("notification-config")
+         .put("default", notificationConfig);
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
+    new HttpNotificationDispatcherMessagebox(vertx.eventBus(), notificationConfig).init();
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
   }
 

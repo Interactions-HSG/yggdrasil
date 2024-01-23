@@ -30,15 +30,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class EnvironmentConfigurationTest {
-  private static final String TEST_AGENT_ID = "test";
-  private static final String AGENT_ID_HEADER = "X-Agent-WebID";
-  private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
   private static final String WORKSPACES_PATH = "/workspaces/";
@@ -105,7 +101,7 @@ public class EnvironmentConfigurationTest {
           StandardCharsets.UTF_8
         );
     this.client
-        .get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
+        .get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + "test")
         .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -153,7 +149,7 @@ public class EnvironmentConfigurationTest {
               r.bodyAsString()
           );
         })
-        .compose(r -> this.callbackMessages.get(0).future())
+        .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0",
@@ -176,7 +172,7 @@ public class EnvironmentConfigurationTest {
                             + COUNTER_ARTIFACT_NAME
                             + "/increment"
                           )
-                          .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+                          .putHeader("X-Agent-WebID", "http://localhost:8080/agents/test")
                           .send())
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -184,7 +180,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
+          Assertions.assertNull(r.bodyAsString(), "The response body should be empty");
         })
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {

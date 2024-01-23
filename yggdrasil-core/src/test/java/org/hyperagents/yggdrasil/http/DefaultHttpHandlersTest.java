@@ -74,13 +74,13 @@ public class DefaultHttpHandlersTest {
     vertx.sharedData()
          .<String, HttpInterfaceConfig>getLocalMap("http-config")
          .put("default", httpConfig);
-    final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
-        "environment-config",
-        JsonObject.of("enabled", true)
-    ));
     vertx.sharedData()
          .<String, EnvironmentConfig>getLocalMap("environment-config")
-         .put("default", environmentConfig);
+         .put("default",
+              new EnvironmentConfigImpl(JsonObject.of(
+                "environment-config",
+                JsonObject.of("enabled", true)
+              )));
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(
           "notification-config",
@@ -94,7 +94,6 @@ public class DefaultHttpHandlersTest {
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
-    new CartagoMessagebox(vertx.eventBus(), environmentConfig).init();
     new HttpNotificationDispatcherMessagebox(vertx.eventBus(), notificationConfig).init();
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
   }
