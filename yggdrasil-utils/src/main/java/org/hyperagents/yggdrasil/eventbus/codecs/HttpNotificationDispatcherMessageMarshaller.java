@@ -105,21 +105,27 @@ public class HttpNotificationDispatcherMessageMarshaller
             MessageNotifications.ENTITY_DELETED.getName()
         );
       }
-      case HttpNotificationDispatcherMessage.ActionFailed ignored ->
+      case HttpNotificationDispatcherMessage.ActionFailed m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ACTION_FAILED.getName()
         );
-      case HttpNotificationDispatcherMessage.ActionRequested ignored ->
+      }
+      case HttpNotificationDispatcherMessage.ActionRequested m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ACTION_REQUESTED.getName()
         );
-      case HttpNotificationDispatcherMessage.ActionSucceeded ignored ->
+      }
+      case HttpNotificationDispatcherMessage.ActionSucceeded m -> {
+        json.addProperty(MessageFields.NOTIFICATION_CONTENT.getName(), m.content());
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageNotifications.ACTION_SUCCEEDED.getName()
         );
+      }
       case HttpNotificationDispatcherMessage.AddCallback m -> {
         json.addProperty(MessageFields.CALLBACK_IRI.getName(), m.callbackIri());
         json.addProperty(

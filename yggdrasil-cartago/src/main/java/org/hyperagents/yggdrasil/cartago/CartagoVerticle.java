@@ -153,7 +153,7 @@ public class CartagoVerticle extends AbstractVerticle {
                 this.httpConfig.getArtifactsUri(w.getName()) + "/",
                 a.getName(),
                 this.instantiateArtifact(
-                  this.httpConfig.getBaseUri() + "/agents/yggdrasil",
+                  this.httpConfig.getAgentUri("yggdrasil"),
                   w.getName(),
                   registry.getArtifactTemplate(c).orElseThrow(),
                   a.getName(),
@@ -181,9 +181,8 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply(this.instantiateWorkspace(workspaceName));
         case CartagoMessage.CreateSubWorkspace(String workspaceName, String subWorkspaceName) ->
           message.reply(this.instantiateSubWorkspace(workspaceName, subWorkspaceName));
-        case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) -> {
+        case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) ->
           message.reply(this.joinWorkspace(agentId, workspaceName));
-        }
         case CartagoMessage.LeaveWorkspace(String agentId, String workspaceName) -> {
           this.leaveWorkspace(agentId, workspaceName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
