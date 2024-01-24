@@ -1,16 +1,12 @@
-name: Run Tests in Container
-
+name: Test and Containerize
 on:
     push:
-      branches-ignore:
-        - main
       paths-ignore:
         - CHANGELOG.md
         - README.md
         - CONTRIBUTING.md
         - LICENSE
         - renovate.json
-        - ".github/workflows/**"
         - docker-compose.yml
         - Dockerfile
     workflow_dispatch:
@@ -22,7 +18,7 @@ env:
   YGGDRASIL_VERSION: 0.0.0
 
 jobs:
-  build-app:
+  build-and-test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -73,8 +69,8 @@ jobs:
             yggdrasil-${{ env.YGGDRASIL_VERSION }}-SNAPSHOT-all.jar
           if-no-files-found: error
 
-  build-container:
-    needs: build-app
+  containerize:
+    needs: build-and-test
     environment: "containerized_debugging"
     runs-on: ubuntu-latest
     defaults:
