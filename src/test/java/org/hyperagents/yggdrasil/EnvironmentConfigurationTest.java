@@ -40,21 +40,19 @@ public class EnvironmentConfigurationTest {
   private static final String WORKSPACES_PATH = "/workspaces/";
   private static final String ARTIFACTS_PATH = "/artifacts/";
 
-  private final List<Promise<Map.Entry<String, String>>> callbackMessages;
+  private List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
   private int promiseIndex;
-
-  public EnvironmentConfigurationTest() {
-    this.callbackMessages =
-      Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(2)
-            .collect(Collectors.toList());
-  }
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     this.client = WebClient.create(vertx);
+    this.callbackMessages =
+      Stream.generate(Promise::<Map.Entry<String, String>>promise)
+            .limit(2)
+            .collect(Collectors.toList());
+    this.promiseIndex = 0;
     vertx
         .eventBus()
         .<String>consumer(
@@ -66,15 +64,15 @@ public class EnvironmentConfigurationTest {
             this.promiseIndex++;
           }
         );
-    vertx
-        .deployVerticle(
+    final var configuration = Files.readString(
+        Path.of(ClassLoader.getSystemResource("cartago_config.json").toURI()),
+        StandardCharsets.UTF_8
+    );
+    vertx.deployVerticle(new CallbackServerVerticle())
+        .compose(r -> vertx.deployVerticle(
           new MainVerticle(),
-          new DeploymentOptions().setConfig((JsonObject) Json.decodeValue(Files.readString(
-            Path.of(ClassLoader.getSystemResource("cartago_config.json").toURI()),
-            StandardCharsets.UTF_8
-          )))
-        )
-        .compose(r -> vertx.deployVerticle(new CallbackServerVerticle()))
+          new DeploymentOptions().setConfig((JsonObject) Json.decodeValue(configuration))
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 

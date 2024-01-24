@@ -53,20 +53,18 @@ public class BodyNotificationTest {
   private static final String BODIES_PATH = "/agents/";
   private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
 
-  private final List<Promise<Map.Entry<String, String>>> callbackMessages;
+  private List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
   private int promiseIndex;
-
-  public BodyNotificationTest() {
-    this.callbackMessages =
-      Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(5)
-            .collect(Collectors.toList());
-  }
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.client = WebClient.create(vertx);
+    this.callbackMessages =
+      Stream.generate(Promise::<Map.Entry<String, String>>promise)
+            .limit(5)
+            .collect(Collectors.toList());
+    this.promiseIndex = 0;
     vertx
         .eventBus()
         .<String>consumer(
@@ -78,40 +76,39 @@ public class BodyNotificationTest {
             this.promiseIndex++;
           }
         );
-    vertx
-        .deployVerticle(
-          new MainVerticle(),
-          new DeploymentOptions().setConfig(JsonObject.of(
-            "http-config",
-            JsonObject.of(
-              "host",
-              TEST_HOST,
-              "port",
-              TEST_PORT
-            ),
-            "notification-config",
-            JsonObject.of(
-              "enabled",
-              true
-            ),
-            "environment-config",
-            JsonObject.of(
-              "enabled",
-              true,
-              "known-artifacts",
-              JsonArray.of(
-                JsonObject.of(
-                  "class",
-                  COUNTER_ARTIFACT_CLASS,
-                  "template",
-                  "org.hyperagents.yggdrasil.artifacts.Counter"
-                )
-              )
-            )
-          ))
-        )
-        .compose(r -> vertx.deployVerticle(new CallbackServerVerticle()))
-        .onComplete(ctx.succeedingThenComplete());
+    vertx.deployVerticle(new CallbackServerVerticle())
+         .compose(r -> vertx.deployVerticle(
+           new MainVerticle(),
+           new DeploymentOptions().setConfig(JsonObject.of(
+             "http-config",
+             JsonObject.of(
+               "host",
+               TEST_HOST,
+               "port",
+               TEST_PORT
+             ),
+             "notification-config",
+             JsonObject.of(
+               "enabled",
+               true
+             ),
+             "environment-config",
+             JsonObject.of(
+               "enabled",
+               true,
+               "known-artifacts",
+               JsonArray.of(
+                 JsonObject.of(
+                   "class",
+                   COUNTER_ARTIFACT_CLASS,
+                   "template",
+                   "org.hyperagents.yggdrasil.artifacts.Counter"
+                 )
+               )
+             )
+           ))
+         ))
+         .onComplete(ctx.succeedingThenComplete());
   }
 
   @AfterEach
