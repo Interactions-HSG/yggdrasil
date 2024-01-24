@@ -18,6 +18,28 @@ env:
   YGGDRASIL_VERSION: 0.0.0
 
 jobs:
+  set-vars:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gen_version.outputs.VERSION }}
+    steps:
+      - name: set values
+        id: gen_version
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: character-replacement-test
+        run: |
+          REPO=$GITHUB_REPOSITORY
+          DB_NAME="${REPO//-/_}"
+          echo $DB_NAME
+      - name: Use the value
+        # this sets environment variables for this step
+        env:
+          VERSION: ${{ steps.gen_version.outputs.VERSION }}
+        run: |
+          echo "${VERSION}"
+
+
   build-and-test:
     runs-on: ubuntu-latest
     defaults:
@@ -31,7 +53,6 @@ jobs:
         TERM: dumb
       ports:
         - "8899:8080"
-        - "8900:8088"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,12 +70,10 @@ jobs:
         with:
           name: check-results
           path: |
-            cartago/build/reports
-            http/build/reports
-            messages/build/reports
-            store/build/reports
-            utils/build/reports
-            websub/build/reports
+            yggdrasil-cartago/build/reports
+            yggdrasil-core/build/reports
+            yggdrasil-utils/build/reports
+            yggdrasil-websub/build/reports
             build/reports
           if-no-files-found: error
       - name: Make structure for app

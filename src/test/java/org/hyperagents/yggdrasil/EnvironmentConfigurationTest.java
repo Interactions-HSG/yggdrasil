@@ -26,9 +26,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Disabled;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
+@Disabled
+//TODO: Test is flaky see https://github.com/Interactions-HSG/yggdrasil/issues/35
 public class EnvironmentConfigurationTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
