@@ -11,13 +11,12 @@ on:
         - Dockerfile
     workflow_dispatch:
 
-# This should be consistent in the whole workflow
 env:
-  # Maybe use https://stackoverflow.com/questions/67288526/github-actions-replace-character-in-string
-  # or https://github.com/orgs/community/discussions/45488
   YGGDRASIL_VERSION: 0.0.0
 
 jobs:
+  # https://stackoverflow.com/questions/67288526/github-actions-replace-character-in-string
+  # https://github.com/orgs/community/discussions/45488
   set-vars:
     runs-on: ubuntu-latest
     outputs:
@@ -26,21 +25,10 @@ jobs:
       - name: set values
         id: gen_version
         run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-      - name: character-replacement-test
-        run: |
-          REPO=$GITHUB_REPOSITORY
-          DB_NAME="${REPO//-/_}"
-          echo $DB_NAME
-      - name: Use the value
-        # this sets environment variables for this step
-        env:
-          VERSION: ${{ steps.gen_version.outputs.VERSION }}
-        run: |
-          echo "${VERSION}"
-
+          echo "VERSION=${GITHUB_REF_NAME////_}" >> $GITHUB_OUTPUT
 
   build-and-test:
+    needs: [set-vars]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,6 +39,7 @@ jobs:
         # Tell scripts assume an non-interactive shell. This keeps logs clean
         # in case of e.g. progress bars that would cause one line for each state, otherwise
         TERM: dumb
+        YGGDRASIL_VERSION: "${{ needs.set-vars.outputs.VERSION }}"
       ports:
         - "8899:8080"
     steps:
@@ -89,12 +78,14 @@ jobs:
           if-no-files-found: error
 
   containerize:
-    needs: build-and-test
+    needs: [set-vars, build-and-test]
     environment: "containerized_debugging"
     runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
+    env:
+      YGGDRASIL_VERSION: "${{ needs.set-vars.outputs.VERSION }}"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
