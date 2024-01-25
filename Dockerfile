@@ -2,6 +2,9 @@ FROM eclipse-temurin:21
 
 ARG YGGDRASIL_VERSION
 
+# Entrypoint requires having it as ENV
+ENV YGGDRASIL_VERSION ${YGGDRASIL_VERSION}
+
 # https://stackoverflow.com/a/793867
 RUN mkdir -p /opt/
 ADD opt/app/ /opt/app/
