@@ -318,6 +318,91 @@ public class RdfStoreVerticleCreateTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testCreateAndGetBody(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var bodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var bodyArtifactRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("output_test_agent_body_test.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var outputParentWorkspaceRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("test_workspace_body_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    this.assertWorkspaceCreated(
+          ctx,
+          Files.readString(
+              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              StandardCharsets.UTF_8
+          ),
+          Files.readString(
+              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              StandardCharsets.UTF_8
+          )
+        )
+        .compose(r -> this.storeMessagebox
+                          .sendMessage(new RdfStoreMessage.CreateBody(
+                            TEST_WORKSPACE_NAME,
+                            "test",
+                            bodyRepresentation
+                          ))
+        )
+        .onSuccess(r -> {
+          try {
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                bodyArtifactRepresentation,
+                r.body()
+            );
+            final var entityUpdatedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+            Assertions.assertEquals(
+                WORKSPACES_PATH + TEST_WORKSPACE_NAME,
+                entityUpdatedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                outputParentWorkspaceRepresentation,
+                entityUpdatedMessage.content()
+            );
+            final var entityCreatedMessage =
+                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            Assertions.assertEquals(
+                "http://localhost:8080/workspaces/test/agents/",
+                entityCreatedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                bodyArtifactRepresentation,
+                entityCreatedMessage.content()
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        })
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          outputParentWorkspaceRepresentation,
+          r.body()
+        ))
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          "http://localhost:8080/workspaces/test/agents/test"
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          bodyArtifactRepresentation,
+          r.body()
+        ))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
   private Future<Message<String>> assertWorkspaceCreated(
       final VertxTestContext ctx,
       final String outputWorkspaceRepresentation,

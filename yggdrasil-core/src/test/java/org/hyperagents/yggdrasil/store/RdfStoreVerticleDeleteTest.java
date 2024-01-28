@@ -107,7 +107,7 @@ public class RdfStoreVerticleDeleteTest {
       throws URISyntaxException, IOException {
     final var deletedWorkspaceDescription =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_workspace_sub_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var platformDescription =
@@ -145,6 +145,20 @@ public class RdfStoreVerticleDeleteTest {
             Assertions.assertEquals(
                 TEST_WORKSPACE_URI,
                 deletionMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            final var bodyDeletionMessage =
+                (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("output_test_agent_body_test.ttl").toURI()),
+                  StandardCharsets.UTF_8
+                ),
+                bodyDeletionMessage.content()
+            );
+            Assertions.assertEquals(
+                TEST_WORKSPACE_URI + "/agents/test",
+                bodyDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
             final var subWorkspaceDeletionMessage =
@@ -211,7 +225,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     final var parentWorkspaceDescription =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_workspace_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var platformDescription =
@@ -232,10 +246,7 @@ public class RdfStoreVerticleDeleteTest {
             final var parentWorkspaceUpdateMessage =
                 (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
-                  StandardCharsets.UTF_8
-                ),
+                parentWorkspaceDescription,
                 parentWorkspaceUpdateMessage.content()
             );
             Assertions.assertEquals(
@@ -246,10 +257,7 @@ public class RdfStoreVerticleDeleteTest {
             final var deletionMessage =
                 (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                Files.readString(
-                  Path.of(ClassLoader.getSystemResource("sub_workspace_c0_td.ttl").toURI()),
-                  StandardCharsets.UTF_8
-                ),
+                deletedWorkspaceDescription,
                 deletionMessage.content()
             );
             Assertions.assertEquals(
@@ -315,7 +323,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     final var parentWorkspaceDescription =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_workspace_sub_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var platformDescription =
@@ -393,6 +401,84 @@ public class RdfStoreVerticleDeleteTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testDeleteAndGetBody(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var deletedBodyDescription =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("output_test_agent_body_test.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
+    final var workspaceDescription =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
+    final var platformDescription =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+          StandardCharsets.UTF_8
+        );
+    this.assertWorkspaceTreeCreated(ctx)
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
+          TEST_WORKSPACE_URI + "/agents/test"
+        )))
+        .onSuccess(r -> {
+          RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+              deletedBodyDescription,
+              r.body()
+          );
+          try {
+            final var parentWorkspaceUpdateMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                Files.readString(
+                  Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+                  StandardCharsets.UTF_8
+                ),
+                parentWorkspaceUpdateMessage.content()
+            );
+            Assertions.assertEquals(
+                TEST_WORKSPACE_URI,
+                parentWorkspaceUpdateMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            final var deletionMessage =
+                (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                deletedBodyDescription,
+                deletionMessage.content()
+            );
+            Assertions.assertEquals(
+                TEST_WORKSPACE_URI + "/agents/test",
+                deletionMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        })
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          TEST_WORKSPACE_URI + "/agents/test"
+        )))
+        .onFailure(RdfStoreVerticleTestHelpers::assertNotFound)
+        .recover(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          TEST_WORKSPACE_URI
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          workspaceDescription,
+          r.body()
+        ))
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          PLATFORM_URI
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          platformDescription,
+          r.body()
+        ))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
   private Future<Message<String>> assertWorkspaceTreeCreated(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var inputWorkspaceRepresentation =
@@ -408,6 +494,11 @@ public class RdfStoreVerticleDeleteTest {
     final var inputArtifactRepresentation =
         Files.readString(
           Path.of(ClassLoader.getSystemResource(COUNTER_ARTIFACT_FILE).toURI()),
+          StandardCharsets.UTF_8
+        );
+    final var inputBodyRepresentation =
+        Files.readString(
+          Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     return this.storeMessagebox
@@ -442,6 +533,19 @@ public class RdfStoreVerticleDeleteTest {
                    "http://localhost:8080/workspaces/sub/artifacts/",
                    "c0",
                    inputArtifactRepresentation
+                 ));
+               })
+               .compose(r -> {
+                 try {
+                   this.notificationQueue.take();
+                   this.notificationQueue.take();
+                 } catch (final Exception e) {
+                   ctx.failNow(e);
+                 }
+                 return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
+                   "test",
+                   "test",
+                   inputBodyRepresentation
                  ));
                })
                .onSuccess(r -> {
