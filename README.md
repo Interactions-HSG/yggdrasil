@@ -116,7 +116,7 @@ and for updating an agent body, URI `/workspaces/<wksp_id>/agents/<agt_id>`),
 can receive [Turtle](http://www.w3.org/TR/2014/REC-turtle-20140225/) payloads other than their default payloads,
 and the current implementation only validates the payload's syntax.
 
-For more information, see the [documentation website](interactions-hsg.github.io/yggdrasil/).
+For more information, see the [documentation website](https://interactions-hsg.github.io/yggdrasil/).
 
 ### WebSub
 
@@ -218,15 +218,23 @@ Link: <http://yggdrasil.andreiciortea.ro/workspaces/test>; rel="self"
 ```
 
 Using the discovered hub and topic IRIs,
-a client can subscribe for notification via a `POST` request that contains a JSON payload with the following fields
+a client can subscribe for notifications via a `POST` request that contains a JSON payload with the following fields
 (see the [W3C WebSub recommendation](https://www.w3.org/TR/2018/REC-websub-20180123/)) to the "hub" URL:
 
- * `hub.mode` (could be either "subscribe" or "unsubscribe")
- * `hub.topic` (the URI of the resource to subscribe to or unsubscribe from)
- * `hub.callback` (the URI to be notified by the Yggdrasil platform upon updates)
+* `hub.mode` (could be either "subscribe" or "unsubscribe")
+* `hub.topic` (the URI of the resource to subscribe to or unsubscribe from)
+* `hub.callback` (the URI to be notified by the Yggdrasil platform upon notifications)
 
-When a resource is created,
-updated or deleted,
+When a resource is created or updated,
 Yggdrasil issues a `POST` request with the resource representation to all registered callbacks.
+When a resource is deleted,
+Yggdrasil issues an empty `POST` request to all registered callbacks.
+When an agent starts or ends performing an action on an artifact in a workspace,
+Yggdrasil issues a JSON `POST` request to all registered callbacks with the following fields:
 
-For more information, see the [documentation website](interactions-hsg.github.io/yggdrasil/).
+* `eventType` (can be either "actionRequested," or "actionSucceeded," or "actionFailed")
+* `artifactName` (the name of the artifact on which the action is done)
+* `actionName` (the name of the action done on the artifact)
+* `cause` (present only if the "eventType" field is set to "actionFailed," the cause of failure)
+
+For more information, see the [documentation website](https://interactions-hsg.github.io/yggdrasil/).
