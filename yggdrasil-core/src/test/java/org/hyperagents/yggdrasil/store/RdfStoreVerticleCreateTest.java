@@ -34,6 +34,8 @@ public class RdfStoreVerticleCreateTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String WORKSPACES_PATH = "http://localhost:8080/workspaces/";
   private static final String TEST_WORKSPACE_NAME = "test";
+  private static final String PLATFORM_FILE = "platform_test_td.ttl";
+  private static final String TEST_WORKSPACE_FILE = "output_test_workspace_td.ttl";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private RdfStoreMessagebox storeMessagebox;
@@ -121,12 +123,12 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     final var platformRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
           StandardCharsets.UTF_8
         );
     final var outputWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
           StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(ctx, outputWorkspaceRepresentation, platformRepresentation)
@@ -168,11 +170,11 @@ public class RdfStoreVerticleCreateTest {
     this.assertWorkspaceCreated(
           ctx,
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
               StandardCharsets.UTF_8
           ),
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
               StandardCharsets.UTF_8
           )
         )
@@ -254,11 +256,11 @@ public class RdfStoreVerticleCreateTest {
     this.assertWorkspaceCreated(
           ctx,
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
               StandardCharsets.UTF_8
           ),
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
               StandardCharsets.UTF_8
           )
         )
@@ -339,11 +341,11 @@ public class RdfStoreVerticleCreateTest {
     this.assertWorkspaceCreated(
           ctx,
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
               StandardCharsets.UTF_8
           ),
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
               StandardCharsets.UTF_8
           )
         )

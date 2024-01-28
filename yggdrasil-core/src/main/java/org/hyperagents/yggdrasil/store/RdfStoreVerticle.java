@@ -469,12 +469,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
               final var artifactIri = requestIri.toString();
               final var workspaceIri =
                   RdfModelUtils.createIri(
-                    Pattern.compile("^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/.*?$")
-                           .matcher(artifactIri)
-                           .results()
-                           .map(r -> r.group(1))
-                           .findFirst()
-                           .orElseThrow()
+                      Pattern
+                        .compile(
+                          "^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/.*?$"
+                        )
+                        .matcher(artifactIri)
+                        .results()
+                        .map(r -> r.group(1))
+                        .findFirst()
+                        .orElseThrow()
                   );
               this.store
                   .getEntityModel(workspaceIri)
