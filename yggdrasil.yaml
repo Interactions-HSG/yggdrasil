@@ -85,7 +85,31 @@ paths:
       tags: 
         - platform
       summary: Handles registration to the WebSub Hub for getting notifications about the platform
-      description: Handles registration to the WebSub Hub for getting notifications about the platform. It needs to be specified the topic for which subscribing, i.e., the URI of the resource to be observed, and the callback to which the notifications should be sent. It can be specified to subscribe or to revoke the subscription.
+      description:
+        Handles registration to the WebSub Hub for getting notifications about the platform. The topic for which subscribing, i.e., the URI of the resource to be observed needs to be specified. Allowed values are
+
+        * ".../workspaces/", gives notifications about workspaces creation
+
+        * ".../workspaces/:wkspid", gives notifications about this workspace update and deletion (the workspace must exist prior to subscription)
+
+        * ".../workspaces/:wkspid/artifacts/", gives notifications about artifacts creation (the workspace must exist prior to subscription)
+
+        * ".../workspaces/:wkspid/artifacts/:artid", gives notifications about this artifact update and deletion (the artifact must exist prior to subscription)
+
+        * ".../workspaces/:wkspid/agents/", gives notifications about body artifacts creation (the workspace must exist prior to subscription)
+        
+        * ".../workspaces/:wkspid/agents/:agt", gives notifications about this body artifact update and deletion, but also the notifications related to the owner agent starting and completing its actions in the given workspace
+
+
+        The callback to which the notifications should be sent also needs to be specified. This endpoint can be used in two modes, one for subscribing and one for unsubscribing. All creation and update notifications are the TURTLE representation of the resource which was created or updated. All deletion notifications are empty by default. Action notifications are in JSON format and follow a schema made of the following four properties
+
+        * "eventType" (values can be either "actionRequested", "actionSucceeded", "actionFailed")
+
+        * "artifactName" (name of the artifact used in the action)
+
+        * "actionName" (name of the action used on the artifact)
+
+        * "cause" (present only if the "eventType" field is set to "actionFailed", the cause of failure)
       operationId: subscribeEntity
       requestBody:
         description: Handles registration to the WebSub Hub
@@ -103,7 +127,7 @@ paths:
                   type: string
                   format: url
                   examples:
-                    - "http://localhost:8080/callback"
+                    - "http://localhost:8081/callback"
                 "hub.mode":
                   type: string
                   enum:
