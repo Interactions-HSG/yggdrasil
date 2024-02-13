@@ -44,7 +44,7 @@ dependencies {
 
   implementation(libs.gson)
   implementation(libs.wot.td.java)
-  implementation("com.github.danaivach.hmas-java:core:d0f02dc")
+  implementation("com.github.danaivach.hmas-java:hmas-java:d0f02dc")
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
