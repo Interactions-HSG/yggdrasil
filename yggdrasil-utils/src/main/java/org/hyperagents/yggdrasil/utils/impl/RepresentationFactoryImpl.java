@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
+import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphWriter;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ArtifactProfile;
@@ -18,9 +19,9 @@ import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
 
-import java.util.ArrayList;
+
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -156,23 +157,37 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
         System.out.println("failed to get inputSchema of " + action.getName());
       }
 
+      ch.unisg.ics.interactions.hmas.interaction.signifiers.Form form = null;
+      try {
 
-      var form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
-        .setMethodName(formTD.getMethodName().get())
-        .setContentType(formTD.getContentType())
+        form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
+          .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
+          .setMethodName(formTD.getMethodName().get())
+          .setContentType(formTD.getContentType())
+          .build();
+      } catch (Exception e) {
+        System.out.println("failed to create form");
+      }
+
+      InputSpecification inputSpecification = null;
+
+      try {
+        inputSpecification = new InputSpecification.Builder()
+          .build();
+      } catch (Exception e) {
+        System.out.println("Failed to get semantic types from inputSchema");
+      }
+
+      ActionSpecification actionSpecification = null;
+
+      try {
+        actionSpecification = new ActionSpecification.Builder(form)
+          .build();
+      } catch (Exception e ) {
+        System.out.println("failed to get semantic types from action");
+      }
+      Signifier signifier = new Signifier.Builder(actionSpecification)
         .build();
-
-      InputSpecification inputSpecification = new InputSpecification.Builder()
-        .setRequiredSemanticTypes(inputSchema.getSemanticTypes())
-        .setDataType(inputSchema.getDatatype())
-        .build();
-
-      ActionSpecification actionSpecification = new ActionSpecification.Builder(form)
-        .addSemanticTypes((Set<String>) action.getSemanticTypes())
-        .setRequiredInput(inputSpecification)
-        .build();
-
-      Signifier signifier = new Signifier.Builder(actionSpecification).build();
 
       signifierList.add(signifier);
     }
@@ -187,6 +202,14 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
       .exposeSignifiers(signifierList)
       .build();
+
+    ArtifactProfileGraphWriter writer = new ArtifactProfileGraphWriter(artifactProfile);
+    try {
+      String test = writer.write();
+      System.out.println(test);
+    } catch (Exception e) {
+      System.out.println(Arrays.toString(e.getStackTrace()));
+    }
     /*
     return serializeHmasArtifactProfile(artifactProfile);
 
