@@ -1,15 +1,26 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
+import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
+import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphWriter;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ArtifactProfile;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -128,6 +139,48 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final Model metadata,
       final ListMultimap<String, ActionAffordance> actionAffordances
   ) {
+
+    Set<Signifier> signifierList = new HashSet<>();
+
+    for (ActionAffordance action : actionAffordances.values()) {
+      Form formTD = action.getFirstForm().get();
+      DataSchema inputSchema = action.getInputSchema().get();
+
+      var form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
+        .setMethodName(formTD.getMethodName().get())
+        .setContentType(formTD.getContentType())
+        .build();
+
+      InputSpecification inputSpecification = new InputSpecification.Builder()
+        .setRequiredSemanticTypes(inputSchema.getSemanticTypes())
+        .setDataType(inputSchema.getDatatype())
+        .build();
+
+      ActionSpecification actionSpecification = new ActionSpecification.Builder(form)
+        .addSemanticTypes((Set<String>) action.getSemanticTypes())
+        .setRequiredInput(inputSpecification)
+        .build();
+
+      Signifier signifier = new Signifier.Builder(actionSpecification).build();
+
+      signifierList.add(signifier);
+    }
+
+
+    Artifact artifact = new Artifact.Builder()
+      .addSemanticType(semanticType)
+      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
+      .build();
+
+    ArtifactProfile artifactProfile = new ArtifactProfile.Builder(artifact)
+      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
+      .exposeSignifiers(signifierList)
+      .build();
+    /*
+    return serializeHmasArtifactProfile(artifactProfile);
+
+     */
+
     final var td =
         new ThingDescription.Builder(artifactName)
                             .addSecurityScheme(securityScheme)
@@ -167,6 +220,11 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setNamespace("dct", "http://purl.org/dc/terms/")
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
       .setNamespace("hmas", "https://purl.org/hmas/")
+      .write();
+  }
+
+  private String serializeHmasArtifactProfile(final ArtifactProfile profile) {
+    return new ArtifactProfileGraphWriter(profile)
       .write();
   }
 }
