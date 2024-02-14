@@ -8,6 +8,12 @@
     "enabled" : true
   },
   "environment-config" : {
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
+      }
+    ],
     "enabled" : true
   }
 }
