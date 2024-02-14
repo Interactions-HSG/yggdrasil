@@ -141,10 +141,21 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   ) {
 
     Set<Signifier> signifierList = new HashSet<>();
+    Form formTD = null;
+    DataSchema inputSchema = null;
 
     for (ActionAffordance action : actionAffordances.values()) {
-      Form formTD = action.getFirstForm().get();
-      DataSchema inputSchema = action.getInputSchema().get();
+      try {
+        formTD = action.getFirstForm().get();
+      } catch (Exception e) {
+        System.out.println("failed to get firstForm of " + action.getName());
+      }
+      try {
+        inputSchema = action.getInputSchema().get();
+      } catch (Exception e) {
+        System.out.println("failed to get inputSchema of " + action.getName());
+      }
+
 
       var form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
         .setMethodName(formTD.getMethodName().get())
