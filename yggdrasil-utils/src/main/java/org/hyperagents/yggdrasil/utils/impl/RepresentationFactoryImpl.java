@@ -210,10 +210,10 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     } catch (Exception e) {
       System.out.println(Arrays.toString(e.getStackTrace()));
     }
-    /*
-    return serializeHmasArtifactProfile(artifactProfile);
 
-     */
+    return serializeHmasArtifactProfile(artifactProfile);
+    /*
+
 
     final var td =
         new ThingDescription.Builder(artifactName)
@@ -225,6 +225,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
                             .addGraph(metadata);
     actionAffordances.values().forEach(td::addAction);
     return serializeThingDescription(td);
+    */
   }
 
   @Override
