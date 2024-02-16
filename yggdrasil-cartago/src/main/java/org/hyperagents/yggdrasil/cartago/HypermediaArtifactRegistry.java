@@ -62,20 +62,20 @@ public final class HypermediaArtifactRegistry {
   public void register(final HypermediaArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
-    artifact.getActionAffordances()
+    artifact.getSignifiers()
             .entrySet()
             .stream()
-            .flatMap(actionEntry -> actionEntry.getValue()
+            .flatMap(signifierEntry -> signifierEntry.getValue()
                                                .stream()
-                                               .map(action -> Map.entry(
-                                                 actionEntry.getKey(),
-                                                 action
+                                               .map(signifier -> Map.entry(
+                                                 signifierEntry.getKey(),
+                                                 signifier
                                                )))
-            .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
+            .forEach(signifier -> signifier.getValue().getActionSpecification().getForms().stream().findFirst().ifPresent(value -> {
               if (value.getMethodName().isPresent()) {
                 this.artifactActionRouter.put(
                     value.getMethodName().get() + value.getTarget(),
-                    action.getKey()
+                    signifier.getKey()
                 );
               }
             }));
