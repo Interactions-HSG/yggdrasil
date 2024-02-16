@@ -1,11 +1,12 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
-import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphReader;
-import ch.unisg.ics.interactions.hmas.interaction.io.ArtifactProfileGraphWriter;
+import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
+import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphWriter;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.ArtifactProfile;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ResourceProfile;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
@@ -38,6 +39,28 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
   @Override
   public String createPlatformRepresentation() {
+    String baseUri = this.httpConfig.getBaseUri();
+    HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
+      .setIRIAsString(baseUri + "/#platform")
+      .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
+      .build();
+
+    var form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(baseUri + "/workspaces/")
+      .setIRIAsString(baseUri + "/#form")
+      .setMethodName(HttpMethod.POST.name())
+      .build();
+
+    ResourceProfile resourceProfile = new ResourceProfile.Builder(hypermediaMASPlatform)
+      .setIRIAsString(baseUri + "/")
+      .exposeSignifier(
+        new Signifier.Builder(
+          new ActionSpecification.Builder(form)
+            .build()
+        ).build())
+      .build();
+
+    return serializeHmasArtifactProfile(resourceProfile);
+      /*
     return serializeThingDescription(
       new ThingDescription
         .Builder("yggdrasil")
@@ -53,6 +76,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .build()
         )
     );
+
+       */
   }
 
   @Override
@@ -60,6 +85,18 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final String workspaceName,
       final Set<String> artifactTemplates
   ) {
+
+    Workspace workspace = new Workspace.Builder()
+      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName) + "#workspace")
+      .addSemanticType("https://purl.org/hmas/Workspace")
+      .build();
+
+    ResourceProfile resourceProfile = new ResourceProfile.Builder(workspace)
+      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName))
+      .build();
+
+    return serializeHmasArtifactProfile(resourceProfile);
+    /*
     return serializeThingDescription(
       new ThingDescription
           .Builder(workspaceName)
@@ -129,6 +166,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
             .build()
           )
     );
+     */
   }
 
   @Override
@@ -198,22 +236,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#artifact") //  #artifact
       .build();
 
-    ArtifactProfile artifactProfile = new ArtifactProfile.Builder(artifact)
+    ResourceProfile artifactProfile = new ResourceProfile.Builder(artifact)
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
       .exposeSignifiers(signifierList)
       .build();
 
-    ArtifactProfileGraphWriter writer = new ArtifactProfileGraphWriter(artifactProfile);
-    try {
-      String test = writer.write();
-      System.out.println(test);
-    } catch (Exception e) {
-      System.out.println(Arrays.toString(e.getStackTrace()));
-    }
-
     return serializeHmasArtifactProfile(artifactProfile);
     /*
-
 
     final var td =
         new ThingDescription.Builder(artifactName)
@@ -225,7 +254,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
                             .addGraph(metadata);
     actionAffordances.values().forEach(td::addAction);
     return serializeThingDescription(td);
-    */
+     */
   }
 
   @Override
@@ -258,8 +287,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .write();
   }
 
-  private String serializeHmasArtifactProfile(final ArtifactProfile profile) {
-    return new ArtifactProfileGraphWriter(profile)
+  private String serializeHmasArtifactProfile(final ResourceProfile profile) {
+    return new ResourceProfileGraphWriter(profile)
       .write();
   }
 }
