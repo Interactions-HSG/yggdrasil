@@ -161,7 +161,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       try {
 
         form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
-          .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
+          .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#form") // #form
           .setMethodName(formTD.getMethodName().get())
           .setContentType(formTD.getContentType())
           .build();
@@ -195,7 +195,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     Artifact artifact = new Artifact.Builder()
       .addSemanticType(semanticType)
-      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
+      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#artifact") //  #artifact
       .build();
 
     ArtifactProfile artifactProfile = new ArtifactProfile.Builder(artifact)
