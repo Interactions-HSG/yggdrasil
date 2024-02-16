@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.utils;
 
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
@@ -17,7 +18,7 @@ public interface RepresentationFactory {
       String artifactName,
       String semanticType,
       Model metadata,
-      ListMultimap<String, ActionAffordance> actionAffordances
+      ListMultimap<String, Signifier> actionAffordances
   );
 
   String createBodyRepresentation(
