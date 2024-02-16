@@ -5,6 +5,7 @@ import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme.TokenLocation;
+import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -37,6 +38,8 @@ public class PhantomX3D extends HypermediaArtifact {
 
   private String robotBaseUri;
   private State state;
+
+  private SecurityScheme securityScheme;
 
   public void init(final String robotBaseUri) {
     this.state = State.NEUTRAL;
@@ -121,6 +124,10 @@ public class PhantomX3D extends HypermediaArtifact {
     this.addMetadata(builder.build());
 
     this.setSecurityScheme(new APIKeySecurityScheme(TokenLocation.HEADER, "X-API-Key"));
+  }
+
+  private void setSecurityScheme(APIKeySecurityScheme apiKeySecurityScheme) {
+     this.securityScheme = apiKeySecurityScheme;
   }
 
   private void moveToNeural() {
