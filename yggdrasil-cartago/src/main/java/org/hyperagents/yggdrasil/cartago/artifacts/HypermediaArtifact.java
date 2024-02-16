@@ -38,7 +38,7 @@ public abstract class HypermediaArtifact extends Artifact {
   private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
   private RepresentationFactory representationFactory =
       new RepresentationFactoryImpl(this.httpConfig);
-  private SecurityScheme securityScheme = new NoSecurityScheme();
+
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -50,7 +50,6 @@ public abstract class HypermediaArtifact extends Artifact {
     return this.representationFactory.createArtifactRepresentation(
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
-      this.securityScheme,
       HypermediaArtifactRegistry.getInstance()
                                 .getArtifactSemanticType(this.getClass().getCanonicalName())
                                 .orElseThrow(
@@ -181,10 +180,6 @@ public abstract class HypermediaArtifact extends Artifact {
   ) {
     this.feedbackActions.add(actionName);
     this.responseConverterMap.put(actionName, responseConverter);
-  }
-
-  protected final void setSecurityScheme(final SecurityScheme scheme) {
-    this.securityScheme = scheme;
   }
 
   protected final void addMetadata(final Model model) {
