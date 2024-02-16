@@ -13,7 +13,6 @@ import cartago.WorkspaceId;
 import cartago.events.ActionFailedEvent;
 import cartago.events.ActionSucceededEvent;
 import cartago.utils.BasicLogger;
-import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
