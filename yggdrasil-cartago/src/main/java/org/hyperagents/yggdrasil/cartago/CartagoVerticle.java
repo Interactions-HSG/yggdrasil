@@ -265,7 +265,6 @@ public class CartagoVerticle extends AbstractVerticle {
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
       this.getAgentNameFromAgentUri(agentUri),
-      new NoSecurityScheme(),
       new LinkedHashModel()
     );
   }
