@@ -1,8 +1,6 @@
 package org.hyperagents.yggdrasil.utils;
 
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
