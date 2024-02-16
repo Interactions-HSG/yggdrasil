@@ -15,7 +15,6 @@ public interface RepresentationFactory {
   String createArtifactRepresentation(
       String workspaceName,
       String artifactName,
-      SecurityScheme securityScheme,
       String semanticType,
       Model metadata,
       ListMultimap<String, ActionAffordance> actionAffordances
@@ -24,7 +23,6 @@ public interface RepresentationFactory {
   String createBodyRepresentation(
       String workspaceName,
       String agentId,
-      SecurityScheme securityScheme,
       Model metadata
   );
 }
