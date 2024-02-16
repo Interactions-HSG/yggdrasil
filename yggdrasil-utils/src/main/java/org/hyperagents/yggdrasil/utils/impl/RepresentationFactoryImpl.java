@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
+import ch.unisg.ics.interactions.hmas.core.hostables.Agent;
 import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
 import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
@@ -264,6 +265,18 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final SecurityScheme securityScheme,
       final Model metadata
   ) {
+    Agent agent = new Agent.Builder()
+      .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#agent")
+      .addSemanticType("https://purl.org/hmas/Artifact")
+      .addSemanticType("https://example.org/Body")
+      .build();
+
+    ResourceProfile profile = new ResourceProfile.Builder(agent)
+      .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
+      .build();
+
+    return serializeHmasArtifactProfile(profile);
+    /*
     final var td =
         new ThingDescription
           .Builder(agentName)
@@ -273,6 +286,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
           .addGraph(metadata);
     return serializeThingDescription(td);
+     */
   }
 
   private String serializeThingDescription(final ThingDescription.Builder td) {
