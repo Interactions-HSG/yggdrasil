@@ -5,26 +5,17 @@ import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
 import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphWriter;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.ResourceProfile;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
-import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
 
 
-import java.util.Arrays;
+
 import java.util.HashSet;
 import java.util.Set;
+
+
 import org.eclipse.rdf4j.model.Model;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
@@ -46,7 +37,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
       .build();
 
-    var form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(baseUri + "/workspaces/")
+    Form form = new Form.Builder(baseUri + "/workspaces/")
       .setIRIAsString(baseUri + "/#form")
       .setMethodName(HttpMethod.POST.name())
       .build();
@@ -60,25 +51,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
         ).build())
       .build();
 
-    return serializeHmasArtifactProfile(resourceProfile);
-      /*
-    return serializeThingDescription(
-      new ThingDescription
-        .Builder("yggdrasil")
-        .addThingURI(this.httpConfig.getBaseUri() + "/")
-        .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
-        .addAction(
-          new ActionAffordance.Builder(
-              "createWorkspace",
-              new Form.Builder(this.httpConfig.getWorkspacesUri() + "/")
-                      .setMethodName(HttpMethod.POST.name())
-                      .build()
-          )
-          .build()
-        )
-    );
-
-       */
+    return serializeHmasResourceProfile(resourceProfile);
   }
 
   @Override
@@ -86,29 +59,28 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final String workspaceName,
       final Set<String> artifactTemplates
   ) {
-
+    String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
     Workspace workspace = new Workspace.Builder()
-      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName) + "#workspace")
+      .setIRIAsString(baseUri + "#workspace")
       .addSemanticType("https://purl.org/hmas/Workspace")
       .build();
 
-    ResourceProfile resourceProfile = new ResourceProfile.Builder(workspace)
-      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName))
+    // makeArtifact Signifier
+    var makeArtifactForm = new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName) + "/")
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#makeArtifact")
       .build();
 
-    return serializeHmasArtifactProfile(resourceProfile);
+    // TODO: Add inputSpecification to makeArtifact
+    var makeArtifactInputSpecification = new InputSpecification.Builder()
+      .build();
+
+    Signifier makeArtifactSignifier = new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
+      .setRequiredInput(makeArtifactInputSpecification).build())
+      .build();
+
     /*
-    return serializeThingDescription(
-      new ThingDescription
-          .Builder(workspaceName)
-          .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName))
-          .addSemanticType("https://purl.org/hmas/Workspace")
-          .addAction(
-            new ActionAffordance.Builder(
-                "makeArtifact",
-                new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName) + "/").build()
-            )
-            .addInputSchema(
+    addInputSchema(
               new ObjectSchema
                 .Builder()
                 .addProperty(
@@ -120,112 +92,105 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
                 .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
                 .build()
             )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "joinWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/join")
-                        .setMethodName(HttpMethod.POST.name())
-                        .build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "quitWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/leave")
-                        .setMethodName(HttpMethod.POST.name())
-                        .build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "focus",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
-                        .setMethodName(HttpMethod.POST.name())
-                        .build()
-            )
-            .addInputSchema(
-              new ObjectSchema
-                .Builder()
-                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
-                .addProperty("callbackIri", new StringSchema.Builder().build())
-                .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
-                .build()
-            )
-            .build()
-          )
-          .addAction(
-            new ActionAffordance.Builder(
-                "createSubWorkspace",
-                new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
-                        .setMethodName(HttpMethod.POST.name())
-                        .build()
-            )
-            .build()
-          )
-    );
      */
+
+
+    // join Workspace Signifier
+    var joinWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/join")
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#joinWorkspace")
+      .build();
+    Signifier joinWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(joinWorkspaceForm).build()).build();
+
+    // leave Workspace Signifier
+    var leaveWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/leave")
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#leaveWorkspace")
+      .build();
+    Signifier leaveWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(leaveWorkspaceForm).build()).build();
+
+    // focus Workspace Signifier
+    var focusWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#focusWorkspace")
+      .build();
+
+    // TODO: Add inputSpecification to focus Workspace
+    var focusWorkspaceInputSpecification = new InputSpecification.Builder()
+      .build();
+
+    /*
+   .addInputSchema(
+      new ObjectSchema
+        .Builder()
+        .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
+        .addProperty("callbackIri", new StringSchema.Builder().build())
+        .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
+        .build()
+    )
+    .build()
+     */
+
+    Signifier focusWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(focusWorkspaceForm)
+      .setRequiredInput(focusWorkspaceInputSpecification).build())
+      .build();
+
+    // create SubWorkspace Signifier
+    var createSubWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#createSubWorkspace")
+      .build();
+    Signifier createSubWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(createSubWorkspaceForm).build()).build();
+
+
+    ResourceProfile resourceProfile = new ResourceProfile.Builder(workspace)
+      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName))
+      .exposeSignifier(makeArtifactSignifier)
+      .exposeSignifier(joinWorkspaceSignifier)
+      .exposeSignifier(leaveWorkspaceSignifier)
+      .exposeSignifier(focusWorkspaceSignifier)
+      .exposeSignifier(createSubWorkspaceSignifier)
+      .build();
+
+    return serializeHmasResourceProfile(resourceProfile);
+
   }
 
   @Override
   public String createArtifactRepresentation(
       final String workspaceName,
       final String artifactName,
-      final SecurityScheme securityScheme,
       final String semanticType,
       final Model metadata,
       final ListMultimap<String, ActionAffordance> actionAffordances
   ) {
 
     Set<Signifier> signifierList = new HashSet<>();
-    Form formTD = null;
-    DataSchema inputSchema = null;
 
     for (ActionAffordance action : actionAffordances.values()) {
-      try {
-        formTD = action.getFirstForm().get();
-      } catch (Exception e) {
-        System.out.println("failed to get firstForm of " + action.getName());
-      }
-      try {
-        inputSchema = action.getInputSchema().get();
-      } catch (Exception e) {
-        System.out.println("failed to get inputSchema of " + action.getName());
+      if (action.getFirstForm().isEmpty()) {
+        continue;
       }
 
-      ch.unisg.ics.interactions.hmas.interaction.signifiers.Form form = null;
-      try {
+      var formTD = action.getFirstForm().get();
 
-        form = new ch.unisg.ics.interactions.hmas.interaction.signifiers.Form.Builder(formTD.getTarget())
-          .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#form") // #form
-          .setMethodName(formTD.getMethodName().get())
-          .setContentType(formTD.getContentType())
+      var form = new Form.Builder(formTD.getTarget())
+        .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#" + action.getName()) // #actionName)
+        .setMethodName(formTD.getMethodName().orElseGet(() -> "GET"))
+        .setContentType(formTD.getContentType())
+        .build();
+
+      var actionSpecification = new ActionSpecification.Builder(form);
+
+      if (action.getInputSchema().isPresent()) {
+        var inputSchema = action.getInputSchema().get();
+        var inputSpecification = new InputSpecification.Builder()
           .build();
-      } catch (Exception e) {
-        System.out.println("failed to create form");
+        actionSpecification.setRequiredInput(inputSpecification);
       }
 
-      InputSpecification inputSpecification = null;
 
-      try {
-        inputSpecification = new InputSpecification.Builder()
-          .build();
-      } catch (Exception e) {
-        System.out.println("Failed to get semantic types from inputSchema");
-      }
-
-      ActionSpecification actionSpecification = null;
-
-      try {
-        actionSpecification = new ActionSpecification.Builder(form)
-          .build();
-      } catch (Exception e ) {
-        System.out.println("failed to get semantic types from action");
-      }
-      Signifier signifier = new Signifier.Builder(actionSpecification)
+      Signifier signifier = new Signifier.Builder(actionSpecification.build())
         .build();
 
       signifierList.add(signifier);
@@ -242,27 +207,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifiers(signifierList)
       .build();
 
-    return serializeHmasArtifactProfile(artifactProfile);
-    /*
-
-    final var td =
-        new ThingDescription.Builder(artifactName)
-                            .addSecurityScheme(securityScheme)
-                            .addSemanticType("https://purl.org/hmas/Artifact")
-                            .addSemanticType(semanticType)
-                            .addThingURI(this.httpConfig
-                                             .getArtifactUri(workspaceName, artifactName))
-                            .addGraph(metadata);
-    actionAffordances.values().forEach(td::addAction);
-    return serializeThingDescription(td);
-     */
+    return serializeHmasResourceProfile(artifactProfile);
   }
 
   @Override
   public String createBodyRepresentation(
       final String workspaceName,
       final String agentName,
-      final SecurityScheme securityScheme,
       final Model metadata
   ) {
     Agent agent = new Agent.Builder()
@@ -275,33 +226,10 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
       .build();
 
-    return serializeHmasArtifactProfile(profile);
-    /*
-    final var td =
-        new ThingDescription
-          .Builder(agentName)
-          .addSecurityScheme(securityScheme)
-          .addSemanticType("https://purl.org/hmas/Artifact")
-          .addSemanticType("https://example.org/Body")
-          .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
-          .addGraph(metadata);
-    return serializeThingDescription(td);
-     */
+    return serializeHmasResourceProfile(profile);
   }
 
-  private String serializeThingDescription(final ThingDescription.Builder td) {
-    return new TDGraphWriter(td.build())
-      .setNamespace("td", "https://www.w3.org/2019/wot/td#")
-      .setNamespace("htv", "http://www.w3.org/2011/http#")
-      .setNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#")
-      .setNamespace("wotsec", "https://www.w3.org/2019/wot/security#")
-      .setNamespace("dct", "http://purl.org/dc/terms/")
-      .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
-      .setNamespace("hmas", "https://purl.org/hmas/")
-      .write();
-  }
-
-  private String serializeHmasArtifactProfile(final ResourceProfile profile) {
+  private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
       .write();
   }
