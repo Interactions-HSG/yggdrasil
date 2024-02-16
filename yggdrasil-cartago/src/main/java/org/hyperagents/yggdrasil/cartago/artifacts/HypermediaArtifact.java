@@ -6,8 +6,6 @@ import cartago.CartagoException;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
-import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import io.vertx.core.json.JsonObject;
@@ -144,6 +142,7 @@ public abstract class HypermediaArtifact extends Artifact {
       final String relativeUri,
       final DataSchema inputSchema
   ) {
+
     final var actionBuilder =
         new ActionAffordance
           .Builder(
