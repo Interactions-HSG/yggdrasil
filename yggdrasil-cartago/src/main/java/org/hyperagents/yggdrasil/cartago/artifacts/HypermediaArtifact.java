@@ -3,8 +3,10 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
@@ -15,7 +17,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -28,7 +29,7 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
-  private final ListMultimap<String, ActionAffordance> actionAffordances =
+  private final ListMultimap<String, Signifier> signifiers =
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Set<String> feedbackActions = new HashSet<>();
@@ -54,7 +55,7 @@ public abstract class HypermediaArtifact extends Artifact {
                                   () -> new RuntimeException("Artifact was not registered!")
                                 ),
       this.metadata,
-      this.actionAffordances
+      this.signifiers
     );
   }
 
@@ -75,8 +76,8 @@ public abstract class HypermediaArtifact extends Artifact {
     return new HashSet<>(this.feedbackActions);
   }
 
-  public final Map<String, List<ActionAffordance>> getActionAffordances() {
-    return this.actionAffordances
+  public final Map<String, List<Signifier>> getSignifiers() {
+    return this.signifiers
                .asMap()
                .entrySet()
                .stream()
@@ -143,30 +144,37 @@ public abstract class HypermediaArtifact extends Artifact {
       final DataSchema inputSchema
   ) {
 
-    final var actionBuilder =
-        new ActionAffordance
-          .Builder(
-            actionName,
-            new Form.Builder(this.getArtifactUri() + relativeUri)
-                    .setMethodName(methodName)
-                    .build()
-          )
-          .addSemanticType(actionClass)
-          .addTitle(actionName);
+
+    // TODO: set content type dynamically
+    // TODO: set input correctly
+    final var form = new Form.Builder(this.getArtifactUri() + relativeUri)
+      .setIRIAsString(this.getArtifactUri() + "#" + actionName)
+      .setMethodName(methodName)
+      .setContentType("application/json")
+      .build();
+
+    final var actionSpecification = new ActionSpecification.Builder(form);
+    if (inputSchema != null) {
+      var inputSpecification = new InputSpecification.Builder()
+        .build();
+      actionSpecification.setRequiredInput(inputSpecification);
+    }
+
+    final var signifier = new Signifier.Builder(actionSpecification.build())
+      .setIRIAsString(this.getArtifactUri() + "#" + actionClass)
+      .build();
+
     this.registerActionAffordance(
         actionName,
-        Optional.ofNullable(inputSchema)
-                .map(actionBuilder::addInputSchema)
-                .orElse(actionBuilder)
-                .build()
+        signifier
     );
   }
 
   protected final void registerActionAffordance(
       final String actionName,
-      final ActionAffordance action
+      final Signifier signifier
   ) {
-    this.actionAffordances.put(actionName, action);
+    this.signifiers.put(actionName, signifier);
   }
 
   protected final void registerFeedbackParameter(final String actionName) {
