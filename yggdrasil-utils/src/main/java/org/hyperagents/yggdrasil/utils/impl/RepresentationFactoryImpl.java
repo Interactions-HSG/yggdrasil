@@ -6,13 +6,10 @@ import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphWriter;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
 
 
-
-import java.util.HashSet;
 import java.util.Set;
 
 
@@ -162,52 +159,18 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final String artifactName,
       final String semanticType,
       final Model metadata,
-      final ListMultimap<String, ActionAffordance> actionAffordances
+      final ListMultimap<String, Signifier> actionAffordances
   ) {
-
-    Set<Signifier> signifierList = new HashSet<>();
-
-    for (ActionAffordance action : actionAffordances.values()) {
-      if (action.getFirstForm().isEmpty()) {
-        continue;
-      }
-
-      var formTD = action.getFirstForm().get();
-
-      var form = new Form.Builder(formTD.getTarget())
-        .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#" + action.getName()) // #actionName)
-        .setMethodName(formTD.getMethodName().orElseGet(() -> "GET"))
-        .setContentType(formTD.getContentType())
-        .build();
-
-      var actionSpecification = new ActionSpecification.Builder(form);
-
-      if (action.getInputSchema().isPresent()) {
-        var inputSchema = action.getInputSchema().get();
-        var inputSpecification = new InputSpecification.Builder()
-          .build();
-        actionSpecification.setRequiredInput(inputSpecification);
-      }
-
-
-      Signifier signifier = new Signifier.Builder(actionSpecification.build())
-        .build();
-
-      signifierList.add(signifier);
-    }
-
-
     Artifact artifact = new Artifact.Builder()
       .addSemanticType(semanticType)
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#artifact") //  #artifact
       .build();
 
-    ResourceProfile artifactProfile = new ResourceProfile.Builder(artifact)
-      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName))
-      .exposeSignifiers(signifierList)
-      .build();
+    var resourceProfileBuilder = new ResourceProfile.Builder(artifact)
+      .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName));
+    actionAffordances.values().forEach(resourceProfileBuilder::exposeSignifier);
 
-    return serializeHmasResourceProfile(artifactProfile);
+    return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
 
   @Override
