@@ -4,6 +4,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -39,18 +43,8 @@ public final class RdfModelUtils {
             .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
       try {
         writer.startRDF();
-
-        writer.handleNamespace("hmas", "https://purl.org/hmas/");
-        writer.handleNamespace("td", "https://www.w3.org/2019/wot/td#");
-        writer.handleNamespace("htv", "http://www.w3.org/2011/http#");
-        writer.handleNamespace("hctl", "https://www.w3.org/2019/wot/hypermedia#");
-        writer.handleNamespace("wotsec", "https://www.w3.org/2019/wot/security#");
-        writer.handleNamespace("dct", "http://purl.org/dc/terms/");
-        writer.handleNamespace("js", "https://www.w3.org/2019/wot/json-schema#");
-        writer.handleNamespace("saref", "https://w3id.org/saref#");
-
+        model.getNamespaces().forEach(ns -> writer.handleNamespace(ns.getPrefix(),ns.getName()));
         model.forEach(writer::handleStatement);
-
         writer.endRDF();
       } catch (final RDFHandlerException e) {
         throw new IOException("RDF handler exception: " + e.getMessage());
