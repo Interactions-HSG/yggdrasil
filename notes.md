@@ -47,3 +47,16 @@ Should either refactor existing code to be more extensible and rely less on TD o
   - It currently overwrites the namespace lines
   - didnt matter for TD but matter for hmas
     - @base gets deleted
+
+
+# General Questions
+- Difference between printing the .write() and publishing it
+  - Where do the URIs come from
+- How is hmas actually structured?
+  - What is the correct translation of TD to hmas
+  - Where do I add which IRI
+- How does Signifier actually work?
+- What is the need for cartago / why do we need artifact code in the src code?
+  - If we want hypermedia shouldnt all artifacts be semantic
+  - Agents (3rd parties) want to add new artifacts at runtime (clashes with having to add class)
+  - Why not just purely use semantic types?
