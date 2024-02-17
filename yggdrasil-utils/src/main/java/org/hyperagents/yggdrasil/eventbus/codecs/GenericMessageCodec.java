@@ -7,12 +7,18 @@ import com.google.gson.JsonSerializer;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
+/**
+ * TODO: Javadoc.
+ */
 public class GenericMessageCodec<T> implements MessageCodec<T, T> {
   private static final int INT_LENGHT = 4;
 
   private final Gson gson;
   private final Class<T> messageType;
 
+  /**
+   * TODO: Javadoc.
+   */
   public <M extends JsonSerializer<? super T> & JsonDeserializer<? super T>> GenericMessageCodec(
       final Class<T> messageType,
       final M messageMarshaller

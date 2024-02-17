@@ -17,17 +17,23 @@ import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
+/**
+ * TODO: Javadoc.
+ */
 public final class RdfModelUtils {
   private RdfModelUtils() {}
 
-  @SuppressWarnings("removal")
+  /**
+   * TODO: Javadoc.
+   */
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
       final var writer = Rio.createWriter(format, out);
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
-              .set(JSONLDSettings.JSONLD_MODE, org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
+              .set(JSONLDSettings.JSONLD_MODE,
+                org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
               .set(JSONLDSettings.USE_NATIVE_TYPES, true)
               .set(JSONLDSettings.OPTIMIZE, true);
       }
@@ -40,7 +46,8 @@ public final class RdfModelUtils {
       try {
 
         writer.startRDF();
-        model.getNamespaces().forEach(namespace -> writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
+        model.getNamespaces().forEach(namespace ->
+            writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
         model.forEach(writer::handleStatement);
         writer.endRDF();
 
@@ -53,6 +60,9 @@ public final class RdfModelUtils {
     }
   }
 
+  /**
+   * TODO: Javadoc.
+   */
   public static Model stringToModel(
       final String graphString,
       final IRI baseIri,

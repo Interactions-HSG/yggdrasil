@@ -6,6 +6,9 @@ import com.google.common.collect.ListMultimap;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
 
+/**
+ * TODO: Javadoc.
+ */
 public interface RepresentationFactory {
 
   String createPlatformRepresentation();

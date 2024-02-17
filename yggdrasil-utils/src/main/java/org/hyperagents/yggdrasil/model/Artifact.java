@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * TODO: Javadoc.
+ */
 public interface Artifact {
   String getName();
 

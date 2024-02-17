@@ -12,6 +12,9 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
+/**
+ * TODO: Javadoc.
+ */
 public class CartagoMessageMarshaller
     implements JsonSerializer<CartagoMessage>, JsonDeserializer<CartagoMessage> {
   @Override

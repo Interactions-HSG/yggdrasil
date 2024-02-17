@@ -22,11 +22,17 @@ import org.hyperagents.yggdrasil.model.KnownArtifact;
 import org.hyperagents.yggdrasil.model.Workspace;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
+/**
+ * TODO: Javadoc.
+ */
 public final class EnvironmentParser {
   private static final Logger LOGGER = Logger.getLogger(EnvironmentParser.class);
 
   private EnvironmentParser() {}
 
+  /**
+   * TODO: Javadoc.
+   */
   public static Environment parse(final JsonObject config) {
     final var envConfig =
         JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);

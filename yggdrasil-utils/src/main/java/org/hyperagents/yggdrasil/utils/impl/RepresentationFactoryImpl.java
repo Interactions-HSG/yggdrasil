@@ -15,6 +15,9 @@ import org.eclipse.rdf4j.model.Model;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
+/**
+ * TODO: Javadoc.
+ */
 public final class RepresentationFactoryImpl implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
 

@@ -4,6 +4,9 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * TODO: Javadoc.
+ */
 public interface Workspace {
   String getName();
 

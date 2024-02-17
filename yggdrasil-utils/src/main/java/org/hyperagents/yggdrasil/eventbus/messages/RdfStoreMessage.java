@@ -4,26 +4,47 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * TODO: Javadoc.
+ */
 public sealed interface RdfStoreMessage {
 
+  /**
+   * TODO: Javadoc.
+   */
   record GetEntity(String requestUri) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record DeleteEntity(String requestUri) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record CreateBody(
       String workspaceName,
       String agentName,
       String bodyRepresentation
   ) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record CreateArtifact(
       String requestUri,
       String artifactName,
       String artifactRepresentation
   ) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record CreateWorkspace(
       String requestUri,
       String workspaceName,
@@ -31,12 +52,18 @@ public sealed interface RdfStoreMessage {
       String workspaceRepresentation
   ) implements RdfStoreMessage {}
 
+  /**
+   * TODO: Javadoc.
+   */
   record QueryKnowledgeGraph(
       String query,
       List<String> defaultGraphUris,
       List<String> namedGraphUris,
       String responseContentType
   ) implements RdfStoreMessage {
+    /**
+     * TODO: Javadoc.
+     */
     public QueryKnowledgeGraph(
         final String query,
         final List<String> defaultGraphUris,

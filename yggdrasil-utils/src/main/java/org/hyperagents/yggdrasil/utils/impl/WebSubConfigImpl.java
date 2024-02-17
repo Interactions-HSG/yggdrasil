@@ -6,12 +6,18 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
+/**
+ * TODO: Javadoc.
+ */
 public class WebSubConfigImpl implements WebSubConfig {
   private static final Logger LOGGER = Logger.getLogger(WebSubConfigImpl.class);
 
   private final boolean enabled;
   private final String webSubHubUri;
 
+  /**
+   * TODO: Javadoc.
+   */
   public WebSubConfigImpl(final JsonObject config, final HttpInterfaceConfig httpConfig) {
     final var webSubConfig =
         JsonObjectUtils.getJsonObject(config, "notification-config", LOGGER::error);

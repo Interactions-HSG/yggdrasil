@@ -6,6 +6,9 @@ import org.apache.log4j.Logger;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
+/**
+ * TODO: Javadoc.
+ */
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   private static final Logger LOGGER = LogManager.getLogger(HttpInterfaceConfigImpl.class);
@@ -14,6 +17,9 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   private final String baseUri;
   private final int port;
 
+  /**
+   * TODO: Javadoc.
+   */
   public HttpInterfaceConfigImpl(final JsonObject config) {
     final var httpConfig = JsonObjectUtils.getJsonObject(config, "http-config", LOGGER::error);
     this.host = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "host", LOGGER::error))

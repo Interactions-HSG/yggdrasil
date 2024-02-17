@@ -8,6 +8,9 @@ import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.codecs.RdfStoreMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
+/**
+ * TODO: Javadoc.
+ */
 public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
   private final EventBus eventBus;
 
