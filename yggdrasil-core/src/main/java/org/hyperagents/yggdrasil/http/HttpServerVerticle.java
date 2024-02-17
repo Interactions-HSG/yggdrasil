@@ -16,6 +16,8 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  * corresponding handler.
  */
 public class HttpServerVerticle extends AbstractVerticle {
+
+  // TODO: These are also defined in the HttpInterfaceConfigImpl
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";
