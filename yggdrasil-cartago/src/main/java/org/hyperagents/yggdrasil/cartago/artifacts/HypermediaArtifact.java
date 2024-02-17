@@ -7,6 +7,7 @@ import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
+// TODO: replace DataSchema
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
