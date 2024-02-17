@@ -63,13 +63,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .build();
 
     // makeArtifact Signifier
-    var makeArtifactForm = new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName) + "/")
+    Form makeArtifactForm = new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName) + "/")
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#makeArtifact")
       .build();
 
     // TODO: Add inputSpecification to makeArtifact
-    var makeArtifactInputSpecification = new InputSpecification.Builder()
+    InputSpecification makeArtifactInputSpecification = new InputSpecification.Builder()
       .build();
 
     Signifier makeArtifactSignifier = new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
@@ -93,27 +93,27 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
 
     // join Workspace Signifier
-    var joinWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/join")
+    Form joinWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/join")
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#joinWorkspace")
       .build();
     Signifier joinWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(joinWorkspaceForm).build()).build();
 
     // leave Workspace Signifier
-    var leaveWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/leave")
+    Form leaveWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/leave")
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#leaveWorkspace")
       .build();
     Signifier leaveWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(leaveWorkspaceForm).build()).build();
 
     // focus Workspace Signifier
-    var focusWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
+    Form focusWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#focusWorkspace")
       .build();
 
     // TODO: Add inputSpecification to focus Workspace
-    var focusWorkspaceInputSpecification = new InputSpecification.Builder()
+    InputSpecification focusWorkspaceInputSpecification = new InputSpecification.Builder()
       .build();
 
     /*
@@ -133,7 +133,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .build();
 
     // create SubWorkspace Signifier
-    var createSubWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
+    Form createSubWorkspaceForm = new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#createSubWorkspace")
       .build();
@@ -166,7 +166,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName) + "#artifact") //  #artifact
       .build();
 
-    var resourceProfileBuilder = new ResourceProfile.Builder(artifact)
+    ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName));
     actionAffordances.values().forEach(resourceProfileBuilder::exposeSignifier);
 
