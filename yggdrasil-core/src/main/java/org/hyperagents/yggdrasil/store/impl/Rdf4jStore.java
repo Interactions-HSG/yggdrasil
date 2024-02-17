@@ -59,9 +59,9 @@ public class Rdf4jStore implements RdfStore {
   @Override
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
     try {
-      var test = QueryResults.asModel(this.connection.getStatements(null, null, null, entityIri));
-      this.connection.getNamespaces().forEach(ns -> test.setNamespace(ns.getPrefix(),ns.getName()));
-      return Optional.of(test).filter(r -> !r.isEmpty());
+      final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, entityIri));
+      this.connection.getNamespaces().forEach(ns -> model.setNamespace(ns.getPrefix(),ns.getName()));
+      return Optional.of(model).filter(r -> !r.isEmpty());
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
