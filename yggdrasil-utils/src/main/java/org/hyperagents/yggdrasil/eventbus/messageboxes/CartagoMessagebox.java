@@ -11,6 +11,9 @@ import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 
+/**
+ * Represents a message box for Cartago messages.
+ */
 public class CartagoMessagebox implements Messagebox<CartagoMessage> {
   private static final Logger LOGGER = Logger.getLogger(CartagoMessagebox.class);
 

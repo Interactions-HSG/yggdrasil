@@ -12,6 +12,12 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
+/**
+ * This class is responsible for marshalling and unmarshalling 
+ * CartagoMessage objects to and from JSON.
+ * It implements the JsonSerializer and JsonDeserializer interfaces 
+ * to customize the serialization and deserialization process.
+ */
 public class CartagoMessageMarshaller
     implements JsonSerializer<CartagoMessage>, JsonDeserializer<CartagoMessage> {
   @Override

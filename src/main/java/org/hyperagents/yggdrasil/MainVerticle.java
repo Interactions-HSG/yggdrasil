@@ -16,6 +16,13 @@ import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 
+
+/**
+ * This is the MainVerticle of the Application.
+ * <p>
+ * It is the entry point of the Application
+ * </p>
+ */
 public class MainVerticle extends AbstractVerticle {
   private static final String DEFAULT_CONF_VALUE = "default";
 

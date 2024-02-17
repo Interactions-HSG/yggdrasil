@@ -60,7 +60,7 @@ public class Rdf4jStore implements RdfStore {
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
     try {
       final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, entityIri));
-      this.connection.getNamespaces().forEach(ns -> model.setNamespace(ns.getPrefix(),ns.getName()));
+      this.connection.getNamespaces().forEach(model::setNamespace);
       return Optional.of(model).filter(r -> !r.isEmpty());
     } catch (final RepositoryException e) {
       throw new IOException(e);
@@ -71,7 +71,7 @@ public class Rdf4jStore implements RdfStore {
   public void addEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
     try {
       this.connection.add(entityModel, entityIri);
-      entityModel.getNamespaces().forEach(namespace -> this.connection.setNamespace(namespace.getPrefix(),namespace.getName()));
+      entityModel.getNamespaces().forEach(namespace -> this.connection.setNamespace(namespace.getPrefix(), namespace.getName()));
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
