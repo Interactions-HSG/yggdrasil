@@ -11,7 +11,8 @@ import java.lang.reflect.Type;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 
 /**
- * TODO: Javadoc.
+ * This class is responsible for marshalling and unmarshalling HttpNotificationDispatcherMessage
+ * objects to and from JSON.
  */
 public class HttpNotificationDispatcherMessageMarshaller
     implements JsonSerializer<HttpNotificationDispatcherMessage>,

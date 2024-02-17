@@ -12,7 +12,8 @@ import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMes
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
- * TODO: Javadoc.
+ * This class represents a messagebox for handling HTTP notification dispatcher messages.
+ * It implements the Messagebox interface for HttpNotificationDispatcherMessage.
  */
 public class HttpNotificationDispatcherMessagebox
     implements Messagebox<HttpNotificationDispatcherMessage> {

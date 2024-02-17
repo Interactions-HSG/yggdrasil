@@ -1,7 +1,7 @@
 package org.hyperagents.yggdrasil.eventbus.messageboxes;
 
 /**
- * TODO: Javadoc.
+ * Represents the message addresses used in the Yggdrasil event bus.
  */
 enum MessageAddresses {
   RDF_STORE("rdfstore"),
@@ -13,14 +13,18 @@ enum MessageAddresses {
   private final String name;
 
   /**
-   * TODO: Javadoc.
+   * Constructs a new MessageAddresses enum with the specified name.
+   *
+   * @param name the name of the message address
    */
   MessageAddresses(final String name) {
     this.name = PREFIX + name;
   }
 
   /**
-   * TODO: Javadoc.
+   * Returns the name of the message address.
+   *
+   * @return the name of the message address
    */
   String getName() {
     return this.name;

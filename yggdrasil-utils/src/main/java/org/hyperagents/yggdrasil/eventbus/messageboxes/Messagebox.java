@@ -5,22 +5,30 @@ import io.vertx.core.eventbus.Message;
 import java.util.function.Consumer;
 
 /**
- * TODO: Javadoc.
+ * Represents a message box that can send and receive messages.
+ *
+ * @param <M> the type of messages that can be sent and received
  */
 public interface Messagebox<M> {
 
   /**
-   * TODO: Javadoc.
+   * Initializes the message box.
    */
   void init();
 
   /**
-   * TODO: Javadoc.
+   * Sends a message to the message box and returns a future 
+   * representing the result of the send operation.
+   *
+   * @param message the message to send
+   * @return a future representing the result of the send operation
    */
   Future<Message<String>> sendMessage(M message);
 
   /**
-   * TODO: Javadoc.
+   * Registers a message handler to receive messages from the message box.
+   *
+   * @param messageHandler the message handler to register
    */
   void receiveMessages(Consumer<Message<M>> messageHandler);
 }

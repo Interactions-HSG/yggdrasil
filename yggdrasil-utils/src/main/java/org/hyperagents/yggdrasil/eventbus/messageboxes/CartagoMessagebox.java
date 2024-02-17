@@ -12,7 +12,7 @@ import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 
 /**
- * TODO: Javadoc.
+ * Represents a message box for Cartago messages.
  */
 public class CartagoMessagebox implements Messagebox<CartagoMessage> {
   private static final Logger LOGGER = Logger.getLogger(CartagoMessagebox.class);

@@ -9,7 +9,9 @@ import org.hyperagents.yggdrasil.eventbus.codecs.RdfStoreMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
 /**
- * TODO: Javadoc.
+ * This class represents a message box for RdfStoreMessage objects.
+ * It implements the Messagebox interface and provides methods for initializing the message box,
+ * sending messages, and receiving messages.
  */
 public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
   private final EventBus eventBus;
