@@ -194,6 +194,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
   private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
+      .setNamespace("hmas","https://purl.org/hmas/")
       .write();
   }
 }
