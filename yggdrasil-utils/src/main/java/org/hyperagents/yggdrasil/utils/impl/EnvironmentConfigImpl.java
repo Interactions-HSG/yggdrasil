@@ -6,7 +6,8 @@ import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
- * TODO: Javadoc.
+ * Represents an implementation of the EnvironmentConfig interface.
+ * This class provides functionality to retrieve and manage environment configuration settings.
  */
 public class EnvironmentConfigImpl implements EnvironmentConfig {
   private static final Logger LOGGER = Logger.getLogger(EnvironmentConfigImpl.class);
@@ -14,7 +15,9 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
   private final boolean enabled;
 
   /**
-   * TODO: Javadoc.
+   * Constructs a new EnvironmentConfigImpl object with the specified configuration.
+   *
+   * @param config The JSON object containing the environment configuration settings.
    */
   public EnvironmentConfigImpl(final JsonObject config) {
     final var environmentConfig =
@@ -24,6 +27,11 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
                        .orElse(false);
   }
 
+  /**
+   * Checks if the environment configuration is enabled.
+   *
+   * @return true if the environment configuration is enabled, false otherwise.
+   */
   @Override
   public boolean isEnabled() {
     return this.enabled;

@@ -7,7 +7,11 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
- * TODO: Javadoc.
+ * Implementation of the WebSubConfig interface.
+ * This class represents the configuration for WebSub, 
+ * a protocol for distributed publish-subscribe communication on the web.
+ * It provides methods to retrieve the configuration settings for WebSub, 
+ * such as whether it is enabled and the WebSub hub URI.
  */
 public class WebSubConfigImpl implements WebSubConfig {
   private static final Logger LOGGER = Logger.getLogger(WebSubConfigImpl.class);
@@ -16,7 +20,11 @@ public class WebSubConfigImpl implements WebSubConfig {
   private final String webSubHubUri;
 
   /**
-   * TODO: Javadoc.
+   * Constructs a new WebSubConfigImpl object with the specified configuration 
+   * and HTTP interface configuration.
+   *
+   * @param config The JSON object containing the WebSub configuration settings.
+   * @param httpConfig The HTTP interface configuration.
    */
   public WebSubConfigImpl(final JsonObject config, final HttpInterfaceConfig httpConfig) {
     final var webSubConfig =

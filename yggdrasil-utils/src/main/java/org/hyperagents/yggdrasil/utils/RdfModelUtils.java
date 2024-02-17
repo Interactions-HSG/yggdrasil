@@ -18,13 +18,19 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
 /**
- * TODO: Javadoc.
+ * Utility class for working with RDF models.
  */
 public final class RdfModelUtils {
   private RdfModelUtils() {}
 
   /**
-   * TODO: Javadoc.
+   * Converts a given RDF model to a string representation in the specified format.
+   *
+   * @param model  the RDF model to convert
+   * @param format the format in which the model should be serialized
+   * @return the string representation of the RDF model
+   * @throws IllegalArgumentException if the RDF format is not supported
+   * @throws IOException              if an I/O error occurs during serialization
    */
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
@@ -61,7 +67,14 @@ public final class RdfModelUtils {
   }
 
   /**
-   * TODO: Javadoc.
+   * Converts a string representation of an RDF graph to an RDF model.
+   *
+   * @param graphString the string representation of the RDF graph
+   * @param baseIri     the base IRI for resolving relative IRIs
+   * @param format      the format of the RDF graph
+   * @return the RDF model
+   * @throws IllegalArgumentException if RDF format is not supported / the graph string is invalid
+   * @throws IOException              if an I/O error occurs during parsing
    */
   public static Model stringToModel(
       final String graphString,
@@ -72,7 +85,7 @@ public final class RdfModelUtils {
       final var rdfParser = Rio.createParser(format);
       final var model = new LinkedHashModel();
       rdfParser.setRDFHandler(new StatementCollector(model));
-      rdfParser.parse(stringReader, baseIri.toString());
+      rdfParser.parse(stringReader, baseIri.stringValue());
       return model;
     } catch (final RDFParseException e) {
       throw new IllegalArgumentException("RDF parse error: " + e.getMessage());
@@ -81,6 +94,13 @@ public final class RdfModelUtils {
     }
   }
 
+  /**
+   * Creates an IRI object from the given string.
+   *
+   * @param iriString the string representation of the IRI
+   * @return the IRI object
+   * @throws IllegalArgumentException if the string representation is not a valid IRI
+   */
   public static IRI createIri(final String iriString) throws IllegalArgumentException {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }

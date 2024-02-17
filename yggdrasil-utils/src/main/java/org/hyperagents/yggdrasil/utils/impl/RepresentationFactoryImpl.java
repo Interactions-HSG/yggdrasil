@@ -16,7 +16,10 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
 /**
- * TODO: Javadoc.
+ * This class is an implementation of the RepresentationFactory interface.
+ * It provides methods to create representations of platforms, workspaces, artifacts, and bodies.
+ * The representations are serialized as Thing Descriptions using the TDGraphWriter class.
+ * The class also includes helper methods for serializing Thing Descriptions.
  */
 public final class RepresentationFactoryImpl implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";

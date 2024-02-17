@@ -7,7 +7,8 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
- * TODO: Javadoc.
+ * Implementation of the HttpInterfaceConfig interface 
+ * that provides configuration for an HTTP interface.
  */
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
@@ -18,7 +19,9 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   private final int port;
 
   /**
-   * TODO: Javadoc.
+   * Constructs a new HttpInterfaceConfigImpl object with the specified configuration.
+   *
+   * @param config The JSON configuration object.
    */
   public HttpInterfaceConfigImpl(final JsonObject config) {
     final var httpConfig = JsonObjectUtils.getJsonObject(config, "http-config", LOGGER::error);
