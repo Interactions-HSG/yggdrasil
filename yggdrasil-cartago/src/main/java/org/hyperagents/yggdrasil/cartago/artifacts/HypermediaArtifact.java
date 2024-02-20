@@ -13,12 +13,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import io.vertx.core.json.JsonObject;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
@@ -154,7 +149,7 @@ public abstract class HypermediaArtifact extends Artifact {
       .setContentType("application/json")
       .build();
 
-    final var actionSpecification = new ActionSpecification.Builder(form);
+    final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(Collections.singleton(actionClass));
     if (inputSchema != null) {
       var inputSpecification = new InputSpecification.Builder()
         .build();
@@ -162,7 +157,7 @@ public abstract class HypermediaArtifact extends Artifact {
     }
 
     final var signifier = new Signifier.Builder(actionSpecification.build())
-      .setIRIAsString(this.getArtifactUri() + "#" + actionClass)
+      .setIRIAsString(this.getArtifactUri() + "#" + actionName + "-Signifier")
       .build();
 
     this.registerActionAffordance(
