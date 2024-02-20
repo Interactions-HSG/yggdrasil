@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
-
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -23,6 +21,32 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 public final class RdfModelUtils {
   private RdfModelUtils() {}
 
+  public static int findSlash(String base, char ch) {
+    int occurrence = 0;
+    for (int i = 0; i < base.length(); i++) {
+      if (base.charAt(i) == ch) {
+        occurrence++;
+        if (occurrence == 3) {
+          return i;
+        }
+      }
+    }
+    // Return -1 if the character does not occur at least three times
+    return -1;
+  }
+
+
+  public static String modelToString(final Model model, final RDFFormat format) throws IOException {
+    var firstStatement = model.getStatements(null,null,createIri("https://purl.org/hmas/ResourceProfile")).iterator().next();
+    var base = firstStatement.getSubject().toString();
+    int index = findSlash(base,'/');
+    if (index < 0) {
+      // this is a normal base
+      return modelToString(model, format, base);
+    }
+    // this is platform uri as base
+    return modelToString(model, format, base.substring(0,index+1));
+  }
   /**
    * Converts a given RDF model to a string representation in the specified format.
    *
@@ -32,25 +56,14 @@ public final class RdfModelUtils {
    * @throws IllegalArgumentException if the RDF format is not supported
    * @throws IOException              if an I/O error occurs during serialization
    */
-  public static String modelToString(final Model model, final RDFFormat format)
+  public static String modelToString(final Model model, final RDFFormat format, final String base)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
-      Optional<String> base = Optional.empty();
-      try {
-        var statements = model.getStatements(null, createIri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), createIri("https://purl.org/hmas/ResourceProfile"));
-        var firstStatement = statements.iterator().next();
-        base = String.valueOf(firstStatement.getSubject()).describeConstable();
-      } catch (Exception ignored) {}
+
 
       RDFWriter writer;
+      writer = Rio.createWriter(format, out, base);
 
-      if (base.isPresent()) {
-        // TODO: set base as platform uri
-        writer = Rio.createWriter(format, out, base.get());
-      }
-      else {
-        writer = Rio.createWriter(format,out);
-      }
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
               .set(JSONLDSettings.JSONLD_MODE,
