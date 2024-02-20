@@ -1,4 +1,5 @@
-@base <http://localhost:8080/workspaces/test/artifacts/c0> .
+@base <http://localhost:8080/> .
+@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -9,27 +10,27 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<> a hmas:ResourceProfile;
-  hmas:exposesSignifier <#http://example.org/Increment>;
-  hmas:isProfileOf <#artifact>;
-  hmas:isContainedIn <../../test> .
+<workspaces/test/artifacts/c0> a hmas:ResourceProfile;
+  hmas:exposesSignifier <workspaces/test/artifacts/c0#inc-Signifier>;
+  hmas:isProfileOf <workspaces/test/artifacts/c0#artifact>;
+  hmas:isContainedIn <workspaces/test> .
 
-<#http://example.org/Increment> a hmas:Signifier;
+<workspaces/test/artifacts/c0#inc-Signifier> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <#inc>
+          sh:hasValue <workspaces/test/artifacts/c0#inc>
         ]
     ] .
 
-<#inc> a hctl:Form;
-  hctl:hasTarget <c0/increment>;
+<workspaces/test/artifacts/c0#inc> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0/increment>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#artifact> a hmas:Artifact, ex:Counter .
+<workspaces/test/artifacts/c0#artifact> a hmas:Artifact, ex:Counter .
 
-<../../test> a hmas:Workspace .
+<workspaces/test> a hmas:Workspace .

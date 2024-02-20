@@ -1,4 +1,5 @@
-@base <http://localhost:8080/workspaces/test> .
+@base <http://localhost:8080/> .
+@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
@@ -9,7 +10,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<> a hmas:ResourceProfile;
+<workspaces/test> a hmas:ResourceProfile;
   hmas:exposesSignifier [ a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;
@@ -17,7 +18,27 @@
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <#makeArtifact>
+              sh:hasValue <workspaces/test#leaveWorkspace>
+            ]
+        ]
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <workspaces/test#createSubWorkspace>
+            ]
+        ]
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <workspaces/test#focusWorkspace>
             ], [
               sh:path hmas:hasInput
             ]
@@ -29,70 +50,50 @@
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <#leaveWorkspace>
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#createSubWorkspace>
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#joinWorkspace>
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#focusWorkspace>
+              sh:hasValue <workspaces/test#makeArtifact>
             ], [
               sh:path hmas:hasInput
+            ]
+        ]
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <workspaces/test#joinWorkspace>
             ]
         ]
     ];
-  hmas:isProfileOf <#workspace>;
-  hmas:isHostedOn </> .
+  hmas:isProfileOf <workspaces/test#workspace>;
+  hmas:isHostedOn <> .
 
-<#makeArtifact> a hctl:Form;
-  hctl:hasTarget <test/artifacts/>;
+<workspaces/test#leaveWorkspace> a hctl:Form;
+  hctl:hasTarget <workspaces/test/leave/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#leaveWorkspace> a hctl:Form;
-  hctl:hasTarget <test/leave>;
+<workspaces/test#createSubWorkspace> a hctl:Form;
+  hctl:hasTarget <workspaces/test/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#createSubWorkspace> a hctl:Form;
-  hctl:hasTarget <>;
+<workspaces/test#focusWorkspace> a hctl:Form;
+  hctl:hasTarget <workspaces/test/focus/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#joinWorkspace> a hctl:Form;
-  hctl:hasTarget <test/join>;
+<workspaces/test#makeArtifact> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#focusWorkspace> a hctl:Form;
-  hctl:hasTarget <test/focus>;
+<workspaces/test#joinWorkspace> a hctl:Form;
+  hctl:hasTarget <workspaces/test/join/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
 
-</> a hmas:HypermediaMASPlatform .
+<> a hmas:HypermediaMASPlatform .
