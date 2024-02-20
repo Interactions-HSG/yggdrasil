@@ -40,6 +40,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
       .build();
 
+    // TODO: add text/turtle -> Second signifier
     Form form = new Form.Builder(baseUri + "/workspaces/")
       .setIRIAsString(baseUri + "/#form")
       .setMethodName(HttpMethod.POST.name())
@@ -185,6 +186,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final String agentName,
       final Model metadata
   ) {
+    // TODO: isContainedIn should be directly on the artifact not the resourceProfile
     Agent agent = new Agent.Builder()
       .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#agent")
       .addSemanticType("https://purl.org/hmas/Artifact")
