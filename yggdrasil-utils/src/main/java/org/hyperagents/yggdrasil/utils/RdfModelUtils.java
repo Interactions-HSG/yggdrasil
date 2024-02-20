@@ -3,16 +3,13 @@ package org.hyperagents.yggdrasil.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
+import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
@@ -35,7 +32,10 @@ public final class RdfModelUtils {
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
-      final var writer = Rio.createWriter(format, out);
+      var statements = model.getStatements(null,createIri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), createIri("https://purl.org/hmas/ResourceProfile"));
+      var firstStatement = statements.iterator().next();
+      var base = firstStatement.getSubject();
+      final var writer = Rio.createWriter(format, out, String.valueOf(base));
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
               .set(JSONLDSettings.JSONLD_MODE,
@@ -50,19 +50,19 @@ public final class RdfModelUtils {
             .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
             .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
       try {
-
         writer.startRDF();
         model.getNamespaces().forEach(namespace ->
             writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
         model.forEach(writer::handleStatement);
         writer.endRDF();
-
       } catch (final RDFHandlerException e) {
         throw new IOException("RDF handler exception: " + e.getMessage());
       }
       return out.toString(StandardCharsets.UTF_8);
     } catch (final UnsupportedRDFormatException e) {
       throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException("Could not set Base for Rio Writer: " + e.getMessage());
     }
   }
 
