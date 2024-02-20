@@ -1,25 +1,34 @@
-@prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
+@base <http://localhost:8080/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix urn: <http://example.org/urn#> .
+@prefix ex: <http://example.org/> .
+@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/> a hmas:HypermediaMASPlatform, td:Thing;
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
-  td:hasActionAffordance [ a td:ActionAffordance;
-      td:name "createWorkspace";
-      td:hasForm [
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction;
-          hctl:hasTarget <http://localhost:8080/workspaces/>;
-          htv:methodName "POST"
+<> a hmas:ResourceProfile;
+  hmas:exposesSignifier [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#form>
+            ]
         ]
     ];
-  td:title "yggdrasil";
-  hmas:hosts <http://localhost:8080/workspaces/test> .
+  hmas:isProfileOf <#platform>;
+  hmas:hosts <workspaces/test> .
 
-<http://localhost:8080/workspaces/test> a hmas:Workspace .
+<#form> a hctl:Form;
+  hctl:hasTarget <workspaces/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<#platform> a hmas:HypermediaMASPlatform .
+
+<workspaces/test> a hmas:Workspace .

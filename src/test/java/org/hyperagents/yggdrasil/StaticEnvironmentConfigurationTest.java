@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil;
 
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
@@ -118,6 +117,7 @@ public class StaticEnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
+          System.out.println("3");
           this.assertEqualsThingDescriptions(
               artifactRepresentation,
               r.bodyAsString()
@@ -128,15 +128,11 @@ public class StaticEnvironmentConfigurationTest {
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
-        Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected)
-                       .getGraph()
-                       .orElseThrow(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual)
-                       .getGraph()
-                       .orElseThrow()
-        ),
-        REPRESENTATIONS_EQUAL_MESSAGE
+      Models.isomorphic(
+        ResourceProfileGraphReader.getModelFromString(expected),
+        ResourceProfileGraphReader.getModelFromString(actual)
+      ),
+      REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 }

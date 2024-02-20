@@ -1,11 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
-import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import com.google.gson.JsonParser;
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -34,7 +29,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -215,27 +209,25 @@ public class HttpEntityHandler {
                   .filter(a -> !a.isEmpty())
                   .ifPresent(a -> registry.setApiKeyForArtifact(artifactIri, a));
 
+
+          // TODO: Actually handle actions with parameters
+          var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getFirstExposedSignifier(actionName);
+          Optional<String> description = Optional.empty();
+
+          if (signifier.isPresent()) {
+            var inputSpec = signifier.get().getActionSpecification().getInputSpecification();
+            if (inputSpec.isPresent()) {
+              description = inputSpec.get().getDescription();
+            }
+          }
+
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
                 agentId,
                 workspaceName,
                 artifactName,
                 actionName,
-                TDGraphReader
-                  .readFromString(TDFormat.RDF_TURTLE, storeResponse.body())
-                  .getActions()
-                  .stream()
-                  .filter(
-                    action -> action.getTitle().isPresent()
-                              && action.getTitle().get().equals(actionName)
-                  )
-                  .findFirst()
-                  .flatMap(ActionAffordance::getInputSchema)
-                  .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
-                  .map(inputSchema -> CartagoDataBundle.toJson(
-                    ((ArraySchema) inputSchema)
-                      .parseJson(JsonParser.parseString(context.body().asString()))
-                  ))
+                description
               ))
               .onSuccess(cartagoResponse -> {
                 final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);

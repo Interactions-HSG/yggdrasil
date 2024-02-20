@@ -1,81 +1,103 @@
-@prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
+@base <http://localhost:8080/workspaces/test> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix urn: <http://example.org/urn#> .
+@prefix ex: <http://example.org/> .
+@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/test> a td:Thing, hmas:Workspace;
-  td:title "test";
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
-  td:hasActionAffordance [ a td:ActionAffordance;
-      td:name "makeArtifact";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
-              js:propertyName "artifactClass";
-              js:enum <http://example.org/Counter>
-            ], [ a js:ArraySchema;
-              js:propertyName "initParams"
-            ], [ a js:StringSchema;
-              js:propertyName "artifactName"
-            ];
-          js:required "artifactClass", "artifactName"
+<> a hmas:ResourceProfile;
+  hmas:exposesSignifier [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#createSubWorkspace>
+            ]
         ]
-    ], [ a td:ActionAffordance;
-      td:name "joinWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#joinWorkspace>
+            ]
         ]
-    ], [ a td:ActionAffordance;
-      td:name "quitWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#makeArtifact>
+            ], [
+              sh:path hmas:hasInput
+            ]
         ]
-    ], [ a td:ActionAffordance;
-      td:name "focus";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
-              js:propertyName "artifactName"
-            ], [ a js:StringSchema;
-              js:propertyName "callbackIri"
-            ];
-          js:required "artifactName", "callbackIri"
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#leaveWorkspace>
+            ]
         ]
-    ], [ a td:ActionAffordance;
-      td:name "createSubWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <#focusWorkspace>
+            ], [
+              sh:path hmas:hasInput
+            ]
         ]
     ];
-  hmas:isHostedOn <http://localhost:8080/>;
-  hmas:contains <http://localhost:8080/workspaces/test/artifacts/c0>, <http://localhost:8080/workspaces/test/agents/test_agent> .
+  hmas:isProfileOf <#workspace>;
+  hmas:isHostedOn </>;
+  hmas:contains <test/artifacts/c0>, <test/agents/test_agent> .
 
-<http://localhost:8080/> a hmas:HypermediaMASPlatform .
+<#createSubWorkspace> a hctl:Form;
+  hctl:hasTarget <>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/c0> a hmas:Artifact .
+<#joinWorkspace> a hctl:Form;
+  hctl:hasTarget <test/join>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/agents/test_agent> a hmas:Artifact .
+<#makeArtifact> a hctl:Form;
+  hctl:hasTarget <test/artifacts/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<#leaveWorkspace> a hctl:Form;
+  hctl:hasTarget <test/leave>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<#focusWorkspace> a hctl:Form;
+  hctl:hasTarget <test/focus>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<#workspace> a hmas:Workspace .
+
+</> a hmas:HypermediaMASPlatform .
+
+<test/artifacts/c0> a hmas:Artifact .
+
+<test/agents/test_agent> a hmas:Artifact .

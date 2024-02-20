@@ -5,12 +5,15 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.rio.*;
 import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
+import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 
@@ -32,14 +35,25 @@ public final class RdfModelUtils {
   public static String modelToString(final Model model, final RDFFormat format)
       throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
-      var statements = model.getStatements(null,createIri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), createIri("https://purl.org/hmas/ResourceProfile"));
-      var firstStatement = statements.iterator().next();
-      var base = firstStatement.getSubject();
-      final var writer = Rio.createWriter(format, out, String.valueOf(base));
+      Optional<String> base = Optional.empty();
+      try {
+        var statements = model.getStatements(null, createIri("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"), createIri("https://purl.org/hmas/ResourceProfile"));
+        var firstStatement = statements.iterator().next();
+        base = String.valueOf(firstStatement.getSubject()).describeConstable();
+      } catch (Exception ignored) {}
+
+      RDFWriter writer;
+
+      if (base.isPresent()) {
+        writer = Rio.createWriter(format, out, base.get());
+      }
+      else {
+        writer = Rio.createWriter(format,out);
+      }
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
               .set(JSONLDSettings.JSONLD_MODE,
-                org.eclipse.rdf4j.rio.helpers.JSONLDMode.FLATTEN)
+                JSONLDMode.FLATTEN)
               .set(JSONLDSettings.USE_NATIVE_TYPES, true)
               .set(JSONLDSettings.OPTIMIZE, true);
       }
