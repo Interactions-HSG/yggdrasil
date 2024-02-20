@@ -33,7 +33,7 @@ public class IntellIotArtifact extends HypermediaArtifact {
   }
 
   protected void registerInteractionAffordances() {
-    this.registerActionAffordance(
+    this.registerSignifier(
         "normalizeValues",
         "normalizeValues",
         "/normalizeValues",
@@ -44,7 +44,7 @@ public class IntellIotArtifact extends HypermediaArtifact {
                        .build()
     );
     this.registerFeedbackParameter("normalizeValues");
-    this.registerActionAffordance(
+    this.registerSignifier(
         "generateRandomId",
         "generateRandomId",
         "/generateRandomId",

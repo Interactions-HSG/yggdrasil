@@ -81,7 +81,7 @@ public class SpatialCalculator2D extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    this.registerActionAffordance(
+    this.registerSignifier(
         "http://example.org#MoveTo",
         "moveTo",
         "/moveTo",

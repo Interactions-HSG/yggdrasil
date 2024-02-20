@@ -39,17 +39,49 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
       .build();
 
-    // TODO: add text/turtle -> Second signifier
-    Form form = new Form.Builder(baseUri + "/workspaces/")
-      .setIRIAsString(baseUri + "/#form")
+    Form createWorkspaceFormJson = new Form.Builder(baseUri + "/workspaces/")
+      .setIRIAsString(baseUri + "/#createWorkspaceFormJson")
       .setMethodName(HttpMethod.POST.name())
+      .build();
+
+    Form createWorkspaceFormTxtTurtle = new Form.Builder(baseUri + "/workspaces/")
+      .setIRIAsString(baseUri + "/#createWorkspaceFormTxtTurtle")
+      .setMethodName(HttpMethod.POST.name())
+      .setContentType("text/turtle")
+      .build();
+
+    Form registerToWebSubHub = new Form.Builder(baseUri + "/hub/")
+      .setIRIAsString(baseUri + "/#registerToWebSubHub")
+      .setMethodName(HttpMethod.POST.name())
+      .setContentType("application/json")
+      .build();
+
+    Form sparqlQueryForm = new Form.Builder(baseUri + "/query/")
+      .setIRIAsString(baseUri + "/#sparqlQueryForm")
+      .setMethodName(HttpMethod.POST.name())
+      .setContentType("application/sparql-query")
       .build();
 
     ResourceProfile resourceProfile = new ResourceProfile.Builder(hypermediaMASPlatform)
       .setIRIAsString(baseUri + "/")
       .exposeSignifier(
         new Signifier.Builder(
-          new ActionSpecification.Builder(form)
+          new ActionSpecification.Builder(createWorkspaceFormJson)
+            .build()
+        ).build())
+      .exposeSignifier(
+        new Signifier.Builder(
+          new ActionSpecification.Builder(createWorkspaceFormTxtTurtle)
+            .build()
+        ).build())
+      .exposeSignifier(
+        new Signifier.Builder(
+          new ActionSpecification.Builder(registerToWebSubHub)
+            .build()
+        ).build())
+      .exposeSignifier(
+        new Signifier.Builder(
+          new ActionSpecification.Builder(sparqlQueryForm)
             .build()
         ).build())
       .build();
@@ -165,7 +197,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       final String artifactName,
       final String semanticType,
       final Model metadata,
-      final ListMultimap<String, Signifier> actionAffordances
+      final ListMultimap<String, Signifier> signifiers
   ) {
     Artifact artifact = new Artifact.Builder()
       .addSemanticType(semanticType)
@@ -174,7 +206,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
       .setIRIAsString(this.httpConfig.getArtifactUri(workspaceName, artifactName));
-    actionAffordances.values().forEach(resourceProfileBuilder::exposeSignifier);
+    signifiers.values().forEach(resourceProfileBuilder::exposeSignifier);
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -189,7 +221,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Agent agent = new Agent.Builder()
       .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#agent")
       .addSemanticType("https://purl.org/hmas/Artifact")
-      .addSemanticType("https://example.org/Body")
+      .addSemanticType("https://purl.org/hmas/agents-artifacts#Body")
       .build();
 
     ResourceProfile profile = new ResourceProfile.Builder(agent)
@@ -202,6 +234,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
       .setNamespace("hmas","https://purl.org/hmas/")
+      .setNamespace("aa","https://purl.org/hmas/agents-artifacts#")
       .write();
   }
 }

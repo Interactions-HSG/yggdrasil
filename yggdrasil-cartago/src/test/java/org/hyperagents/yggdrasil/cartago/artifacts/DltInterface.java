@@ -43,7 +43,7 @@ public class DltInterface extends HypermediaArtifact {
 
   @Override
   protected void registerInteractionAffordances() {
-    this.registerActionAffordance(
+    this.registerSignifier(
         "http://example.org/sendTransaction",
         "sendTransaction",
         "/sendTransaction",

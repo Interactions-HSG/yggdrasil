@@ -82,7 +82,7 @@ public class PhantomX3D extends HypermediaArtifact {
 
   @Override
   protected void registerInteractionAffordances() {
-    this.registerActionAffordance(
+    this.registerSignifier(
         PREFIX + "MoveTo",
         "moveTo",
         "/moveTo",
@@ -108,9 +108,9 @@ public class PhantomX3D extends HypermediaArtifact {
                         )
                         .build()
     );
-    this.registerActionAffordance(PREFIX + "Grasp", "grasp", "/grasp");
-    this.registerActionAffordance(PREFIX + "Release", "release", "/release");
-    this.registerActionAffordance(PREFIX + "Reset", "reset", "/reset");
+    this.registerSignifier(PREFIX + "Grasp", "grasp", "/grasp");
+    this.registerSignifier(PREFIX + "Release", "release", "/release");
+    this.registerSignifier(PREFIX + "Reset", "reset", "/reset");
 
     // Add initial coordinates, these are currently hard-coded
     final var builder = new ModelBuilder();

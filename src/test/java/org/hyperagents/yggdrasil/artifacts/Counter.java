@@ -25,6 +25,6 @@ public class Counter extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    this.registerActionAffordance("http://example.org/Increment", "inc", "/increment");
+    this.registerSignifier("http://example.org/Increment", "inc", "/increment");
   }
 }

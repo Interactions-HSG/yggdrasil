@@ -15,7 +15,7 @@ public class Adder extends HypermediaArtifact {
 
   @Override
   protected void registerInteractionAffordances() {
-    this.registerActionAffordance(
+    this.registerSignifier(
         "http://example.org/add",
         "add",
         "/add",

@@ -115,24 +115,24 @@ public abstract class HypermediaArtifact extends Artifact {
     );
   }
 
-  protected final void registerActionAffordance(
+  protected final void registerSignifier(
       final String actionClass,
       final String actionName,
       final String relativeUri
   ) {
-    this.registerActionAffordance(actionClass, actionName, relativeUri, null);
+    this.registerSignifier(actionClass, actionName, relativeUri, null);
   }
 
-  protected final void registerActionAffordance(
+  protected final void registerSignifier(
       final String actionClass,
       final String actionName,
       final String relativeUri,
       final DataSchema inputSchema
   ) {
-    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
+    this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema);
   }
 
-  protected final void registerActionAffordance(
+  protected final void registerSignifier(
       final String actionClass,
       final String actionName,
       final String methodName,
@@ -149,7 +149,10 @@ public abstract class HypermediaArtifact extends Artifact {
       .setContentType("application/json")
       .build();
 
-    final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(Collections.singleton(actionClass));
+    Set<String> semanticTypes = new HashSet<>();
+    semanticTypes.add(actionClass);
+    final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(semanticTypes);
+
     if (inputSchema != null) {
       var inputSpecification = new InputSpecification.Builder()
         .build();
@@ -160,13 +163,13 @@ public abstract class HypermediaArtifact extends Artifact {
       .setIRIAsString(this.getArtifactUri() + "#" + actionName + "-Signifier")
       .build();
 
-    this.registerActionAffordance(
+    this.registerSignifier(
         actionName,
         signifier
     );
   }
 
-  protected final void registerActionAffordance(
+  protected final void registerSignifier(
       final String actionName,
       final Signifier signifier
   ) {
