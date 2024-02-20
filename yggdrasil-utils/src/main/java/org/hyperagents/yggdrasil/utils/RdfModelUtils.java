@@ -45,6 +45,7 @@ public final class RdfModelUtils {
       RDFWriter writer;
 
       if (base.isPresent()) {
+        // TODO: set base as platform uri
         writer = Rio.createWriter(format, out, base.get());
       }
       else {
