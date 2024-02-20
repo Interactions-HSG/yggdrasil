@@ -21,13 +21,6 @@ public class Counter extends HypermediaArtifact {
     System.out.println("count incremented");
   }
 
-  @OPERATION
-  public void dec() {
-    final var prop = this.getObsProperty("count");
-    prop.updateValue(prop.intValue() - 1);
-    System.out.println("count decremented");
-  }
-
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
