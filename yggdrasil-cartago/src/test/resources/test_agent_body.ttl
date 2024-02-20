@@ -7,9 +7,11 @@
 @prefix ex: <http://example.org/> .
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
 
 <http://localhost:8080/workspaces/test/agents/test> a hmas:ResourceProfile;
-  hmas:isProfileOf <http://localhost:8080/workspaces/test/agents/test#agent> .
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/agents/test#agentBody> .
 
-<http://localhost:8080/workspaces/test/agents/test#agent> a hmas:Agent, hmas:Artifact,
-    <https://example.org/Body> .
+<http://localhost:8080/workspaces/test/agents/test#agentBody> a hmas:Artifact ;
+  aa:isBodyOf <http://localhost:8080/workspaces/test/agents/test#agent> .
+<http://localhost:8080/workspaces/test/agents/test#agent> a hmas:Agent .
