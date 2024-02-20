@@ -5,6 +5,7 @@ bin/
 .classpath
 .project
 .idea/
+.vscode/
 
 # Ignore VertX file cache
 .vertx/

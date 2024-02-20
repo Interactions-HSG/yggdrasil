@@ -20,6 +20,10 @@ import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
+/**
+ * Utility Verticle to implement Websub functionality
+ */
+@SuppressWarnings("unused")
 public class HttpNotificationVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(HttpNotificationVerticle.class);
 

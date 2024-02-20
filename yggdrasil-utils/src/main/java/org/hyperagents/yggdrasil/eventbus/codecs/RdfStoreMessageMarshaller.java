@@ -14,6 +14,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
+/**
+ * This class is responsible for serializing and deserializing 
+ * RdfStoreMessage objects to and from JSON.
+ */
 public class RdfStoreMessageMarshaller
     implements JsonSerializer<RdfStoreMessage>, JsonDeserializer<RdfStoreMessage> {
 

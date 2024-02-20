@@ -11,6 +11,10 @@ import org.hyperagents.yggdrasil.eventbus.codecs.HttpNotificationDispatcherMessa
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
+/**
+ * This class represents a messagebox for handling HTTP notification dispatcher messages.
+ * It implements the Messagebox interface for HttpNotificationDispatcherMessage.
+ */
 public class HttpNotificationDispatcherMessagebox
     implements Messagebox<HttpNotificationDispatcherMessage> {
   private static final Logger LOGGER = Logger.getLogger(HttpNotificationDispatcherMessagebox.class);
