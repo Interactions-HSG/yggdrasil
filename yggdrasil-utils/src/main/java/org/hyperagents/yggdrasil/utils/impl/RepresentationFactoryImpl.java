@@ -238,11 +238,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(baseUri + "#deleteArtifactForm")
       .build();
 
-    Form doActionForm = new Form.Builder(baseUri)
-      .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#doActionForm")
-      .build();
-
     resourceProfileBuilder
       .exposeSignifier(
         new Signifier.Builder(
@@ -257,11 +252,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(deleteArtifactForm)
-            .build()
-        ).build())
-      .exposeSignifier(
-        new Signifier.Builder(
-          new ActionSpecification.Builder(doActionForm)
             .build()
         ).build());
 
