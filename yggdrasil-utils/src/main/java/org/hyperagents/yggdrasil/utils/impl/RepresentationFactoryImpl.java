@@ -49,7 +49,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .build();
 
     Form createWorkspaceFormTxtTurtle = new Form.Builder(baseUri + "/workspaces/")
-      .setIRIAsString(baseUri + "/#createWorkspaceFormTxtTurtle")
+      .setIRIAsString(baseUri + "/#createWorkspaceFormTextTurtle")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("text/turtle")
       .build();
@@ -117,6 +117,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // makeArtifact Signifier
     Form makeArtifactForm = new Form.Builder(baseUri + "/artifacts/")
       .setMethodName(HttpMethod.POST.name())
+      .setContentType("application/json")
       .setIRIAsString(baseUri + "#makeArtifactForm")
       .build();
     // TODO: Add inputSpecification to makeArtifact
@@ -141,6 +142,24 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
           .setName("Initialization parameters")
           .setDescription("A list containing the parameters for initializing the artifact")
+          .build())
+      .build();
+
+    // registerArtifact Signifier
+    Form registerArtifactForm = new Form.Builder(baseUri + "/artifacts/")
+      .setMethodName(HttpMethod.POST.name())
+      .setContentType("text/turtle")
+      .setIRIAsString(baseUri + "#registerArtifactForm")
+      .build();
+    QualifiedValueSpecification registerArtifactInput = new QualifiedValueSpecification.Builder()
+      .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
+      .setIRIAsString("http://example.org/artifact-shape")
+      .setRequired(true)
+      .addPropertySpecification("http://www.w3.org/2000/01/rdf-schema#",
+        new StringSpecification.Builder()
+          .setRequired(true)
+          .setName("representation")
+          .setDescription("The representation of the artifact")
           .build())
       .build();
 
@@ -186,6 +205,9 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Signifier makeArtifactSignifier = new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
       .setInputSpecification(makeArtifactInput).build())
       .build();
+    Signifier registerArtifactSignifier = new Signifier.Builder(new ActionSpecification.Builder(registerArtifactForm)
+      .setInputSpecification(registerArtifactInput).build())
+      .build();
     Signifier joinWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(joinWorkspaceForm).build()).build();
     Signifier leaveWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(leaveWorkspaceForm).build()).build();
     Signifier createSubWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(createSubWorkspaceForm).build()).build();
@@ -199,6 +221,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     ResourceProfile resourceProfile = new ResourceProfile.Builder(workspace)
       .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName))
       .exposeSignifier(makeArtifactSignifier)
+      .exposeSignifier(registerArtifactSignifier)
       .exposeSignifier(joinWorkspaceSignifier)
       .exposeSignifier(leaveWorkspaceSignifier)
       .exposeSignifier(createSubWorkspaceSignifier)
