@@ -149,9 +149,7 @@ public abstract class HypermediaArtifact extends Artifact {
       .setContentType("application/json")
       .build();
 
-    Set<String> semanticTypes = new HashSet<>();
-    semanticTypes.add(actionClass);
-    final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(semanticTypes);
+    final var actionSpecification = new ActionSpecification.Builder(form).addSemanticType(actionName).addSemanticType(actionClass);
 
     if (inputSchema != null) {
       actionSpecification.setInputSpecification(inputSchema);
