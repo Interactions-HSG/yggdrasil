@@ -2,6 +2,10 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
+import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
@@ -19,10 +23,11 @@ public class Adder extends HypermediaArtifact {
         "http://example.org/add",
         "add",
         "/add",
-        new ArraySchema.Builder()
-                       .addItem(new IntegerSchema.Builder().build())
-                       .addItem(new IntegerSchema.Builder().build())
-                       .build()
+        new ValueSpecification.Builder()
+          .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+          .setName("Parameters")
+          .setDescription("A list containing two Integers")
+          .build()
     );
     this.registerFeedbackParameter("add");
   }

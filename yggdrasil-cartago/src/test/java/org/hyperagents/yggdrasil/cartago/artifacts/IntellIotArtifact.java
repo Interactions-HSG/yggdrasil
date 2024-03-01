@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
@@ -32,25 +33,33 @@ public class IntellIotArtifact extends HypermediaArtifact {
     p.set((int) Math.floor(c * Math.random()));
   }
 
+  // TODO: Set correct Input
+  /*
+          new ArraySchema.Builder()
+                       .addItem(new NumberSchema.Builder().build())
+                       .addItem(new NumberSchema.Builder().build())
+                       .addItem(new NumberSchema.Builder().build())
+                       .build()
+   */
   protected void registerInteractionAffordances() {
     this.registerSignifier(
         "normalizeValues",
         "normalizeValues",
         "/normalizeValues",
-        new ArraySchema.Builder()
-                       .addItem(new NumberSchema.Builder().build())
-                       .addItem(new NumberSchema.Builder().build())
-                       .addItem(new NumberSchema.Builder().build())
-                       .build()
+      new ValueSpecification.Builder().build()
     );
     this.registerFeedbackParameter("normalizeValues");
+    /*
+            new ArraySchema.Builder()
+                       .addItem(new IntegerSchema.Builder().build())
+                       .build()
+     */
     this.registerSignifier(
         "generateRandomId",
         "generateRandomId",
         "/generateRandomId",
-        new ArraySchema.Builder()
-                       .addItem(new IntegerSchema.Builder().build())
-                       .build()
+      new ValueSpecification.Builder().build()
+
     );
     this.registerFeedbackParameter("generateRandomId");
   }

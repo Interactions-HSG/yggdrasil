@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.AbstractValueSpecification;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -217,7 +218,8 @@ public class HttpEntityHandler {
           if (signifier.isPresent()) {
             var inputSpec = signifier.get().getActionSpecification().getInputSpecification();
             if (inputSpec.isPresent()) {
-              description = inputSpec.get().getDescription();
+              AbstractValueSpecification specs = (AbstractValueSpecification) inputSpec.get();
+              description = specs.getDescription();
             }
           }
 

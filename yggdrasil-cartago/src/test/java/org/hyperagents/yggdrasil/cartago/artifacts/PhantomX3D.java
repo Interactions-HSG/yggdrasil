@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
 import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
@@ -79,14 +80,9 @@ public class PhantomX3D extends HypermediaArtifact {
       this.moveToPickUpLocationFromNeural();
     }
   }
-
-  @Override
-  protected void registerInteractionAffordances() {
-    this.registerSignifier(
-        PREFIX + "MoveTo",
-        "moveTo",
-        "/moveTo",
-        new ObjectSchema.Builder()
+  // TODO: Set correct input
+  /*
+          new ObjectSchema.Builder()
                         .addSemanticType(PREFIX + "FactoryFloorPosition")
                         .addProperty(
                           "x",
@@ -107,6 +103,14 @@ public class PhantomX3D extends HypermediaArtifact {
                                           .build()
                         )
                         .build()
+   */
+  @Override
+  protected void registerInteractionAffordances() {
+    this.registerSignifier(
+        PREFIX + "MoveTo",
+        "moveTo",
+        "/moveTo",
+      new QualifiedValueSpecification.Builder().build()
     );
     this.registerSignifier(PREFIX + "Grasp", "grasp", "/grasp");
     this.registerSignifier(PREFIX + "Release", "release", "/release");

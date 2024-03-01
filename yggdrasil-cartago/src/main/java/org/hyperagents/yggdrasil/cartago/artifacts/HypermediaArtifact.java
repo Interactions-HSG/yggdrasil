@@ -3,9 +3,9 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.IOSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.InputSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 // TODO: replace DataSchema
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
@@ -127,7 +127,7 @@ public abstract class HypermediaArtifact extends Artifact {
       final String actionClass,
       final String actionName,
       final String relativeUri,
-      final DataSchema inputSchema
+      final IOSpecification inputSchema
   ) {
     this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema);
   }
@@ -137,7 +137,7 @@ public abstract class HypermediaArtifact extends Artifact {
       final String actionName,
       final String methodName,
       final String relativeUri,
-      final DataSchema inputSchema
+      final IOSpecification inputSchema
   ) {
 
 
@@ -154,9 +154,7 @@ public abstract class HypermediaArtifact extends Artifact {
     final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(semanticTypes);
 
     if (inputSchema != null) {
-      var inputSpecification = new InputSpecification.Builder()
-        .build();
-      actionSpecification.setRequiredInput(inputSpecification);
+      actionSpecification.setInputSpecification(inputSchema);
     }
 
     final var signifier = new Signifier.Builder(actionSpecification.build())

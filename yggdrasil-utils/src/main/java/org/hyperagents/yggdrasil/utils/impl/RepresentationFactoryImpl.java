@@ -4,7 +4,11 @@ import ch.unisg.ics.interactions.hmas.core.hostables.Agent;
 import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
 import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
+import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphWriter;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
@@ -116,7 +120,28 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(baseUri + "#makeArtifactForm")
       .build();
     // TODO: Add inputSpecification to makeArtifact
-    InputSpecification makeArtifactInputSpecification = new InputSpecification.Builder()
+    QualifiedValueSpecification makeArtifactInput = new QualifiedValueSpecification.Builder()
+      .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
+      .setIRIAsString("http://example.org/artifact-shape")
+      .setRequired(true)
+      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasName",
+        new StringSpecification.Builder()
+          .setRequired(true)
+          .setName("Name")
+          .setDescription("The name of the created artifact")
+          .build())
+      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasClass",
+        new StringSpecification.Builder()
+          .setRequired(true)
+          .setName("Class")
+          .setDescription("The class of the created artifact")
+          .build())
+      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasInitialisationParameters",
+        new ValueSpecification.Builder()
+          .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+          .setName("Initialization parameters")
+          .setDescription("A list containing the parameters for initializing the artifact")
+          .build())
       .build();
 
     // join Workspace Signifier
@@ -130,16 +155,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Form leaveWorkspaceForm = new Form.Builder(baseUri + "/leave/")
       .setMethodName(HttpMethod.POST.name())
       .setIRIAsString(baseUri + "#leaveWorkspaceForm")
-      .build();
-
-
-    // focus Workspace Signifier
-    Form focusWorkspaceForm = new Form.Builder(baseUri + "/focus/")
-      .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#focusWorkspaceForm")
-      .build();
-    // TODO: Add inputSpecification to focus Workspace
-    InputSpecification focusWorkspaceInputSpecification = new InputSpecification.Builder()
       .build();
 
     // create SubWorkspace Signifier
@@ -169,13 +184,10 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
 
     Signifier makeArtifactSignifier = new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
-      .setRequiredInput(makeArtifactInputSpecification).build())
+      .setInputSpecification(makeArtifactInput).build())
       .build();
     Signifier joinWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(joinWorkspaceForm).build()).build();
     Signifier leaveWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(leaveWorkspaceForm).build()).build();
-    Signifier focusWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(focusWorkspaceForm)
-      .setRequiredInput(focusWorkspaceInputSpecification).build())
-      .build();
     Signifier createSubWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(createSubWorkspaceForm).build()).build();
     Signifier getCurrentWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(getCurrentWorkspaceForm).build()).build();
     Signifier updateCurrentWorkspaceSignifier = new Signifier.Builder(new ActionSpecification.Builder(updateCurrentWorkspaceForm).build()).build();
@@ -189,7 +201,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifier(makeArtifactSignifier)
       .exposeSignifier(joinWorkspaceSignifier)
       .exposeSignifier(leaveWorkspaceSignifier)
-      .exposeSignifier(focusWorkspaceSignifier)
       .exposeSignifier(createSubWorkspaceSignifier)
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
@@ -305,7 +316,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
       .setNamespace("hmas","https://purl.org/hmas/")
-      .setNamespace("aa","https://purl.org/hmas/agents-artifacts#")
+      .setNamespace("aa","https://purl.org/hmas/agents-artifacts/")
       .write();
   }
 }

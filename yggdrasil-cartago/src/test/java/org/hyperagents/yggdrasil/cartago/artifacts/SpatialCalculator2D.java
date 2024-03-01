@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
@@ -78,6 +79,15 @@ public class SpatialCalculator2D extends HypermediaArtifact {
     return deg >= 0.0 ? deg : 360.0 + deg;
   }
 
+  /*
+  TODO: Set correct input
+          new ArraySchema.Builder()
+                       .addSemanticType(PREFIX + "2DCoordinates")
+                       .addItem(new IntegerSchema.Builder().build())
+                       .addMinItems(2)
+                       .addMaxItems(2)
+                       .build()
+   */
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
@@ -85,12 +95,7 @@ public class SpatialCalculator2D extends HypermediaArtifact {
         "http://example.org#MoveTo",
         "moveTo",
         "/moveTo",
-        new ArraySchema.Builder()
-                       .addSemanticType(PREFIX + "2DCoordinates")
-                       .addItem(new IntegerSchema.Builder().build())
-                       .addMinItems(2)
-                       .addMaxItems(2)
-                       .build()
+      new ValueSpecification.Builder().build()
     );
   }
 }

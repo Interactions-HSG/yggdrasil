@@ -12,6 +12,10 @@
       {
         "class" : "http://example.org/Counter",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
+      },
+      {
+        "class" : "http://example.org/Adder",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Adder"
       }
     ],
     "enabled" : true
