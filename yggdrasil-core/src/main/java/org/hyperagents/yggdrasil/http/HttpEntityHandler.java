@@ -212,9 +212,9 @@ public class HttpEntityHandler {
 
 
           // TODO: Actually handle actions with parameters
-          ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().forEach(signifier -> System.out.println(signifier.getActionSpecification().getSemanticTypes()));
-          var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getFirstExposedSignifier(actionName);
-          System.out.println(actionName);
+          ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().forEach(signifier -> System.out.println(signifier.getActionSpecification().getRequiredSemanticTypes()));
+          var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getFirstExposedSignifier(request.method().name() + request.absoluteURI());
+          System.out.println(request.method().name() + request.absoluteURI());
           System.out.println(signifier);
           Optional<String> description = Optional.empty();
 
