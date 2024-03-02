@@ -324,6 +324,7 @@ public class CartagoVerticle extends AbstractVerticle {
     this.joinWorkspace(agentUri, workspaceName);
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var feedbackParameter = new OpFeedbackParam<>();
+    System.out.println("Hello");
     final var operation =
         payload
           .map(p -> {

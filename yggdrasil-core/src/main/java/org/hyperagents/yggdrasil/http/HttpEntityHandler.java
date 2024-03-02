@@ -212,10 +212,10 @@ public class HttpEntityHandler {
 
 
           // TODO: Actually handle actions with parameters
-          ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().forEach(signifier -> System.out.println(signifier.getActionSpecification().getRequiredSemanticTypes()));
-          var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getFirstExposedSignifier(request.method().name() + request.absoluteURI());
-          System.out.println(request.method().name() + request.absoluteURI());
-          System.out.println(signifier);
+          var signifiers = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers();
+          var signifier = signifiers.stream()
+            .filter(sig -> sig.getActionSpecification().getRequiredSemanticTypes().contains(artifactIri + "/" + actionName))
+            .findFirst();
           Optional<String> description = Optional.empty();
 
           if (signifier.isPresent()) {
@@ -225,6 +225,7 @@ public class HttpEntityHandler {
               description = specs.getDescription();
             }
           }
+          System.out.println(description);
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
                 agentId,
