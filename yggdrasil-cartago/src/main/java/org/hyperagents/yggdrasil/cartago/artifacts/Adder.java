@@ -23,11 +23,34 @@ public class Adder extends HypermediaArtifact {
         "http://example.org/add",
         "add",
         "/add",
-        new ValueSpecification.Builder()
-          .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
-          .setName("Parameters")
-          .setDescription("A list containing two Integers")
-          .build()
+      new QualifiedValueSpecification.Builder()
+        .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+        .setRequired(true)
+        .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#First",
+          new IntegerSpecification.Builder()
+            .setName("1st Parameter")
+            .setRequired(true)
+            .build())
+        .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#Rest",
+          new QualifiedValueSpecification.Builder()
+            .setRequired(true)
+            .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+            .addPropertySpecification(
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#First",
+              new IntegerSpecification.Builder()
+                .setName("2nd Parameter")
+                .setRequired(true)
+                .build()
+            )
+            .addPropertySpecification(
+              "http://www.w3.org/1999/02/22-rdf-syntax-ns#Rest",
+              new ValueSpecification.Builder()
+                .setValueAsString("http://www.w3.org/1999/02/22-rdf-syntax-ns#Nil")
+                .setRequired(true)
+                .build()
+            )
+            .build())
+        .build()
     );
     this.registerFeedbackParameter("add");
   }
