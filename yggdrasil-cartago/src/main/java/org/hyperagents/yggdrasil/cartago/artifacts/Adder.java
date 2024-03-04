@@ -24,6 +24,7 @@ public class Adder extends HypermediaArtifact {
         "add",
         "/add",
       new QualifiedValueSpecification.Builder()
+        .setIRIAsString("http://example.org/specification")
         .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
         .setRequired(true)
         .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#First",
@@ -33,6 +34,7 @@ public class Adder extends HypermediaArtifact {
             .build())
         .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#Rest",
           new QualifiedValueSpecification.Builder()
+            .setIRIAsString("http://example.org/qualifiedValueSpecification")
             .setRequired(true)
             .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
             .addPropertySpecification(

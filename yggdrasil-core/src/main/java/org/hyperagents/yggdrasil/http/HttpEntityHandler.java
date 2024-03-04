@@ -213,27 +213,22 @@ public class HttpEntityHandler {
                   .filter(a -> !a.isEmpty())
                   .ifPresent(a -> registry.setApiKeyForArtifact(artifactIri, a));
 
-
           // TODO: Actually handle actions with parameters
-          System.out.println(storeResponse.body());
-          var signifiers = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers();
-          var signifier = signifiers.stream()
+          // gets the signifier for the action
+          var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().stream()
             .filter(sig -> sig.getActionSpecification().getRequiredSemanticTypes().contains(artifactIri + "/" + actionName))
             .findFirst();
+
           Optional<String> description = Optional.empty();
+          if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
+            JsonElement jsonElement = JsonParser.parseString(context.body().asString());
+            var input = signifier.get().getActionSpecification().getInputSpecification().get();
+            List<Object> result = new ArrayList<>();
+            QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+            var output = parseInput(jsonElement,qualifiedValueSpecification,result);
+            description = Json.encode(objectListToTypedList(output)).describeConstable();
+          }
 
-          System.out.println(signifiers);
-
-          JsonElement jsonElement = JsonParser.parseString(context.body().asString());
-          List<Object> result = new ArrayList<>();
-          assert signifier.isPresent();
-          var input = signifier.get().getActionSpecification().getInputSpecification();
-          System.out.println(input);
-          // var output = parseInput(jsonElement, qual, result);
-
-          // description = Json.encode(objectListToTypedList(output)).describeConstable();
-
-          System.out.println(description);
 
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
