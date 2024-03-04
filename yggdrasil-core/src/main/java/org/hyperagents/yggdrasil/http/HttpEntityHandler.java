@@ -2,6 +2,8 @@ package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.AbstractValueSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -30,6 +32,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -212,6 +215,7 @@ public class HttpEntityHandler {
 
 
           // TODO: Actually handle actions with parameters
+
           var signifiers = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers();
           var signifier = signifiers.stream()
             .filter(sig -> sig.getActionSpecification().getRequiredSemanticTypes().contains(artifactIri + "/" + actionName))
@@ -220,12 +224,17 @@ public class HttpEntityHandler {
 
           if (signifier.isPresent()) {
             var inputSpec = signifier.get().getActionSpecification().getInputSpecification();
+            var jsonBody = JsonParser.parseString(context.body().asString());
+
             if (inputSpec.isPresent()) {
               AbstractValueSpecification specs = (AbstractValueSpecification) inputSpec.get();
               description = specs.getDescription();
             }
           }
           System.out.println(description);
+
+
+
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
                 agentId,
