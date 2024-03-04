@@ -1,10 +1,17 @@
 package org.hyperagents.yggdrasil.utils;
 
+import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import com.google.gson.JsonElement;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for working with JSON objects.
@@ -107,5 +114,48 @@ public final class JsonObjectUtils {
       );
     }
     return Optional.empty();
+  }
+
+
+  // TODO: put into HMAS library
+  @SuppressWarnings("unchecked")
+  public static List<List<Object>> objectListToTypedList(final List<Object> params) {
+    return params.stream()
+      .map(param -> {
+        final var typedParam = new ArrayList<>();
+        if (param instanceof List<?>) {
+          typedParam.add(List.class.getCanonicalName());
+          typedParam.add(objectListToTypedList((List<Object>) param));
+        } else {
+          typedParam.add(param.getClass().getCanonicalName());
+          typedParam.add(String.valueOf(param));
+        }
+        return typedParam;
+      })
+      .collect(Collectors.toList());
+  }
+
+  // TODO: Put into HMAS Lib
+  public static List<Object> parseInput(JsonElement jsonElement, QualifiedValueSpecification qualifiedValueSpecification, List<Object> result) {
+    var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
+    var properties = qualifiedValueSpecification.getPropertySpecifications();
+
+    if (semanticTypes.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")) {
+      assert jsonElement.isJsonArray();
+      var jsonArray = jsonElement.getAsJsonArray();
+      var firstProperty = properties.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#First");
+      var restProperty = properties.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#Rest");
+      var firstElement = jsonArray.remove(0);
+
+      if (firstProperty instanceof IntegerSpecification) {
+        result.add(firstElement.getAsInt());
+      }
+
+      if (restProperty instanceof QualifiedValueSpecification) {
+        var restQualifiedValueSpecification = (QualifiedValueSpecification) restProperty;
+        parseInput(jsonArray, restQualifiedValueSpecification, result);
+      }
+    }
+    return result;
   }
 }
