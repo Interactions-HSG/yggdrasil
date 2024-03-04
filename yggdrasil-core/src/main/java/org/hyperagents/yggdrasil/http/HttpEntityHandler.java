@@ -2,7 +2,9 @@ package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.AbstractValueSpecification;
+
 import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -15,13 +17,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
@@ -45,6 +41,10 @@ import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
+
+import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.objectListToTypedList;
+import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
+
 
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
@@ -215,25 +215,25 @@ public class HttpEntityHandler {
 
 
           // TODO: Actually handle actions with parameters
-
+          System.out.println(storeResponse.body());
           var signifiers = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers();
           var signifier = signifiers.stream()
             .filter(sig -> sig.getActionSpecification().getRequiredSemanticTypes().contains(artifactIri + "/" + actionName))
             .findFirst();
           Optional<String> description = Optional.empty();
 
-          if (signifier.isPresent()) {
-            var inputSpec = signifier.get().getActionSpecification().getInputSpecification();
-            var jsonBody = JsonParser.parseString(context.body().asString());
+          System.out.println(signifiers);
 
-            if (inputSpec.isPresent()) {
-              AbstractValueSpecification specs = (AbstractValueSpecification) inputSpec.get();
-              description = specs.getDescription();
-            }
-          }
+          JsonElement jsonElement = JsonParser.parseString(context.body().asString());
+          List<Object> result = new ArrayList<>();
+          assert signifier.isPresent();
+          var input = signifier.get().getActionSpecification().getInputSpecification();
+          System.out.println(input);
+          // var output = parseInput(jsonElement, qual, result);
+
+          // description = Json.encode(objectListToTypedList(output)).describeConstable();
+
           System.out.println(description);
-
-
 
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
