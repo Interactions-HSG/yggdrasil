@@ -395,12 +395,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   .getEntityModel(platformResourceProfileIri)
                   .ifPresent(Failable.asConsumer(platformModel -> {
                     platformModel.add(
-                      platformResourceProfileIri,
+                      platformIRI,
                         RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
-                      resourceIRI
+                      workspaceIRI
                     );
                     platformModel.add(
-                      resourceIRI,
+                      workspaceIRI,
                         RDF.TYPE,
                         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                     );
