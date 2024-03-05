@@ -286,13 +286,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final Model entityModel,
       final IRI workspaceIri
   ) throws IOException {
+    final var artifactIRI = RdfModelUtils.createIri(entityIri + "#artifact");
+    final var workspaceActualIRI = RdfModelUtils.createIri(workspaceIri + "#workspace");
     entityModel.add(
-        entityIri,
+        artifactIRI,
         RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-        workspaceIri
+      workspaceActualIRI
     );
     entityModel.add(
-        workspaceIri,
+      workspaceActualIRI,
         RDF.TYPE,
         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
     );
