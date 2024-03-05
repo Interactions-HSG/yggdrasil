@@ -229,7 +229,6 @@ public class HttpEntityHandler {
             description = Json.encode(objectListToTypedList(output)).describeConstable();
           }
 
-
           this.cartagoMessagebox
               .sendMessage(new CartagoMessage.DoAction(
                 agentId,

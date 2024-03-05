@@ -140,11 +140,11 @@ public final class JsonObjectUtils {
     var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
     var properties = qualifiedValueSpecification.getPropertySpecifications();
 
-    if (semanticTypes.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")) {
+    if (semanticTypes.contains("https://www.w3.org/1999/02/22-rdf-syntax-ns#List")) {
       assert jsonElement.isJsonArray();
       var jsonArray = jsonElement.getAsJsonArray();
-      var firstProperty = properties.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#First");
-      var restProperty = properties.get("http://www.w3.org/1999/02/22-rdf-syntax-ns#Rest");
+      var firstProperty = properties.get("https://www.w3.org/1999/02/22-rdf-syntax-ns#first");
+      var restProperty = properties.get("https://www.w3.org/1999/02/22-rdf-syntax-ns#rest");
       var firstElement = jsonArray.remove(0);
 
       if (firstProperty instanceof IntegerSpecification) {
