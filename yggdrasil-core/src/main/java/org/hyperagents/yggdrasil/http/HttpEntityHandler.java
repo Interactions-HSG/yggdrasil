@@ -216,12 +216,12 @@ public class HttpEntityHandler {
 
           // TODO: Actually handle actions with parameters
           // gets the signifier for the action
-          final var signifierName = artifactIri + "#" + actionName + "-Signifier";
+          final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
 
 
           var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().stream()
             .filter(sig -> sig.getIRIAsString().isPresent())
-            .filter(sig -> sig.getIRIAsString().get().equals(signifierName))
+            .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
             .findFirst();
 
           Optional<String> description = Optional.empty();
