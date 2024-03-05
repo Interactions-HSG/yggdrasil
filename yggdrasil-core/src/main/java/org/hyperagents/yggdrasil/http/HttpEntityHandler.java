@@ -223,10 +223,10 @@ public class HttpEntityHandler {
           if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
             JsonElement jsonElement = JsonParser.parseString(context.body().asString());
             var input = signifier.get().getActionSpecification().getInputSpecification().get();
-            List<Object> result = new ArrayList<>();
             QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
-            var output = parseInput(jsonElement,qualifiedValueSpecification,result);
-            description = Json.encode(objectListToTypedList(output)).describeConstable();
+            description = CartagoDataBundle.toJson(
+              parseInput(jsonElement,qualifiedValueSpecification,new ArrayList<>())
+            ).describeConstable();
           }
 
           this.cartagoMessagebox
