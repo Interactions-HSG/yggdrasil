@@ -302,12 +302,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .getEntityModel(workspaceIri)
         .ifPresent(Failable.asConsumer(workspaceModel -> {
           workspaceModel.add(
-              workspaceIri,
+              workspaceActualIRI,
               RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-              entityIri
+              artifactIRI
           );
           workspaceModel.add(
-              entityIri,
+              artifactIRI,
               RDF.TYPE,
               RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
           );
