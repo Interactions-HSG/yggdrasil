@@ -2,7 +2,7 @@ package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.AbstractValueSpecification;
+
 
 import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
 import com.google.gson.JsonElement;
@@ -43,7 +43,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
-import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.objectListToTypedList;
+
 import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
 
 
@@ -529,31 +529,17 @@ public class HttpEntityHandler {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
     final var entityIri = RdfModelUtils.createIri(requestUri + hint);
+    System.out.println("entityIri: " + entityIri);
+    System.out.println("entityRepresentation: " + entityRepresentation);
+
     try {
-      final var entityGraph = RdfModelUtils.stringToModel(
-          entityRepresentation,
-          entityIri,
-          RDFFormat.TURTLE
-      );
-      // TODO:
-      // first check if resourceProfile
-      if (entityGraph.contains(
-        entityIri,
-        RDF.TYPE,
-        CORE.RESOURCE_PROFILE
-      )) {
-        System.out.println("is resourceProfile");
-        var nodes = entityGraph.getStatements(
-          entityIri,
-          RdfModelUtils.createIri(CORE.IS_PROFILE_OF.toString()),
-    null);
-        var firstNode = nodes.iterator().next();
-        var nodeIri = firstNode.getObject().stringValue();
-        if (entityGraph.contains(
-          RdfModelUtils.createIri(nodeIri),
-          RDF.TYPE,
-          CORE.ARTIFACT
-        )){
+      final var entityGraph = RdfModelUtils.stringToModel(entityRepresentation, entityIri, RDFFormat.TURTLE);
+
+      if (entityGraph.contains(entityIri, RDF.TYPE, CORE.RESOURCE_PROFILE)) {
+        var firstNode= entityGraph.getStatements(entityIri,CORE.IS_PROFILE_OF, null).iterator().next();
+        var nodeIri = (IRI) firstNode.getObject();
+
+        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.ARTIFACT)){
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
               requestUri,
@@ -561,36 +547,30 @@ public class HttpEntityHandler {
               entityRepresentation
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-        };
+        }
 
-
-
-      } else if (
-          entityGraph.contains(
-            entityIri,
-            RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-            RdfModelUtils.createIri("https://purl.org/hmas/Workspace")
-          )
-      ) {
-        this.rdfStoreMessagebox
+        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.WORKSPACE)){
+          this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                requestUri,
-                hint,
-                entityGraph.stream()
-                           .filter(t ->
-                             t.getSubject().equals(entityIri)
-                             && t.getPredicate().equals(RdfModelUtils.createIri(
-                               "https://purl.org/hmas/isContainedIn"
-                             ))
-                           )
-                           .map(Statement::getObject)
-                           .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                           .flatMap(Optional::stream)
-                           .map(IRI::toString)
-                           .findFirst(),
-                entityRepresentation
+              requestUri,
+              hint,
+              entityGraph.stream()
+                .filter(t ->
+                  t.getSubject().equals(entityIri)
+                    && t.getPredicate().equals(RdfModelUtils.createIri(
+                    "https://purl.org/hmas/isContainedIn"
+                  ))
+                )
+                .map(Statement::getObject)
+                .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                .flatMap(Optional::stream)
+                .map(IRI::toString)
+                .findFirst(),
+              entityRepresentation
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+        }
+
       } else {
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }
