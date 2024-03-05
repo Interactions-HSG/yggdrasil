@@ -529,8 +529,6 @@ public class HttpEntityHandler {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
     final var entityIri = RdfModelUtils.createIri(requestUri + hint);
-    System.out.println("entityIri: " + entityIri);
-    System.out.println("entityRepresentation: " + entityRepresentation);
 
     try {
       final var entityGraph = RdfModelUtils.stringToModel(entityRepresentation, entityIri, RDFFormat.TURTLE);
