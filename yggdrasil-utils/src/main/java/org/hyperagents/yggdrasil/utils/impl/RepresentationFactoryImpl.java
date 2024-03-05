@@ -340,6 +340,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     return new ResourceProfileGraphWriter(profile)
       .setNamespace("hmas","https://purl.org/hmas/")
       .setNamespace("aa","https://purl.org/hmas/agents-artifacts/")
+      .setNamespace("rdf", "https://www.w3.org/1999/02/22-rdf-syntax-ns#")
       .write();
   }
 }
