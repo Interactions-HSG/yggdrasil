@@ -36,7 +36,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   }
 
 
-  public Signifier webSubSignifier(String baseUri) {
+  public Signifier webSubSignifier(String baseUri, String topic, String mode) {
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
@@ -45,30 +45,32 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
             .build())
-          .setInputSpecification(new QualifiedValueSpecification.Builder()
-            .setIRIAsString("https://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
-            .setRequired(true)
-            .addPropertySpecification("http://example.org/topic",
-              new StringSpecification.Builder()
-                .setRequired(true)
-                .setName("hub.topic")
-                .setDescription("The topic of the WebSub hub")
-                .build()
-            )
-            .addPropertySpecification("http://example.org/callback",
-              new StringSpecification.Builder()
-                .setRequired(true)
-                .setName("hub.callback")
-                .setDescription("The callback URL of the WebSub hub")
-                .build()
-            )
-            .addPropertySpecification("http://example.org/mode",
-              new StringSpecification.Builder()
-                .setRequired(true)
-                .setName("hub.mode")
-                .setDescription("The mode of the WebSub hub")
-                .build()
-            ).build()
+          .setInputSpecification(
+            new QualifiedValueSpecification.Builder()
+              .setIRIAsString(baseUri + "/#webSubWorkspacesInput")
+              .addRequiredSemanticType("http://example.org/Websubsubscription")
+              .setRequired(true)
+              .addPropertySpecification("http://example.org/topic",
+                new StringSpecification.Builder()
+                  .setRequired(true)
+                  .setName("hub.topic")
+                  .setDescription("The topic of the WebSub hub")
+                  .build()
+              )
+              .addPropertySpecification("http://example.org/callback",
+                new StringSpecification.Builder()
+                  .setRequired(true)
+                  .setName("hub.callback")
+                  .setDescription("The callback URL of the WebSub hub")
+                  .build()
+              )
+              .addPropertySpecification("http://example.org/mode",
+                new StringSpecification.Builder()
+                  .setRequired(true)
+                  .setName("hub.mode")
+                  .setDescription("The mode of the WebSub hub")
+                  .build()
+              ).build()
           ).build()
       ).build();
   }
@@ -137,7 +139,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri))
+      .exposeSignifier(webSubSignifier(baseUri,"",""))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -268,7 +270,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
       .exposeSignifier(deleteCurrentWorkspaceSignifier)
-      .exposeSignifier(webSubSignifier(baseUri))
+      .exposeSignifier(webSubSignifier(baseUri,"",""))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -329,7 +331,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(deleteArtifactForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri));
+      .exposeSignifier(webSubSignifier(baseUri,"",""));
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -374,7 +376,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(updateBodyForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri));
+      .exposeSignifier(webSubSignifier(baseUri,"",""));
 
     return serializeHmasResourceProfile(profile.build());
   }

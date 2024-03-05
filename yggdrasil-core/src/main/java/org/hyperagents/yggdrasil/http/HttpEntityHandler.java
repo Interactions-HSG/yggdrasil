@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
+import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.AbstractValueSpecification;
 
@@ -534,20 +535,36 @@ public class HttpEntityHandler {
           entityIri,
           RDFFormat.TURTLE
       );
-      if (
-          entityGraph.contains(
-            entityIri,
-            RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-            RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
-          )
-      ) {
-        this.rdfStoreMessagebox
+      // TODO:
+      // first check if resourceProfile
+      if (entityGraph.contains(
+        entityIri,
+        RDF.TYPE,
+        CORE.RESOURCE_PROFILE
+      )) {
+        System.out.println("is resourceProfile");
+        var nodes = entityGraph.getStatements(
+          entityIri,
+          RdfModelUtils.createIri(CORE.IS_PROFILE_OF.toString()),
+    null);
+        var firstNode = nodes.iterator().next();
+        var nodeIri = firstNode.getObject().stringValue();
+        if (entityGraph.contains(
+          RdfModelUtils.createIri(nodeIri),
+          RDF.TYPE,
+          CORE.ARTIFACT
+        )){
+          this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
               requestUri,
               hint,
               entityRepresentation
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+        };
+
+
+
       } else if (
           entityGraph.contains(
             entityIri,

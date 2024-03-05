@@ -18,7 +18,7 @@ public class Adder extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     this.registerSignifier(
-        "http://example.org/add",
+        "http://example.org/Add",
         "add",
         "/add",
       new QualifiedValueSpecification.Builder()
@@ -45,7 +45,7 @@ public class Adder extends HypermediaArtifact {
             .addPropertySpecification(
               "https://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
               new ValueSpecification.Builder()
-                .addRequiredSemanticType("https://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+                .addRequiredSemanticType("https://www.w3.org/1999/02/22-rdf-syntax-ns#List")
                 .setValueAsString("https://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
                 .setRequired(true)
                 .build()
