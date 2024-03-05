@@ -534,10 +534,10 @@ public class HttpEntityHandler {
       final var entityGraph = RdfModelUtils.stringToModel(entityRepresentation, entityIri, RDFFormat.TURTLE);
 
       if (entityGraph.contains(entityIri, RDF.TYPE, CORE.RESOURCE_PROFILE)) {
-        var firstNode= entityGraph.getStatements(entityIri,CORE.IS_PROFILE_OF, null).iterator().next();
+        var firstNode = entityGraph.getStatements(entityIri, CORE.IS_PROFILE_OF, null).iterator().next();
         var nodeIri = (IRI) firstNode.getObject();
 
-        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.ARTIFACT)){
+        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.ARTIFACT)) {
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
               requestUri,
@@ -545,9 +545,7 @@ public class HttpEntityHandler {
               entityRepresentation
             ))
             .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-        }
-
-        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.WORKSPACE)){
+        } else if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.WORKSPACE)) {
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
               requestUri,
