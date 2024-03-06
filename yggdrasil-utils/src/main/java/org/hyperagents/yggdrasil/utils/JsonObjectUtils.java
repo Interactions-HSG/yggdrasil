@@ -5,13 +5,14 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import com.google.gson.JsonElement;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+
 
 /**
  * Utility class for working with JSON objects.
@@ -117,43 +118,24 @@ public final class JsonObjectUtils {
   }
 
 
-  // TODO: put into HMAS library
-  @SuppressWarnings("unchecked")
-  public static List<List<Object>> objectListToTypedList(final List<Object> params) {
-    return params.stream()
-      .map(param -> {
-        final var typedParam = new ArrayList<>();
-        if (param instanceof List<?>) {
-          typedParam.add(List.class.getCanonicalName());
-          typedParam.add(objectListToTypedList((List<Object>) param));
-        } else {
-          typedParam.add(param.getClass().getCanonicalName());
-          typedParam.add(String.valueOf(param));
-        }
-        return typedParam;
-      })
-      .collect(Collectors.toList());
-  }
-
   // TODO: Put into HMAS Lib
   public static List<Object> parseInput(JsonElement jsonElement, QualifiedValueSpecification qualifiedValueSpecification, List<Object> result) {
     var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
     var properties = qualifiedValueSpecification.getPropertySpecifications();
 
-    if (semanticTypes.contains("https://www.w3.org/1999/02/22-rdf-syntax-ns#List")) {
+    if (semanticTypes.contains(RDF.LIST.stringValue())) {
       assert jsonElement.isJsonArray();
       var jsonArray = jsonElement.getAsJsonArray();
-      var firstProperty = properties.get("https://www.w3.org/1999/02/22-rdf-syntax-ns#first");
-      var restProperty = properties.get("https://www.w3.org/1999/02/22-rdf-syntax-ns#rest");
+      var firstProperty = properties.get(RDF.FIRST.stringValue());
+      var restProperty = properties.get(RDF.REST.stringValue());
       var firstElement = jsonArray.remove(0);
 
       if (firstProperty instanceof IntegerSpecification) {
         result.add(firstElement.getAsInt());
       }
 
-      if (restProperty instanceof QualifiedValueSpecification) {
-        var restQualifiedValueSpecification = (QualifiedValueSpecification) restProperty;
-        parseInput(jsonArray, restQualifiedValueSpecification, result);
+      if (restProperty instanceof QualifiedValueSpecification restQualifiedValueSpecification) {
+          parseInput(jsonArray, restQualifiedValueSpecification, result);
       }
     }
     return result;
