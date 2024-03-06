@@ -5,6 +5,7 @@ import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 
 public class Adder extends HypermediaArtifact {
@@ -23,30 +24,30 @@ public class Adder extends HypermediaArtifact {
         "/add",
       new QualifiedValueSpecification.Builder()
         .setIRIAsString("http://example.org/addends")
-        .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+        .addRequiredSemanticType(RDF.LIST.stringValue())
         .setRequired(true)
-        .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+        .addPropertySpecification(RDF.FIRST.stringValue(),
           new IntegerSpecification.Builder()
             .setName("1st Parameter")
             .setRequired(true)
             .build())
-        .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+        .addPropertySpecification(RDF.REST.stringValue(),
           new QualifiedValueSpecification.Builder()
             .setIRIAsString("http://example.org/addendsRest")
             .setRequired(true)
-            .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+            .addRequiredSemanticType(RDF.LIST.stringValue())
             .addPropertySpecification(
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#first",
+              RDF.FIRST.stringValue(),
               new IntegerSpecification.Builder()
                 .setName("2nd Parameter")
                 .setRequired(true)
                 .build()
             )
             .addPropertySpecification(
-              "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest",
+              RDF.REST.stringValue(),
               new ValueSpecification.Builder()
-                .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
-                .setValueAsString("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+                .addRequiredSemanticType(RDF.LIST.stringValue())
+                .setValueAsString(RDF.NIL.stringValue())
                 .setRequired(true)
                 .build()
             )
