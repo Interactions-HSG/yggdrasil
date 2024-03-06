@@ -31,12 +31,17 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
   private final HttpInterfaceConfig httpConfig;
 
+  public enum WebSubMode {
+    subscribe,
+    unsubscribe
+  }
+
   public RepresentationFactoryImpl(final HttpInterfaceConfig httpConfig) {
     this.httpConfig = httpConfig;
   }
 
 
-  public Signifier webSubSignifier(String baseUri, String signifierName, String topic, String mode) {
+  public Signifier webSubSignifier(String baseUri, String signifierName, String topic, WebSubMode mode) {
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
@@ -47,7 +52,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
             .build())
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
-              .setIRIAsString(baseUri + "/#webSub" + mode + "Input")
+              .setIRIAsString(baseUri + "/#webSub" + mode.toString().substring(0,1).toUpperCase() + mode.toString().substring(1) + "Input")
               .addRequiredSemanticType("http://example.org/Websubsubscription")
               .setRequired(true)
               .addPropertySpecification("http://example.org/topic",
@@ -68,7 +73,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               .addPropertySpecification("http://example.org/mode",
                 new StringSpecification.Builder()
                   .setRequired(true)
-                  .setValue(mode)
+                  .setValue(mode.name())
                   .setName("hub.mode")
                   .setDescription("The mode of the WebSub hub")
                   .build()
@@ -143,9 +148,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspaces",baseUri + "/workspaces/","subscribe"))
-      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspaces",baseUri + "/workspaces/","unsubscribe"))
-
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspaces",baseUri + "/workspaces/",WebSubMode.subscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspaces",baseUri + "/workspaces/",WebSubMode.unsubscribe))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -276,8 +280,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
       .exposeSignifier(deleteCurrentWorkspaceSignifier)
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspace",baseUri,"subscribe"))
-      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspace",baseUri,"unsubscribe"))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspace",baseUri,WebSubMode.subscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspace",baseUri,WebSubMode.unsubscribe))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -338,8 +342,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(deleteArtifactForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToArtifact",baseUri,"subscribe"))
-      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromArtifact",baseUri,"unsubscribe"));
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToArtifact",baseUri,WebSubMode.subscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromArtifact",baseUri,WebSubMode.unsubscribe));
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -384,8 +388,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(updateBodyForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,"subscribe"))
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,"unsubscribe"));
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,WebSubMode.subscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,WebSubMode.unsubscribe));
 
 
     return serializeHmasResourceProfile(profile.build());
