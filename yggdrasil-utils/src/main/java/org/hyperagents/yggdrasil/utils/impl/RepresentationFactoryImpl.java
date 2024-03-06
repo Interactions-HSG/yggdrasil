@@ -36,7 +36,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   }
 
 
-  public Signifier webSubSignifier(String baseUri, String topic, String mode) {
+  public Signifier webSubSignifier(String baseUri, String signifierName, String topic, String mode) {
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
@@ -53,6 +53,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               .addPropertySpecification("http://example.org/topic",
                 new StringSpecification.Builder()
                   .setRequired(true)
+                  .setValue(topic)
                   .setName("hub.topic")
                   .setDescription("The topic of the WebSub hub")
                   .build()
@@ -67,12 +68,15 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               .addPropertySpecification("http://example.org/mode",
                 new StringSpecification.Builder()
                   .setRequired(true)
+                  .setValue(mode)
                   .setName("hub.mode")
                   .setDescription("The mode of the WebSub hub")
                   .build()
               ).build()
           ).build()
-      ).build();
+      )
+        .setIRIAsString(baseUri + "#" + signifierName)
+        .build();
   }
 
 
@@ -139,7 +143,9 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"",""))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspaces",baseUri + "/workspaces/","subscribe"))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspaces",baseUri + "/workspaces/","unsubscribe"))
+
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -270,7 +276,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
       .exposeSignifier(deleteCurrentWorkspaceSignifier)
-      .exposeSignifier(webSubSignifier(baseUri,"",""))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspace",baseUri,"subscribe"))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspace",baseUri,"unsubscribe"))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -331,7 +338,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(deleteArtifactForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"",""));
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToArtifact",baseUri,"subscribe"))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromArtifact",baseUri,"unsubscribe"));
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -376,7 +384,9 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(updateBodyForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"",""));
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,"subscribe"))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToAgent",baseUri,"unsubscribe"));
+
 
     return serializeHmasResourceProfile(profile.build());
   }
@@ -385,7 +395,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     return new ResourceProfileGraphWriter(profile)
       .setNamespace("hmas","https://purl.org/hmas/")
       .setNamespace("aa","https://purl.org/hmas/agents-artifacts/")
-      .setNamespace("rdf", "https://www.w3.org/1999/02/22-rdf-syntax-ns#")
+      .setNamespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
       .write();
   }
 }
