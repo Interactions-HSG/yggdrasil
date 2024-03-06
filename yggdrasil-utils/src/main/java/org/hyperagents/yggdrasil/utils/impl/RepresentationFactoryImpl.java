@@ -41,13 +41,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       new Signifier.Builder(
         new ActionSpecification.Builder(
           new Form.Builder(this.httpConfig.getBaseUri() + "/hub/")
-            .setIRIAsString(baseUri + "/#webSubWorkspacesForm")
+            .setIRIAsString(baseUri + "/#webSubForm")
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
             .build())
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
-              .setIRIAsString(baseUri + "/#webSubWorkspacesInput")
+              .setIRIAsString(baseUri + "/#webSub" + mode + "Input")
               .addRequiredSemanticType("http://example.org/Websubsubscription")
               .setRequired(true)
               .addPropertySpecification("http://example.org/topic",
