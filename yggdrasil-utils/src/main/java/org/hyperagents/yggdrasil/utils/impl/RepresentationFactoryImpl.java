@@ -94,8 +94,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
       .build();
 
-    Form createWorkspaceFormJson = new Form.Builder(baseUri + "/workspaces/")
-      .setIRIAsString(baseUri + "/#createWorkspaceFormJson")
     Form createWorkspaceFormJson = new Form.Builder(workspaces)
       .setIRIAsString(baseUri + "#createWorkspaceFormJson")
       .setMethodName(HttpMethod.POST.name())
