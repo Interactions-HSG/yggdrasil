@@ -336,7 +336,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var workspaceIri =
         this.generateEntityIri(requestIri.toString(), content.workspaceName());
     final var resourceIRI = RdfModelUtils.createIri(workspaceIri);
-    final var workspaceIRI = RdfModelUtils.createIri(workspaceIri + "#workspace");
+    final var workspaceIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
     Optional
         .ofNullable(content.workspaceRepresentation())
         .filter(s -> !s.isEmpty())
