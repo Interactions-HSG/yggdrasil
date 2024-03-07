@@ -53,9 +53,9 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
               .setIRIAsString(baseUri + "/#webSub" + mode.toString().substring(0,1).toUpperCase() + mode.toString().substring(1) + "Input")
-              .addRequiredSemanticType("http://example.org/Websubsubscription")
+              .addRequiredSemanticType("http://www.example.org/websub#websubsubscription")
               .setRequired(true)
-              .addPropertySpecification("http://example.org/topic",
+              .addPropertySpecification("http://www.example.org/websub#topic",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setValue(topic)
@@ -63,14 +63,14 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
                   .setDescription("The topic of the WebSub hub")
                   .build()
               )
-              .addPropertySpecification("http://example.org/callback",
+              .addPropertySpecification("http://www.example.org/websub#callback",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setName("hub.callback")
                   .setDescription("The callback URL of the WebSub hub")
                   .build()
               )
-              .addPropertySpecification("http://example.org/mode",
+              .addPropertySpecification("http://www.example.org/websub#mode",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setValue(mode.name())
@@ -80,7 +80,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               ).build()
           ).build()
       )
-        .setIRIAsString(baseUri + "#" + signifierName)
+        .setIRIAsString(baseUri + "/#" + signifierName)
         .build();
   }
 
@@ -162,7 +162,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   ) {
     String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
     Workspace workspace = new Workspace.Builder()
-      .setIRIAsString(baseUri + "#workspace")
+      .setIRIAsString(baseUri + "/#workspace")
       .addSemanticType("https://purl.org/hmas/Workspace")
       .build();
 
@@ -170,7 +170,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Form makeArtifactForm = new Form.Builder(baseUri + "/artifacts/")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("application/json")
-      .setIRIAsString(baseUri + "#makeArtifactForm")
+      .setIRIAsString(baseUri + "/#makeArtifactForm")
       .build();
     // TODO: Add inputSpecification to makeArtifact
     QualifiedValueSpecification makeArtifactInput = new QualifiedValueSpecification.Builder()
@@ -201,7 +201,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Form registerArtifactForm = new Form.Builder(baseUri + "/artifacts/")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("text/turtle")
-      .setIRIAsString(baseUri + "#registerArtifactForm")
+      .setIRIAsString(baseUri + "/#registerArtifactForm")
       .build();
     QualifiedValueSpecification registerArtifactInput = new QualifiedValueSpecification.Builder()
       .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
@@ -218,38 +218,38 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // join Workspace Signifier
     Form joinWorkspaceForm = new Form.Builder(baseUri + "/join/")
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#joinWorkspaceForm")
+      .setIRIAsString(baseUri + "#/joinWorkspaceForm")
       .build();
 
 
     // leave Workspace Signifier
     Form leaveWorkspaceForm = new Form.Builder(baseUri + "/leave/")
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#leaveWorkspaceForm")
+      .setIRIAsString(baseUri + "/#leaveWorkspaceForm")
       .build();
 
     // create SubWorkspace Signifier
     Form createSubWorkspaceForm = new Form.Builder(baseUri + "/")
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#createSubWorkspaceForm")
+      .setIRIAsString(baseUri + "/#createSubWorkspaceForm")
       .build();
 
     // get current Workspace representation
     Form getCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "#getCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "/#getCurrentWorkspaceForm")
       .build();
 
     // update current workspace representation
     Form updateCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "#updateCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "/#updateCurrentWorkspaceForm")
       .build();
 
     // delete current workspace
     Form deleteCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
       .setMethodName(HttpMethod.DELETE.name())
-      .setIRIAsString(baseUri + "#deleteCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "/#deleteCurrentWorkspaceForm")
       .build();
 
 
@@ -300,7 +300,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     Artifact artifact = new Artifact.Builder()
       .addSemanticType(semanticType)
-      .setIRIAsString(baseUri+ "#artifact") //  #artifact
+      .setIRIAsString(baseUri+ "/#artifact") //  #artifact
       .build();
 
     ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
@@ -311,19 +311,19 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // get the representation for this artifact
     Form getArtifactRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "#getArtifactRepresentationForm")
+      .setIRIAsString(baseUri + "/#getArtifactRepresentationForm")
       .build();
 
     // update this artifact
     Form updateArtifactForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "#updateArtifactForm")
+      .setIRIAsString(baseUri + "/#updateArtifactForm")
       .build();
 
     // delete this artifact
     Form deleteArtifactForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.DELETE.name())
-      .setIRIAsString(baseUri + "#deleteArtifactForm")
+      .setIRIAsString(baseUri + "/#deleteArtifactForm")
       .build();
 
     resourceProfileBuilder
@@ -358,7 +358,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     // TODO: isContainedIn should be directly on the artifact not the resourceProfile
     Agent agent = new Agent.Builder()
-      .setIRIAsString(baseUri + "#agent")
+      .setIRIAsString(baseUri + "/#agent")
       .addSemanticType("https://purl.org/hmas/Artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
       .build();
@@ -369,12 +369,12 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // Possible Signifiers of body
     Form getBodyRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "#getBodyRepresentationForm")
+      .setIRIAsString(baseUri + "/#getBodyRepresentationForm")
       .build();
 
     Form updateBodyForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "#updateBodyForm")
+      .setIRIAsString(baseUri + "/#updateBodyForm")
       .build();
 
     profile
@@ -400,6 +400,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setNamespace("hmas","https://purl.org/hmas/")
       .setNamespace("jacamo","https://purl.org/hmas/jacamo/")
       .setNamespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
+      .setNamespace("websub", "http://www.example.org/websub#")
       .write();
   }
 }
