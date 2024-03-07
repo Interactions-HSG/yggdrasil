@@ -351,7 +351,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     // TODO: isContainedIn should be directly on the artifact not the resourceProfile
     Agent agent = new Agent.Builder()
-      .setIRIAsString(baseUri + "#agent")
+      .setIRIAsString(baseUri + "#artifact")
       .addSemanticType("https://purl.org/hmas/Artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
       .build();
