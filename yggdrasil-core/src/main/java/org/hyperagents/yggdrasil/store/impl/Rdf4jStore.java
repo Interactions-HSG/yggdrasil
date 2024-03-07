@@ -3,10 +3,13 @@ package org.hyperagents.yggdrasil.store.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.MalformedQueryException;
@@ -60,7 +63,20 @@ public class Rdf4jStore implements RdfStore {
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
     try {
       final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, entityIri));
-      this.connection.getNamespaces().forEach(model::setNamespace);
+      var connectionNamespaces = new HashMap<String, Namespace>();
+
+      for (Namespace namespace : this.connection.getNamespaces()) {
+        connectionNamespaces.put(namespace.getName(),namespace);
+      }
+
+      var modelIris = RdfModelUtils.collectAllIriNamespaces(model);
+
+      for (String iri : modelIris) {
+        if (connectionNamespaces.containsKey(iri)) {
+          model.setNamespace(connectionNamespaces.get(iri));
+        }
+      }
+
       return Optional.of(model).filter(r -> !r.isEmpty());
     } catch (final RepositoryException e) {
       throw new IOException(e);
