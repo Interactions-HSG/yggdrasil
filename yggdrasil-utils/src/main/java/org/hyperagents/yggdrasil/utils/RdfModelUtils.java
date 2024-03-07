@@ -136,4 +136,27 @@ public final class RdfModelUtils {
   public static IRI createIri(final String iriString) throws IllegalArgumentException {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }
+
+
+  public static Set<String> collectAllIriNamespaces(Model model) {
+    Set<String> iris = new HashSet<>();
+
+    for (Statement statement : model) {
+      if (statement.getSubject() instanceof IRI) {
+        iris.add(((IRI) statement.getSubject()).getNamespace());
+      }
+
+      if (statement.getPredicate() != null) {
+        iris.add((statement.getPredicate()).getNamespace());
+      }
+
+      if (statement.getObject() instanceof IRI) {
+        iris.add(((IRI) statement.getObject()).getNamespace());
+      }
+    }
+
+    return iris;
+  }
+
+
 }
