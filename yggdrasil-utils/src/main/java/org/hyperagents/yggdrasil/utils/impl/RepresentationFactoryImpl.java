@@ -45,14 +45,14 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
-          new Form.Builder(this.httpConfig.getBaseUri() + "/hub/")
-            .setIRIAsString(baseUri + "/#webSubForm")
+          new Form.Builder(this.httpConfig.getBaseUri() + "hub/")
+            .setIRIAsString(baseUri + "#webSubForm")
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
             .build())
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
-              .setIRIAsString(baseUri + "/#webSub" + mode.toString().substring(0,1).toUpperCase() + mode.toString().substring(1) + "Input")
+              .setIRIAsString(baseUri + "#webSub" + mode.toString().substring(0,1).toUpperCase() + mode.toString().substring(1) + "Input")
               .addRequiredSemanticType("http://www.example.org/websub#websubsubscription")
               .setRequired(true)
               .addPropertySpecification("http://www.example.org/websub#topic",
@@ -80,7 +80,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
               ).build()
           ).build()
       )
-        .setIRIAsString(baseUri + "/#" + signifierName)
+        .setIRIAsString(baseUri + "#" + signifierName)
         .build();
   }
 
@@ -88,41 +88,38 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   @Override
   public String createPlatformRepresentation() {
     String baseUri = this.httpConfig.getBaseUri();
+    String workspaces = this.httpConfig.getWorkspacesUri();
     HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
-      .setIRIAsString(baseUri + "/#platform")
+      .setIRIAsString(baseUri + "#platform")
       .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
       .build();
 
     Form createWorkspaceFormJson = new Form.Builder(baseUri + "/workspaces/")
       .setIRIAsString(baseUri + "/#createWorkspaceFormJson")
+    Form createWorkspaceFormJson = new Form.Builder(workspaces)
+      .setIRIAsString(baseUri + "#createWorkspaceFormJson")
       .setMethodName(HttpMethod.POST.name())
       .build();
 
-    Form createWorkspaceFormTxtTurtle = new Form.Builder(baseUri + "/workspaces/")
-      .setIRIAsString(baseUri + "/#createWorkspaceFormTextTurtle")
+    Form createWorkspaceFormTxtTurtle = new Form.Builder(workspaces)
+      .setIRIAsString(baseUri + "#createWorkspaceFormTextTurtle")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("text/turtle")
       .build();
 
-    Form registerToWebSubHub = new Form.Builder(baseUri + "/hub/")
-      .setIRIAsString(baseUri + "/#registerToWebSubHub")
-      .setMethodName(HttpMethod.POST.name())
-      .setContentType("application/json")
-      .build();
-
-    Form sparqlGetQueryForm = new Form.Builder(baseUri + "/query/")
-      .setIRIAsString(baseUri + "/#sparqlGetQueryForm")
+    Form sparqlGetQueryForm = new Form.Builder(baseUri + "query/")
+      .setIRIAsString(baseUri + "#sparqlGetQueryForm")
       .setMethodName(HttpMethod.GET.name())
       .setContentType("application/sparql-query")
       .build();
-    Form sparqlPostQueryForm = new Form.Builder(baseUri + "/query/")
-      .setIRIAsString(baseUri + "/#sparqlPostQueryForm")
+    Form sparqlPostQueryForm = new Form.Builder(baseUri + "query/")
+      .setIRIAsString(baseUri + "#sparqlPostQueryForm")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("application/sparql-query")
       .build();
 
     ResourceProfile resourceProfile = new ResourceProfile.Builder(hypermediaMASPlatform)
-      .setIRIAsString(baseUri + "/")
+      .setIRIAsString(baseUri)
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(createWorkspaceFormJson)
@@ -135,11 +132,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
         ).build())
       .exposeSignifier(
         new Signifier.Builder(
-          new ActionSpecification.Builder(registerToWebSubHub)
-            .build()
-        ).build())
-      .exposeSignifier(
-        new Signifier.Builder(
           new ActionSpecification.Builder(sparqlGetQueryForm)
             .build()
         ).build())
@@ -148,8 +140,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
         ).build())
-      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspaces",baseUri + "/workspaces/",WebSubMode.subscribe))
-      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspaces",baseUri + "/workspaces/",WebSubMode.unsubscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"subscribeToWorkspaces",baseUri + "workspaces/",WebSubMode.subscribe))
+      .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromWorkspaces",baseUri + "workspaces/",WebSubMode.unsubscribe))
       .build();
 
     return serializeHmasResourceProfile(resourceProfile);
@@ -162,15 +154,15 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   ) {
     String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
     Workspace workspace = new Workspace.Builder()
-      .setIRIAsString(baseUri + "/#workspace")
+      .setIRIAsString(baseUri + "#workspace")
       .addSemanticType("https://purl.org/hmas/Workspace")
       .build();
 
     // makeArtifact Signifier
-    Form makeArtifactForm = new Form.Builder(baseUri + "/artifacts/")
+    Form makeArtifactForm = new Form.Builder(baseUri + "artifacts/")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("application/json")
-      .setIRIAsString(baseUri + "/#makeArtifactForm")
+      .setIRIAsString(baseUri + "#makeArtifactForm")
       .build();
     // TODO: Add inputSpecification to makeArtifact
     QualifiedValueSpecification makeArtifactInput = new QualifiedValueSpecification.Builder()
@@ -198,10 +190,10 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .build();
 
     // registerArtifact Signifier
-    Form registerArtifactForm = new Form.Builder(baseUri + "/artifacts/")
+    Form registerArtifactForm = new Form.Builder(baseUri + "artifacts/")
       .setMethodName(HttpMethod.POST.name())
       .setContentType("text/turtle")
-      .setIRIAsString(baseUri + "/#registerArtifactForm")
+      .setIRIAsString(baseUri + "#registerArtifactForm")
       .build();
     QualifiedValueSpecification registerArtifactInput = new QualifiedValueSpecification.Builder()
       .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
@@ -216,40 +208,40 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .build();
 
     // join Workspace Signifier
-    Form joinWorkspaceForm = new Form.Builder(baseUri + "/join/")
+    Form joinWorkspaceForm = new Form.Builder(baseUri + "join/")
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "#/joinWorkspaceForm")
+      .setIRIAsString(baseUri + "#joinWorkspaceForm")
       .build();
 
 
     // leave Workspace Signifier
-    Form leaveWorkspaceForm = new Form.Builder(baseUri + "/leave/")
+    Form leaveWorkspaceForm = new Form.Builder(baseUri + "leave/")
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "/#leaveWorkspaceForm")
+      .setIRIAsString(baseUri + "#leaveWorkspaceForm")
       .build();
 
     // create SubWorkspace Signifier
-    Form createSubWorkspaceForm = new Form.Builder(baseUri + "/")
+    Form createSubWorkspaceForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.POST.name())
-      .setIRIAsString(baseUri + "/#createSubWorkspaceForm")
+      .setIRIAsString(baseUri + "#createSubWorkspaceForm")
       .build();
 
     // get current Workspace representation
-    Form getCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
+    Form getCurrentWorkspaceForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "/#getCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "#getCurrentWorkspaceForm")
       .build();
 
     // update current workspace representation
-    Form updateCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
+    Form updateCurrentWorkspaceForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "/#updateCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "#updateCurrentWorkspaceForm")
       .build();
 
     // delete current workspace
-    Form deleteCurrentWorkspaceForm = new Form.Builder(baseUri + "/")
+    Form deleteCurrentWorkspaceForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.DELETE.name())
-      .setIRIAsString(baseUri + "/#deleteCurrentWorkspaceForm")
+      .setIRIAsString(baseUri + "#deleteCurrentWorkspaceForm")
       .build();
 
 
@@ -300,7 +292,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     Artifact artifact = new Artifact.Builder()
       .addSemanticType(semanticType)
-      .setIRIAsString(baseUri+ "/#artifact") //  #artifact
+      .setIRIAsString(baseUri+ "#artifact") //  #artifact
       .build();
 
     ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
@@ -311,19 +303,19 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // get the representation for this artifact
     Form getArtifactRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "/#getArtifactRepresentationForm")
+      .setIRIAsString(baseUri + "#getArtifactRepresentationForm")
       .build();
 
     // update this artifact
     Form updateArtifactForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "/#updateArtifactForm")
+      .setIRIAsString(baseUri + "#updateArtifactForm")
       .build();
 
     // delete this artifact
     Form deleteArtifactForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.DELETE.name())
-      .setIRIAsString(baseUri + "/#deleteArtifactForm")
+      .setIRIAsString(baseUri + "#deleteArtifactForm")
       .build();
 
     resourceProfileBuilder
@@ -331,17 +323,20 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
         new Signifier.Builder(
           new ActionSpecification.Builder(getArtifactRepresentationForm)
             .build()
-        ).build())
+        ).setIRIAsString(baseUri + "#getArtifactRepresentation")
+          .build())
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(updateArtifactForm)
             .build()
-        ).build())
+        ).setIRIAsString(baseUri + "#updateArtifact")
+          .build())
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(deleteArtifactForm)
             .build()
-        ).build())
+        ).setIRIAsString(baseUri + "#deleteArtifact")
+          .build())
       .exposeSignifier(webSubSignifier(baseUri,"subscribeToArtifact",baseUri,WebSubMode.subscribe))
       .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromArtifact",baseUri,WebSubMode.unsubscribe));
 
@@ -358,7 +353,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
     // TODO: isContainedIn should be directly on the artifact not the resourceProfile
     Agent agent = new Agent.Builder()
-      .setIRIAsString(baseUri + "/#agent")
+      .setIRIAsString(baseUri + "#agent")
       .addSemanticType("https://purl.org/hmas/Artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
       .build();
@@ -369,12 +364,12 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     // Possible Signifiers of body
     Form getBodyRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
-      .setIRIAsString(baseUri + "/#getBodyRepresentationForm")
+      .setIRIAsString(baseUri + "#getBodyRepresentationForm")
       .build();
 
     Form updateBodyForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.PUT.name())
-      .setIRIAsString(baseUri + "/#updateBodyForm")
+      .setIRIAsString(baseUri + "#updateBodyForm")
       .build();
 
     profile
