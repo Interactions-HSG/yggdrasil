@@ -126,7 +126,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       }
                     }))
                     .orElse(RdfStoreFactory.createInMemoryStore());
-          final var platformIri = RdfModelUtils.createIri(this.httpConfig.getBaseUri() + "/");
+          final var platformIri = RdfModelUtils.createIri(this.httpConfig.getBaseUri());
           this.store.addEntityModel(
               platformIri,
               RdfModelUtils.stringToModel(
@@ -149,7 +149,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             environment.getWorkspaces()
                        .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
                          ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
-                             httpConfig.getWorkspacesUri() + "/",
+                             httpConfig.getWorkspacesUri(),
                              w.getName(),
                              w.getParentName().map(httpConfig::getWorkspaceUri),
                              Files.readString(r, StandardCharsets.UTF_8)
@@ -157,7 +157,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                          w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
                              Failable.asConsumer(ar ->
                                ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                                 httpConfig.getArtifactsUri(w.getName()) + "/",
+                                 httpConfig.getArtifactsUri(w.getName()),
                                  a.getName(),
                                  Files.readString(ar, StandardCharsets.UTF_8)
                                ))
@@ -232,7 +232,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityCreated(
-                this.httpConfig.getAgentBodiesUri(content.workspaceName()) + "/",
+                this.httpConfig.getAgentBodiesUri(content.workspaceName()),
                 stringGraphResult
               )
             );
@@ -286,8 +286,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final Model entityModel,
       final IRI workspaceIri
   ) throws IOException {
-    final var artifactIRI = RdfModelUtils.createIri(entityIri + "#artifact");
-    final var workspaceActualIRI = RdfModelUtils.createIri(workspaceIri + "#workspace");
+    final var artifactIRI = RdfModelUtils.createIri(entityIri + "/#artifact");
+    final var workspaceActualIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
     entityModel.add(
         artifactIRI,
         RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
@@ -643,20 +643,25 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private String generateEntityIri(final String requestIri, final String hint) throws IOException {
     final var fullRequestIri = !requestIri.endsWith("/") ? requestIri.concat("/") : requestIri;
     final var optHint = Optional.ofNullable(hint).filter(s -> !s.isEmpty());
+    String regexPattern = "(?<!:)//";
+
     // Try to generate an IRI using the hint provided in the initial request
     if (optHint.isPresent()) {
-      final var candidateIri = fullRequestIri.concat(optHint.get());
+      final var candidateIri = fullRequestIri.concat(optHint.get()).replaceAll(regexPattern, "/");
+
       if (!this.store.containsEntityModel(RdfModelUtils.createIri(candidateIri))) {
         return candidateIri;
       }
     }
     // Generate a new IRI
-    return Stream.generate(() -> UUID.randomUUID().toString())
-                 .map(fullRequestIri::concat)
-                 .dropWhile(Failable.asPredicate(
-                   i -> this.store.containsEntityModel(RdfModelUtils.createIri(i))
-                 ))
-                 .findFirst()
-                 .orElseThrow();
+    var IRI = Stream.generate(() -> UUID.randomUUID().toString()).map(fullRequestIri::concat)
+      .dropWhile(Failable.asPredicate(
+        i -> this.store.containsEntityModel(RdfModelUtils.createIri(i))
+      )).findFirst();
+    if (IRI.isPresent()) {
+      return IRI.get().replaceAll(regexPattern, "/");
+    }
+    throw new IOException("Failed to generate a new IRI");
+
   }
 }
