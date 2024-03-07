@@ -183,15 +183,15 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
           .setName("Name")
           .setDescription("The name of the created artifact")
           .build())
-      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasClass",
+      .addPropertySpecification("https://purl.org/hmas/jacamo/hasClass",
         new StringSpecification.Builder()
           .setRequired(true)
           .setName("Class")
           .setDescription("The class of the created artifact")
           .build())
-      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasInitialisationParameters",
+      .addPropertySpecification("https://purl.org/hmas/jacamo/hasInitialisationParameters",
         new ValueSpecification.Builder()
-          .addRequiredSemanticType("https://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+          .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
           .setName("Initialization parameters")
           .setDescription("A list containing the parameters for initializing the artifact")
           .build())
@@ -207,7 +207,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
       .setIRIAsString("http://example.org/artifact-shape")
       .setRequired(true)
-      .addPropertySpecification("https://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
+      .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
         new StringSpecification.Builder()
           .setRequired(true)
           .setName("representation")
