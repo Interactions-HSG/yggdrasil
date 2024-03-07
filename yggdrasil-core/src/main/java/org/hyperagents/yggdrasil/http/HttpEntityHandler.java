@@ -530,13 +530,14 @@ public class HttpEntityHandler {
 
   // TODO: support different content types
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
-    final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
+    final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
     final var hint = context.request().getHeader("Slug");
     final var entityIri = RdfModelUtils.createIri(requestUri + hint);
 
     try {
       final var entityGraph = RdfModelUtils.stringToModel(entityRepresentation, entityIri, RDFFormat.TURTLE);
 
+      // TODO: if slug is without trailing backslash and representation is with then doesnt work
       if (entityGraph.contains(entityIri, RDF.TYPE, CORE.RESOURCE_PROFILE)) {
         var firstNode = entityGraph.getStatements(entityIri, CORE.IS_PROFILE_OF, null).iterator().next();
         var nodeIri = (IRI) firstNode.getObject();
