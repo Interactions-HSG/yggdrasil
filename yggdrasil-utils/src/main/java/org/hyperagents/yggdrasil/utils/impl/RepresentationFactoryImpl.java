@@ -177,7 +177,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
       .setIRIAsString("http://example.org/artifact-shape")
       .setRequired(true)
-      .addPropertySpecification("https://purl.org/hmas/agents-artifacts/hasName",
+      .addPropertySpecification("https://purl.org/hmas/jacamo/hasName",
         new StringSpecification.Builder()
           .setRequired(true)
           .setName("Name")
@@ -360,7 +360,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     Agent agent = new Agent.Builder()
       .setIRIAsString(baseUri + "#agent")
       .addSemanticType("https://purl.org/hmas/Artifact")
-      .addSemanticType("https://purl.org/hmas/agents-artifacts#Body")
+      .addSemanticType("https://purl.org/hmas/jacamo/Body")
       .build();
 
     ResourceProfile.Builder profile = new ResourceProfile.Builder(agent)
@@ -398,7 +398,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
       .setNamespace("hmas","https://purl.org/hmas/")
-      .setNamespace("aa","https://purl.org/hmas/agents-artifacts/")
+      .setNamespace("jacamo","https://purl.org/hmas/jacamo/")
       .setNamespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
       .write();
   }

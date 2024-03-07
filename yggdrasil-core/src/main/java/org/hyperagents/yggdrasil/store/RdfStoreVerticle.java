@@ -219,7 +219,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RdfModelUtils.createIri(this.httpConfig.getAgentUri(content.agentName()));
             entityModel.add(
                 entityIri,
-                RdfModelUtils.createIri("https://example.org/isBodyOf"),
+                RdfModelUtils.createIri("https://purl.org/hmas/jacamo/isBodyOf"),
                 agentIri
             );
             entityModel.add(
