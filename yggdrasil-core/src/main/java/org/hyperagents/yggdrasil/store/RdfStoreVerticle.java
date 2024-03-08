@@ -204,6 +204,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         content.agentName()
     );
     final var entityIri = RdfModelUtils.createIri(bodyIri);
+    final var entityBodyIri = RdfModelUtils.createIri(bodyIri + "#artifact");
     Optional
         .ofNullable(content.bodyRepresentation())
         .filter(s -> !s.isEmpty())
@@ -218,7 +219,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var agentIri =
                 RdfModelUtils.createIri(this.httpConfig.getAgentUri(content.agentName()));
             entityModel.add(
-                entityIri,
+                entityBodyIri,
                 RdfModelUtils.createIri("https://purl.org/hmas/jacamo/isBodyOf"),
                 agentIri
             );
@@ -286,8 +287,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final Model entityModel,
       final IRI workspaceIri
   ) throws IOException {
-    final var artifactIRI = RdfModelUtils.createIri(entityIri + "/#artifact");
-    final var workspaceActualIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
+    final var artifactIRI = entityIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(entityIri + "#artifact") : RdfModelUtils.createIri(entityIri + "/#artifact");
+    final var workspaceActualIRI = workspaceIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(workspaceIri + "#workspace") : RdfModelUtils.createIri(workspaceIri + "/#workspace");
     entityModel.add(
         artifactIRI,
         RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
