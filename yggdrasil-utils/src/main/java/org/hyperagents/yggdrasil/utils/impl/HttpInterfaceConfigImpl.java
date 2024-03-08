@@ -72,7 +72,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getAgentBodiesUri(final String workspaceName) {
-    return this.getWorkspaceUri(workspaceName) + "agents/";
+    return this.getWorkspaceUri(workspaceName) + "artifacts/";
   }
 
   @Override
