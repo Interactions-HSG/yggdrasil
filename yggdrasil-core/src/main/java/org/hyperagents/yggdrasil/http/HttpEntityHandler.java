@@ -92,7 +92,7 @@ public class HttpEntityHandler {
   }
 
   public void handleGetEntity(final RoutingContext routingContext) {
-    final var entityIri = this.httpConfig.getBaseUri() + routingContext.request().path();
+    final var entityIri = this.httpConfig.getBaseUri() + routingContext.request().path().substring(1);
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
         .onComplete(
