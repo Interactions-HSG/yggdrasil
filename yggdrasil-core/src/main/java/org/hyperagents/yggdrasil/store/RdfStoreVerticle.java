@@ -217,7 +217,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RdfModelUtils.createIri(this.httpConfig.getWorkspaceUri(content.workspaceName()));
             this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri);
             final var agentIri =
-                RdfModelUtils.createIri(this.httpConfig.getAgentUri(content.agentName()));
+                RdfModelUtils.createIri(content.agentID());
             entityModel.add(
                 entityBodyIri,
                 RdfModelUtils.createIri("https://purl.org/hmas/jacamo/isBodyOf"),

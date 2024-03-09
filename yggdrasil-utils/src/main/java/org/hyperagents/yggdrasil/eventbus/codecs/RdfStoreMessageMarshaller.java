@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
 /**
- * This class is responsible for serializing and deserializing 
+ * This class is responsible for serializing and deserializing
  * RdfStoreMessage objects to and from JSON.
  */
 public class RdfStoreMessageMarshaller
@@ -102,6 +102,7 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.CREATE_BODY.getName()
         );
         json.addProperty(MessageFields.WORKSPACE_NAME.getName(), m.workspaceName());
+        json.addProperty(MessageFields.AGENT_ID.getName(), m.agentID());
         json.addProperty(MessageFields.AGENT_NAME.getName(), m.agentName());
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.bodyRepresentation());
       }
@@ -142,6 +143,7 @@ public class RdfStoreMessageMarshaller
       );
       case CREATE_BODY -> new RdfStoreMessage.CreateBody(
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
         jsonObject.get(MessageFields.AGENT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );

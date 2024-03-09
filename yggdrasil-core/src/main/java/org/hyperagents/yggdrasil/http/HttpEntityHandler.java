@@ -347,6 +347,7 @@ public class HttpEntityHandler {
           this.rdfStoreMessagebox
               .sendMessage(new RdfStoreMessage.CreateBody(
                 workspaceName,
+                agentId,
                 this.getAgentNameFromId(agentId),
                 response.body()
               ))

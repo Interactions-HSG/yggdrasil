@@ -47,6 +47,7 @@ public sealed interface RdfStoreMessage {
    */
   record CreateBody(
       String workspaceName,
+      String agentID,
       String agentName,
       String bodyRepresentation
   ) implements RdfStoreMessage {
