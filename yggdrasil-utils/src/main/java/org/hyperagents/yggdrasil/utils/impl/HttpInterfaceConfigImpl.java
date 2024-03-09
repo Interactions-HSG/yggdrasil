@@ -82,6 +82,6 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getAgentUri(final String agentName) {
-    return this.baseUri + "/agents/" + agentName + "/";
+    return this.baseUri + "agents/" + agentName + "/";
   }
 }
