@@ -1,6 +1,6 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
-import ch.unisg.ics.interactions.hmas.core.hostables.Agent;
+
 import ch.unisg.ics.interactions.hmas.core.hostables.Artifact;
 import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
@@ -350,9 +350,8 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
 
     // TODO: isContainedIn should be directly on the artifact not the resourceProfile
-    Agent agent = new Agent.Builder()
+    Artifact agent = new Artifact.Builder()
       .setIRIAsString(baseUri + "#artifact")
-      .addSemanticType("https://purl.org/hmas/Artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
       .build();
 
