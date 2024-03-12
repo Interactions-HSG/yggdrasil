@@ -396,12 +396,14 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String getAgentNameFromAgentUri(final String agentUri) {
-    return Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
-                  .matcher(agentUri)
-                  .results()
-                  .findFirst()
-                  .orElseThrow()
-                  .group(1);
+    var returnVal = Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
+      .matcher(agentUri)
+      .results()
+      .findFirst();
+    if (returnVal.isPresent()) {
+      return returnVal.get().group(1);
+    }
+    return "anonymous-agent";
   }
 
   private AgentId getAgentId(final AgentCredential credential, final WorkspaceId workspaceId) {

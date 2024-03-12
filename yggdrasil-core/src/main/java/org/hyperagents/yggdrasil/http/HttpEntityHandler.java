@@ -484,13 +484,16 @@ public class HttpEntityHandler {
         });
   }
 
+  // TODO getAgentNameFromId is also in CartagoVerticle needs to be linked!
   private String getAgentNameFromId(final String agentId) {
-    return Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
+    var returnVal = Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
                   .matcher(agentId)
                   .results()
-                  .findFirst()
-                  .orElseThrow()
-                  .group(1);
+                  .findFirst();
+    if (returnVal.isPresent()) {
+      return returnVal.get().group(1);
+    }
+    return "anonymous-agent";
   }
 
   private Map<String, List<String>> getHeaders(final String entityIri) {

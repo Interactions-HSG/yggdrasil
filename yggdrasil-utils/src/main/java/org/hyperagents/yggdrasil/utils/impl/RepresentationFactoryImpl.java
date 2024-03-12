@@ -349,6 +349,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   ) {
     String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
 
+    // TODO: set #body everywhere
     Artifact agent = new Artifact.Builder()
       .setIRIAsString(baseUri + "#artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
