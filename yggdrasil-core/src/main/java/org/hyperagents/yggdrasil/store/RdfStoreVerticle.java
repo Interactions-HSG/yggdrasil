@@ -198,7 +198,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private void handleCreateBody(
       final RdfStoreMessage.CreateBody content,
       final Message<RdfStoreMessage> message
-  ) throws IOException {
+  ) {
     final var bodyIri = this.httpConfig.getAgentBodyUri(
         content.workspaceName(),
         content.agentName()

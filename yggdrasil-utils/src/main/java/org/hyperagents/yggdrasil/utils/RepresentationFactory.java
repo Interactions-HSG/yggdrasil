@@ -32,7 +32,6 @@ public interface RepresentationFactory {
    *
    * @param workspaceName the name of the workspace
    * @param artifactName the name of the artifact
-   * @param securityScheme the security scheme for the artifact
    * @param semanticType the semantic type of the artifact
    * @param metadata the metadata of the artifact
    * @param actionAffordances the action affordances of the artifact
@@ -51,7 +50,6 @@ public interface RepresentationFactory {
    *
    * @param workspaceName the name of the workspace
    * @param agentId the ID of the agent
-   * @param securityScheme the security scheme for the body
    * @param metadata the metadata of the body
    * @return the body representation as a string
    */

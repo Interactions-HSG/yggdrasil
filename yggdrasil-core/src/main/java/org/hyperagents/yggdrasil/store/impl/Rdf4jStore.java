@@ -145,35 +145,35 @@ public class Rdf4jStore implements RdfStore {
         originalQueryDataset.getNamedGraphs().forEach(queryDataset::addNamedGraph);
       }
       preparedQuery.setDataset(queryDataset);
-      if (preparedQuery instanceof TupleQuery preparedTupleQuery) {
-        preparedTupleQuery.evaluate(
-            responseContentType.equals("application/sparql-results+xml")
-            ? new SPARQLResultsXMLWriter(out)
-            : (responseContentType.equals("application/sparql-results+json")
-               ? new SPARQLResultsJSONWriter(out)
-               : (responseContentType.equals("text/tab-separated-values")
-                  ? new SPARQLResultsTSVWriter(out)
-                  : new SPARQLResultsCSVWriter(out)
-                 )
-              )
-        );
-      } else if (preparedQuery instanceof BooleanQuery preparedBooleanQuery) {
-        (
-          responseContentType.equals("application/sparql-results+xml")
-          ? new SPARQLBooleanXMLWriter(out)
-          : (responseContentType.equals("application/sparql-results+json")
-             ? new SPARQLBooleanJSONWriter(out)
-             : new BooleanTextWriter(out)
+        switch (preparedQuery) {
+            case TupleQuery preparedTupleQuery -> preparedTupleQuery.evaluate(
+                    responseContentType.equals("application/sparql-results+xml")
+                            ? new SPARQLResultsXMLWriter(out)
+                            : (responseContentType.equals("application/sparql-results+json")
+                            ? new SPARQLResultsJSONWriter(out)
+                            : (responseContentType.equals("text/tab-separated-values")
+                            ? new SPARQLResultsTSVWriter(out)
+                            : new SPARQLResultsCSVWriter(out)
+                    )
+                    )
+            );
+            case BooleanQuery preparedBooleanQuery -> (
+                    responseContentType.equals("application/sparql-results+xml")
+                            ? new SPARQLBooleanXMLWriter(out)
+                            : (responseContentType.equals("application/sparql-results+json")
+                            ? new SPARQLBooleanJSONWriter(out)
+                            : new BooleanTextWriter(out)
+                    )
             )
-        )
-        .handleBoolean(preparedBooleanQuery.evaluate());
-      } else if (preparedQuery instanceof GraphQuery preparedGraphQuery) {
-        out.writeBytes(
-            RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
-                                        RDFFormat.TURTLE)
-                         .getBytes(StandardCharsets.UTF_8)
-        );
-      }
+                    .handleBoolean(preparedBooleanQuery.evaluate());
+            case GraphQuery preparedGraphQuery -> out.writeBytes(
+                    RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
+                                    RDFFormat.TURTLE)
+                            .getBytes(StandardCharsets.UTF_8)
+            );
+            default -> {
+            }
+        }
       return out.toString(StandardCharsets.UTF_8);
     } catch (final MalformedQueryException e) {
       throw new IllegalArgumentException(e);
