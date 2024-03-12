@@ -213,9 +213,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
           Failable.asConsumer(s -> {
             final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
-            final var workspaceIri =
-                RdfModelUtils.createIri(this.httpConfig.getWorkspaceUri(content.workspaceName()));
-            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri);
+            final var workspaceIri = this.httpConfig.getWorkspaceUri(content.workspaceName());
+            final var workspaceActualIri = workspaceIri.endsWith("/") ? RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) : RdfModelUtils.createIri(workspaceIri);
+            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceActualIri);
             final var agentIri =
                 RdfModelUtils.createIri(content.agentID());
             entityModel.add(

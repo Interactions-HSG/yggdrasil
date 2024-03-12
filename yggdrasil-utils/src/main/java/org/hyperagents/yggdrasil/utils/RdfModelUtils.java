@@ -39,7 +39,7 @@ public final class RdfModelUtils {
     return -1;
   }
 
-
+  // TODO: Should get base as a parameter
   public static String modelToString(final Model model, final RDFFormat format) throws IOException {
     var firstStatement = model.getStatements(null,null,createIri("https://purl.org/hmas/ResourceProfile")).iterator().next();
     var base = firstStatement.getSubject().toString();

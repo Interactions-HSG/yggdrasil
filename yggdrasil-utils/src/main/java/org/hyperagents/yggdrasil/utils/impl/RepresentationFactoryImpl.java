@@ -349,7 +349,6 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
   ) {
     String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
 
-    // TODO: isContainedIn should be directly on the artifact not the resourceProfile
     Artifact agent = new Artifact.Builder()
       .setIRIAsString(baseUri + "#artifact")
       .addSemanticType("https://purl.org/hmas/jacamo/Body")
