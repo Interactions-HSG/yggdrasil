@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -137,6 +138,9 @@ public final class RdfModelUtils {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }
 
+  public static Resource createBNode() {
+    return SimpleValueFactory.getInstance().createBNode();
+  }
 
   public static Set<String> collectAllIriNamespaces(Model model) {
     Set<String> iris = new HashSet<>();

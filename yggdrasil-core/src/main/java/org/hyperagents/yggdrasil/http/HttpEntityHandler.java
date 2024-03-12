@@ -536,46 +536,54 @@ public class HttpEntityHandler {
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
     final var hint = context.request().getHeader("Slug");
-    final var entityIri = RdfModelUtils.createIri(requestUri + hint);
+    final var name = hint.endsWith("/") ? hint : hint + "/";
+    final var entityIri = RdfModelUtils.createIri(requestUri + name);
+
 
     try {
       final var entityGraph = RdfModelUtils.stringToModel(entityRepresentation, entityIri, RDFFormat.TURTLE);
+      final var firstNode = entityGraph.getStatements(null, RDF.TYPE, CORE.RESOURCE_PROFILE).iterator().next();
+
+      if (firstNode == null) {
+        context.fail(HttpStatus.SC_BAD_REQUEST);
+        return;
+      }
+
+      var test = firstNode.toString().substring(1,this.httpConfig.getBaseUri().length()+1);
+      if (firstNode.getSubject().isIRI() && !test.equals(this.httpConfig.getBaseUri())) {
+        context.fail(HttpStatus.SC_BAD_REQUEST);
+        return;
+      }
 
       // TODO: if slug is without trailing backslash and representation is with then doesnt work
-      if (entityGraph.contains(entityIri, RDF.TYPE, CORE.RESOURCE_PROFILE)) {
-        var firstNode = entityGraph.getStatements(entityIri, CORE.IS_PROFILE_OF, null).iterator().next();
-        var nodeIri = (IRI) firstNode.getObject();
-
-        if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.ARTIFACT)) {
-          this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateArtifact(
-              requestUri,
-              hint,
-              entityRepresentation
-            ))
-            .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-        } else if (entityGraph.contains(nodeIri, RDF.TYPE, CORE.WORKSPACE)) {
-          this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              requestUri,
-              hint,
-              entityGraph.stream()
-                .filter(t ->
-                  t.getSubject().equals(entityIri)
-                    && t.getPredicate().equals(RdfModelUtils.createIri(
-                    "https://purl.org/hmas/isContainedIn"
-                  ))
-                )
-                .map(Statement::getObject)
-                .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                .flatMap(Optional::stream)
-                .map(IRI::toString)
-                .findFirst(),
-              entityRepresentation
-            ))
-            .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-        }
-
+      if (entityGraph.contains(null, RDF.TYPE, CORE.ARTIFACT)) {
+        this.rdfStoreMessagebox
+          .sendMessage(new RdfStoreMessage.CreateArtifact(
+            requestUri,
+            name,
+            entityRepresentation
+          ))
+          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+      } else if (entityGraph.contains(null, RDF.TYPE, CORE.WORKSPACE)) {
+        this.rdfStoreMessagebox
+          .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            requestUri,
+            name,
+            entityGraph.stream()
+              .filter(t ->
+                t.getSubject().equals(entityIri)
+                  && t.getPredicate().equals(RdfModelUtils.createIri(
+                  "https://purl.org/hmas/isContainedIn"
+                ))
+              )
+              .map(Statement::getObject)
+              .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+              .flatMap(Optional::stream)
+              .map(IRI::toString)
+              .findFirst(),
+            entityRepresentation
+          ))
+          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
       } else {
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }

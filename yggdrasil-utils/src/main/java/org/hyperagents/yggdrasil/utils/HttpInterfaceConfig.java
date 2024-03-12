@@ -1,11 +1,12 @@
 package org.hyperagents.yggdrasil.utils;
 
 import io.vertx.core.shareddata.Shareable;
+import org.eclipse.rdf4j.model.IRI;
 
 /**
  * Represents the configuration for an HTTP interface.
  * This interface extends the Shareable interface from the Vert.x library.
- * It provides methods to retrieve the host, port, base URI, 
+ * It provides methods to retrieve the host, port, base URI,
  * and various URIs related to workspaces, artifacts, agents, etc.
  */
 public interface HttpInterfaceConfig extends Shareable {
@@ -29,6 +30,9 @@ public interface HttpInterfaceConfig extends Shareable {
    * @return the base URI
    */
   String getBaseUri();
+
+  IRI getBaseIrI();
+
 
   /**
    * Gets the URI for retrieving all workspaces.

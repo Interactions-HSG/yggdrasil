@@ -3,8 +3,11 @@ package org.hyperagents.yggdrasil.utils.impl;
 import io.vertx.core.json.JsonObject;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 
 /**
  * Implementation of the HttpInterfaceConfig interface
@@ -48,6 +51,11 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   @Override
   public String getBaseUri() {
     return this.baseUri;
+  }
+
+  @Override
+  public IRI getBaseIrI() {
+    return RdfModelUtils.createIri(this.baseUri);
   }
 
   @Override
