@@ -4,7 +4,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
@@ -29,13 +28,15 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   public HttpInterfaceConfigImpl(final JsonObject config) {
     final var httpConfig = JsonObjectUtils.getJsonObject(config, "http-config", LOGGER::error);
     this.host = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "host", LOGGER::error))
-                          .orElse("0.0.0.0");
+      .orElse("0.0.0.0");
     this.port = httpConfig.flatMap(c -> JsonObjectUtils.getInteger(c, "port", LOGGER::error))
-                          .orElse(8080);
-    this.baseUri =
-            httpConfig
-                    .flatMap(c -> JsonObjectUtils.getString(c, "base-uri", LOGGER::error)).orElseGet(()
-                -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":" + this.port + "/");
+      .orElse(8080);
+
+    String baseUri1;
+    baseUri1 = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "base-uri", LOGGER::error)).orElseGet(()
+          -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":" + this.port + "/");
+    baseUri1 = baseUri1.endsWith("/") ? baseUri1 : baseUri1 + "/";
+    this.baseUri = baseUri1;
   }
 
   @Override
