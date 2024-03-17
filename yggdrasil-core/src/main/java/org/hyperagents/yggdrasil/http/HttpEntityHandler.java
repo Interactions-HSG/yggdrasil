@@ -16,6 +16,8 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+
+import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -536,7 +538,7 @@ public class HttpEntityHandler {
   private void createEntity(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
     final var hint = context.request().getHeader("Slug");
-    final var name = hint.endsWith("/") ? hint : hint + "/";
+    final var name = hint.endsWith("/") ? hint.substring(0,hint.length() - 1) : hint;
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
 
 
@@ -565,25 +567,44 @@ public class HttpEntityHandler {
           ))
           .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
       } else if (entityGraph.contains(null, RDF.TYPE, CORE.WORKSPACE)) {
-        this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateWorkspace(
-            requestUri,
-            name,
-            entityGraph.stream()
-              .filter(t ->
-                t.getSubject().equals(entityIri)
-                  && t.getPredicate().equals(RdfModelUtils.createIri(
-                  "https://purl.org/hmas/isContainedIn"
-                ))
-              )
-              .map(Statement::getObject)
-              .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-              .flatMap(Optional::stream)
-              .map(IRI::toString)
-              .findFirst(),
-            entityRepresentation
-          ))
-          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+        this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.CreateWorkspace(name))
+          .compose(response -> {
+            var workspaceRepresentation = response.body();
+              try {
+                  var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
+                  entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
+                  baseModel.getNamespaces().forEach(entityGraph::setNamespace);
+              } catch (IOException e) {
+                  throw new RuntimeException(e);
+              }
+
+              try {
+                  return this.rdfStoreMessagebox
+                  .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                    requestUri,
+                    name,
+                    entityGraph.stream()
+                      .filter(t ->
+                        t.getSubject().equals(entityIri)
+                          && t.getPredicate().equals(RdfModelUtils.createIri(
+                          "https://purl.org/hmas/isContainedIn"
+                        ))
+                      )
+                      .map(Statement::getObject)
+                      .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                      .flatMap(Optional::stream)
+                      .map(IRI::toString)
+                      .findFirst(),
+                    RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE)
+                  ));
+              } catch (IOException e) {
+                  throw new RuntimeException(e);
+              }
+          }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+          .onFailure(context::fail);
+
       } else {
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }

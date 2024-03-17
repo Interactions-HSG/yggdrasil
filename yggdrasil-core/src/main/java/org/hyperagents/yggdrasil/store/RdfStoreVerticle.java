@@ -28,11 +28,7 @@ import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMes
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
-import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
-import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
-import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
-import org.hyperagents.yggdrasil.utils.RdfModelUtils;
-import org.hyperagents.yggdrasil.utils.WebSubConfig;
+import org.hyperagents.yggdrasil.utils.*;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 /**
@@ -48,12 +44,15 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private HttpInterfaceConfig httpConfig;
   private RdfStore store;
 
+  private RepresentationFactoryImpl representationFactory;
+
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx.sharedData()
                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
                                 .get("default");
+    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       this.vertx.eventBus(),
       this.vertx.sharedData()
@@ -130,7 +129,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           this.store.addEntityModel(
               platformIri,
               RdfModelUtils.stringToModel(
-                new RepresentationFactoryImpl(this.httpConfig).createPlatformRepresentation(),
+                this.representationFactory.createPlatformRepresentation(),
                 platformIri,
                 RDFFormat.TURTLE
               )
@@ -263,6 +262,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
           Failable.asConsumer(s -> {
             final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+
             final var workspaceIri = RdfModelUtils.createIri(
                 artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
             );
@@ -337,7 +337,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var workspaceIri =
         this.generateEntityIri(requestIri.toString(), content.workspaceName());
     final var resourceIRI = RdfModelUtils.createIri(workspaceIri);
-    final var workspaceIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
+
+    IRI workspaceIRI;
+    if (workspaceIri.endsWith("/")) {
+      workspaceIRI = RdfModelUtils.createIri(workspaceIri + "#workspace");
+    } else {
+      workspaceIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
+    }
+
     Optional
         .ofNullable(content.workspaceRepresentation())
         .filter(s -> !s.isEmpty())

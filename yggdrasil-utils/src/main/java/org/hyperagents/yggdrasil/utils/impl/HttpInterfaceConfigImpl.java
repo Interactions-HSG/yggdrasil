@@ -66,31 +66,44 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getWorkspaceUri(final String workspaceName) {
-    return this.getWorkspacesUri() + workspaceName + "/";
+    return this.getWorkspacesUri() + validateInput(workspaceName) + "/";
   }
 
   @Override
   public String getArtifactsUri(final String workspaceName) {
-    return this.getWorkspaceUri(workspaceName) + "artifacts/";
+
+    return this.getWorkspaceUri(validateInput(workspaceName)) + "artifacts/";
   }
 
   @Override
   public String getArtifactUri(final String workspaceName, final String artifactName) {
-    return this.getArtifactsUri(workspaceName) + artifactName + "/";
+    var cleanWorkspaceName = validateInput(workspaceName);
+    var cleanArtifactName = validateInput(artifactName);
+    return this.getArtifactsUri(cleanWorkspaceName) + cleanArtifactName + "/";
   }
 
   @Override
   public String getAgentBodiesUri(final String workspaceName) {
-    return this.getWorkspaceUri(workspaceName) + "artifacts/";
+    return this.getWorkspaceUri(validateInput(workspaceName)) + "artifacts/";
   }
 
   @Override
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
-    return this.getAgentBodiesUri(workspaceName) + agentName + "/";
+    var cleanWorkspaceName = validateInput(workspaceName);
+    var cleanAgentName = validateInput(agentName);
+    return this.getAgentBodiesUri(cleanWorkspaceName) + cleanAgentName + "/";
   }
 
   @Override
   public String getAgentUri(final String agentName) {
-    return this.baseUri + "agents/" + agentName + "/";
+    var cleanAgentName = validateInput(agentName);
+    return this.baseUri + "agents/" + validateInput(cleanAgentName) + "/";
+  }
+
+
+  // TODO: Add more validation to what is acceptable url
+  private String validateInput(String StringInput) {
+      return StringInput.replaceAll("/","");
   }
 }
+
