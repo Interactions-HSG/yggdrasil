@@ -110,21 +110,24 @@ public class HttpEntityHandler {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
       return;
     }
-
-    this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateWorkspace(workspaceName))
-        .compose(response ->
-          this.rdfStoreMessagebox
+    this.rdfStoreMessagebox.sendMessage(
+      new RdfStoreMessage.GetEntityIri(this.httpConfig.getWorkspacesUri(), workspaceName)
+      ).compose(nameResponse ->
+        this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.CreateWorkspace(nameResponse.body()))
+          .compose(response ->
+            this.rdfStoreMessagebox
               .sendMessage(new RdfStoreMessage.CreateWorkspace(
                 this.httpConfig.getBaseUri() + context.request().path(),
-                workspaceName,
+                nameResponse.body(),
                 Optional.empty(),
                 response.body()
               ))
               .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
               .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
-        )
-        .onFailure(context::fail);
+          )
+          .onFailure(context::fail)
+        );
   }
 
   public void handleCreateArtifact(final RoutingContext context) {
@@ -139,24 +142,28 @@ public class HttpEntityHandler {
     final var artifactName =
         ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
-    this.cartagoMessagebox
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(
+      this.httpConfig.getBaseUri() + context.request().path(), artifactName)
+    ).compose(nameResponse ->
+      this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
-            agentId,
-            context.pathParam(WORKSPACE_ID_PARAM),
-            artifactName,
-            representation
+          agentId,
+          context.pathParam(WORKSPACE_ID_PARAM),
+          nameResponse.body(),
+          representation
         ))
         .compose(response ->
           this.rdfStoreMessagebox
-              .sendMessage(new RdfStoreMessage.CreateArtifact(
-                this.httpConfig.getBaseUri() + context.request().path(),
-                artifactName,
-                response.body()
-              ))
-              .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-              .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+            .sendMessage(new RdfStoreMessage.CreateArtifact(
+              this.httpConfig.getBaseUri() + context.request().path(),
+              nameResponse.body(),
+              response.body()
+            ))
+            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
         )
-        .onFailure(context::fail);
+        .onFailure(context::fail))
+    ;
   }
 
   // TODO: add payload validation
@@ -581,39 +588,42 @@ public class HttpEntityHandler {
             ).onFailure(context::fail));
 
       } else if (entityGraph.contains(null, RDF.TYPE, CORE.WORKSPACE)) {
-        this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.CreateWorkspace(name))
-          .compose(response -> {
-            var workspaceRepresentation = response.body();
-              try {
+        this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
+          actualEntityName ->
+            this.cartagoMessagebox
+              .sendMessage(new CartagoMessage.CreateWorkspace(actualEntityName.body()))
+              .compose(response -> {
+                var workspaceRepresentation = response.body();
+                try {
                   var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
                   entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                   baseModel.getNamespaces().forEach(entityGraph::setNamespace);
-                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE);
-              } catch (IOException e) {
+                  workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE);
+                } catch (IOException e) {
                   throw new RuntimeException(e);
-              }
-            return this.rdfStoreMessagebox
-              .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                requestUri,
-                name,
-                entityGraph.stream()
-                  .filter(t ->
-                    t.getSubject().equals(entityIri)
-                      && t.getPredicate().equals(RdfModelUtils.createIri(
-                      "https://purl.org/hmas/isContainedIn"
-                    ))
-                  )
-                  .map(Statement::getObject)
-                  .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                  .flatMap(Optional::stream)
-                  .map(IRI::toString)
-                  .findFirst(),
-                workspaceRepresentation
-              ));
-          }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
-          .onFailure(context::fail);
+                }
+                return this.rdfStoreMessagebox
+                  .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                    requestUri,
+                    actualEntityName.body(),
+                    entityGraph.stream()
+                      .filter(t ->
+                        t.getSubject().equals(entityIri)
+                          && t.getPredicate().equals(RdfModelUtils.createIri(
+                          "https://purl.org/hmas/isContainedIn"
+                        ))
+                      )
+                      .map(Statement::getObject)
+                      .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                      .flatMap(Optional::stream)
+                      .map(IRI::toString)
+                      .findFirst(),
+                    workspaceRepresentation
+                  ));
+              }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+              .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+              .onFailure(context::fail)
+          );
       } else {
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }
