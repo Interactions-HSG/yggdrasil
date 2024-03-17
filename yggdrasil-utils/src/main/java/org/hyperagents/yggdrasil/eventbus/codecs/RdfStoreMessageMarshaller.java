@@ -69,6 +69,15 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.GET_ENTITY.getName()
         );
       }
+      case RdfStoreMessage.GetEntityIri(String requestUri, String slug) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
+        json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), slug);
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.GET_ENTITY_IRI.getName()
+        );
+      }
+
       case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
         json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
@@ -127,6 +136,10 @@ public class RdfStoreMessageMarshaller
     ) {
       case GET_ENTITY -> new RdfStoreMessage.GetEntity(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+      );
+      case GET_ENTITY_IRI -> new RdfStoreMessage.GetEntityIri(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.ENTITY_URI_HINT.getName()).getAsString()
       );
       case CREATE_ARTIFACT -> new RdfStoreMessage.CreateArtifact(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),

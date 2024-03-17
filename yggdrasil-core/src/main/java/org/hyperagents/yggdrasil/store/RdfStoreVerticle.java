@@ -64,6 +64,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     ownMessagebox.receiveMessages(message -> {
       try {
         switch (message.body()) {
+          case RdfStoreMessage.GetEntityIri(String requestUri, String slug) ->
+            message.reply(this.handleGetEntityIri(requestUri, slug));
           case RdfStoreMessage.GetEntity(String requestUri) ->
             this.handleGetEntity(RdfModelUtils.createIri(requestUri), message);
           case RdfStoreMessage.CreateArtifact content ->
@@ -646,6 +648,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void replyEntityNotFound(final Message<RdfStoreMessage> message) {
     message.fail(HttpStatus.SC_NOT_FOUND, "Entity not found.");
+  }
+
+
+  private String handleGetEntityIri(final String requestIri, final String hint) throws IOException {
+    final var fullRequestIri = !requestIri.endsWith("/") ? requestIri.concat("/") : requestIri;
+    final var optHint = Optional.ofNullable(hint).filter(s -> !s.isEmpty());
+    String regexPattern = "(?<!:)//";
+
+    // Try to generate an IRI using the hint provided in the initial request
+    if (optHint.isPresent()) {
+      final var candidateIri = fullRequestIri.concat(optHint.get()).replaceAll(regexPattern, "/");
+
+      if (!this.store.containsEntityModel(RdfModelUtils.createIri(candidateIri))) {
+        return hint;
+      }
+    }
+    return UUID.randomUUID().toString();
   }
 
   private String generateEntityIri(final String requestIri, final String hint) throws IOException {

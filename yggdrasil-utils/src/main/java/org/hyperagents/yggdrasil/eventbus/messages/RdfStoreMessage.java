@@ -13,6 +13,10 @@ import java.util.Optional;
  */
 public sealed interface RdfStoreMessage {
 
+
+  record GetEntityIri(String requestUri, String slug) implements RdfStoreMessage {
+  }
+
   /**
    * A record representing a request to get an entity from the RDF store.
    *

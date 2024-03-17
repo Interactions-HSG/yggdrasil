@@ -540,6 +540,7 @@ public class HttpEntityHandler {
     final var hint = context.request().getHeader("Slug");
     final var name = hint.endsWith("/") ? hint.substring(0,hint.length() - 1) : hint;
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
+    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
 
     try {
@@ -559,13 +560,26 @@ public class HttpEntityHandler {
 
       // TODO: if slug is without trailing backslash and representation is with then doesnt work
       if (entityGraph.contains(null, RDF.TYPE, CORE.ARTIFACT)) {
-        this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateArtifact(
-            requestUri,
-            name,
-            entityRepresentation
-          ))
-          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+
+        this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
+          actualEntityName -> this.cartagoMessagebox
+            .sendMessage(new CartagoMessage.CreateArtifact(
+              agentId,
+              context.pathParam(WORKSPACE_ID_PARAM),
+              actualEntityName.body(),
+              entityRepresentation
+            ))
+            .compose(response ->
+              this.rdfStoreMessagebox
+                .sendMessage(new RdfStoreMessage.CreateArtifact(
+                  this.httpConfig.getBaseUri() + context.request().path(),
+                  actualEntityName.body(),
+                  response.body()
+                ))
+                .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+                .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+            ).onFailure(context::fail));
+
       } else if (entityGraph.contains(null, RDF.TYPE, CORE.WORKSPACE)) {
         this.cartagoMessagebox
           .sendMessage(new CartagoMessage.CreateWorkspace(name))
@@ -575,36 +589,31 @@ public class HttpEntityHandler {
                   var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
                   entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                   baseModel.getNamespaces().forEach(entityGraph::setNamespace);
+                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE);
               } catch (IOException e) {
                   throw new RuntimeException(e);
               }
-
-              try {
-                  return this.rdfStoreMessagebox
-                  .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                    requestUri,
-                    name,
-                    entityGraph.stream()
-                      .filter(t ->
-                        t.getSubject().equals(entityIri)
-                          && t.getPredicate().equals(RdfModelUtils.createIri(
-                          "https://purl.org/hmas/isContainedIn"
-                        ))
-                      )
-                      .map(Statement::getObject)
-                      .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                      .flatMap(Optional::stream)
-                      .map(IRI::toString)
-                      .findFirst(),
-                    RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE)
-                  ));
-              } catch (IOException e) {
-                  throw new RuntimeException(e);
-              }
+            return this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                requestUri,
+                name,
+                entityGraph.stream()
+                  .filter(t ->
+                    t.getSubject().equals(entityIri)
+                      && t.getPredicate().equals(RdfModelUtils.createIri(
+                      "https://purl.org/hmas/isContainedIn"
+                    ))
+                  )
+                  .map(Statement::getObject)
+                  .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                  .flatMap(Optional::stream)
+                  .map(IRI::toString)
+                  .findFirst(),
+                workspaceRepresentation
+              ));
           }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
           .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
           .onFailure(context::fail);
-
       } else {
         context.fail(HttpStatus.SC_BAD_REQUEST);
       }

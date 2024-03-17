@@ -27,6 +27,13 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
         new GenericMessageCodec<>(RdfStoreMessage.GetEntity.class, new RdfStoreMessageMarshaller())
     );
     this.eventBus.registerDefaultCodec(
+      RdfStoreMessage.GetEntityIri.class,
+      new GenericMessageCodec<>(
+        RdfStoreMessage.GetEntityIri.class,
+        new RdfStoreMessageMarshaller()
+      )
+    );
+    this.eventBus.registerDefaultCodec(
         RdfStoreMessage.CreateBody.class,
         new GenericMessageCodec<>(
           RdfStoreMessage.CreateBody.class,
