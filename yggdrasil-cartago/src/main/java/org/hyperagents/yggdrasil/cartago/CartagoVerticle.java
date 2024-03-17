@@ -129,7 +129,7 @@ public class CartagoVerticle extends AbstractVerticle {
           w.getParentName().ifPresentOrElse(
               Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
                 new RdfStoreMessage.CreateWorkspace(
-                  this.httpConfig.getWorkspacesUri() + "/",
+                  this.httpConfig.getWorkspacesUri(),
                   w.getName(),
                   Optional.of(this.httpConfig.getWorkspaceUri(p)),
                   this.instantiateSubWorkspace(p, w.getName())
@@ -137,7 +137,7 @@ public class CartagoVerticle extends AbstractVerticle {
               )),
               Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
                 new RdfStoreMessage.CreateWorkspace(
-                  this.httpConfig.getWorkspacesUri() + "/",
+                  this.httpConfig.getWorkspacesUri(),
                   w.getName(),
                   Optional.empty(),
                   this.instantiateWorkspace(w.getName())
@@ -192,17 +192,28 @@ public class CartagoVerticle extends AbstractVerticle {
             String artifactName,
             String representation
           ) -> {
-          final var artifactInit = new JsonObject(representation);
-          message.reply(this.instantiateArtifact(
+          try {
+            final var artifactInit = new JsonObject(representation);
+            message.reply(this.instantiateArtifact(
               agentId,
               workspaceName,
               JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-                             .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
-                             .orElseThrow(),
+                .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
+                .orElseThrow(),
               artifactName,
               JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
-                             .map(i -> i.getList().toArray())
-          ));
+                .map(i -> i.getList().toArray())
+            ));
+          } catch (Exception ignored) {
+            message.reply(this.instantiateArtifact(
+              agentId,
+              workspaceName,
+              null,
+              artifactName,
+              Optional.empty()
+            ));
+          }
+
         }
         case CartagoMessage.Focus(
           String agentId,
@@ -305,6 +316,15 @@ public class CartagoVerticle extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+    if (artifactClass == null) {
+      workspace.makeArtifact(
+        this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+        artifactName,
+        "org.hyperagents.yggdrasil.cartago.artifacts.BasicArtifact",
+        params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+      );
+      return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
+    }
     workspace.makeArtifact(
         this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
         artifactName,
