@@ -14,6 +14,10 @@
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
       },
       {
+        "class": "http://example.org/Artifact",
+        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicArtifact"
+      },
+      {
         "class" : "http://example.org/Adder",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Adder"
       }
