@@ -588,6 +588,9 @@ public class HttpEntityHandler {
             ).onFailure(context::fail));
 
       } else if (entityGraph.contains(null, RDF.TYPE, CORE.WORKSPACE)) {
+        entityGraph.remove(null,RDF.TYPE,CORE.RESOURCE_PROFILE);
+        entityGraph.remove(null,CORE.IS_PROFILE_OF,null);
+        entityGraph.remove(null,RDF.TYPE,CORE.WORKSPACE);
         this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
           actualEntityName ->
             this.cartagoMessagebox
