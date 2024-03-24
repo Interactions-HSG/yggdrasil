@@ -269,7 +269,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
             );
             this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri);
-            System.out.println("entityIri: " + entityIri);
             this.store.addEntityModel(entityIri, entityModel);
             final var stringGraphResult =
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
