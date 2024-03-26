@@ -50,7 +50,7 @@ API:
 	Artifact:
 	+ /workspaces/{wrkspid}/artifacts/ - POST
 	+ /workspaces/{wrkspid}/artifacts/{artifact}/ - GET POST PUT DELETE
-	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus - NEW POST
+	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus/ - NEW POST
 
 	body:
 	-> REMOVED? since we give agents now also artifact uri in platform?
@@ -60,4 +60,10 @@ API:
 
 # NOTES ON IMPLEMENTATION
 - RepresentationFactory Interface imposes methods for creating representations -> return null
-- Different implementations of uri wrappers -> trailing vs no trailing slash
+- Different implementations of uri wrappers -> trailing slash
+
+
+
+RDFSTore to many responsibilities
+Representation coupled with cartago
+createEntity refactor

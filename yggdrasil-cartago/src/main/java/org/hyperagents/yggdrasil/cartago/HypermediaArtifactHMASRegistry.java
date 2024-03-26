@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -82,6 +83,30 @@ public final class HypermediaArtifactHMASRegistry {
     this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
+  public void register(final HypermediaTDArtifact artifact) {
+    final var artifactTemplate = artifact.getArtifactId().getName();
+    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+    artifact.getActionAffordances()
+      .entrySet()
+      .stream()
+      .flatMap(actionEntry -> actionEntry.getValue()
+        .stream()
+        .map(action -> Map.entry(
+          actionEntry.getKey(),
+          action
+        )))
+      .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
+        if (value.getMethodName().isPresent()) {
+          this.artifactActionRouter.put(
+            value.getMethodName().get() + value.getTarget(),
+            action.getKey()
+          );
+        }
+      }));
+    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
+  }
+
 
   public void addArtifactTemplate(final String key, final String value) {
     this.artifactSemanticTypes.put(key, value);

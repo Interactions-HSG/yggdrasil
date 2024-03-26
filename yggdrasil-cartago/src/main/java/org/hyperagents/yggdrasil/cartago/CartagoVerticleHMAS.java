@@ -323,6 +323,9 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+
+    // TODO: return error when template not available
+
     if (artifactClass == null) {
       workspace.makeArtifact(
         this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
