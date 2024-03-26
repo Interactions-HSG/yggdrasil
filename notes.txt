@@ -31,13 +31,26 @@ Problems for merging TD and HMAS:
 		-> Similar as to other configuration where we pass the correct impl to the verticle?
 
 
-
-
-
-
-
-
-
-
 General:
 	- No need to differentiate between focus / subscribe WebSub artifact -> All artifacts are cartago artifacts
+
+API:
+	Platform:
+	+ / - GET
+	+ /query/ - GET POST ?- missing
+	- /hub/ - NO LONGER NEEDED
+	
+	Workspace:
+	+ /workspaces/ - POST 
+	+ /workspaces/{wrkspid}/ - GET POST PUT DELETE
+	+ /workspaces/{wrkspid}/join - POST
+	+ /workspaces/{wrkspid}/leave - POST
+	- /workspaces/{wrkspid}/focus - NO LONGER NEEDED -> In artifact itself
+	
+	Artifact:
+	+ /workspaces/{wrkspid}/artifacts/ - POST
+	+ /workspaces/{wrkspid}/artifacts/{artifact}/ - GET POST PUT DELETE
+	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus - NEW POST
+
+	body:
+	-> REMOVED? since we give agents now also artifact uri in platform?
