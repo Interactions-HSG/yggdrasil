@@ -13,7 +13,7 @@ import com.google.common.collect.Multimaps;
 import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactTDRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -46,7 +46,7 @@ public abstract class HypermediaTDArtifact extends Artifact {
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
       this.securityScheme,
-      HypermediaArtifactTDRegistry.getInstance()
+      HypermediaArtifactRegistry.getInstance()
         .getArtifactSemanticType(this.getClass().getCanonicalName())
         .orElseThrow(
           () -> new RuntimeException("Artifact was not registered!")
@@ -106,7 +106,7 @@ public abstract class HypermediaTDArtifact extends Artifact {
       this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
     }
     this.registerInteractionAffordances();
-    HypermediaArtifactTDRegistry.getInstance().register(this);
+    HypermediaArtifactRegistry.getInstance().register(this);
   }
 
   protected final String getArtifactUri() {

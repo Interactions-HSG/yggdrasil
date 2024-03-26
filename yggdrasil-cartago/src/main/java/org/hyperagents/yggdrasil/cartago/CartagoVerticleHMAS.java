@@ -123,7 +123,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
   }
 
   private void initializeFromConfiguration() {
-    final var registry = HypermediaArtifactHMASRegistry.getInstance();
+    final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
                                 .sharedData()
                                 .<String, Environment>getLocalMap("environment")
@@ -205,7 +205,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
               agentId,
               workspaceName,
               JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-                .flatMap(HypermediaArtifactHMASRegistry.getInstance()::getArtifactTemplate)
+                .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
                 .orElseThrow(),
               artifactName,
               JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
@@ -255,7 +255,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
                            this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
-      HypermediaArtifactHMASRegistry.getInstance().getArtifactTemplates()
+      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
     );
   }
 
@@ -269,7 +269,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
                            this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
-      HypermediaArtifactHMASRegistry.getInstance().getArtifactTemplates()
+      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
     );
   }
 
@@ -333,7 +333,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
         "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact",
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
       );
-      return HypermediaArtifactHMASRegistry.getInstance().getArtifactDescription(artifactName);
+      return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
     }
     workspace.makeArtifact(
         this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
@@ -341,7 +341,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
         artifactClass,
         params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
-    return HypermediaArtifactHMASRegistry.getInstance().getArtifactDescription(artifactName);
+    return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
   }
 
   private Future<Optional<String>> doAction(
@@ -352,7 +352,7 @@ public class CartagoVerticleHMAS extends AbstractVerticle {
       final Optional<String> payload
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
-    final var registry = HypermediaArtifactHMASRegistry.getInstance();
+    final var registry = HypermediaArtifactRegistry.getInstance();
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
         payload

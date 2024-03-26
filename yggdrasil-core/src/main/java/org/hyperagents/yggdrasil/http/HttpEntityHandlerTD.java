@@ -25,8 +25,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactHMASRegistry;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactTDRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -193,7 +192,7 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactTDRegistry.getInstance();
+    final var registry = HypermediaArtifactRegistry.getInstance();
     var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
     // remove trailing slash from artifactIRI if present

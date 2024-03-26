@@ -4,14 +4,24 @@ import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.UnaryOperator;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact;
 
-import java.util.*;
-import java.util.function.UnaryOperator;
-
-public class HypermediaArtifactTDRegistry {
-
-  private static HypermediaArtifactTDRegistry REGISTRY;
+/**
+ * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
+ * local maps in Vert.x. Can be refactored using async shared maps to run over a cluster.
+ */
+@SuppressWarnings("PMD.ReplaceHashtableWithMap")
+public final class HypermediaArtifactRegistry {
+  private static HypermediaArtifactRegistry REGISTRY;
 
   // Maps an artifact type IRI to the canonical names of the corresponding CArtAgO artifact class
   // E.g.: "https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D" ->
@@ -30,7 +40,7 @@ public class HypermediaArtifactTDRegistry {
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
 
-  private HypermediaArtifactTDRegistry() {
+  private HypermediaArtifactRegistry() {
     this.artifactSemanticTypes = new Hashtable<>();
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
@@ -43,13 +53,36 @@ public class HypermediaArtifactTDRegistry {
   }
 
   @SuppressFBWarnings({"MS_EXPOSE_REP"})
-  public static synchronized HypermediaArtifactTDRegistry getInstance() {
+  public static synchronized HypermediaArtifactRegistry getInstance() {
     if (REGISTRY == null) {
-      REGISTRY = new HypermediaArtifactTDRegistry();
+      REGISTRY = new HypermediaArtifactRegistry();
     }
     return REGISTRY;
   }
 
+  public void register(final HypermediaHMASArtifact artifact) {
+    final var artifactTemplate = artifact.getArtifactId().getName();
+    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+    artifact.getSignifiers()
+            .entrySet()
+            .stream()
+            .flatMap(signifierEntry -> signifierEntry.getValue()
+                                               .stream()
+                                               .map(signifier -> Map.entry(
+                                                 signifierEntry.getKey(),
+                                                 signifier
+                                               )))
+            .forEach(signifier -> signifier.getValue().getActionSpecification().getForms().stream().findFirst().ifPresent(value -> {
+              if (value.getMethodName().isPresent()) {
+                this.artifactActionRouter.put(
+                    value.getMethodName().get() + value.getTarget(),
+                    signifier.getKey()
+                );
+              }
+            }));
+    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
+  }
   public void register(final HypermediaTDArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
@@ -74,15 +107,16 @@ public class HypermediaArtifactTDRegistry {
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
 
+
   public void addArtifactTemplate(final String key, final String value) {
     this.artifactSemanticTypes.put(key, value);
   }
 
   public void addArtifactTemplates(final JsonObject artifactTemplates) {
     Optional.ofNullable(artifactTemplates)
-      .ifPresent(t -> t.forEach(
-        e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
-      ));
+            .ifPresent(t -> t.forEach(
+              e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
+            ));
   }
 
   public Set<String> getArtifactTemplates() {
@@ -91,11 +125,11 @@ public class HypermediaArtifactTDRegistry {
 
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
-      .entrySet()
-      .stream()
-      .filter(e -> e.getValue().equals(artifactTemplate))
-      .map(Map.Entry::getKey)
-      .findFirst();
+               .entrySet()
+               .stream()
+               .filter(e -> e.getValue().equals(artifactTemplate))
+               .map(Map.Entry::getKey)
+               .findFirst();
   }
 
   public Optional<String> getArtifactTemplate(final String artifactSemanticType) {
@@ -140,10 +174,9 @@ public class HypermediaArtifactTDRegistry {
   }
 
   public UnaryOperator<Object> getFeedbackResponseConverter(
-    final String artifactName,
-    final String action
+      final String artifactName,
+      final String action
   ) {
     return this.feedbackResponseConverters.get(artifactName).get(action);
   }
 }
-

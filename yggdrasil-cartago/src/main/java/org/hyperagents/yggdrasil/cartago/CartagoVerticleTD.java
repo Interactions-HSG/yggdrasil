@@ -44,7 +44,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
 
-  private HypermediaArtifactTDRegistry registry;
+  private HypermediaArtifactRegistry registry;
 
   @Override
   public void start(final Promise<Void> startPromise) {
@@ -55,7 +55,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
     this.workspaceRegistry = new WorkspaceRegistryImpl();
     this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
     this.agentCredentials = new HashMap<>();
-    this.registry = HypermediaArtifactTDRegistry.getInstance();
+    this.registry = HypermediaArtifactRegistry.getInstance();
     final var eventBus = this.vertx.eventBus();
     final var ownMessagebox = new CartagoMessagebox(
       eventBus,
@@ -307,7 +307,6 @@ public class CartagoVerticleTD  extends AbstractVerticle {
     final Optional<String> payload
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
-    final var registry = HypermediaArtifactTDRegistry.getInstance();
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
       payload

@@ -32,7 +32,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactHMASRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -211,7 +211,7 @@ public class HttpEntityHandlerHMAS implements HttpEntityHandlerInterface {
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactHMASRegistry.getInstance();
+    final var registry = HypermediaArtifactRegistry.getInstance();
     var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
     final var actionName =
         registry.getActionName(request.method().name(), request.absoluteURI());

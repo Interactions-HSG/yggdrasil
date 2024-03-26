@@ -16,7 +16,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactHMASRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -43,7 +43,7 @@ public abstract class HypermediaHMASArtifact extends Artifact {
     return this.representationFactory.createArtifactRepresentation(
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
-      HypermediaArtifactHMASRegistry.getInstance()
+      HypermediaArtifactRegistry.getInstance()
                                 .getArtifactSemanticType(this.getClass().getCanonicalName())
                                 .orElseThrow(
                                   () -> new RuntimeException("Artifact was not registered!")
@@ -103,7 +103,7 @@ public abstract class HypermediaHMASArtifact extends Artifact {
       this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     }
     this.registerInteractionAffordances();
-    HypermediaArtifactHMASRegistry.getInstance().register(this);
+    HypermediaArtifactRegistry.getInstance().register(this);
   }
 
   protected final String getArtifactUri() {
