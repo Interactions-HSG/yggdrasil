@@ -42,15 +42,15 @@ public final class RdfModelUtils {
 
   // TODO: Should get base as a parameter
   public static String modelToString(final Model model, final RDFFormat format) throws IOException {
-    var firstStatement = model.getStatements(null,null,createIri("https://purl.org/hmas/ResourceProfile")).iterator().next();
-    var base = firstStatement.getSubject().toString();
-    int index = findSlash(base,'/');
-    if (index < 0) {
+      var firstStatement = model.getStatements(null,null,createIri("https://purl.org/hmas/ResourceProfile")).iterator().next();
+      var base = firstStatement.getSubject().toString();
+      int index = findSlash(base,'/');
+      if (index < 0) {
       // this is a normal base
-      return modelToString(model, format, base);
-    }
+        return modelToString(model, format, base);
+      }
     // this is platform uri as base
-    return modelToString(model, format, base.substring(0,index+1));
+      return modelToString(model, format, base.substring(0,index+1));
   }
   /**
    * Converts a given RDF model to a string representation in the specified format.

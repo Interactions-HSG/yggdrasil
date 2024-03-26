@@ -47,11 +47,11 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
-public class CartagoVerticle extends AbstractVerticle {
-  private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
+public class CartagoVerticleHMAS extends AbstractVerticle {
+  private static final Logger LOGGER = LogManager.getLogger(CartagoVerticleHMAS.class);
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
   private HttpInterfaceConfig httpConfig;
@@ -61,6 +61,8 @@ public class CartagoVerticle extends AbstractVerticle {
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
 
+  private EnvironmentConfig environmentConfig;
+
   @Override
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx
@@ -68,16 +70,21 @@ public class CartagoVerticle extends AbstractVerticle {
                           .<String, HttpInterfaceConfig>getLocalMap("http-config")
                           .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+
+
+    // TODO: DEPENDING ON ONTOLOGY USE DIFFERENT FACTORY
+    this.environmentConfig = this.vertx.sharedData()
+                                  .<String, EnvironmentConfig>getLocalMap("environment-config")
+                                  .get(DEFAULT_CONFIG_VALUE);
+
+
+    this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     this.agentCredentials = new HashMap<>();
 
     final var eventBus = this.vertx.eventBus();
     final var ownMessagebox = new CartagoMessagebox(
         eventBus,
-        this.vertx
-            .sharedData()
-            .<String, EnvironmentConfig>getLocalMap("environment-config")
-            .get(DEFAULT_CONFIG_VALUE)
+        this.environmentConfig
     );
     ownMessagebox.init();
     ownMessagebox.receiveMessages(this::handleCartagoRequest);

@@ -21,7 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class RdfStoreVerticleGetTest {
+public class RdfStoreVerticleHMASGetTest {
   private RdfStoreMessagebox storeMessagebox;
 
   @BeforeEach
@@ -40,7 +40,7 @@ public class RdfStoreVerticleGetTest {
                 )
               )));
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
-    vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
+    vertx.deployVerticle(new RdfStoreVerticleHMAS(), ctx.succeedingThenComplete());
   }
 
   @AfterEach

@@ -30,13 +30,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class RdfStoreVerticleUpdateTest {
+public class RdfStoreVerticleHMASUpdateTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private RdfStoreMessagebox storeMessagebox;
 
-  public RdfStoreVerticleUpdateTest() {
+  public RdfStoreVerticleHMASUpdateTest() {
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
@@ -73,7 +73,7 @@ public class RdfStoreVerticleUpdateTest {
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
-    vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
+    vertx.deployVerticle(new RdfStoreVerticleHMAS(), ctx.succeedingThenComplete());
   }
 
   @AfterEach

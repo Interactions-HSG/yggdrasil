@@ -10,6 +10,8 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
+import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
 
@@ -27,7 +29,7 @@ import org.hyperagents.yggdrasil.utils.RepresentationFactory;
  * The representations are serialized as Thing Descriptions using the TDGraphWriter class.
  * The class also includes helper methods for serializing Thing Descriptions.
  */
-public final class RepresentationFactoryImpl implements RepresentationFactory {
+public final class RepresentationFactoryHMASImpl implements RepresentationFactory {
 
   private final HttpInterfaceConfig httpConfig;
 
@@ -36,7 +38,7 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
     unsubscribe
   }
 
-  public RepresentationFactoryImpl(final HttpInterfaceConfig httpConfig) {
+  public RepresentationFactoryHMASImpl(final HttpInterfaceConfig httpConfig) {
     this.httpConfig = httpConfig;
   }
 
@@ -398,6 +400,16 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
 
 
     return serializeHmasResourceProfile(profile.build());
+  }
+
+  @Override
+  public String createArtifactRepresentation(String workspaceName, String artifactName, SecurityScheme securityScheme, String semanticType, Model metadata, ListMultimap<String, ActionAffordance> actionAffordances) {
+    return null;
+  }
+
+  @Override
+  public String createBodyRepresentation(String workspaceName, String agentName, SecurityScheme securityScheme, Model metadata) {
+    return null;
   }
 
   private String serializeHmasResourceProfile(final ResourceProfile profile) {

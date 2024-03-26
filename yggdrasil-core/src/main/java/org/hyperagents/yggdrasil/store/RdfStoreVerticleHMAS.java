@@ -29,13 +29,13 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.*;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
  */
-public class RdfStoreVerticle extends AbstractVerticle {
-  private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
+public class RdfStoreVerticleHMAS extends AbstractVerticle {
+  private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticleHMAS.class);
   private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
   private static final String DEFAULT_CONFIG_VALUE = "default";
@@ -44,7 +44,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private HttpInterfaceConfig httpConfig;
   private RdfStore store;
 
-  private RepresentationFactoryImpl representationFactory;
+  private RepresentationFactoryHMASImpl representationFactory;
 
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
@@ -52,7 +52,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.httpConfig = this.vertx.sharedData()
                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
                                 .get("default");
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+    this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       this.vertx.eventBus(),
       this.vertx.sharedData()

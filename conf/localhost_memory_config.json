@@ -22,6 +22,7 @@
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Adder"
       }
     ],
-    "enabled" : true
+    "enabled" : true,
+    "ontology": "td"
   }
 }

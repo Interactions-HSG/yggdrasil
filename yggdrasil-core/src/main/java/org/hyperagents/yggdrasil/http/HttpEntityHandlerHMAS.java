@@ -54,8 +54,8 @@ import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
  * (e.g., creating a workspace, executing an action) are redirected to the
  * {@link CartagoMessagebox}.
  */
-public class HttpEntityHandler {
-  private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
+public class HttpEntityHandlerHMAS implements HttpEntityHandlerInterface {
+  private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandlerHMAS.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
 
@@ -65,7 +65,7 @@ public class HttpEntityHandler {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
 
-  public HttpEntityHandler(
+  public HttpEntityHandlerHMAS(
       final Vertx vertx,
       final HttpInterfaceConfig httpConfig,
       final EnvironmentConfig environmentConfig,
@@ -460,7 +460,6 @@ public class HttpEntityHandler {
       );
     }
   }
-
   private void handleQueryMessage(
       final RoutingContext routingContext,
       final String query,

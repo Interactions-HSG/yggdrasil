@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class RdfStoreVerticleQueryTest {
+public class RdfStoreVerticleHMASQueryTest {
   private static final String PLATFORM_URI = "http://localhost:8080/";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
   private static final String CONTENTS_EQUAL_MESSAGE = "The contents should be equal";
@@ -92,7 +92,7 @@ public class RdfStoreVerticleQueryTest {
           Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
-    vertx.deployVerticle(new RdfStoreVerticle())
+    vertx.deployVerticle(new RdfStoreVerticleHMAS())
          .compose(i -> this.messagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
            "http://localhost:8080/workspaces/",
            "test",

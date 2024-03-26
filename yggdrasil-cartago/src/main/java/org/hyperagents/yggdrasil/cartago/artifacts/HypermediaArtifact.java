@@ -20,7 +20,7 @@ import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
   private final ListMultimap<String, Signifier> signifiers =
@@ -30,7 +30,7 @@ public abstract class HypermediaArtifact extends Artifact {
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
   private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
   private RepresentationFactory representationFactory =
-      new RepresentationFactoryImpl(this.httpConfig);
+      new RepresentationFactoryHMASImpl(this.httpConfig);
 
 
   /**
@@ -100,7 +100,7 @@ public abstract class HypermediaArtifact extends Artifact {
           baseUri.toString()
         )
       ));
-      this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     }
     this.registerInteractionAffordances();
     HypermediaArtifactRegistry.getInstance().register(this);

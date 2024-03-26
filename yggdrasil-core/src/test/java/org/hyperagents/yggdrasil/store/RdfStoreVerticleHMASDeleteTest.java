@@ -30,7 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class RdfStoreVerticleDeleteTest {
+public class RdfStoreVerticleHMASDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
@@ -41,7 +41,7 @@ public class RdfStoreVerticleDeleteTest {
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private RdfStoreMessagebox storeMessagebox;
 
-  public RdfStoreVerticleDeleteTest() {
+  public RdfStoreVerticleHMASDeleteTest() {
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
@@ -78,7 +78,7 @@ public class RdfStoreVerticleDeleteTest {
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
-    vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
+    vertx.deployVerticle(new RdfStoreVerticleHMAS(), ctx.succeedingThenComplete());
   }
 
   @AfterEach
