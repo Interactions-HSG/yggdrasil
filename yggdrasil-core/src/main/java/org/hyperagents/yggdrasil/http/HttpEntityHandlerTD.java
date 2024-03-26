@@ -25,7 +25,8 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactHMASRegistry;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactTDRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -192,8 +193,15 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactRegistry.getInstance();
-    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final var registry = HypermediaArtifactTDRegistry.getInstance();
+    var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+
+    // remove trailing slash from artifactIRI if present
+    if (artifactIri.endsWith("/")) {
+      artifactIri = artifactIri.substring(0, artifactIri.length() - 1);
+    }
+    final var artifactFinalIri = artifactIri;
+
     final var actionName =
       registry.getActionName(request.method().name(), request.absoluteURI());
 
@@ -202,38 +210,7 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
       .onSuccess(storeResponse -> {
         Optional.ofNullable(context.request().getHeader("X-API-Key"))
           .filter(a -> !a.isEmpty())
-          .ifPresent(a -> registry.setApiKeyForArtifact(artifactIri, a));
-
-        var description = TDGraphReader
-          .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse.body())
-          .getActions()
-          .stream()
-          .filter(
-            action -> action.getTitle().isPresent()
-              && action.getTitle().get().equals(actionName)
-          )
-          .findFirst()
-          .flatMap(ActionAffordance::getInputSchema)
-          .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY));
-
-        var description2 = description
-          .map(inputSchema -> JsonParser.parseString(context.body().asString()));
-
-        var description3 = description
-          .map(inputSchema -> ((ArraySchema) inputSchema)
-            .parseJson(JsonParser.parseString(context.body().asString()))
-          );
-
-        var description4 = description
-          .map(inputSchema -> CartagoDataBundle.toJson(
-            ((ArraySchema) inputSchema)
-              .parseJson(JsonParser.parseString(context.body().asString()))
-          ));
-
-        System.out.println(description);
-        System.out.println(description2);
-        System.out.println(description3);
-        System.out.println(description4);
+          .ifPresent(a -> registry.setApiKeyForArtifact(artifactFinalIri, a));
 
         this.cartagoMessagebox
           .sendMessage(new CartagoMessage.DoAction(

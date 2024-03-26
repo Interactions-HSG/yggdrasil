@@ -3,12 +3,10 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
-import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
+
 import java.util.List;
 
-public class IntellIotArtifact extends HypermediaArtifact {
+public class IntellIotHMASArtifact extends HypermediaHMASArtifact {
 
   @OPERATION
   public void normalizeValues(

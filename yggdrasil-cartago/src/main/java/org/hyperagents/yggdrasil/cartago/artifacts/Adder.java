@@ -8,7 +8,7 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 
-public class Adder extends HypermediaArtifact {
+public class Adder extends HypermediaHMASArtifact {
   @OPERATION
   public void add(final int x, final int y, final OpFeedbackParam<Integer> sumParam) {
     this.log("adder performs add");

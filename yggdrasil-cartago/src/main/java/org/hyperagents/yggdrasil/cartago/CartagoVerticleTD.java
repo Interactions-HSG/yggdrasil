@@ -44,6 +44,8 @@ public class CartagoVerticleTD  extends AbstractVerticle {
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
 
+  private HypermediaArtifactTDRegistry registry;
+
   @Override
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx
@@ -53,7 +55,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
     this.workspaceRegistry = new WorkspaceRegistryImpl();
     this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
     this.agentCredentials = new HashMap<>();
-
+    this.registry = HypermediaArtifactTDRegistry.getInstance();
     final var eventBus = this.vertx.eventBus();
     final var ownMessagebox = new CartagoMessagebox(
       eventBus,
@@ -99,7 +101,6 @@ public class CartagoVerticleTD  extends AbstractVerticle {
   }
 
   private void initializeFromConfiguration() {
-    final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
       .sharedData()
       .<String, Environment>getLocalMap("environment")
@@ -180,7 +181,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
             agentId,
             workspaceName,
             JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-              .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
+              .flatMap(this.registry::getArtifactTemplate)
               .orElseThrow(),
             artifactName,
             JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
@@ -220,7 +221,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      this.registry.getArtifactTemplates()
     );
   }
 
@@ -234,7 +235,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      this.registry.getArtifactTemplates()
     );
   }
 
@@ -295,7 +296,7 @@ public class CartagoVerticleTD  extends AbstractVerticle {
       artifactClass,
       params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
-    return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
+    return this.registry.getArtifactDescription(artifactName);
   }
 
   private Future<Optional<String>> doAction(
@@ -305,9 +306,8 @@ public class CartagoVerticleTD  extends AbstractVerticle {
     final String action,
     final Optional<String> payload
   ) throws CartagoException {
-    System.out.println(payload);
     this.joinWorkspace(agentUri, workspaceName);
-    final var registry = HypermediaArtifactRegistry.getInstance();
+    final var registry = HypermediaArtifactTDRegistry.getInstance();
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
       payload

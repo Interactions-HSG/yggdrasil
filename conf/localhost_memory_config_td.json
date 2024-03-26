@@ -1,0 +1,20 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "environment-config" : {
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
+      }
+    ],
+    "enabled" : true,
+    "ontology": "td"
+  }
+}

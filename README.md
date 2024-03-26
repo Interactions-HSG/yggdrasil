@@ -40,7 +40,7 @@ The default Gradle task `shadowJar` generates a fat-jar in the `build/libs` dire
 To start an Yggdrasil node:
 
 ```shell
-java -jar build/libs/yggdrasil-0.0.0-SNAPSHOT-all.jar -conf conf/localhost_memory_config.json
+java -jar build/libs/yggdrasil-0.0.0-SNAPSHOT-all.jar -conf conf/localhost_memory_config_hmas.json
 ```
 
 The configuration file is optional. Open your browser to

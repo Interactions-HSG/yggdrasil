@@ -2,15 +2,14 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Flow;
 
-public class DltInterface extends HypermediaArtifact {
+public class DltInterface extends HypermediaHMASArtifact {
   private String dltClientUrl;
   private HttpClient client;
 
