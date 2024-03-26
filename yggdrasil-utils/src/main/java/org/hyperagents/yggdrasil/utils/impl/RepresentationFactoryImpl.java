@@ -316,6 +316,12 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
       .setIRIAsString(baseUri + "#deleteArtifactForm")
       .build();
 
+    // focus this artifact
+    Form focusArtifactForm = new Form.Builder(baseUri + "focus/")
+      .setMethodName(HttpMethod.POST.name())
+      .setIRIAsString(baseUri + "#focusArtifactForm")
+      .build();
+
     resourceProfileBuilder
       .exposeSignifier(
         new Signifier.Builder(
@@ -335,6 +341,13 @@ public final class RepresentationFactoryImpl implements RepresentationFactory {
             .build()
         ).setIRIAsString(baseUri + "#deleteArtifact")
           .build())
+      .exposeSignifier(
+        new Signifier.Builder(
+          new ActionSpecification.Builder(focusArtifactForm)
+            .build()
+        ).setIRIAsString(baseUri + "#focusArtifact")
+          .build()
+      )
       .exposeSignifier(webSubSignifier(baseUri,"subscribeToArtifact",baseUri,WebSubMode.subscribe))
       .exposeSignifier(webSubSignifier(baseUri,"unsubscribeFromArtifact",baseUri,WebSubMode.unsubscribe));
 
