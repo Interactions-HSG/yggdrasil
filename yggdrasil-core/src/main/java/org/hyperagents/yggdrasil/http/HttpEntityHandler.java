@@ -23,6 +23,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -178,8 +179,21 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var hint = context.request().getHeader("Slug");
     final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
+    final var entityIri = RdfModelUtils.createIri(requestUri + name);
+    Model entityGraph = null;
+    try {
+      entityGraph = RdfModelUtils.stringToModel(
+        entityRepresentation,
+        entityIri,
+        RDFFormat.TURTLE
+      );
+    } catch (final Exception e) {
+      LOGGER.error(e);
+      context.fail(HttpStatus.SC_BAD_REQUEST);
+    }
 
 
+    Model finalEntityGraph = entityGraph;
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
       actualEntityName -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
@@ -196,16 +210,26 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             actualEntityName.body()
           )
         ))
-        .compose(response ->
-          this.rdfStoreMessagebox
+        .compose(response -> {
+          var artifactRepresentation = response.body();
+          try {
+            var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
+            finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));
+            baseModel.getNamespaces().forEach(finalEntityGraph::setNamespace);
+            artifactRepresentation = RdfModelUtils.modelToString(finalEntityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+
+          return this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
               this.httpConfig.getBaseUri() + context.request().path(),
               actualEntityName.body(),
-              response.body()
+              response.body()//artifactRepresentation
             ))
             .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
-        ).onFailure(context::fail));
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end());
+        }).onFailure(context::fail));
   }
 
   public void handleFocus(final RoutingContext context) {

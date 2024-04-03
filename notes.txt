@@ -76,3 +76,9 @@ createEntity refactor
 - Combined all classes where it was possible
 - Most classes do not depend on ontology anymore
 - Only rdfstoreverticle and cartagoVerticle have a if statement to decide which RepresentationFactor to use
+
+- Made it so that when you create an artifact through turtle it is built on top of cartago base artifact
+-> this artifact needs to be in the environment config.
+
+- Need solution for adding artifacts and workspaces through turtle on how to modify the graph
+-> need to overwrite certain uris and delete others while keeping all others
