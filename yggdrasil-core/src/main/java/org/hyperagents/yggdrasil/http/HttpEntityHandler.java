@@ -1,6 +1,10 @@
 package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -27,6 +31,8 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -38,6 +44,8 @@ import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
+
+import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
 
 
 /**
@@ -410,6 +418,72 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       )
       .onFailure(context::fail);
   }
+
+
+  public void handleAction(final RoutingContext context) {
+    final var request = context.request();
+    final var agentId = request.getHeader(AGENT_WEBID_HEADER);
+
+    if (agentId == null) {
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
+    }
+
+    final var artifactName = context.pathParam("artid");
+    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
+    final var registry = HypermediaArtifactRegistry.getInstance();
+    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final var actionName =
+      registry.getActionName(request.method().name(), request.absoluteURI());
+
+    this.rdfStoreMessagebox
+      .sendMessage(new RdfStoreMessage.GetEntity(artifactIri))
+      .onSuccess(storeResponse -> {
+        Optional.ofNullable(context.request().getHeader("X-API-Key"))
+          .filter(a -> !a.isEmpty())
+          .ifPresent(a -> registry.setApiKeyForArtifact(artifactIri, a));
+
+        // TODO: Actually handle actions with parameters
+        // gets the signifier for the action
+        final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
+
+
+        var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().stream()
+          .filter(sig -> sig.getIRIAsString().isPresent())
+          .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
+          .findFirst();
+
+        Optional<String> description = Optional.empty();
+        if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
+          JsonElement jsonElement = JsonParser.parseString(context.body().asString());
+          var input = signifier.get().getActionSpecification().getInputSpecification().get();
+          QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+          description = CartagoDataBundle.toJson(
+            parseInput(jsonElement,qualifiedValueSpecification,new ArrayList<>())
+          ).describeConstable();
+        }
+
+        this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.DoAction(
+            agentId,
+            workspaceName,
+            artifactName,
+            actionName,
+            description
+          ))
+          .onSuccess(cartagoResponse -> {
+            final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
+            if (registry.hasFeedbackParam(artifactName, actionName)) {
+              httpResponse.end(cartagoResponse.body());
+            } else {
+              httpResponse.end();
+            }
+          })
+          .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+      })
+      .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+  }
+
 
   public void handleQuery(final RoutingContext routingContext) {
     final var request = routingContext.request();

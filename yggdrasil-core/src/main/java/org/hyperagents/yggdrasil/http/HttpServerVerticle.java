@@ -146,6 +146,9 @@ public class HttpServerVerticle extends AbstractVerticle {
           .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
 
+    final var actionRoute = router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
+
+
 
     if (!this.environmentConfig.isEnabled()) {
       createWorkspaceRoute.disable();
@@ -154,6 +157,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       leaveRoute.disable();
       focusRoute.disable();
       createArtifactRoute.disable();
+      actionRoute.disable();
     }
 
     final var notificationRoute = router.post("/hub/").handler(handler::handleEntitySubscription);
