@@ -26,8 +26,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -41,16 +39,13 @@ import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 
-import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
-
-
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
  * (e.g., creating a workspace, executing an action) are redirected to the
  * {@link CartagoMessagebox}.
  */
-public class HttpEntityHandlerHMAS implements HttpEntityHandlerInterface {
-  private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandlerHMAS.class);
+public class HttpEntityHandler implements HttpEntityHandlerInterface {
+  private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
 
@@ -60,7 +55,7 @@ public class HttpEntityHandlerHMAS implements HttpEntityHandlerInterface {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
 
-  public HttpEntityHandlerHMAS(
+  public HttpEntityHandler(
     final Vertx vertx,
     final HttpInterfaceConfig httpConfig,
     final EnvironmentConfig environmentConfig,

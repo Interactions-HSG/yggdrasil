@@ -11,8 +11,6 @@ import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
-import java.util.Objects;
-
 /**
  * This verticle exposes an HTTP/1.1 interface for Yggdrasil. All requests are forwarded to a
  * corresponding handler.
@@ -83,7 +81,7 @@ public class HttpServerVerticle extends AbstractVerticle {
                               .allowedHeader("Origin"))
           .handler(BodyHandler.create());
 
-    HttpEntityHandlerInterface handler = new HttpEntityHandlerHMAS(
+    HttpEntityHandlerInterface handler = new HttpEntityHandler(
         this.vertx,
         httpConfig,
         environmentConfig,
