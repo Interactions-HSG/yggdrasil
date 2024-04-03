@@ -1,11 +1,5 @@
 package org.hyperagents.yggdrasil.http;
 
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -23,8 +17,6 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -168,17 +160,38 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
   }
 
   public void handleCreateArtifactTurtle(final RoutingContext context, final String entityRepresentation) {
+    // TODO: FORGETTING TO ADD ENTITY REPRESENTATION TO MODEL?
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
+    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
+    final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
 
-    this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.CreateArtifact(
-        requestUri,
-        hint,
-        entityRepresentation
-      ))
-      .onFailure(context::fail)
-      .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
+      actualEntityName -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(
+          agentId,
+          context.pathParam(WORKSPACE_ID_PARAM),
+          actualEntityName.body(),
+          String.format(
+            """
+            {
+              "artifactName": "%s",
+              "artifactClass": "http://example.org/Artifact"
+            }
+            """,
+            actualEntityName.body()
+          )
+        ))
+        .compose(response ->
+          this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateArtifact(
+              this.httpConfig.getBaseUri() + context.request().path(),
+              actualEntityName.body(),
+              response.body()
+            ))
+            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+        ).onFailure(context::fail));
   }
 
 
@@ -207,70 +220,6 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
       .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 
-  public void handleAction(final RoutingContext context) {
-    final var request = context.request();
-    final var agentId = request.getHeader(AGENT_WEBID_HEADER);
-
-    if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
-      return;
-    }
-
-    final var artifactName = context.pathParam("artid");
-    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactRegistry.getInstance();
-    var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
-
-    // remove trailing slash from artifactIRI if present
-    if (artifactIri.endsWith("/")) {
-      artifactIri = artifactIri.substring(0, artifactIri.length() - 1);
-    }
-    final var artifactFinalIri = artifactIri;
-
-    final var actionName =
-      registry.getActionName(request.method().name(), request.absoluteURI());
-
-    this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.GetEntity(artifactIri))
-      .onSuccess(storeResponse -> {
-        Optional.ofNullable(context.request().getHeader("X-API-Key"))
-          .filter(a -> !a.isEmpty())
-          .ifPresent(a -> registry.setApiKeyForArtifact(artifactFinalIri, a));
-
-        this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.DoAction(
-            agentId,
-            workspaceName,
-            artifactName,
-            actionName,
-            TDGraphReader
-              .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse.body())
-              .getActions()
-              .stream()
-              .filter(
-                action -> action.getTitle().isPresent()
-                  && action.getTitle().get().equals(actionName)
-              )
-              .findFirst()
-              .flatMap(ActionAffordance::getInputSchema)
-              .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
-              .map(inputSchema -> CartagoDataBundle.toJson(
-                ((ArraySchema) inputSchema)
-                  .parseJson(JsonParser.parseString(context.body().asString()))
-              ))
-          ))
-          .onSuccess(cartagoResponse -> {
-            final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
-            if (registry.hasFeedbackParam(artifactName, actionName)) {
-              httpResponse.end(cartagoResponse.body());
-            } else {
-              httpResponse.end();
-            }
-          })
-          .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
-      })
-      .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
-  }
 
   // TODO: add payload validation
   public void handleUpdateEntity(final RoutingContext routingContext) {

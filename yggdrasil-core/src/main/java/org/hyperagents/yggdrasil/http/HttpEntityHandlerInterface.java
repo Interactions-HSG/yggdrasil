@@ -11,7 +11,6 @@ public interface HttpEntityHandlerInterface {
   void handleCreateArtifactJson(final RoutingContext context);
   void handleCreateArtifactTurtle(final RoutingContext context);
   void handleFocus(final RoutingContext context);
-  void handleAction(final RoutingContext context);
   void handleUpdateEntity(final RoutingContext routingContext);
   void handleDeleteEntity(final RoutingContext routingContext);
   void handleEntitySubscription(final RoutingContext routingContext);

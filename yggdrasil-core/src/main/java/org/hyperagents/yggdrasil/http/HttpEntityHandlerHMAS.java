@@ -1,12 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
 import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
-
-
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -241,78 +235,6 @@ public class HttpEntityHandlerHMAS implements HttpEntityHandlerInterface {
         artifactName
       )))
       .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
-  }
-
-  public void handleAction(final RoutingContext context) {
-    final var request = context.request();
-    final var agentId = request.getHeader(AGENT_WEBID_HEADER);
-
-    if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
-      return;
-    }
-
-    final var artifactName = context.pathParam("artid");
-    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactRegistry.getInstance();
-    var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
-    final var actionName =
-      registry.getActionName(request.method().name(), request.absoluteURI());
-
-    // remove trailing slash from artifactIRI if present
-    if (artifactIri.endsWith("/")) {
-      artifactIri = artifactIri.substring(0, artifactIri.length() - 1);
-    }
-
-    final var artifactFinalIri = artifactIri;
-
-
-    this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.GetEntity(artifactIri))
-      .onSuccess(storeResponse -> {
-        Optional.ofNullable(context.request().getHeader("X-API-Key"))
-          .filter(a -> !a.isEmpty())
-          .ifPresent(a -> registry.setApiKeyForArtifact(artifactFinalIri, a));
-
-        // TODO: Actually handle actions with parameters
-        // gets the signifier for the action
-        final var signifierIRI = artifactFinalIri + "/#" + actionName + "-Signifier";
-
-
-        var signifier = ResourceProfileGraphReader.readFromString(storeResponse.body()).getExposedSignifiers().stream()
-          .filter(sig -> sig.getIRIAsString().isPresent())
-          .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
-          .findFirst();
-
-        Optional<String> description = Optional.empty();
-        if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
-          JsonElement jsonElement = JsonParser.parseString(context.body().asString());
-          var input = signifier.get().getActionSpecification().getInputSpecification().get();
-          QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
-          description = CartagoDataBundle.toJson(
-            parseInput(jsonElement, qualifiedValueSpecification, new ArrayList<>())
-          ).describeConstable();
-        }
-
-        this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.DoAction(
-            agentId,
-            workspaceName,
-            artifactName,
-            actionName,
-            description
-          ))
-          .onSuccess(cartagoResponse -> {
-            final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
-            if (registry.hasFeedbackParam(artifactName, actionName)) {
-              httpResponse.end(cartagoResponse.body());
-            } else {
-              httpResponse.end();
-            }
-          })
-          .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
-      })
       .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }
 

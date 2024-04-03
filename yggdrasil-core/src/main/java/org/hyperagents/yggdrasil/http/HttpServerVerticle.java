@@ -83,22 +83,12 @@ public class HttpServerVerticle extends AbstractVerticle {
                               .allowedHeader("Origin"))
           .handler(BodyHandler.create());
 
-    HttpEntityHandlerInterface handler;
-    if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
-      handler = new HttpEntityHandlerHMAS(
+    HttpEntityHandlerInterface handler = new HttpEntityHandlerHMAS(
         this.vertx,
         httpConfig,
         environmentConfig,
         notificationConfig
       );
-    } else {
-      handler = new HttpEntityHandlerTD(
-        this.vertx,
-        httpConfig,
-        environmentConfig,
-        notificationConfig
-      );
-    }
 
 
     router.get("/").handler(handler::handleGetEntity);
@@ -158,7 +148,6 @@ public class HttpServerVerticle extends AbstractVerticle {
           .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
 
-    final var actionRoute = router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
 
     if (!this.environmentConfig.isEnabled()) {
       createWorkspaceRoute.disable();
@@ -167,7 +156,6 @@ public class HttpServerVerticle extends AbstractVerticle {
       leaveRoute.disable();
       focusRoute.disable();
       createArtifactRoute.disable();
-      actionRoute.disable();
     }
 
     final var notificationRoute = router.post("/hub/").handler(handler::handleEntitySubscription);
