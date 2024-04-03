@@ -22,7 +22,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
@@ -90,7 +89,7 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
       );
   }
 
-  public void handleCreateWorkspace(final RoutingContext context) {
+  public void handleCreateWorkspaceJson(final RoutingContext context) {
     final var workspaceName = context.request().getHeader("Slug");
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
@@ -115,7 +114,7 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
       .onFailure(context::fail);
   }
 
-  public void handleCreateArtifact(final RoutingContext context) {
+  public void handleCreateArtifactJson(final RoutingContext context) {
     final var representation = context.body().asString();
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
@@ -147,14 +146,41 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
       .onFailure(context::fail);
   }
 
+
   // TODO: add payload validation
-  public void handleCreateEntity(final RoutingContext routingContext) {
+  public void handleCreateWorkspaceTurtle(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
       return;
     }
-    this.createEntity(routingContext, routingContext.body().asString());
+    this.handleCreateWorkspaceTurtle(routingContext, routingContext.body().asString());
   }
+
+  public void handleCreateArtifactTurtle(final RoutingContext context) {
+    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
+
+    if (agentId == null) {
+      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      return;
+    }
+
+    this.handleCreateArtifactTurtle(context, context.body().asString());
+  }
+
+  public void handleCreateArtifactTurtle(final RoutingContext context, final String entityRepresentation) {
+    final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
+    final var hint = context.request().getHeader("Slug");
+
+    this.rdfStoreMessagebox
+      .sendMessage(new RdfStoreMessage.CreateArtifact(
+        requestUri,
+        hint,
+        entityRepresentation
+      ))
+      .onFailure(context::fail)
+      .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
+  }
+
 
   public void handleFocus(final RoutingContext context) {
     final var representation = ((JsonObject) Json.decodeValue(context.body().asString()));
@@ -521,7 +547,7 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
   }
 
   // TODO: support different content types
-  private void createEntity(final RoutingContext context, final String entityRepresentation) {
+  private void handleCreateWorkspaceTurtle(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path();
     final var hint = context.request().getHeader("Slug");
     final var entityIri = RdfModelUtils.createIri(requestUri + hint);
@@ -531,27 +557,6 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
         entityIri,
         RDFFormat.TURTLE
       );
-      if (
-        entityGraph.contains(
-          entityIri,
-          RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-          RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
-        )
-      ) {
-        this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateArtifact(
-            requestUri,
-            hint,
-            entityRepresentation
-          ))
-          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-      } else if (
-        entityGraph.contains(
-          entityIri,
-          RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-          RdfModelUtils.createIri("https://purl.org/hmas/Workspace")
-        )
-      ) {
         this.rdfStoreMessagebox
           .sendMessage(new RdfStoreMessage.CreateWorkspace(
             requestUri,
@@ -571,9 +576,6 @@ public class HttpEntityHandlerTD implements HttpEntityHandlerInterface{
             entityRepresentation
           ))
           .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED));
-      } else {
-        context.fail(HttpStatus.SC_BAD_REQUEST);
-      }
     } catch (final Exception e) {
       LOGGER.error(e);
       context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);

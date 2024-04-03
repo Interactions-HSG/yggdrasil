@@ -65,15 +65,8 @@ public class MainVerticle extends AbstractVerticle {
                 else return this.vertx.deployVerticle(new RdfStoreVerticleTD(), new DeploymentOptions().setConfig(config));
               })
               .compose(v -> notificationConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.websub.HttpNotificationVerticle") : Future.succeededFuture())
-              .compose(v -> {if (environmentConfig.isEnabled()) {
-                  if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
-                    return this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticleHMAS");
-                  } else {
-                    return this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticleTD");
-                }
-              } else {
-                return Future.succeededFuture();
-              }}).<Void>mapEmpty()
+              .compose(v -> environmentConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticle") : Future.succeededFuture())
+              .<Void>mapEmpty()
               .onComplete(startPromise);
   }
 }

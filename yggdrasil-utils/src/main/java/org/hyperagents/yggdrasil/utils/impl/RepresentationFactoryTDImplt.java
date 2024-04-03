@@ -8,6 +8,7 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
+import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import io.vertx.core.http.HttpMethod;
@@ -127,11 +128,6 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   }
 
   @Override
-  public String createBodyRepresentation(String workspaceName, String agentId, Model metadata) {
-    return null;
-  }
-
-  @Override
   public String createArtifactRepresentation(
     final String workspaceName,
     final String artifactName,
@@ -150,6 +146,15 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addGraph(metadata);
     actionAffordances.values().forEach(td::addAction);
     return serializeThingDescription(td);
+  }
+
+  @Override
+  public String createBodyRepresentation(
+    final String workspaceName,
+    final String agentName,
+    final Model metadata)
+  {
+    return createBodyRepresentation(workspaceName, agentName, new NoSecurityScheme(), metadata);
   }
 
   @Override

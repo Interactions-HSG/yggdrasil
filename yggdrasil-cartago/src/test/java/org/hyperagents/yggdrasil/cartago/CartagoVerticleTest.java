@@ -39,7 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-public class CartagoVerticleHMASTest {
+public class CartagoVerticleTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
@@ -64,7 +64,7 @@ public class CartagoVerticleHMASTest {
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private CartagoMessagebox cartagoMessagebox;
 
-  public CartagoVerticleHMASTest() {
+  public CartagoVerticleTest() {
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
@@ -128,7 +128,7 @@ public class CartagoVerticleHMASTest {
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
-    vertx.deployVerticle(new CartagoVerticleHMAS(), ctx.succeedingThenComplete());
+    vertx.deployVerticle(new CartagoVerticle(), ctx.succeedingThenComplete());
   }
 
   @AfterEach
