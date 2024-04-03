@@ -72,6 +72,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .<String, EnvironmentConfig>getLocalMap("environment-config")
       .get(DEFAULT_CONFIG_VALUE);
 
+    // TODO: Only place that depends on ontology :D
     if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
       this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     } else {

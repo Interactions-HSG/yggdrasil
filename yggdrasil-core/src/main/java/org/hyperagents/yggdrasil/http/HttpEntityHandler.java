@@ -539,7 +539,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
                 entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                 baseModel.getNamespaces().forEach(entityGraph::setNamespace);
-                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE);
+                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
               } catch (IOException e) {
                 throw new RuntimeException(e);
               }

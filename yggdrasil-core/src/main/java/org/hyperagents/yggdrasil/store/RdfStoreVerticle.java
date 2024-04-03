@@ -30,12 +30,13 @@ import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.*;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
  */
-public class RdfStoreVerticleHMAS extends AbstractVerticle {
-  private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticleHMAS.class);
+public class RdfStoreVerticle extends AbstractVerticle {
+  private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
   private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
   private static final String DEFAULT_CONFIG_VALUE = "default";
@@ -44,7 +45,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
   private HttpInterfaceConfig httpConfig;
   private RdfStore store;
 
-  private RepresentationFactoryHMASImpl representationFactory;
+  private RepresentationFactory representationFactory;
 
   @SuppressWarnings("PMD.SwitchStmtsShouldHaveDefault")
   @Override
@@ -52,7 +53,17 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
     this.httpConfig = this.vertx.sharedData()
                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
                                 .get("default");
-    this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
+
+    EnvironmentConfig environmentConfig = this.vertx.sharedData()
+                                .<String, EnvironmentConfig>getLocalMap("environment-config")
+                                .get("default");
+
+    // TODO: Only place that depends on ontology :D
+    if (environmentConfig.getOntology().equals("hmas")) {
+      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
+    } else {
+      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
+    }
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       this.vertx.eventBus(),
       this.vertx.sharedData()
@@ -187,7 +198,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
   ) throws IOException {
     final var result = this.store.getEntityModel(requestIri);
     if (result.isPresent()) {
-      this.replyWithPayload(message, RdfModelUtils.modelToString(result.get(), RDFFormat.TURTLE));
+      this.replyWithPayload(message, RdfModelUtils.modelToString(result.get(), RDFFormat.TURTLE,this.httpConfig.getBaseUri()));
     } else {
       this.replyEntityNotFound(message);
     }
@@ -231,7 +242,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
             );
             this.store.addEntityModel(entityIri, entityModel);
             final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityCreated(
                 this.httpConfig.getAgentBodiesUri(content.workspaceName()),
@@ -271,7 +282,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
             this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri);
             this.store.addEntityModel(entityIri, entityModel);
             final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityCreated(
                 requestIri.toString(),
@@ -318,7 +329,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
           this.dispatcherMessagebox.sendMessage(
             new HttpNotificationDispatcherMessage.EntityChanged(
               workspaceIri.toString(),
-              RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE)
+              RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
             )
           );
         }));
@@ -384,7 +395,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         parentIri.toString(),
-                        RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE)
+                        RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                       )
                     );
                   }));
@@ -420,14 +431,14 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         platformResourceProfileIri.toString(),
-                        RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE)
+                        RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                       )
                     );
                   }));
             }
             this.store.addEntityModel(resourceIRI, entityModel);
             final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityCreated(
                 requestIri.toString(),
@@ -473,7 +484,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
         .ifPresentOrElse(
           Failable.asConsumer(entityModel -> {
             final var entityModelString =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE);
+                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             if (entityModel.contains(
                 requestIri,
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
@@ -501,7 +512,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         workspaceIri.toString(),
-                        RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE)
+                        RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                       )
                     );
                   }));
@@ -543,7 +554,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                       this.dispatcherMessagebox.sendMessage(
                         new HttpNotificationDispatcherMessage.EntityChanged(
                           platformIri.toString(),
-                          RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE)
+                          RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                         )
                       );
                     }));
@@ -577,7 +588,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                             this.dispatcherMessagebox.sendMessage(
                               new HttpNotificationDispatcherMessage.EntityChanged(
                                 parentIri.toString(),
-                                RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE)
+                                RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                               )
                             );
                           }))
@@ -613,7 +624,7 @@ public class RdfStoreVerticleHMAS extends AbstractVerticle {
                   this.dispatcherMessagebox.sendMessage(
                     new HttpNotificationDispatcherMessage.EntityDeleted(
                       iri.toString(),
-                      RdfModelUtils.modelToString(model, RDFFormat.TURTLE)
+                      RdfModelUtils.modelToString(model, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                     )
                   );
                 }));

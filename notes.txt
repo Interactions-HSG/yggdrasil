@@ -67,3 +67,12 @@ API:
 RDFSTore to many responsibilities
 Representation coupled with cartago <- cartagoVerticle does not depend on ontology
 createEntity refactor
+
+
+
+# New
+
+- I removed do action from the api (this was discussed to be not needed)
+- Combined all classes where it was possible
+- Most classes do not depend on ontology anymore
+- Only rdfstoreverticle and cartagoVerticle have a if statement to decide which RepresentationFactor to use

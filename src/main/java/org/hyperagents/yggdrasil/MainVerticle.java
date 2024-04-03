@@ -8,8 +8,7 @@ import io.vertx.core.Promise;
 import org.hyperagents.yggdrasil.http.HttpServerVerticle;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.model.impl.EnvironmentParser;
-import org.hyperagents.yggdrasil.store.RdfStoreVerticleHMAS;
-import org.hyperagents.yggdrasil.store.RdfStoreVerticleTD;
+import org.hyperagents.yggdrasil.store.RdfStoreVerticle;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
@@ -58,12 +57,7 @@ public class MainVerticle extends AbstractVerticle {
 
     // start the verticles
     this.vertx.deployVerticle(new HttpServerVerticle())
-              .compose(v -> {
-                if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
-                  return this.vertx.deployVerticle(new RdfStoreVerticleHMAS(), new DeploymentOptions().setConfig(config));
-                }
-                else return this.vertx.deployVerticle(new RdfStoreVerticleTD(), new DeploymentOptions().setConfig(config));
-              })
+              .compose(v -> this.vertx.deployVerticle(new RdfStoreVerticle(), new DeploymentOptions().setConfig(config)))
               .compose(v -> notificationConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.websub.HttpNotificationVerticle") : Future.succeededFuture())
               .compose(v -> environmentConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticle") : Future.succeededFuture())
               .<Void>mapEmpty()

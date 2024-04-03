@@ -152,6 +152,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final String workspaceName,
       final Set<String> artifactTemplates
   ) {
+    // TODO: Add artifactTemplates to makeArtifact signifier
     String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
     Workspace workspace = new Workspace.Builder()
       .setIRIAsString(baseUri + "#workspace")
