@@ -82,3 +82,7 @@ createEntity refactor
 
 - Need solution for adding artifacts and workspaces through turtle on how to modify the graph
 -> need to overwrite certain uris and delete others while keeping all others
+
+-> The API for /../../artifacts/artifact/{action} could be removed?
+ -> Add the endpoints to the artifacts themselves? would make more sense?
+ -> URL would be the same in the end just not in presented in the swagger specs and handles by artifacts themselves and not rdfverticle?
