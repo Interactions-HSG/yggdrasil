@@ -72,7 +72,6 @@ createEntity refactor
 
 # New
 
-- I removed do action from the api (this was discussed to be not needed)
 - Combined all classes where it was possible
 - Most classes do not depend on ontology anymore
 - Only rdfstoreverticle and cartagoVerticle have a if statement to decide which RepresentationFactor to use
@@ -86,3 +85,24 @@ createEntity refactor
 -> The API for /../../artifacts/artifact/{action} could be removed?
  -> Add the endpoints to the artifacts themselves? would make more sense?
  -> URL would be the same in the end just not in presented in the swagger specs and handles by artifacts themselves and not rdfverticle?
+
+// question of base cartago artifact
+
++ add list of missing features (e.g.: WebID, Interface to Cartago(feedbackParams, etc) )
+
+! MOST IMPORTANT FOR RELEASE !
++ Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action
++ look at feedbackParams specifically
+
++ websub check
+
+// only after release!
++ Think where signifier exposure mechanism could fit in yggdrasil
++ Implement small version with xArm example
++ think of interesting domain use case for context aware signifiers
+
++ create new util class to make artifacts from turtle
+ -> do not need cartago for it anymore
+ -> Util clas would need to have access to RepresentationFactory
+ -> Util class would create the artifactRepresentations and merge it with the request turtle representation
+

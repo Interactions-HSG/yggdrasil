@@ -233,7 +233,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             .sendMessage(new RdfStoreMessage.CreateArtifact(
               this.httpConfig.getBaseUri() + context.request().path(),
               actualEntityName.body(),
-              response.body()//artifactRepresentation
+              artifactRepresentation//artifactRepresentation
             ))
             .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
             .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end());
