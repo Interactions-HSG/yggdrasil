@@ -330,6 +330,10 @@ public class CartagoVerticle extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var registry = HypermediaArtifactRegistry.getInstance();
+    final var hypermediaArtifact = HypermediaArtifactRegistry.getInstance().getArtifact(artifactName);
+
+    Optional<String> actualPayload = hypermediaArtifact.handleAction(null,action,null);
+
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
       payload
