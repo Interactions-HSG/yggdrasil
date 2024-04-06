@@ -3,16 +3,22 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.gson.JsonParser;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
@@ -24,7 +30,7 @@ import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-public abstract class HypermediaTDArtifact extends Artifact {
+public abstract class HypermediaTDArtifact extends Artifact implements HypermediaArtifact {
   private final ListMultimap<String, ActionAffordance> actionAffordances =
     Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
@@ -185,5 +191,25 @@ public abstract class HypermediaTDArtifact extends Artifact {
   protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
   }
+
+  public Optional<String> handleAction(String storeResponse, String actionName, RoutingContext context)
+  {
+    return TDGraphReader
+      .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
+      .getActions()
+      .stream()
+      .filter(
+        action -> action.getTitle().isPresent()
+          && action.getTitle().get().equals(actionName)
+      )
+      .findFirst()
+      .flatMap(ActionAffordance::getInputSchema)
+      .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
+      .map(inputSchema -> CartagoDataBundle.toJson(
+        ((ArraySchema) inputSchema)
+          .parseJson(JsonParser.parseString(context.body().asString()))
+      ));
+  }
+
 }
 

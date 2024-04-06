@@ -3,26 +3,41 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.Artifact;
 import cartago.ArtifactId;
 import cartago.CartagoException;
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IOSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
+import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.vertx.core.json.JsonObject;
 import java.net.URI;
 import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+
+import io.vertx.ext.web.RoutingContext;
+import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 
-public abstract class HypermediaHMASArtifact extends Artifact {
+import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
+
+public abstract class HypermediaHMASArtifact extends Artifact implements HypermediaArtifact {
   private final ListMultimap<String, Signifier> signifiers =
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
@@ -185,4 +200,36 @@ public abstract class HypermediaHMASArtifact extends Artifact {
   protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
   }
+
+
+  public Optional<String> handleAction(String storeResponse, String actionName, RoutingContext context)
+  {
+
+    final var artifactName = context.pathParam("artid");
+
+    final var workspaceName = context.pathParam("wkspid");
+
+    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+
+
+    final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
+
+
+    var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
+      .filter(sig -> sig.getIRIAsString().isPresent())
+      .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
+      .findFirst();
+
+    Optional<String> description = Optional.empty();
+    if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
+      JsonElement jsonElement = JsonParser.parseString(context.body().asString());
+      var input = signifier.get().getActionSpecification().getInputSpecification().get();
+      QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+      description = CartagoDataBundle.toJson(
+        parseInput(jsonElement,qualifiedValueSpecification,new ArrayList<>())
+      ).describeConstable();
+    }
+    return description;
+  }
+
 }
