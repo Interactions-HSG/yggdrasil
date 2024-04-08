@@ -412,8 +412,6 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       .onFailure(context::fail);
   }
 
-// TODO: MAKE IT WORK FOR BOTH TD AND HMAS SOMEHOW???
-// HOW TO BEST HANDLE CARTAGO ACTIONS? -> INPUT ALWAYS JSON ARRAY AS PER API
   public void handleAction(final RoutingContext context) {
     final var request = context.request();
     final var agentId = request.getHeader(AGENT_WEBID_HEADER);
