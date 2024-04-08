@@ -15,7 +15,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.JsonParser;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
@@ -192,7 +191,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.metadata.addAll(model);
   }
 
-  public Optional<String> handleAction(String storeResponse, String actionName, RoutingContext context)
+  public Optional<String> handleAction(String storeResponse, String actionName, String context)
   {
     return TDGraphReader
       .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
@@ -207,7 +206,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       .filter(inputSchema -> inputSchema.getDatatype().equals(DataSchema.ARRAY))
       .map(inputSchema -> CartagoDataBundle.toJson(
         ((ArraySchema) inputSchema)
-          .parseJson(JsonParser.parseString(context.body().asString()))
+          .parseJson(JsonParser.parseString(context))
       ));
   }
 

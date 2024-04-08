@@ -223,8 +223,9 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceName,
           String artifactName,
           String actionName,
-          Optional<String> content
-        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, content)
+          String storeResponse,
+          String context
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse,context)
           .onSuccess(o -> message.reply(o.orElse(String.valueOf(HttpStatus.SC_OK))))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
       }
@@ -326,13 +327,14 @@ public class CartagoVerticle extends AbstractVerticle {
     final String workspaceName,
     final String artifactName,
     final String action,
-    final Optional<String> payload
+    final String storeResponse,
+    final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var registry = HypermediaArtifactRegistry.getInstance();
-    final var hypermediaArtifact = HypermediaArtifactRegistry.getInstance().getArtifact(artifactName);
+    final var hypermediaArtifact = registry.getArtifact(artifactName);
 
-    Optional<String> actualPayload = hypermediaArtifact.handleAction(null,action,null);
+    Optional<String> payload = hypermediaArtifact.handleAction(storeResponse,action,context);
 
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =

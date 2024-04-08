@@ -9,11 +9,6 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.JsonElement;
@@ -24,8 +19,6 @@ import java.util.*;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-import io.vertx.ext.web.RoutingContext;
-import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
@@ -202,12 +195,11 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
 
-  public Optional<String> handleAction(String storeResponse, String actionName, RoutingContext context)
+  public Optional<String> handleAction(String storeResponse, String actionName, String context)
   {
 
-    final var artifactName = context.pathParam("artid");
-
-    final var workspaceName = context.pathParam("wkspid");
+    final var workspaceName = this.getId().getWorkspaceId().getName();
+    final var artifactName = this.getId().getName();
 
     final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
@@ -222,7 +214,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
     Optional<String> description = Optional.empty();
     if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
-      JsonElement jsonElement = JsonParser.parseString(context.body().asString());
+      JsonElement jsonElement = JsonParser.parseString(context);
       var input = signifier.get().getActionSpecification().getInputSpecification().get();
       QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
       description = CartagoDataBundle.toJson(

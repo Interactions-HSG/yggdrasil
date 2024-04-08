@@ -94,6 +94,7 @@ public final class HypermediaArtifactRegistry {
 
   public void register(final HypermediaTDArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
+    this.artifacts.put(artifactTemplate, artifact);
     this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
     artifact.getActionAffordances()
       .entrySet()

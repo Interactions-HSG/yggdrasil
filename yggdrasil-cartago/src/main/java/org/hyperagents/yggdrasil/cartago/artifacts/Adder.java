@@ -21,7 +21,7 @@ public class Adder extends HypermediaHMASArtifact {
     this.registerSignifier(
         "http://example.org/Add",
         "add",
-        "/add",
+        "add",
       new QualifiedValueSpecification.Builder()
         .setIRIAsString("http://example.org/addends")
         .addRequiredSemanticType(RDF.LIST.stringValue())

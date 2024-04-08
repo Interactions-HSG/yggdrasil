@@ -1,6 +1,6 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
-import java.util.Optional;
+
 
 /**
  * Classifies all messages related to Cartago.
@@ -108,14 +108,16 @@ public sealed interface CartagoMessage {
    * @param workspaceName The name of the workspace where the artifact is located.
    * @param artifactName  The name of the artifact on which the action will be performed.
    * @param actionName    The name of the action to be performed.
-   * @param content       Optional additional information for the action.
+   * @param storeResponse The string representation of the response of the action.
+   * @param context       The routing context of the request.
    */
   record DoAction(
       String agentId,
       String workspaceName,
       String artifactName,
       String actionName,
-      Optional<String> content
+      String storeResponse,
+      String context
   ) implements CartagoMessage {
   }
 }

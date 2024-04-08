@@ -9,13 +9,14 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
-import java.util.Optional;
+
+
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
 /**
- * This class is responsible for marshalling and unmarshalling 
+ * This class is responsible for marshalling and unmarshalling
  * CartagoMessage objects to and from JSON.
- * It implements the JsonSerializer and JsonDeserializer interfaces 
+ * It implements the JsonSerializer and JsonDeserializer interfaces
  * to customize the serialization and deserialization process.
  */
 public class CartagoMessageMarshaller
@@ -66,9 +67,8 @@ public class CartagoMessageMarshaller
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ACTION_NAME.getName()).getAsString(),
-        jsonObject.get(MessageFields.ACTION_CONTENT.getName()).isJsonNull()
-        ? Optional.empty()
-        : Optional.of(jsonObject.get(MessageFields.ACTION_CONTENT.getName()).getAsString())
+        jsonObject.get(MessageFields.STORE_RESPONSE.getName()).getAsString(),
+        jsonObject.get(MessageFields.CONTEXT.getName()).getAsString()
       );
       default -> throw new JsonParseException("The request method is not valid");
     };
@@ -136,7 +136,8 @@ public class CartagoMessageMarshaller
         json.addProperty(MessageFields.AGENT_ID.getName(), m.agentId());
         json.addProperty(MessageFields.ARTIFACT_NAME.getName(), m.artifactName());
         json.addProperty(MessageFields.ACTION_NAME.getName(), m.actionName());
-        json.addProperty(MessageFields.ACTION_CONTENT.getName(), m.content().orElse(null));
+        json.addProperty(MessageFields.STORE_RESPONSE.getName(), m.storeResponse());
+        json.addProperty(MessageFields.CONTEXT.getName(), m.context());
       }
     }
     return json;
