@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.hc.core5.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.artifacts.Adder;
+import org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS;
 import org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -97,7 +97,7 @@ public class CartagoVerticleTest {
                  "class",
                  ADDER_SEMANTIC_TYPE,
                  "template",
-                 Adder.class.getCanonicalName()
+                 AdderHMAS.class.getCanonicalName()
                ),
                JsonObject.of(
                  "class",
