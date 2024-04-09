@@ -1,0 +1,22 @@
+@base <http://localhost:8080/> .
+@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix urn: <http://example.org/urn#> .
+@prefix ex: <http://example.org/> .
+@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+
+<workspaces/test/agents/test_agent> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/agents/test_agent#agent>;
+  hmas:isContainedIn <workspaces/test>;
+  <https://example.org/isBodyOf> <agents/test_agent> .
+
+<workspaces/test/agents/test_agent#agent> a hmas:Agent, hmas:Artifact, aa:Body .
+
+<workspaces/test> a hmas:Workspace .
+
+<agents/test_agent> a hmas:Agent .
