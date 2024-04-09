@@ -155,7 +155,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       .setContentType("application/json")
       .build();
 
-    final var actionSpecification = new ActionSpecification.Builder(form).setRequiredSemanticTypes(Collections.singleton(actionClass)).addSemanticType(actionClass);
+    final var actionSpecification = new ActionSpecification.Builder(form).addRequiredSemanticTypes(Collections.singleton(actionClass)).addSemanticType(actionClass);
 
     if (inputSchema != null) {
       actionSpecification.setInputSpecification(inputSchema);
