@@ -308,7 +308,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
             .compose(r -> this.notificationMessagebox.sendMessage(
-              new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
+              // TODO: Before it just added callback to entityIri again should be r.body?
+              new HttpNotificationDispatcherMessage.AddCallback(r.body(), callbackIri)
             ))
             .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
             .onFailure(t -> routingContext.fail(
