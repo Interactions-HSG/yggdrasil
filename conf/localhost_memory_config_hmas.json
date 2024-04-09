@@ -19,7 +19,7 @@
       },
       {
         "class" : "http://example.org/Adder",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Adder"
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS"
       }
     ],
     "enabled" : true,
