@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil;
+package org.hyperagents.yggdrasil.hmas;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import io.vertx.core.DeploymentOptions;
@@ -9,6 +9,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.apache.hc.core5.http.HttpStatus;
+import org.eclipse.rdf4j.model.util.Models;
+import org.hyperagents.yggdrasil.MainVerticle;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -18,13 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hc.core5.http.HttpStatus;
-import org.eclipse.rdf4j.model.util.Models;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
@@ -95,6 +97,8 @@ public class BodyNotificationTest {
              JsonObject.of(
                "enabled",
                true,
+               "ontology",
+               "hmas",
                "known-artifacts",
                JsonArray.of(
                  JsonObject.of(
@@ -119,22 +123,22 @@ public class BodyNotificationTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("output_test_workspace_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_test_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_test_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_agent_body_test_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithArtifactAndBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_c0_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_workspace_c0_body_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client

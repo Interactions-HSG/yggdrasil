@@ -34,6 +34,8 @@ public class RdfStoreVerticleCreateTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String WORKSPACES_PATH = "http://localhost:8080/workspaces/";
   private static final String TEST_WORKSPACE_NAME = "test";
+  private static final String PLATFORM_FILE = "platform_test_td.ttl";
+  private static final String TEST_WORKSPACE_FILE = "output_test_workspace_td.ttl";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private RdfStoreMessagebox storeMessagebox;
@@ -121,12 +123,12 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     final var platformRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
           StandardCharsets.UTF_8
         );
     final var outputWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
           StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(ctx, outputWorkspaceRepresentation, platformRepresentation)
@@ -168,11 +170,11 @@ public class RdfStoreVerticleCreateTest {
     this.assertWorkspaceCreated(
           ctx,
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
               StandardCharsets.UTF_8
           ),
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
               StandardCharsets.UTF_8
           )
         )
@@ -254,11 +256,11 @@ public class RdfStoreVerticleCreateTest {
     this.assertWorkspaceCreated(
           ctx,
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
               StandardCharsets.UTF_8
           ),
           Files.readString(
-              Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
               StandardCharsets.UTF_8
           )
         )
@@ -313,6 +315,91 @@ public class RdfStoreVerticleCreateTest {
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           outputArtifactRepresentation,
+          r.body()
+        ))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testCreateAndGetBody(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var bodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var bodyArtifactRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("output_test_agent_body_test.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var outputParentWorkspaceRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("test_workspace_body_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    this.assertWorkspaceCreated(
+          ctx,
+          Files.readString(
+              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+              StandardCharsets.UTF_8
+          ),
+          Files.readString(
+              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
+              StandardCharsets.UTF_8
+          )
+        )
+        .compose(r -> this.storeMessagebox
+                          .sendMessage(new RdfStoreMessage.CreateBody(
+                            TEST_WORKSPACE_NAME,
+                            "test",
+                            bodyRepresentation
+                          ))
+        )
+        .onSuccess(r -> {
+          try {
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                bodyArtifactRepresentation,
+                r.body()
+            );
+            final var entityUpdatedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+            Assertions.assertEquals(
+                WORKSPACES_PATH + TEST_WORKSPACE_NAME,
+                entityUpdatedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                outputParentWorkspaceRepresentation,
+                entityUpdatedMessage.content()
+            );
+            final var entityCreatedMessage =
+                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            Assertions.assertEquals(
+                "http://localhost:8080/workspaces/test/agents/",
+                entityCreatedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                bodyArtifactRepresentation,
+                entityCreatedMessage.content()
+            );
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        })
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          outputParentWorkspaceRepresentation,
+          r.body()
+        ))
+        .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
+          "http://localhost:8080/workspaces/test/agents/test"
+        )))
+        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          bodyArtifactRepresentation,
           r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());

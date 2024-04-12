@@ -11,17 +11,18 @@
     "known-artifacts" : [
       {
         "class" : "http://example.org/Counter",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Counter"
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
       },
       {
         "class": "http://example.org/Artifact",
-        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicArtifact"
+        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
       },
       {
         "class" : "http://example.org/Adder",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.Adder"
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS"
       }
     ],
-    "enabled" : true
+    "enabled" : true,
+    "ontology": "hmas"
   }
 }

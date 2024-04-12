@@ -4,7 +4,7 @@ import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
-public class Counter extends HypermediaArtifact {
+public class CounterHMAS extends HypermediaHMASArtifact {
 
   public void init() {
     this.defineObsProperty("count", 0);
@@ -24,6 +24,6 @@ public class Counter extends HypermediaArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
-    this.registerSignifier("http://example.org/Increment", "inc", "/increment");
+    this.registerSignifier("http://example.org/Increment", "inc", "increment");
   }
 }

@@ -19,14 +19,11 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
 import org.apache.commons.lang3.function.Failable;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +44,8 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class CartagoVerticle extends AbstractVerticle {
@@ -64,20 +62,28 @@ public class CartagoVerticle extends AbstractVerticle {
   @Override
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx
-                          .sharedData()
-                          .<String, HttpInterfaceConfig>getLocalMap("http-config")
-                          .get(DEFAULT_CONFIG_VALUE);
+      .sharedData()
+      .<String, HttpInterfaceConfig>getLocalMap("http-config")
+      .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
-    this.representationFactory = new RepresentationFactoryImpl(this.httpConfig);
+
+
+    EnvironmentConfig environmentConfig = this.vertx.sharedData()
+      .<String, EnvironmentConfig>getLocalMap("environment-config")
+      .get(DEFAULT_CONFIG_VALUE);
+
+    // TODO: Only place that depends on ontology :D
+    if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
+      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
+    } else {
+      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
+    }
     this.agentCredentials = new HashMap<>();
 
     final var eventBus = this.vertx.eventBus();
     final var ownMessagebox = new CartagoMessagebox(
-        eventBus,
-        this.vertx
-            .sharedData()
-            .<String, EnvironmentConfig>getLocalMap("environment-config")
-            .get(DEFAULT_CONFIG_VALUE)
+      eventBus,
+      environmentConfig
     );
     ownMessagebox.init();
     ownMessagebox.receiveMessages(this::handleCartagoRequest);
@@ -85,87 +91,87 @@ public class CartagoVerticle extends AbstractVerticle {
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       eventBus,
       this.vertx
-          .sharedData()
-          .<String, WebSubConfig>getLocalMap("notification-config")
-          .get(DEFAULT_CONFIG_VALUE)
+        .sharedData()
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .get(DEFAULT_CONFIG_VALUE)
     );
     this.vertx
-        .<Void>executeBlocking(() -> {
-          CartagoEnvironment.getInstance().init(new BasicLogger());
-          this.initializeFromConfiguration();
-          return null;
-        })
-        .onComplete(startPromise);
+      .<Void>executeBlocking(() -> {
+        CartagoEnvironment.getInstance().init(new BasicLogger());
+        this.initializeFromConfiguration();
+        return null;
+      })
+      .onComplete(startPromise);
   }
 
   @Override
   public void stop(final Promise<Void> stopPromise) {
     this.vertx
-        .<Void>executeBlocking(() -> {
-          CartagoEnvironment.getInstance().shutdown();
-          // Resetting CArtAgO root workspace before shutting down to ensure system is fully reset
-          final var rootWorkspace = CartagoEnvironment.getInstance().getRootWSP();
-          rootWorkspace.setWorkspace(new Workspace(
-              rootWorkspace.getId(),
-              rootWorkspace,
-              new BasicLogger()
-          ));
-          return null;
-        })
-        .onComplete(stopPromise);
+      .<Void>executeBlocking(() -> {
+        CartagoEnvironment.getInstance().shutdown();
+        // Resetting CArtAgO root workspace before shutting down to ensure system is fully reset
+        final var rootWorkspace = CartagoEnvironment.getInstance().getRootWSP();
+        rootWorkspace.setWorkspace(new Workspace(
+          rootWorkspace.getId(),
+          rootWorkspace,
+          new BasicLogger()
+        ));
+        return null;
+      })
+      .onComplete(stopPromise);
   }
 
   private void initializeFromConfiguration() {
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
-                                .sharedData()
-                                .<String, Environment>getLocalMap("environment")
-                                .get(DEFAULT_CONFIG_VALUE);
+      .sharedData()
+      .<String, Environment>getLocalMap("environment")
+      .get(DEFAULT_CONFIG_VALUE);
     environment.getKnownArtifacts()
-               .forEach(a -> registry.addArtifactTemplate(a.getClazz(), a.getTemplate()));
+      .forEach(a -> registry.addArtifactTemplate(a.getClazz(), a.getTemplate()));
     environment
-        .getWorkspaces()
-        .forEach(w -> {
-          w.getParentName().ifPresentOrElse(
-              Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
-                new RdfStoreMessage.CreateWorkspace(
-                  this.httpConfig.getWorkspacesUri(),
-                  w.getName(),
-                  Optional.of(this.httpConfig.getWorkspaceUri(p)),
-                  this.instantiateSubWorkspace(p, w.getName())
-                )
-              )),
-              Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
-                new RdfStoreMessage.CreateWorkspace(
-                  this.httpConfig.getWorkspacesUri(),
-                  w.getName(),
-                  Optional.empty(),
-                  this.instantiateWorkspace(w.getName())
-                )
-              ))
-          );
-          w.getAgents().forEach(
-              Failable.asConsumer(a -> this.joinWorkspace(a.getName(), w.getName()))
-          );
-          w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
-            this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                this.httpConfig.getArtifactsUri(w.getName()) + "/",
-                a.getName(),
-                this.instantiateArtifact(
-                  this.httpConfig.getAgentUri("yggdrasil"),
-                  w.getName(),
-                  registry.getArtifactTemplate(c).orElseThrow(),
-                  a.getName(),
-                  Optional.of(a.getInitializationParameters())
-                          .filter(p -> !p.isEmpty())
-                          .map(List::toArray)
-                )
-            ));
-            a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
-                this.focus(ag.getName(), w.getName(), a.getName())
-            ));
-          })));
-        });
+      .getWorkspaces()
+      .forEach(w -> {
+        w.getParentName().ifPresentOrElse(
+          Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
+            new RdfStoreMessage.CreateWorkspace(
+              this.httpConfig.getWorkspacesUri(),
+              w.getName(),
+              Optional.of(this.httpConfig.getWorkspaceUri(p)),
+              this.instantiateSubWorkspace(p, w.getName())
+            )
+          )),
+          Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
+            new RdfStoreMessage.CreateWorkspace(
+              this.httpConfig.getWorkspacesUri(),
+              w.getName(),
+              Optional.empty(),
+              this.instantiateWorkspace(w.getName())
+            )
+          ))
+        );
+        w.getAgents().forEach(
+          Failable.asConsumer(a -> this.joinWorkspace(a.getName(), w.getName()))
+        );
+        w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
+          this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+            this.httpConfig.getArtifactsUri(w.getName()) + "/",
+            a.getName(),
+            this.instantiateArtifact(
+              this.httpConfig.getAgentUri("yggdrasil"),
+              w.getName(),
+              registry.getArtifactTemplate(c).orElseThrow(),
+              a.getName(),
+              Optional.of(a.getInitializationParameters())
+                .filter(p -> !p.isEmpty())
+                .map(List::toArray)
+            )
+          ));
+          a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
+            this.focus(ag.getName(), w.getName(), a.getName())
+          ));
+        })));
+      });
   }
 
   @SuppressWarnings({
@@ -187,39 +193,28 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply(String.valueOf(HttpStatus.SC_OK));
         }
         case CartagoMessage.CreateArtifact(
-            String agentId,
-            String workspaceName,
-            String artifactName,
-            String representation
-          ) -> {
-          try {
-            final var artifactInit = new JsonObject(representation);
-            message.reply(this.instantiateArtifact(
-              agentId,
-              workspaceName,
-              JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-                .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
-                .orElseThrow(),
-              artifactName,
-              JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
-                .map(i -> i.getList().toArray())
-            ));
-          } catch (Exception ignored) {
-            message.reply(this.instantiateArtifact(
-              agentId,
-              workspaceName,
-              null,
-              artifactName,
-              Optional.empty()
-            ));
-          }
-
+          String agentId,
+          String workspaceName,
+          String artifactName,
+          String representation
+        ) -> {
+          final var artifactInit = new JsonObject(representation);
+          message.reply(this.instantiateArtifact(
+            agentId,
+            workspaceName,
+            JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
+              .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
+              .orElseThrow(),
+            artifactName,
+            JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
+              .map(i -> i.getList().toArray())
+          ));
         }
         case CartagoMessage.Focus(
           String agentId,
           String workspaceName,
           String artifactName
-          ) -> {
+        ) -> {
           this.focus(agentId, workspaceName, artifactName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
         }
@@ -228,11 +223,11 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceName,
           String artifactName,
           String actionName,
-          Optional<String> content
-          ) ->
-          this.doAction(agentId, workspaceName, artifactName, actionName, content)
-              .onSuccess(o -> message.reply(o.orElse(String.valueOf(HttpStatus.SC_OK))))
-              .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
+          String storeResponse,
+          String context
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse,context)
+          .onSuccess(o -> message.reply(o.orElse(String.valueOf(HttpStatus.SC_OK))))
+          .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
       }
     } catch (final DecodeException | NoSuchElementException | CartagoException e) {
       message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -241,11 +236,11 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private String instantiateWorkspace(final String workspaceName) throws CartagoException {
     this.workspaceRegistry
-        .registerWorkspace(CartagoEnvironment.getInstance()
-                                             .getRootWSP()
-                                             .getWorkspace()
-                                             .createWorkspace(workspaceName),
-                           this.httpConfig.getWorkspaceUri(workspaceName));
+      .registerWorkspace(CartagoEnvironment.getInstance()
+          .getRootWSP()
+          .getWorkspace()
+          .createWorkspace(workspaceName),
+        this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
       HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
@@ -253,13 +248,13 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String instantiateSubWorkspace(final String workspaceName, final String subWorkspaceName)
-      throws CartagoException {
+    throws CartagoException {
     this.workspaceRegistry
-        .registerWorkspace(this.workspaceRegistry
-                               .getWorkspace(workspaceName)
-                               .orElseThrow()
-                               .createWorkspace(subWorkspaceName),
-                           this.httpConfig.getWorkspaceUri(subWorkspaceName));
+      .registerWorkspace(this.workspaceRegistry
+          .getWorkspace(workspaceName)
+          .orElseThrow()
+          .createWorkspace(subWorkspaceName),
+        this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
       HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
@@ -267,11 +262,12 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private String joinWorkspace(final String agentUri, final String workspaceName)
-      throws CartagoException {
+    throws CartagoException {
     this.workspaceRegistry
-        .getWorkspace(workspaceName)
-        .orElseThrow()
-        .joinWorkspace(this.getAgentCredential(agentUri), e -> {});
+      .getWorkspace(workspaceName)
+      .orElseThrow()
+      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
+      });
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
       this.getAgentNameFromAgentUri(agentUri),
@@ -280,83 +276,80 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void focus(
-      final String agentUri,
-      final String workspaceName,
-      final String artifactName
+    final String agentUri,
+    final String workspaceName,
+    final String artifactName
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace
-        .focus(
-          this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
-          p -> true,
-          new NotificationCallback(this.httpConfig, this.dispatcherMessagebox),
-          Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
+      .focus(
+        this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
+        p -> true,
+        new NotificationCallback(this.httpConfig, this.dispatcherMessagebox),
+        Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
+      )
+      .forEach(p -> this.dispatcherMessagebox.sendMessage(
+        new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+          this.httpConfig.getArtifactUri(workspaceName, artifactName),
+          p.toString()
         )
-        .forEach(p -> this.dispatcherMessagebox.sendMessage(
-          new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-            this.httpConfig.getArtifactUri(workspaceName, artifactName),
-            p.toString()
-          )
-        ));
+      ));
   }
 
   private void leaveWorkspace(final String agentUri, final String workspaceName)
-      throws CartagoException {
+    throws CartagoException {
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace.quitAgent(this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()));
   }
 
   private String instantiateArtifact(
-      final String agentUri,
-      final String workspaceName,
-      final String artifactClass,
-      final String artifactName,
-      final Optional<Object[]> params
+    final String agentUri,
+    final String workspaceName,
+    final String artifactClass,
+    final String artifactName,
+    final Optional<Object[]> params
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-    if (artifactClass == null) {
-      workspace.makeArtifact(
-        this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
-        artifactName,
-        "org.hyperagents.yggdrasil.cartago.artifacts.BasicArtifact",
-        params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
-      );
-      return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
-    }
+
     workspace.makeArtifact(
-        this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
-        artifactName,
-        artifactClass,
-        params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+      artifactName,
+      artifactClass,
+      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
     return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
   }
 
   private Future<Optional<String>> doAction(
-      final String agentUri,
-      final String workspaceName,
-      final String artifactName,
-      final String action,
-      final Optional<String> payload
+    final String agentUri,
+    final String workspaceName,
+    final String artifactName,
+    final String action,
+    final String storeResponse,
+    final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var registry = HypermediaArtifactRegistry.getInstance();
+    final var hypermediaArtifact = registry.getArtifact(artifactName);
+
+    Optional<String> payload = hypermediaArtifact.handleAction(storeResponse,action,context);
+
     final var feedbackParameter = new OpFeedbackParam<>();
     final var operation =
-        payload
-          .map(p -> {
-            final var params = CartagoDataBundle.fromJson(payload.get());
-            return new Op(
-              action,
-              registry.hasFeedbackParam(artifactName, action)
+      payload
+        .map(p -> {
+          final var params = CartagoDataBundle.fromJson(payload.get());
+          return new Op(
+            action,
+            registry.hasFeedbackParam(artifactName, action)
               ? Stream.concat(Arrays.stream(params), Stream.of(feedbackParameter))
-                      .toArray()
+              .toArray()
               : params
-            );
-          })
-          .orElseGet(() -> new Op(action));
+          );
+        })
+        .orElseGet(() -> new Op(action));
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     final var agentName = this.getAgentNameFromAgentUri(agentUri);
@@ -367,43 +360,43 @@ public class CartagoVerticle extends AbstractVerticle {
       )
     );
     workspace.execOp(0L,
-                     this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
-                     e -> {
-                       if (e instanceof ActionSucceededEvent) {
-                         this.dispatcherMessagebox.sendMessage(
-                           new HttpNotificationDispatcherMessage.ActionSucceeded(
-                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
-                             this.getActionNotificationContent(artifactName, action).encode()
-                           )
-                         );
-                         promise.complete();
-                       } else if (e instanceof ActionFailedEvent f) {
-                         this.dispatcherMessagebox.sendMessage(
-                           new HttpNotificationDispatcherMessage.ActionFailed(
-                             this.httpConfig.getAgentBodyUri(workspaceName, agentName),
-                             this.getActionNotificationContent(artifactName, action)
-                                 .put("cause", f.getFailureMsg())
-                                 .encode()
-                           )
-                         );
-                         promise.fail(f.getFailureMsg());
-                       }
-                     },
-                     artifactName,
-                     operation,
-                     -1,
-                     null);
+      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+      e -> {
+        if (e instanceof ActionSucceededEvent) {
+          this.dispatcherMessagebox.sendMessage(
+            new HttpNotificationDispatcherMessage.ActionSucceeded(
+              this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+              this.getActionNotificationContent(artifactName, action).encode()
+            )
+          );
+          promise.complete();
+        } else if (e instanceof ActionFailedEvent f) {
+          this.dispatcherMessagebox.sendMessage(
+            new HttpNotificationDispatcherMessage.ActionFailed(
+              this.httpConfig.getAgentBodyUri(workspaceName, agentName),
+              this.getActionNotificationContent(artifactName, action)
+                .put("cause", f.getFailureMsg())
+                .encode()
+            )
+          );
+          promise.fail(f.getFailureMsg());
+        }
+      },
+      artifactName,
+      operation,
+      -1,
+      null);
     return promise.future()
-                  .map(ignored ->
-                    Optional.ofNullable(feedbackParameter.get())
-                            .map(r ->
-                              registry.hasFeedbackResponseConverter(artifactName, action)
-                              ? registry.getFeedbackResponseConverter(artifactName, action)
-                                        .apply(r)
-                              : r
-                            )
-                            .map(Object::toString)
-                  );
+      .map(ignored ->
+        Optional.ofNullable(feedbackParameter.get())
+          .map(r ->
+            registry.hasFeedbackResponseConverter(artifactName, action)
+              ? registry.getFeedbackResponseConverter(artifactName, action)
+              .apply(r)
+              : r
+          )
+          .map(Object::toString)
+      );
   }
 
   private JsonObject getActionNotificationContent(final String artifactName, final String action) {

@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil;
+package org.hyperagents.yggdrasil.td;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import io.vertx.core.DeploymentOptions;
@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
+import org.hyperagents.yggdrasil.MainVerticle;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -64,7 +65,7 @@ public class EnvironmentConfigurationTest {
           }
         );
     final var configuration = Files.readString(
-        Path.of(ClassLoader.getSystemResource("cartago_config.json").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/cartago_config.json").toURI()),
         StandardCharsets.UTF_8
     );
     vertx.deployVerticle(new CallbackServerVerticle())
@@ -84,17 +85,17 @@ public class EnvironmentConfigurationTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client

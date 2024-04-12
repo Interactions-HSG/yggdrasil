@@ -2,7 +2,7 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 
 @SuppressWarnings("unused")
-public class BasicArtifact extends HypermediaArtifact {
+public class BasicTDArtifact extends HypermediaTDArtifact {
   @Override
   protected void registerInteractionAffordances() {
     // No affordances to register

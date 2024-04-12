@@ -3,7 +3,7 @@ Problems for merging TD and HMAS:
 	- RdfStoreVerticle handles creation of Workspace / platform / artifacts / bodies
 	- Adds ontology specific prefixes in creation
 	-> If we can strip RdfStoreVerticle of anything ontology specific we can use it as our RDF Store
-	
+
 - Yggdrasil-Core: HttpEntityHandler
 	- Only really depends on ontology if we create through turtle
 	- Since we decide what to instanciate through first rdf triple
@@ -23,7 +23,7 @@ Problems for merging TD and HMAS:
 	-> Could have two methods of creating Signifiers?
 
 - Yggdrasil-Utils: RepresentationFactoryImpl
-	- Obviously we would need two different factories 
+	- Obviously we would need two different factories
 	- Could check if some input stays the same so we can use same interface
 	- Problem arises here because of securityschemes
 	-> Should not be a problem to have two implementations of the interface
@@ -39,18 +39,70 @@ API:
 	+ / - GET
 	+ /query/ - GET POST ?- missing
 	- /hub/ - NO LONGER NEEDED
-	
+
 	Workspace:
-	+ /workspaces/ - POST 
+	+ /workspaces/ - POST
 	+ /workspaces/{wrkspid}/ - GET POST PUT DELETE
 	+ /workspaces/{wrkspid}/join - POST
 	+ /workspaces/{wrkspid}/leave - POST
 	- /workspaces/{wrkspid}/focus - NO LONGER NEEDED -> In artifact itself
-	
+
 	Artifact:
 	+ /workspaces/{wrkspid}/artifacts/ - POST
 	+ /workspaces/{wrkspid}/artifacts/{artifact}/ - GET POST PUT DELETE
-	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus - NEW POST
+	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus/ - NEW POST
 
 	body:
 	-> REMOVED? since we give agents now also artifact uri in platform?
+
+
+
+
+# NOTES ON IMPLEMENTATION
+- RepresentationFactory Interface imposes methods for creating representations -> return null
+- Different implementations of uri wrappers -> trailing slash
+
+
+
+RDFSTore to many responsibilities
+Representation coupled with cartago <- cartagoVerticle does not depend on ontology
+createEntity refactor
+
+
+
+# New
+
+- Combined all classes where it was possible
+- Most classes do not depend on ontology anymore
+- Only rdfstoreverticle and cartagoVerticle have a if statement to decide which RepresentationFactor to use
+
+- Made it so that when you create an artifact through turtle it is built on top of cartago base artifact
+-> this artifact needs to be in the environment config.
+
+- Need solution for adding artifacts and workspaces through turtle on how to modify the graph
+-> need to overwrite certain uris and delete others while keeping all others
+
+-> The API for /../../artifacts/artifact/{action} could be removed?
+ -> Add the endpoints to the artifacts themselves? would make more sense?
+ -> URL would be the same in the end just not in presented in the swagger specs and handles by artifacts themselves and not rdfverticle?
+
+// question of base cartago artifact
+
++ add list of missing features (e.g.: WebID, Interface to Cartago(feedbackParams, etc) )
+
+! MOST IMPORTANT FOR RELEASE !
++ Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action
++ look at feedbackParams specifically
+
++ websub check
+
+// only after release!
++ Think where signifier exposure mechanism could fit in yggdrasil
++ Implement small version with xArm example
++ think of interesting domain use case for context aware signifiers
+
++ create new util class to make artifacts from turtle
+ -> do not need cartago for it anymore
+ -> Util clas would need to have access to RepresentationFactory
+ -> Util class would create the artifactRepresentations and merge it with the request turtle representation
+

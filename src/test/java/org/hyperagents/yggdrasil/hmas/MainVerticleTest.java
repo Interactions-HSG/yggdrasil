@@ -1,6 +1,7 @@
-package org.hyperagents.yggdrasil;
+package org.hyperagents.yggdrasil.hmas;
 
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -9,6 +10,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.apache.hc.core5.http.HttpStatus;
+import org.eclipse.rdf4j.model.util.Models;
+import org.hyperagents.yggdrasil.MainVerticle;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -18,13 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hc.core5.http.HttpStatus;
-import org.eclipse.rdf4j.model.util.Models;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
@@ -36,6 +39,7 @@ public class MainVerticleTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
+  private static final String BASE_ARTIFACT_CLASS = "http://example.org/Artifact";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
@@ -101,9 +105,18 @@ public class MainVerticleTest {
                    "class",
                    COUNTER_ARTIFACT_CLASS,
                    "template",
-                   "org.hyperagents.yggdrasil.artifacts.Counter"
+                   "org.hyperagents.yggdrasil.artifacts.CounterTD"
+                 ),
+                 JsonObject.of(
+                   "class",
+                   BASE_ARTIFACT_CLASS,
+                    "template",
+                   "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
                  )
-               )
+
+               ),
+               "ontology",
+               "td"
              )
            ))
          ))
@@ -119,42 +132,42 @@ public class MainVerticleTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var platformRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("platform_test_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/platform_test_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/output_test_workspace_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_sub_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/output_sub_workspace_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithSubWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_sub.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_agent_body_sub.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactAndBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_c0_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_body.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -502,8 +515,12 @@ public class MainVerticleTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
       Models.isomorphic(
-        ResourceProfileGraphReader.getModelFromString(expected),
-        ResourceProfileGraphReader.getModelFromString(actual)
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected)
+          .getGraph()
+          .orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual)
+          .getGraph()
+          .orElseThrow()
       ),
       REPRESENTATIONS_EQUAL_MESSAGE
     );

@@ -14,4 +14,11 @@ public interface EnvironmentConfig extends Shareable {
    * @return true if the environment is enabled, false otherwise.
    */
   boolean isEnabled();
+
+  /**
+   * Gets the ontology used in the environment.
+   *
+   * @return the ontology
+   */
+  String getOntology();
 }

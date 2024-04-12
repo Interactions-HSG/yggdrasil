@@ -1,0 +1,81 @@
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix saref: <https://w3id.org/saref#> .
+
+<http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+  td:title "sub";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance;
+      td:name "makeArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactClass";
+              js:enum <http://example.org/Counter>
+            ], [ a js:ArraySchema;
+              js:propertyName "initParams"
+            ], [ a js:StringSchema;
+              js:propertyName "artifactName"
+            ];
+          js:required "artifactClass", "artifactName"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "joinWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "quitWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "focus";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactName"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ];
+          js:required "artifactName", "callbackIri"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "createSubWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ];
+  hmas:isContainedIn <http://localhost:8080/workspaces/test>;
+  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0>, <http://localhost:8080/workspaces/sub/agents/test_agent> .
+
+<http://localhost:8080/workspaces/test> a hmas:Workspace .
+
+<http://localhost:8080/workspaces/sub/artifacts/c0> a hmas:Artifact .
+
+<http://localhost:8080/workspaces/sub/agents/test_agent> a hmas:Artifact .

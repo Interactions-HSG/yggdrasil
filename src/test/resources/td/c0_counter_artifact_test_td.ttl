@@ -1,0 +1,36 @@
+@base <http://localhost:8080/> .
+@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix urn: <http://example.org/urn#> .
+@prefix ex: <http://example.org/> .
+@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+
+<workspaces/test/artifacts/c0> a hmas:ResourceProfile;
+  hmas:exposesSignifier <workspaces/test/artifacts/c0#inc-Signifier>;
+  hmas:isProfileOf <workspaces/test/artifacts/c0#artifact>;
+  hmas:isContainedIn <workspaces/test> .
+
+<workspaces/test/artifacts/c0#inc-Signifier> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/test/artifacts/c0#inc>
+        ]
+    ] .
+
+<workspaces/test/artifacts/c0#inc> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0/increment>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<workspaces/test/artifacts/c0#artifact> a hmas:Artifact, ex:Counter .
+
+<workspaces/test> a hmas:Workspace .

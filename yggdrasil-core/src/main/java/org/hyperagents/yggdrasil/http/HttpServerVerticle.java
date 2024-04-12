@@ -81,27 +81,28 @@ public class HttpServerVerticle extends AbstractVerticle {
                               .allowedHeader("Origin"))
           .handler(BodyHandler.create());
 
-    final var handler = new HttpEntityHandler(
+    HttpEntityHandlerInterface handler = new HttpEntityHandler(
         this.vertx,
         httpConfig,
         environmentConfig,
         notificationConfig
-    );
+      );
+
 
     router.get("/").handler(handler::handleGetEntity);
 
     router.post("/workspaces/")
           .consumes(TURTLE_CONTENT_TYPE)
-          .handler(handler::handleCreateEntity);
+          .handler(handler::handleCreateWorkspaceTurtle);
     final var createWorkspaceRoute = router.post("/workspaces/")
-                                           .handler(handler::handleCreateWorkspace);
+                                           .handler(handler::handleCreateWorkspaceJson);
 
     router.get(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(WORKSPACE_PATH).handler(handler::handleGetEntity);
     router.post(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.post(WORKSPACE_PATH)
           .consumes(TURTLE_CONTENT_TYPE)
-          .handler(handler::handleCreateEntity);
+          .handler(handler::handleCreateWorkspaceTurtle);
     final var createSubWorkspaceRoute = router.post(WORKSPACE_PATH)
                                               .handler(handler::handleCreateSubWorkspace);
     router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
@@ -124,10 +125,10 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.post("/workspaces/:wkspid/artifacts/")
           .consumes(TURTLE_CONTENT_TYPE)
-          .handler(handler::handleCreateEntity);
+          .handler(handler::handleCreateArtifactTurtle);
     final var createArtifactRoute = router.post("/workspaces/:wkspid/artifacts/")
                                           .consumes(ContentType.APPLICATION_JSON.getMimeType())
-                                          .handler(handler::handleCreateArtifact);
+                                          .handler(handler::handleCreateArtifactJson);
 
     router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
@@ -146,6 +147,8 @@ public class HttpServerVerticle extends AbstractVerticle {
           .handler(handler::handleUpdateEntity);
 
     final var actionRoute = router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
+
+
 
     if (!this.environmentConfig.isEnabled()) {
       createWorkspaceRoute.disable();

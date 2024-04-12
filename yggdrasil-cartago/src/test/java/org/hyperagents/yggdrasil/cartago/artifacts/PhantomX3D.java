@@ -12,7 +12,7 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
-public class PhantomX3D extends HypermediaArtifact {
+public class PhantomX3D extends HypermediaHMASArtifact {
   private static final String PREFIX = "https://ci.mines-stetienne.fr/kg/ontology#";
 
   private static final String SET_BASE_URI = "/base";
