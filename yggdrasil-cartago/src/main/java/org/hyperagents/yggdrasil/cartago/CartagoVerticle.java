@@ -44,6 +44,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
@@ -72,12 +73,10 @@ public class CartagoVerticle extends AbstractVerticle {
       .<String, EnvironmentConfig>getLocalMap("environment-config")
       .get(DEFAULT_CONFIG_VALUE);
 
-    // TODO: Only place that depends on ontology :D
-    if (Objects.equals(environmentConfig.getOntology(), "hmas")) {
-      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
-    } else {
-      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
-    }
+    this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
+      environmentConfig.getOntology(),
+      this.httpConfig
+    );
     this.agentCredentials = new HashMap<>();
 
     final var eventBus = this.vertx.eventBus();
