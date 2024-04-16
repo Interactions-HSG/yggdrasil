@@ -30,6 +30,7 @@ import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.*;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
@@ -58,13 +59,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
     EnvironmentConfig environmentConfig = this.vertx.sharedData()
                                 .<String, EnvironmentConfig>getLocalMap("environment-config")
                                 .get("default");
-
-    // TODO: Only place that depends on ontology :D
-    if (environmentConfig.getOntology().equals("hmas")) {
-      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
-    } else {
-      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
-    }
+    this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
+      environmentConfig.getOntology(),
+      this.httpConfig
+    );
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       this.vertx.eventBus(),
       this.vertx.sharedData()
