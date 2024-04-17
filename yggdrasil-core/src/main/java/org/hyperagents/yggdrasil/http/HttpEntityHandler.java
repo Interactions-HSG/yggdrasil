@@ -354,7 +354,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           .sendMessage(new RdfStoreMessage.CreateBody(
             workspaceName,
             agentId,
-            this.getAgentNameFromId(agentId),
+            hint,
             response.body()
           ))
       )
