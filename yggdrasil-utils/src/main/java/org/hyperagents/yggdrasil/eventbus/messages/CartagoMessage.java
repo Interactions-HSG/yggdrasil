@@ -38,7 +38,7 @@ public sealed interface CartagoMessage {
    * @param agentId       The unique identifier of the agent that wants to join the workspace.
    * @param workspaceName The name of the workspace the agent wants to join.
    */
-  record JoinWorkspace(String agentId, String workspaceName) implements CartagoMessage {
+  record JoinWorkspace(String agentId,String hint, String workspaceName) implements CartagoMessage {
   }
 
   /**

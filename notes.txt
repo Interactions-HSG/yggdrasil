@@ -1,36 +1,3 @@
-Problems for merging TD and HMAS:
-- Yggdrasil-Core: RdfStoreVerticle
-	- RdfStoreVerticle handles creation of Workspace / platform / artifacts / bodies
-	- Adds ontology specific prefixes in creation
-	-> If we can strip RdfStoreVerticle of anything ontology specific we can use it as our RDF Store
-
-- Yggdrasil-Core: HttpEntityHandler
-	- Only really depends on ontology if we create through turtle
-	- Since we decide what to instanciate through first rdf triple
-	-> Split createEntity into different methods to handle each case
-	-> Each case separately called per endpoint
-	-> No need to check turtle for that
-
-	-> TD Implementation only handled cartago operations that used json arrays
-	-> What to do with HMAS?
-	-> What to do with more complicated input?
-
-
-- Yggrdasil-Cartago: HypermediaArtifact
-	- Strong(er) coupling due to registering of signifiers
-	- Also TD has security schemes
-	-> No clear way of dual usage
-	-> Could have two methods of creating Signifiers?
-
-- Yggdrasil-Utils: RepresentationFactoryImpl
-	- Obviously we would need two different factories
-	- Could check if some input stays the same so we can use same interface
-	- Problem arises here because of securityschemes
-	-> Should not be a problem to have two implementations of the interface
-	-> How to decide which on to use depending on chosen ontology?
-		-> Similar as to other configuration where we pass the correct impl to the verticle?
-
-
 General:
 	- No need to differentiate between focus / subscribe WebSub artifact -> All artifacts are cartago artifacts
 
@@ -58,18 +25,6 @@ API:
 
 
 
-# NOTES ON IMPLEMENTATION
-- RepresentationFactory Interface imposes methods for creating representations -> return null
-- Different implementations of uri wrappers -> trailing slash
-
-
-
-RDFSTore to many responsibilities
-Representation coupled with cartago <- cartagoVerticle does not depend on ontology
-createEntity refactor
-
-
-
 # New
 
 - Combined all classes where it was possible
@@ -93,6 +48,7 @@ createEntity refactor
 ! MOST IMPORTANT FOR RELEASE !
 + Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action
 + look at feedbackParams specifically
++ add slug to body for joinworkspace
 
 + websub check
 

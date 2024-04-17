@@ -45,8 +45,7 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
+
 
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class CartagoVerticle extends AbstractVerticle {
@@ -185,8 +184,8 @@ public class CartagoVerticle extends AbstractVerticle {
           message.reply(this.instantiateWorkspace(workspaceName));
         case CartagoMessage.CreateSubWorkspace(String workspaceName, String subWorkspaceName) ->
           message.reply(this.instantiateSubWorkspace(workspaceName, subWorkspaceName));
-        case CartagoMessage.JoinWorkspace(String agentId, String workspaceName) ->
-          message.reply(this.joinWorkspace(agentId, workspaceName));
+        case CartagoMessage.JoinWorkspace(String agentId,String hint, String workspaceName) ->
+          message.reply(this.joinWorkspace(agentId, hint, workspaceName));
         case CartagoMessage.LeaveWorkspace(String agentId, String workspaceName) -> {
           this.leaveWorkspace(agentId, workspaceName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
@@ -257,6 +256,19 @@ public class CartagoVerticle extends AbstractVerticle {
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
       HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+    );
+  }
+  private String joinWorkspace(final String agentUri,final String hint, final String workspaceName)
+    throws CartagoException {
+    this.workspaceRegistry
+      .getWorkspace(workspaceName)
+      .orElseThrow()
+      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
+      });
+    return this.representationFactory.createBodyRepresentation(
+      workspaceName,
+      hint,
+      new LinkedHashModel()
     );
   }
 

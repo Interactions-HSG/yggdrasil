@@ -45,6 +45,7 @@ public class CartagoMessageMarshaller
       );
       case JOIN_WORKSPACE -> new CartagoMessage.JoinWorkspace(
         jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
+        jsonObject.get("hint").getAsString(),
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString()
       );
       case LEAVE_WORKSPACE -> new CartagoMessage.LeaveWorkspace(

@@ -335,6 +335,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
+    final var hint = routingContext.request().getHeader("Slug");
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -345,6 +346,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.JoinWorkspace(
         agentId,
+        hint,
         workspaceName
       ))
       .compose(response ->
