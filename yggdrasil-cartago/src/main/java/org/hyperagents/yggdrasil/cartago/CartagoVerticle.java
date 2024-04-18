@@ -260,6 +260,9 @@ public class CartagoVerticle extends AbstractVerticle {
   }
   private String joinWorkspace(final String agentUri,final String hint, final String workspaceName)
     throws CartagoException {
+    if (hint == null || hint.isEmpty()) {
+      return this.joinWorkspace(agentUri, workspaceName);
+    }
     this.workspaceRegistry
       .getWorkspace(workspaceName)
       .orElseThrow()

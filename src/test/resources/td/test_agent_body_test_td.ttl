@@ -8,21 +8,14 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 
-<workspaces/test/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
-  td:title "c0";
+<workspaces/test/artifacts/test_agent/> a td:Thing, hmas:Artifact, <https://example.org/Body>;
+  td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
-  td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
-      td:name "inc";
-      td:title "inc";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/test/artifacts/c0/increment>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
     ] .
 
-<workspaces/test/artifacts/c0/#artifact> hmas:isContainedIn <workspaces/test/#workspace> .
+<workspaces/test/artifacts/test_agent/#artifact> hmas:isContainedIn <workspaces/test/#workspace>;
+  <https://purl.org/hmas/jacamo/isBodyOf> <agents/test_agent> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
+
+<agents/test_agent> a hmas:Agent .

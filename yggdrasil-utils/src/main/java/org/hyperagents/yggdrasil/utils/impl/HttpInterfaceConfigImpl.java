@@ -97,13 +97,16 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   @Override
   public String getAgentUri(final String agentName) {
     var cleanAgentName = validateInput(agentName);
-    return this.baseUri + "agents/" + validateInput(cleanAgentName) + "/";
+    return this.baseUri + "artifacts/" + validateInput(cleanAgentName) + "/";
   }
 
 
   // TODO: Add more validation to what is acceptable url
   private String validateInput(String StringInput) {
-      return StringInput.replaceAll("/","");
+    if (StringInput == null) {
+      return "";
+    }
+    return StringInput.replaceAll("/","");
   }
 }
 

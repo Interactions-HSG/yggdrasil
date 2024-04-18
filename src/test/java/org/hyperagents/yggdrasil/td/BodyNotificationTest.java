@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.td;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -9,6 +11,16 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.apache.hc.core5.http.HttpStatus;
+import org.eclipse.rdf4j.model.util.Models;
+import org.hyperagents.yggdrasil.MainVerticle;
+import org.hyperagents.yggdrasil.hmas.CallbackServerVerticle;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -18,14 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.hc.core5.http.HttpStatus;
-import org.eclipse.rdf4j.model.util.Models;
-import org.hyperagents.yggdrasil.MainVerticle;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
@@ -36,6 +40,7 @@ public class BodyNotificationTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
+  private static final String BASE_ARTIFACT_CLASS = "http://example.org/Artifact";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
@@ -97,14 +102,20 @@ public class BodyNotificationTest {
                "enabled",
                true,
                "ontology",
-               "hmas",
+               "td",
                "known-artifacts",
                JsonArray.of(
                  JsonObject.of(
                    "class",
                    COUNTER_ARTIFACT_CLASS,
                    "template",
-                   "org.hyperagents.yggdrasil.artifacts.Counter"
+                   "org.hyperagents.yggdrasil.artifacts.CounterTD"
+                 ),
+                 JsonObject.of(
+                   "class",
+                   BASE_ARTIFACT_CLASS,
+                   "template",
+                   "org.hyperagents.yggdrasil.artifacts.BasicTDArtifact"
                  )
                )
              )
@@ -122,22 +133,22 @@ public class BodyNotificationTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/output_test_workspace_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_test_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_test_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_test_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_agent_body_test_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithArtifactAndBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_c0_body_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_workspace_c0_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client
@@ -167,9 +178,7 @@ public class BodyNotificationTest {
                             "artifactName",
                             COUNTER_ARTIFACT_NAME,
                             "artifactClass",
-                            COUNTER_ARTIFACT_CLASS,
-                            "initParams",
-                            JsonArray.of(5)
+                            COUNTER_ARTIFACT_CLASS
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -209,7 +218,7 @@ public class BodyNotificationTest {
                             this.getUrl(
                               WORKSPACES_PATH
                               + MAIN_WORKSPACE_NAME
-                              + BODIES_PATH
+                              + ARTIFACTS_PATH
                             ),
                             HUB_CALLBACK_PARAM,
                             CALLBACK_URL
@@ -256,7 +265,7 @@ public class BodyNotificationTest {
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + BODIES_PATH),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -274,8 +283,9 @@ public class BodyNotificationTest {
                             this.getUrl(
                               WORKSPACES_PATH
                               + MAIN_WORKSPACE_NAME
-                              + BODIES_PATH
+                              + ARTIFACTS_PATH
                               + TEST_AGENT_NAME
+                              + "/"
                             ),
                             HUB_CALLBACK_PARAM,
                             CALLBACK_URL
@@ -288,18 +298,19 @@ public class BodyNotificationTest {
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.client
-                          .post(
-                            TEST_PORT,
-                            TEST_HOST,
-                            WORKSPACES_PATH
-                            + MAIN_WORKSPACE_NAME
-                            + ARTIFACTS_PATH
-                            + COUNTER_ARTIFACT_NAME
-                            + "/increment"
-                          )
-                          .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-                          .send())
+        .compose(r ->
+          this.client
+              .post(
+                TEST_PORT,
+                TEST_HOST,
+                WORKSPACES_PATH
+                  + MAIN_WORKSPACE_NAME
+                  + ARTIFACTS_PATH
+                  + COUNTER_ARTIFACT_NAME
+                  + "/increment"
+              )
+              .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+              .send())
         .onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
@@ -314,8 +325,9 @@ public class BodyNotificationTest {
               this.getUrl(
                 WORKSPACES_PATH
                 + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
+                + ARTIFACTS_PATH
                 + TEST_AGENT_NAME
+                + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -341,8 +353,9 @@ public class BodyNotificationTest {
               this.getUrl(
                 WORKSPACES_PATH
                 + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
+                + ARTIFACTS_PATH
                 + TEST_AGENT_NAME
+                + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -372,8 +385,8 @@ public class BodyNotificationTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
         Models.isomorphic(
-          ResourceProfileGraphReader.getModelFromString(expected),
-          ResourceProfileGraphReader.getModelFromString(actual)
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().get(),
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().get()
         ),
         REPRESENTATIONS_EQUAL_MESSAGE
     );

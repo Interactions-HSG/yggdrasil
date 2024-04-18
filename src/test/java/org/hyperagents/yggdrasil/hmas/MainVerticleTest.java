@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.hmas;
 
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
@@ -105,18 +106,18 @@ public class MainVerticleTest {
                    "class",
                    COUNTER_ARTIFACT_CLASS,
                    "template",
-                   "org.hyperagents.yggdrasil.artifacts.CounterTD"
+                   "org.hyperagents.yggdrasil.artifacts.CounterHMAS"
                  ),
                  JsonObject.of(
                    "class",
                    BASE_ARTIFACT_CLASS,
                     "template",
-                   "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
+                   "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
                  )
 
                ),
                "ontology",
-               "td"
+               "hmas"
              )
            ))
          ))
@@ -132,42 +133,42 @@ public class MainVerticleTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var platformRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/platform_test_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/platform_test_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/output_test_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/output_test_workspace_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/output_sub_workspace_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/output_sub_workspace_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithSubWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/test_workspace_sub_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/test_agent_body_sub.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_sub.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactAndBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_body.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -223,6 +224,7 @@ public class MainVerticleTest {
                })
                .compose(r -> this.callbackMessages.getFirst().future())
                .onSuccess(m -> {
+                 System.out.println(("here"));
                  Assertions.assertEquals(
                      this.getUrl("/"),
                      m.getKey(),
@@ -457,6 +459,7 @@ public class MainVerticleTest {
                          + SUB_WORKSPACE_NAME
                          + ARTIFACTS_PATH
                          + COUNTER_ARTIFACT_NAME
+                         + "/"
                      ),
                      m.getKey(),
                      URIS_EQUAL_MESSAGE
@@ -495,6 +498,7 @@ public class MainVerticleTest {
                         + SUB_WORKSPACE_NAME
                         + ARTIFACTS_PATH
                         + COUNTER_ARTIFACT_NAME
+                         + "/"
                      ),
                      m.getKey(),
                      URIS_EQUAL_MESSAGE
@@ -515,12 +519,8 @@ public class MainVerticleTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
       Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected)
-          .getGraph()
-          .orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual)
-          .getGraph()
-          .orElseThrow()
+        ResourceProfileGraphReader.getModelFromString(expected),
+        ResourceProfileGraphReader.getModelFromString(actual)
       ),
       REPRESENTATIONS_EQUAL_MESSAGE
     );

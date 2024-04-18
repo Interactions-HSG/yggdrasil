@@ -110,7 +110,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              this.httpConfig.getBaseUri() + context.request().path(),
+              this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path(),
               nameResponse.body(),
               Optional.empty(),
               response.body()
@@ -308,8 +308,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
             .compose(r -> this.notificationMessagebox.sendMessage(
-              // TODO: Before it just added callback to entityIri again should be r.body?
-              new HttpNotificationDispatcherMessage.AddCallback(r.body(), callbackIri)
+              // TODO: why do we need this if we have the same callback again?
+              new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
             ))
             .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
             .onFailure(t -> routingContext.fail(
@@ -335,7 +335,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
-    final var hint = routingContext.request().getHeader("Slug");
+    var hint = routingContext.request().getHeader("Slug");
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -343,20 +343,31 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
 
     final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
+
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.JoinWorkspace(
         agentId,
         hint,
         workspaceName
       ))
-      .compose(response ->
-        this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateBody(
-            workspaceName,
-            agentId,
-            hint,
-            response.body()
-          ))
+      .compose(response -> {
+          if (hint == null) {
+            return this.rdfStoreMessagebox
+              .sendMessage(new RdfStoreMessage.CreateBody(
+                workspaceName,
+                agentId,
+                getAgentNameFromId(agentId),
+                response.body()
+              ));
+          }
+          return this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateBody(
+              workspaceName,
+              agentId,
+              hint,
+              response.body()
+            ));
+        }
       )
       .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
       .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));

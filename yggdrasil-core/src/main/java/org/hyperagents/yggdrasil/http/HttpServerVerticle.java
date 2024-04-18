@@ -119,7 +119,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     final var leaveRoute = router.post(WORKSPACE_PATH + "/leave")
                                  .handler(handler::handleLeaveWorkspace);
     router.post(WORKSPACE_PATH + "/focus/").handler(handler::handleRedirectWithoutSlash);
-    final var focusRoute = router.post(ARTIFACT_PATH + "/focus")
+    final var focusRoute = router.post(WORKSPACE_PATH + "/focus")
                                  .consumes(ContentType.APPLICATION_JSON.getMimeType())
                                  .handler(handler::handleFocus);
 

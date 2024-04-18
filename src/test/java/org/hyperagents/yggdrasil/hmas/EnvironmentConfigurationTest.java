@@ -66,7 +66,7 @@ public class EnvironmentConfigurationTest {
           }
         );
     final var configuration = Files.readString(
-        Path.of(ClassLoader.getSystemResource("td/cartago_config.json").toURI()),
+        Path.of(ClassLoader.getSystemResource("hmas/cartago_config.json").toURI()),
         StandardCharsets.UTF_8
     );
     vertx.deployVerticle(new CallbackServerVerticle())
@@ -86,17 +86,17 @@ public class EnvironmentConfigurationTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/test_workspace_sub_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client
@@ -151,7 +151,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0",
+              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -184,7 +184,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0",
+              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );

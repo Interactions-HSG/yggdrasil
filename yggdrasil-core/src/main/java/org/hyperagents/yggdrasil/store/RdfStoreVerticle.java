@@ -284,7 +284,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             this.dispatcherMessagebox.sendMessage(
               new HttpNotificationDispatcherMessage.EntityCreated(
-                requestIri.toString(),
+                removeDuplicateSlashes(requestIri.toString()),
                 stringGraphResult
               )
             );
@@ -365,8 +365,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
           Failable.asConsumer(s -> {
             final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
+
             if (content.parentWorkspaceUri().isPresent()) {
-              final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get());
+              final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get().substring(0, content.parentWorkspaceUri().get().length() - 1));
               entityModel.add(
                 resourceIRI,
                   RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
@@ -391,6 +392,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                     );
                     this.store.replaceEntityModel(parentIri, parentModel);
+                    System.out.println(parentIri);
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         parentIri.toString(),
@@ -438,12 +440,21 @@ public class RdfStoreVerticle extends AbstractVerticle {
             this.store.addEntityModel(resourceIRI, entityModel);
             final var stringGraphResult =
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
-            this.dispatcherMessagebox.sendMessage(
-              new HttpNotificationDispatcherMessage.EntityCreated(
-                requestIri.toString(),
-                stringGraphResult
-              )
-            );
+            if (requestIri.toString().endsWith("//")) {
+              this.dispatcherMessagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.EntityCreated(
+                  requestIri.toString().substring(0, requestIri.toString().length() - 1),
+                  stringGraphResult
+                )
+              );
+            } else {
+              this.dispatcherMessagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.EntityCreated(
+                  requestIri.toString(),
+                  stringGraphResult
+                )
+              );
+            }
             this.replyWithPayload(message, stringGraphResult);
           }),
           () -> this.replyFailed(message)
@@ -708,5 +719,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
     throw new IOException("Failed to generate a new IRI");
 
+  }
+
+  private String removeDuplicateSlashes(final String requestIri) {
+    return requestIri.replaceAll("(?<!:)//", "/");
   }
 }

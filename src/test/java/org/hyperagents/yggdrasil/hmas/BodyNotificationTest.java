@@ -37,6 +37,7 @@ public class BodyNotificationTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
+  private static final String BASE_ARTIFACT_CLASS = "http://example.org/Artifact";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
@@ -105,7 +106,13 @@ public class BodyNotificationTest {
                    "class",
                    COUNTER_ARTIFACT_CLASS,
                    "template",
-                   "org.hyperagents.yggdrasil.artifacts.Counter"
+                   "org.hyperagents.yggdrasil.artifacts.CounterHMAS"
+                 ),
+                 JsonObject.of(
+                   "class",
+                   BASE_ARTIFACT_CLASS,
+                   "template",
+                   "org.hyperagents.yggdrasil.artifacts.BasicHMASArtifact"
                  )
                )
              )
@@ -123,22 +130,22 @@ public class BodyNotificationTest {
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_test_workspace_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/output_test_workspace_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_test_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_test_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var testAgentBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_test_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_test_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var workspaceWithArtifactAndBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_c0_body_hmas.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("hmas/test_workspace_c0_body_hmas.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client
@@ -168,9 +175,7 @@ public class BodyNotificationTest {
                             "artifactName",
                             COUNTER_ARTIFACT_NAME,
                             "artifactClass",
-                            COUNTER_ARTIFACT_CLASS,
-                            "initParams",
-                            JsonArray.of(5)
+                            COUNTER_ARTIFACT_CLASS
                           )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -210,7 +215,7 @@ public class BodyNotificationTest {
                             this.getUrl(
                               WORKSPACES_PATH
                               + MAIN_WORKSPACE_NAME
-                              + BODIES_PATH
+                              + ARTIFACTS_PATH
                             ),
                             HUB_CALLBACK_PARAM,
                             CALLBACK_URL
@@ -257,7 +262,7 @@ public class BodyNotificationTest {
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + BODIES_PATH),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -275,8 +280,9 @@ public class BodyNotificationTest {
                             this.getUrl(
                               WORKSPACES_PATH
                               + MAIN_WORKSPACE_NAME
-                              + BODIES_PATH
+                              + ARTIFACTS_PATH
                               + TEST_AGENT_NAME
+                              + "/"
                             ),
                             HUB_CALLBACK_PARAM,
                             CALLBACK_URL
@@ -289,18 +295,19 @@ public class BodyNotificationTest {
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.client
-                          .post(
-                            TEST_PORT,
-                            TEST_HOST,
-                            WORKSPACES_PATH
-                            + MAIN_WORKSPACE_NAME
-                            + ARTIFACTS_PATH
-                            + COUNTER_ARTIFACT_NAME
-                            + "/increment"
-                          )
-                          .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-                          .send())
+        .compose(r ->
+          this.client
+              .post(
+                TEST_PORT,
+                TEST_HOST,
+                WORKSPACES_PATH
+                  + MAIN_WORKSPACE_NAME
+                  + ARTIFACTS_PATH
+                  + COUNTER_ARTIFACT_NAME
+                  + "/increment"
+              )
+              .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+              .send())
         .onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
@@ -315,8 +322,9 @@ public class BodyNotificationTest {
               this.getUrl(
                 WORKSPACES_PATH
                 + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
+                + ARTIFACTS_PATH
                 + TEST_AGENT_NAME
+                + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -342,8 +350,9 @@ public class BodyNotificationTest {
               this.getUrl(
                 WORKSPACES_PATH
                 + MAIN_WORKSPACE_NAME
-                + BODIES_PATH
+                + ARTIFACTS_PATH
                 + TEST_AGENT_NAME
+                + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
