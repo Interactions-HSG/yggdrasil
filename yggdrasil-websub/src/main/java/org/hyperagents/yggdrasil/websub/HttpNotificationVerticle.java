@@ -65,10 +65,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     ownMessagebox.receiveMessages(message -> {
       switch (message.body()) {
         case HttpNotificationDispatcherMessage.AddCallback(String requestIri, String callbackIri) ->
-        {
-          System.out.printf("Adding callback for %s to %s%n", requestIri, callbackIri);
           this.registry.addCallbackIri(requestIri, callbackIri);
-        }
         case HttpNotificationDispatcherMessage.RemoveCallback(
             String requestIri,
             String callbackIri
@@ -152,7 +149,6 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       final String requestIri,
       final String content
   ) {
-    System.out.println("Sending notification for " + requestIri );
     this.registry.getCallbackIris(requestIri).forEach(c ->
         this.createNotificationRequest(client, webSubHubUri, c, requestIri)
             .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))

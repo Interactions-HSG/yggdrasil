@@ -66,7 +66,7 @@ public class MainVerticleTest {
     this.client = WebClient.create(vertx);
     this.callbackMessages =
       Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(9)
+            .limit(12)
             .collect(Collectors.toList());
     this.promiseIndex = 0;
     vertx
@@ -224,7 +224,6 @@ public class MainVerticleTest {
                })
                .compose(r -> this.callbackMessages.getFirst().future())
                .onSuccess(m -> {
-                 System.out.println(("here"));
                  Assertions.assertEquals(
                      this.getUrl("/"),
                      m.getKey(),
@@ -451,7 +450,7 @@ public class MainVerticleTest {
                      "The response body should contain the OK status code"
                  );
                })
-               .compose(r -> this.callbackMessages.get(7).future())
+               .compose(r -> this.callbackMessages.get(8).future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
                      this.getUrl(
@@ -490,7 +489,7 @@ public class MainVerticleTest {
                  );
                  Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
                })
-               .compose(r -> this.callbackMessages.get(8).future())
+               .compose(r -> this.callbackMessages.get(9).future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
                      this.getUrl(

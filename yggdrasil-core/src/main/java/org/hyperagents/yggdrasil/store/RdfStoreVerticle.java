@@ -392,7 +392,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                     );
                     this.store.replaceEntityModel(parentIri, parentModel);
-                    System.out.println(parentIri);
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         parentIri.toString(),
