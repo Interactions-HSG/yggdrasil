@@ -384,8 +384,8 @@ public class BodyNotificationTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
         Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().get(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().get()
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
         ),
         REPRESENTATIONS_EQUAL_MESSAGE
     );
