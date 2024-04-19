@@ -1,17 +1,137 @@
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix websub: <http://www.example.org/websub#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix urn: <http://example.org/urn#> .
 @prefix ex: <http://example.org/> .
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
-@prefix aa: <https://purl.org/hmas/agents-artifacts#> .
 
-<http://localhost:8080/workspaces/test/agents/test> a hmas:ResourceProfile;
-  hmas:isProfileOf <http://localhost:8080/workspaces/test/agents/test#agentBody> .
+<http://localhost:8080/workspaces/test/artifacts/test/> a hmas:ResourceProfile;
+  hmas:exposesSignifier [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/test/#getBodyRepresentationForm>
+            ]
+        ]
+    ], <http://localhost:8080/workspaces/test/artifacts/test/#subscribeToAgent>, [ a hmas:Signifier;
+      hmas:signifies [ a sh:NodeShape;
+          sh:class hmas:ActionExecution;
+          sh:property [
+              sh:path prov:used;
+              sh:minCount "1"^^xs:int;
+              sh:maxCount "1"^^xs:int;
+              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/test/#updateBodyForm>
+            ]
+        ]
+    ];
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/test/#artifact> .
 
-<http://localhost:8080/workspaces/test/agents/test#agentBody> a hmas:Artifact ;
-  aa:isBodyOf <http://localhost:8080/workspaces/test/agents/test#agent> .
-<http://localhost:8080/workspaces/test/agents/test#agent> a hmas:Agent .
+<http://localhost:8080/workspaces/test/artifacts/test/#getBodyRepresentationForm>
+  a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/test/>;
+  htv:methodName "GET";
+  hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#subscribeToAgent> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/test/#webSubForm>
+        ], [
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/test/#webSubUnsubscribeInput>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ], [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/test/#webSubForm>
+        ], [
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/test/#webSubSubscribeInput>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#webSubForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/hub/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#webSubUnsubscribeInput> a sh:Shape;
+  sh:class websub:websubsubscription;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "hub.callback";
+      sh:description "The callback URL of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:callback
+    ], [ a sh:Shape;
+      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/test/";
+      sh:datatype xs:string;
+      sh:name "hub.topic";
+      sh:description "The topic of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:topic
+    ], [ a sh:Shape;
+      sh:hasValue "unsubscribe";
+      sh:datatype xs:string;
+      sh:name "hub.mode";
+      sh:description "The mode of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:mode
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#webSubSubscribeInput> a sh:Shape;
+  sh:class websub:websubsubscription;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "hub.callback";
+      sh:description "The callback URL of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:callback
+    ], [ a sh:Shape;
+      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/test/";
+      sh:datatype xs:string;
+      sh:name "hub.topic";
+      sh:description "The topic of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:topic
+    ], [ a sh:Shape;
+      sh:hasValue "subscribe";
+      sh:datatype xs:string;
+      sh:name "hub.mode";
+      sh:description "The mode of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:mode
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#updateBodyForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/test/>;
+  htv:methodName "PUT";
+  hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/test/artifacts/test/#artifact> a hmas:Artifact,
+    jacamo:Body .
