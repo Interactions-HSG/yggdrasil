@@ -1,3 +1,4 @@
+@base <http://localhost:8080/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
@@ -5,8 +6,9 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
 
-<http://localhost:8080/workspaces/sub> a td:Thing, hmas:Workspace;
+<workspaces/sub/> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -14,26 +16,26 @@
       td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+          hctl:hasTarget <workspaces/sub/artifacts/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
               js:propertyName "artifactClass";
-              js:enum <http://example.org/Counter>
+              js:enum ex:Counter, ex:Artifact
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;
               js:propertyName "artifactName"
             ];
-          js:required "artifactName", "artifactClass"
+          js:required "artifactClass", "artifactName"
         ]
     ], [ a td:ActionAffordance;
       td:name "joinWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+          hctl:hasTarget <workspaces/sub/join>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -41,7 +43,7 @@
       td:name "quitWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
+          hctl:hasTarget <workspaces/sub/leave>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -49,7 +51,7 @@
       td:name "focus";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
+          hctl:hasTarget <workspaces/sub/focus>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
@@ -65,11 +67,12 @@
       td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:hasTarget <workspaces/sub/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] ;
-  hmas:isContainedIn <http://localhost:8080/workspaces/test> .
+    ] .
 
-<http://localhost:8080/workspaces/test> a hmas:Workspace .
+<workspaces/sub> hmas:isContainedIn <workspaces/test> .
+
+<workspaces/test> a hmas:Workspace .

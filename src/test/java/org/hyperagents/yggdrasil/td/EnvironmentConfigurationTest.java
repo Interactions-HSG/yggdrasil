@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.td;
 
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -150,7 +151,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0",
+              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -183,7 +184,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0",
+              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -199,8 +200,8 @@ public class EnvironmentConfigurationTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
       Models.isomorphic(
-        ResourceProfileGraphReader.getModelFromString(expected),
-        ResourceProfileGraphReader.getModelFromString(actual)
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
       ),
       REPRESENTATIONS_EQUAL_MESSAGE
     );

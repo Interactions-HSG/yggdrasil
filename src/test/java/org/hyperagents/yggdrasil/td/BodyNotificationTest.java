@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.td;
 
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;

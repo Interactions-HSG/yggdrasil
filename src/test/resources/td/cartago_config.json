@@ -11,7 +11,11 @@
     "known-artifacts" : [
       {
         "class" : "http://example.org/Counter",
-        "template" : "org.hyperagents.yggdrasil.artifacts.Counter"
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
+      },
+      {
+        "class": "http://example.org/Artifact",
+        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
       }
     ],
     "workspaces" : [
@@ -41,6 +45,7 @@
         "name" : "test"
       }
     ],
-    "enabled" : true
+    "enabled" : true,
+    "ontology" : "td"
   }
 }
