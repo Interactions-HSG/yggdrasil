@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -46,7 +47,7 @@ public class CartagoVerticleHMASTest {
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
-    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/agents/test";
+    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/test/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String NONEXISTENT_NAME = "nonexistent";
@@ -697,7 +698,13 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) {
+  public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var COUNTER_ARTIFACT_HMAS =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("counter_artifact_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -717,7 +724,8 @@ public class CartagoVerticleHMASTest {
             List.of(5)
           ))
         )))
-      .compose(r -> this.cartagoMessagebox
+      .compose(r ->
+        this.cartagoMessagebox
         .sendMessage(new CartagoMessage.Focus(
           FOCUSING_AGENT_IRI,
           SUB_WORKSPACE_NAME,
@@ -744,7 +752,7 @@ public class CartagoVerticleHMASTest {
           SUB_WORKSPACE_NAME,
           "c1",
           INCREMENT_OPERATION,
-          "Optional.empty()",
+          COUNTER_ARTIFACT_HMAS,
           ""
         ));
       })
@@ -823,16 +831,19 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .compose(r -> this.cartagoMessagebox
+      .compose(r -> {
         // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
-        .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          ADD_OPERATION,
-          "Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))",
-          ""
-        )))
+        return this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.DoAction(
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "a0",
+            ADD_OPERATION,
+            r.body(),
+            "[2,2]"
+          )
+      );
+      })
       .onSuccess(r -> Assertions.assertEquals(
         String.valueOf(4),
         r.body(),
@@ -858,14 +869,13 @@ public class CartagoVerticleHMASTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           NONEXISTENT_NAME,
           "a0",
           ADD_OPERATION,
-          "Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))",
-          ""
+          r.body(),
+          Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
       .onFailure(t -> Assertions.assertEquals(
         HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -892,14 +902,13 @@ public class CartagoVerticleHMASTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           NONEXISTENT_NAME,
           ADD_OPERATION,
-          "Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))",
-          ""
+          r.body(),
+          Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
       .onFailure(t -> Assertions.assertEquals(
         HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -932,8 +941,8 @@ public class CartagoVerticleHMASTest {
           MAIN_WORKSPACE_NAME,
           "a0",
           NONEXISTENT_NAME,
-          "Optional.of(CartagoDataBundle.toJson(List.of(2, 2)))",
-          ""
+          r.body(),
+          Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
       .onFailure(t -> Assertions.assertEquals(
         HttpStatus.SC_INTERNAL_SERVER_ERROR,
@@ -966,8 +975,8 @@ public class CartagoVerticleHMASTest {
           MAIN_WORKSPACE_NAME,
           "a0",
           ADD_OPERATION,
-          "Optional.of(CartagoDataBundle.toJson(List.of(2, 2, 5.0)))",
-          ""
+          r.body(),
+          "[2,3,5,6]"
         )))
       .onFailure(t -> Assertions.assertEquals(
         HttpStatus.SC_INTERNAL_SERVER_ERROR,

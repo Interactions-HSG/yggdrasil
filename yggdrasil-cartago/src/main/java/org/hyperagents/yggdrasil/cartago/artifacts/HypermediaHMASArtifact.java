@@ -211,16 +211,15 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       .filter(sig -> sig.getIRIAsString().isPresent())
       .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
       .findFirst();
-
-    Optional<String> description = Optional.empty();
-    if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
-      JsonElement jsonElement = JsonParser.parseString(context);
-      var input = signifier.get().getActionSpecification().getInputSpecification().get();
-      QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
-      description = CartagoDataBundle.toJson(
-        parseInput(jsonElement,qualifiedValueSpecification,new ArrayList<>())
-      ).describeConstable();
-    }
+      Optional<String> description = Optional.empty();
+      if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
+        JsonElement jsonElement = JsonParser.parseString(context);
+        var input = signifier.get().getActionSpecification().getInputSpecification().get();
+        QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+        description = CartagoDataBundle.toJson(
+          parseInput(jsonElement, qualifiedValueSpecification, new ArrayList<>())
+        ).describeConstable();
+      }
     return description;
   }
 

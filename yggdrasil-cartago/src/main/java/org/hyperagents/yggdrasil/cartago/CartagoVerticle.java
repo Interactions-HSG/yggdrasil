@@ -348,13 +348,20 @@ public class CartagoVerticle extends AbstractVerticle {
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var hypermediaArtifact = registry.getArtifact(artifactName);
 
-    Optional<String> payload = hypermediaArtifact.handleAction(storeResponse,action,context);
+    Optional<String> payload;
+    try {
+      payload = hypermediaArtifact.handleAction(storeResponse,action,context);
+    } catch (Exception e) {
+      return Future.failedFuture(e);
+    }
+
 
     final var feedbackParameter = new OpFeedbackParam<>();
+    Optional<String> finalPayload = payload;
     final var operation =
       payload
         .map(p -> {
-          final var params = CartagoDataBundle.fromJson(payload.get());
+          final var params = CartagoDataBundle.fromJson(finalPayload.get());
           return new Op(
             action,
             registry.hasFeedbackParam(artifactName, action)

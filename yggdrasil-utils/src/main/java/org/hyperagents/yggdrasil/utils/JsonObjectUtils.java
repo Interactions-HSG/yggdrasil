@@ -137,6 +137,9 @@ public final class JsonObjectUtils {
       if (restProperty instanceof QualifiedValueSpecification restQualifiedValueSpecification) {
           parseInput(jsonArray, restQualifiedValueSpecification, result);
       }
+      if (!(restProperty instanceof  QualifiedValueSpecification) && !jsonArray.isEmpty()) {
+        throw new IllegalArgumentException("Invalid JSON input");
+      }
     }
     return result;
   }
