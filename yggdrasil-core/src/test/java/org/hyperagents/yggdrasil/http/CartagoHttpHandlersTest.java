@@ -238,7 +238,7 @@ public class CartagoHttpHandlersTest {
         URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH + "/")),
         createEntityMessage.parentWorkspaceUri(),
         "The parent workspace URI should be present"
     );
@@ -337,7 +337,7 @@ public class CartagoHttpHandlersTest {
           INIT_PARAMS_PARAM,
           JsonArray.of(5)
         );
-    final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_ARTIFACTS_PATH)
+    final var request = this.client.post(TEST_PORT, TEST_HOST, "/workspaces/test/artifacts")
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(
                                      HttpHeaders.CONTENT_TYPE.toString(),
@@ -645,7 +645,7 @@ public class CartagoHttpHandlersTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var deleteBodyMessage = (RdfStoreMessage.DeleteEntity) storeMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_WORKSPACE_PATH + "/agents/test_agent"),
+        this.helper.getUri(MAIN_WORKSPACE_PATH + "/artifacts/test_agent/"),
         deleteBodyMessage.requestUri(),
         NAMES_EQUAL_MESSAGE
     );
@@ -755,7 +755,7 @@ public class CartagoHttpHandlersTest {
     final var addCallbackMessage =
         (HttpNotificationDispatcherMessage.AddCallback) notificationMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME),
+        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME +"/"),
         addCallbackMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );

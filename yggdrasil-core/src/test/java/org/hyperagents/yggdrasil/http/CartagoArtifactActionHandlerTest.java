@@ -158,7 +158,7 @@ public class CartagoArtifactActionHandlerTest {
     );
     Assertions.assertEquals(
         Optional.of(CartagoDataBundle.toJson(ADD_PARAMS)),
-        doActionMessage.content(),
+        Optional.of(doActionMessage.context()),
         CONTENTS_EQUAL_MESSAGE
     );
     cartagoMessage.reply(String.valueOf(5));
@@ -225,7 +225,7 @@ public class CartagoArtifactActionHandlerTest {
     );
     Assertions.assertEquals(
         Optional.empty(),
-        doActionMessage.content(),
+        Optional.of(doActionMessage.context()),
         CONTENTS_EQUAL_MESSAGE
     );
     cartagoMessage.reply(String.valueOf(5));
@@ -319,8 +319,8 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.empty(),
-        doActionMessage.content(),
+        "[2,3]",
+        doActionMessage.context(),
         CONTENTS_EQUAL_MESSAGE
     );
     cartagoMessage.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error has occurred.");

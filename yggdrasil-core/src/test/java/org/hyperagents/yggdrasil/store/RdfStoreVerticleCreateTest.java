@@ -64,7 +64,9 @@ public class RdfStoreVerticleCreateTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     vertx.sharedData()
@@ -352,6 +354,7 @@ public class RdfStoreVerticleCreateTest {
         .compose(r -> this.storeMessagebox
                           .sendMessage(new RdfStoreMessage.CreateBody(
                             TEST_WORKSPACE_NAME,
+                            "test",
                             "test",
                             bodyRepresentation
                           ))

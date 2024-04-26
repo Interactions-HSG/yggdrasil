@@ -97,6 +97,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleCreateWorkspaceJson(final RoutingContext context) {
     final var workspaceName = context.request().getHeader("Slug");
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
+    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
+
+    // remove any double slashes that are not part of the protocol
+    String regex = "(?<!:)//";
+
+    final var cleanRequestUri = requestUri.replaceAll(regex, "/");
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -110,7 +116,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path(),
+              cleanRequestUri,
               nameResponse.body(),
               Optional.empty(),
               response.body()
@@ -415,7 +421,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       .compose(response ->
         this.rdfStoreMessagebox
           .sendMessage(new RdfStoreMessage.CreateWorkspace(
-            this.httpConfig.getWorkspacesUri() + "/",
+            this.httpConfig.getWorkspacesUri(),
             subWorkspaceName,
             Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
             response.body()

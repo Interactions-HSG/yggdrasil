@@ -325,6 +325,7 @@ public class RdfStoreVerticleUpdateTest {
                  return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
                    "test",
                    "test",
+                   "test",
                    inputBodyRepresentation
                  ));
                })
