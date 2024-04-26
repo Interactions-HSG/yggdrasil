@@ -1,0 +1,33 @@
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix urn: <http://example.org/urn#> .
+@prefix ex: <http://example.org/> .
+@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+
+<http://localhost:8080/workspaces/test/artifacts/a0> a hmas:ResourceProfile;
+  hmas:exposesSignifier <http://localhost:8080/workspaces/test/artifacts/a0#http://example.org/add>;
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/a0#artifact> .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#http://example.org/add> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#add>
+        ], [
+          sh:path hmas:hasInput
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#add> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/add>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#artifact> a hmas:Artifact, ex:Adder .

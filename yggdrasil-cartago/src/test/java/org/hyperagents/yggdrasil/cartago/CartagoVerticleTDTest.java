@@ -7,21 +7,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.apache.hc.core5.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS;
-import org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS;
+import org.hyperagents.yggdrasil.cartago.artifacts.AdderTD;
+import org.hyperagents.yggdrasil.cartago.artifacts.CounterTD;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -39,9 +27,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 @ExtendWith(VertxExtension.class)
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
-public class CartagoVerticleHMASTest {
+public class CartagoVerticleTDTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
@@ -66,7 +65,7 @@ public class CartagoVerticleHMASTest {
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
   private CartagoMessagebox cartagoMessagebox;
 
-  public CartagoVerticleHMASTest() {
+  public CartagoVerticleTDTest() {
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
@@ -85,7 +84,7 @@ public class CartagoVerticleHMASTest {
         "environment-config",
         JsonObject.of("enabled", true,
           "ontology",
-          "hmas")
+          "td")
       ));
     vertx.sharedData()
       .<String, EnvironmentConfig>getLocalMap("environment-config")
@@ -101,13 +100,13 @@ public class CartagoVerticleHMASTest {
               "class",
               ADDER_SEMANTIC_TYPE,
               "template",
-              AdderHMAS.class.getCanonicalName()
+              AdderTD.class.getCanonicalName()
             ),
             JsonObject.of(
               "class",
               COUNTER_SEMANTIC_TYPE,
               "template",
-              CounterHMAS.class.getCanonicalName()
+              CounterTD.class.getCanonicalName()
             )
           )
         )
@@ -146,7 +145,7 @@ public class CartagoVerticleHMASTest {
     throws IOException, URISyntaxException {
     final var expectedThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/test_workspace_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/test_workspace_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -178,7 +177,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedBodyThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/test_agent_body_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -233,7 +232,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/sub_workspace_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -256,7 +255,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/sub2_workspace_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/sub2_workspace_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -353,7 +352,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -383,7 +382,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/c1_counter_artifact_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/c1_counter_artifact_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -418,7 +417,7 @@ public class CartagoVerticleHMASTest {
     throws URISyntaxException, IOException {
     final var expectedAdderArtifactThingDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/a0_adder_artifact_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/a0_adder_artifact_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.cartagoMessagebox
@@ -699,9 +698,9 @@ public class CartagoVerticleHMASTest {
 
   @Test
   public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException {
-    final var COUNTER_ARTIFACT_HMAS =
+    final var COUNTER_ARTIFACT_TD =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/counter_artifact_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("td/counter_artifact_td.ttl").toURI()),
         StandardCharsets.UTF_8
       );
 
@@ -752,7 +751,7 @@ public class CartagoVerticleHMASTest {
           SUB_WORKSPACE_NAME,
           "c1",
           INCREMENT_OPERATION,
-          COUNTER_ARTIFACT_HMAS,
+          COUNTER_ARTIFACT_TD,
           ""
         ));
       })

@@ -1,0 +1,23 @@
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
+
+<http://localhost:8080/workspaces/sub/artifacts/c1/> a td:Thing, hmas:Artifact, ex:Counter;
+  td:title "c1";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
+      td:name "inc";
+      td:title "inc";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ] .
