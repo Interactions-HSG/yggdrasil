@@ -1,33 +1,26 @@
-@base <http://localhost:8080/workspaces/sub/artifacts/c0> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix urn: <http://example.org/urn#> .
-@prefix ex: <http://example.org/> .
-@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@base <http://localhost:8080/> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<> a hmas:ResourceProfile;
-  hmas:exposesSignifier <#http://example.org/Increment>;
-  hmas:isProfileOf <#artifact>;
-  hmas:isContainedIn <../../sub> .
-
-<#http://example.org/Increment> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#inc>
+<workspaces/sub/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
+  td:title "c0";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
+      td:name "inc";
+      td:title "inc";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/artifacts/c0/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
         ]
     ] .
 
-<#inc> a hctl:Form;
-  hctl:hasTarget <c0/increment>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
+<workspaces/sub/artifacts/c0/#artifact> hmas:isContainedIn <workspaces/sub/#workspace> .
 
-<#artifact> a hmas:Artifact, ex:Counter .
+<workspaces/sub/#workspace> a hmas:Workspace .

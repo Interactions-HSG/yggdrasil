@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.Json;
@@ -8,6 +10,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.apache.hc.core5.http.HttpStatus;
+import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.cartago.artifacts.AdderTD;
 import org.hyperagents.yggdrasil.cartago.artifacts.CounterTD;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -434,10 +437,9 @@ public class CartagoVerticleTDTest {
             List.of()
           ))
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedAdderArtifactThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -1002,6 +1004,16 @@ public class CartagoVerticleTDTest {
       notifyPropertyMessage.content(),
       content,
       "The properties should be equal"
+    );
+  }
+
+  private void assertEqualsThingDescriptions(final String expected, final String actual) {
+    Assertions.assertTrue(
+      Models.isomorphic(
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
+      ),
+      TDS_EQUAL_MESSAGE
     );
   }
 }

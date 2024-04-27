@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.ReplyException;
 import io.vertx.core.json.Json;
@@ -20,6 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.hc.core5.http.HttpStatus;
+import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS;
 import org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -151,10 +153,9 @@ public class CartagoVerticleHMASTest {
       );
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -189,10 +190,9 @@ public class CartagoVerticleHMASTest {
           null,
           MAIN_WORKSPACE_NAME
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedBodyThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -243,10 +243,9 @@ public class CartagoVerticleHMASTest {
           MAIN_WORKSPACE_NAME,
           SUB_WORKSPACE_NAME
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedWorkspaceThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -271,10 +270,9 @@ public class CartagoVerticleHMASTest {
           SUB_WORKSPACE_NAME,
           "sub2"
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedWorkspaceThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -370,10 +368,9 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedCounterArtifactThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -405,10 +402,9 @@ public class CartagoVerticleHMASTest {
             List.of(5)
           ))
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedCounterArtifactThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -435,10 +431,9 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .onSuccess(r -> Assertions.assertEquals(
+      .onSuccess(r -> assertEqualsThingDescriptions(
         expectedAdderArtifactThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
+        r.body()
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
@@ -1003,6 +998,16 @@ public class CartagoVerticleHMASTest {
       notifyPropertyMessage.content(),
       content,
       "The properties should be equal"
+    );
+  }
+
+  private void assertEqualsThingDescriptions(final String expected, final String actual) {
+    Assertions.assertTrue(
+      Models.isomorphic(
+        ResourceProfileGraphReader.getModelFromString(expected),
+        ResourceProfileGraphReader.getModelFromString(actual)
+      ),
+      TDS_EQUAL_MESSAGE
     );
   }
 }

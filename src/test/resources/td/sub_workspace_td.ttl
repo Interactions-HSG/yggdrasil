@@ -1,101 +1,81 @@
-@base <http://localhost:8080/workspaces/sub> .
+@base <http://localhost:8080/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix sh: <http://www.w3.org/ns/shacl#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix urn: <http://example.org/urn#> .
-@prefix ex: <http://example.org/> .
-@prefix xs: <http://www.w3.org/2001/XMLSchema#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<> a hmas:ResourceProfile;
-  hmas:exposesSignifier [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#createSubWorkspace>
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#leaveWorkspace>
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#focusWorkspace>
-            ], [
-              sh:path hmas:hasInput
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#makeArtifact>
-            ], [
-              sh:path hmas:hasInput
-            ]
-        ]
-    ], [ a hmas:Signifier;
-      hmas:signifies [ a sh:NodeShape;
-          sh:class hmas:ActionExecution;
-          sh:property [
-              sh:path prov:used;
-              sh:minCount "1"^^xs:int;
-              sh:maxCount "1"^^xs:int;
-              sh:hasValue <#joinWorkspace>
-            ]
-        ]
+<workspaces/sub/> a td:Thing, hmas:Workspace;
+  td:title "sub";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  hmas:isProfileOf <#workspace>;
-  hmas:isContainedIn <test>;
-  hmas:contains <sub/artifacts/c0> .
+  td:hasActionAffordance [ a td:ActionAffordance;
+      td:name "makeArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/artifacts/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactClass";
+              js:enum ex:Counter, ex:Artifact
+            ], [ a js:ArraySchema;
+              js:propertyName "initParams"
+            ], [ a js:StringSchema;
+              js:propertyName "artifactName"
+            ];
+          js:required "artifactClass", "artifactName"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "joinWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/join>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "quitWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/leave>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "focus";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/focus>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactName"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ];
+          js:required "artifactName", "callbackIri"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "createSubWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ] .
 
-<#createSubWorkspace> a hctl:Form;
-  hctl:hasTarget <>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
+<workspaces/sub> hmas:isContainedIn <workspaces/test> .
 
-<#leaveWorkspace> a hctl:Form;
-  hctl:hasTarget <sub/leave>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
+<workspaces/test> a hmas:Workspace .
 
-<#focusWorkspace> a hctl:Form;
-  hctl:hasTarget <sub/focus>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
+<workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
 
-<#makeArtifact> a hctl:Form;
-  hctl:hasTarget <sub/artifacts/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-<#joinWorkspace> a hctl:Form;
-  hctl:hasTarget <sub/join>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-<#workspace> a hmas:Workspace .
-
-<test> a hmas:Workspace .
-
-<sub/artifacts/c0> a hmas:Artifact .
+<workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .

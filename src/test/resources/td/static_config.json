@@ -12,15 +12,16 @@
         "artifacts" : [
           {
             "name" : "c0",
-            "representation" : "src/test/resources/c0_counter_artifact.ttl"
+            "representation" : "src/test/resources/td/c0_counter_artifact.ttl"
           }
         ],
-        "representation" : "src/test/resources/sub_workspace_td.ttl"
+        "representation" : "src/test/resources/td/sub_workspace_td.ttl"
       },
       {
         "name" : "test",
-        "representation" : "src/test/resources/test_workspace_td.ttl"
+        "representation" : "src/test/resources/td/test_workspace_td.ttl"
       }
-    ]
+    ],
+    "ontology" : "td"
   }
 }
