@@ -71,37 +71,42 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getArtifactsUri(final String workspaceName) {
-
-    return this.getWorkspaceUri(validateInput(workspaceName)) + "artifacts/";
+    return this.getWorkspaceUri(workspaceName) + "artifacts/";
   }
 
   @Override
   public String getArtifactUri(final String workspaceName, final String artifactName) {
-    var cleanWorkspaceName = validateInput(workspaceName);
     var cleanArtifactName = validateInput(artifactName);
-    return this.getArtifactsUri(cleanWorkspaceName) + cleanArtifactName + "/";
+    return this.getArtifactsUri(workspaceName) + cleanArtifactName + "/";
   }
 
   @Override
   public String getAgentBodiesUri(final String workspaceName) {
-    return this.getWorkspaceUri(validateInput(workspaceName)) + "artifacts/";
+    return this.getWorkspaceUri(workspaceName) + "artifacts/";
   }
 
   @Override
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
-    var cleanWorkspaceName = validateInput(workspaceName);
     var cleanAgentName = validateInput(agentName);
-    return this.getAgentBodiesUri(cleanWorkspaceName) + cleanAgentName + "/";
+    return this.getAgentBodiesUri(workspaceName) + cleanAgentName + "/";
   }
 
   @Override
   public String getAgentUri(final String agentName) {
     var cleanAgentName = validateInput(agentName);
-    return this.baseUri + "artifacts/" + validateInput(cleanAgentName) + "/";
+    return this.baseUri + "artifacts/" + cleanAgentName + "/";
   }
 
 
-  // TODO: Add more validation to what is acceptable url
+  // TODO: Add better validation
+
+  /**
+   * Validate the input string by removing any slashes.
+   * The name cannot have any slashes since we use them as separators in the URI.
+   *
+   * @param StringInput The input string to validate.
+   * @return The validated string.
+   */
   private String validateInput(String StringInput) {
     if (StringInput == null) {
       return "";
