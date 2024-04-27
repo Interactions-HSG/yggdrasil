@@ -17,11 +17,10 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public class HttpServerVerticle extends AbstractVerticle {
 
-  // TODO: These are also defined in the HttpInterfaceConfigImpl
+  // TODO: We said agents bodies should also use artifacts path
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";
-  public static final String BODY_PATH = "/workspaces/:wkspid/agents/:agtname";
 
   private HttpServer server;
   private EnvironmentConfig environmentConfig;
@@ -138,13 +137,6 @@ public class HttpServerVerticle extends AbstractVerticle {
           .handler(handler::handleUpdateEntity);
     router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
-
-    router.get(BODY_PATH + "/").handler(handler::handleRedirectWithoutSlash);
-    router.get(BODY_PATH).handler(handler::handleGetEntity);
-    router.put(BODY_PATH + "/").handler(handler::handleRedirectWithoutSlash);
-    router.put(BODY_PATH)
-          .consumes(TURTLE_CONTENT_TYPE)
-          .handler(handler::handleUpdateEntity);
 
     final var actionRoute = router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
 
