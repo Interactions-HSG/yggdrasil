@@ -129,9 +129,6 @@ public class StaticEnvironmentConfigurationTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    System.out.println("=============================================================");
-    System.out.println(actual);
-    System.out.println("=============================================================");
     Assertions.assertTrue(
       Models.isomorphic(
         ResourceProfileGraphReader.getModelFromString(expected),
