@@ -1,45 +1,56 @@
-@prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
+@base <http://localhost:8080/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<http://localhost:8080/workspaces/test> a td:Thing, hmas:Workspace;
+<workspaces/test> a td:Thing, hmas:Workspace;
+  td:title "test";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
   td:hasActionAffordance [ a td:ActionAffordance;
-      td:name "joinWorkspace";
+      td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance;
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/>;
+          hctl:hasTarget <workspaces/test/artifacts/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
-              js:propertyName "artifactName"
+              js:propertyName "artifactClass";
+              js:enum ex:Adder, ex:Counter
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;
-              js:propertyName "artifactClass";
-              js:enum <http://example.org/Adder>, <http://example.org/Counter>
+              js:propertyName "artifactName"
             ];
-          js:required "artifactName", "artifactClass"
-        ];
-      td:name "makeArtifact"
+          js:required "artifactClass", "artifactName"
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "joinWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/test/join>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance;
+      td:name "quitWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/test/leave>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
     ], [ a td:ActionAffordance;
       td:name "focus";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
+          hctl:hasTarget <workspaces/test/focus>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
@@ -52,27 +63,18 @@
           js:required "artifactName", "callbackIri"
         ]
     ], [ a td:ActionAffordance;
-      td:name "quitWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance;
       td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
+          hctl:hasTarget <workspaces/test>;
           hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction;
-          hctl:hasTarget <http://localhost:8080/workspaces/test>
+          hctl:hasOperationType td:invokeAction
         ]
-    ] ;
-  td:title "test";
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
-  hmas:isHostedOn <http://localhost:8080/>;
-  hmas:contains <http://localhost:8080/workspaces/test/artifacts/c0> .
+    ] .
 
-<http://localhost:8080/> a hmas:HypermediaMASPlatform .
-<http://localhost:8080/workspaces/test/artifacts/c0> a hmas:Artifact .
+<workspaces/test/#workspace> hmas:isHostedOn <#platform>;
+  hmas:contains <workspaces/test/artifacts/c0/#artifact> .
+
+<#platform> a hmas:HypermediaMASPlatform .
+
+<workspaces/test/artifacts/c0/#artifact> a hmas:Artifact .

@@ -1,25 +1,24 @@
+@base <http://localhost:8080/> .
 @prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<http://localhost:8080/> a hmas:HypermediaMASPlatform, td:Thing;
+<> a td:Thing, hmas:HypermediaMASPlatform;
+  td:title "yggdrasil";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "createWorkspace";
       td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/>;
           hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction;
-          hctl:hasTarget <http://localhost:8080/workspaces/>;
-          htv:methodName "POST"
+          hctl:hasOperationType td:invokeAction
         ]
-    ];
-  td:title "yggdrasil";
-  hmas:hosts <http://localhost:8080/workspaces/test> .
+    ] .
 
-<http://localhost:8080/workspaces/test> a hmas:Workspace .
+<#platform> hmas:hosts <workspaces/test/#workspace> .
+
+<workspaces/test/#workspace> a hmas:Workspace .

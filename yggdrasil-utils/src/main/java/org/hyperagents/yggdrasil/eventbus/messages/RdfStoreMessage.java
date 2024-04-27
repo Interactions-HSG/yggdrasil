@@ -46,6 +46,7 @@ public sealed interface RdfStoreMessage {
    * A record representing a request to create a body in the RDF store.
    *
    * @param workspaceName      The name of the workspace where the body will be created.
+   * @param agentID            The ID of the agent for which the body will be created.
    * @param agentName          The name of the agent for which the body will be created.
    * @param bodyRepresentation The string representation of the body to be created.
    */

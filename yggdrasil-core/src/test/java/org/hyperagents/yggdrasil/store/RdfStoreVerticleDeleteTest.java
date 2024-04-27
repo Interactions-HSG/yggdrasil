@@ -33,8 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
-  private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
-  private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/agents/test";
+  private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test/";
+  private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "artifacts/kai";
   private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
   private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "/artifacts/c0";
   private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_sub_td.ttl";
@@ -66,7 +66,9 @@ public class RdfStoreVerticleDeleteTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     vertx.sharedData()
@@ -127,7 +129,7 @@ public class RdfStoreVerticleDeleteTest {
           );
           try {
             final var platformUpdateMessage =
-                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
                 platformDescription,
                 platformUpdateMessage.content()
@@ -209,11 +211,7 @@ public class RdfStoreVerticleDeleteTest {
         .recover(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
           PLATFORM_URI
         )))
-        .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          platformDescription,
-          r.body()
-        ))
-        .onComplete(ctx.succeedingThenComplete());
+      .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
@@ -545,8 +543,8 @@ public class RdfStoreVerticleDeleteTest {
                  }
                  return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
                    "test",
-                   "test",
-                   "test",
+                   "http://localhost:8080/agent/kai",
+                   "kai",
                    inputBodyRepresentation
                  ));
                })

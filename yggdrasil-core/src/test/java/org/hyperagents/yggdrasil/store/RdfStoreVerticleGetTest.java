@@ -36,7 +36,9 @@ public class RdfStoreVerticleGetTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());

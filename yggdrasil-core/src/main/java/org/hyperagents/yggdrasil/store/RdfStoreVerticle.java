@@ -31,8 +31,6 @@ import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.store.impl.RdfStoreFactory;
 import org.hyperagents.yggdrasil.utils.*;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
-import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
 /**
  * Stores the RDF graphs representing the instantiated artifacts.
@@ -80,10 +78,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
             this.handleGetEntity(RdfModelUtils.createIri(requestUri), message);
           case RdfStoreMessage.CreateArtifact content ->
             this.handleCreateArtifact(
-              RdfModelUtils.createIri(content.requestUri()),
-              content,
-              message
-            );
+            RdfModelUtils.createIri(content.requestUri()),
+            content,
+            message
+          );
           case RdfStoreMessage.CreateWorkspace content ->
             this.handleCreateWorkspace(
               RdfModelUtils.createIri(content.requestUri()),

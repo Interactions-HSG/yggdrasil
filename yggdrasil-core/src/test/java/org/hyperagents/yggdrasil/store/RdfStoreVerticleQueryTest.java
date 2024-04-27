@@ -66,7 +66,9 @@ public class RdfStoreVerticleQueryTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     vertx.sharedData()

@@ -1,6 +1,8 @@
 package org.hyperagents.yggdrasil.store;
 
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
+import ch.unisg.ics.interactions.wot.td.ThingDescription;
+import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.eventbus.ReplyException;
 import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
@@ -16,8 +18,18 @@ public final class RdfStoreVerticleTestHelpers {
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
         Models.isomorphic(
-          ResourceProfileGraphReader.getModelFromString(expected),
-          ResourceProfileGraphReader.getModelFromString(actual)
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+        ),
+        REPRESENTATIONS_EQUAL_MESSAGE
+    );
+  }
+
+  public static void assertEqualsResourceProfiles(final String expected, final String actual) {
+    Assertions.assertTrue(
+        Models.isomorphic(
+          ResourceProfileGraphReader.readFromString(expected).getGraph().orElseThrow(),
+          ResourceProfileGraphReader.readFromString(actual).getGraph().orElseThrow()
         ),
         REPRESENTATIONS_EQUAL_MESSAGE
     );
