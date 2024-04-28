@@ -71,6 +71,8 @@ public class Rdf4jStore implements RdfStore {
     String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
     var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
 
+    System.out.println("Getting Entity iri: " + fixedEntityIri.toString());
+
 
     try {
       final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, fixedEntityIri));
@@ -100,6 +102,8 @@ public class Rdf4jStore implements RdfStore {
     String entityIriString = entityIri.toString();
     String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
     var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
+    System.out.println("Adding Entity iri: " + fixedEntityIri.toString());
 
     try {
       this.connection.add(entityModel, fixedEntityIri);

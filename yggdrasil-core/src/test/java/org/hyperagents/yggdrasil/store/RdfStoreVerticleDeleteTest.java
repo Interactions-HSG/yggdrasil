@@ -34,9 +34,9 @@ public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test/";
-  private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "artifacts/kai";
-  private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
-  private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "/artifacts/c0";
+  private static final String TEST_AGENT_BODY_URI = "http://localhost:8080/agent/kai/";
+  private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub/";
+  private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "artifacts/c0/";
   private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_sub_td.ttl";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
@@ -80,7 +80,9 @@ public class RdfStoreVerticleDeleteTest {
         notificationConfig
     );
     notificationMessagebox.init();
-    notificationMessagebox.receiveMessages(m -> this.notificationQueue.add(m.body()));
+    notificationMessagebox.receiveMessages(m -> {
+      this.notificationQueue.add(m.body());
+    });
     vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
   }
 
@@ -127,29 +129,34 @@ public class RdfStoreVerticleDeleteTest {
               deletedWorkspaceDescription,
               r.body()
           );
+          System.out.println("1");
           try {
             final var platformUpdateMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
                 platformDescription,
                 platformUpdateMessage.content()
             );
+            System.out.println("2");
             Assertions.assertEquals(
                 PLATFORM_URI,
                 platformUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
+            System.out.println("3");
             final var deletionMessage =
                 (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
                 deletedWorkspaceDescription,
                 deletionMessage.content()
             );
+            System.out.println("4");
             Assertions.assertEquals(
                 TEST_WORKSPACE_URI,
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
+            System.out.println("5");
             final var bodyDeletionMessage =
                 (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -159,6 +166,7 @@ public class RdfStoreVerticleDeleteTest {
                 ),
                 bodyDeletionMessage.content()
             );
+            System.out.println("6");
             Assertions.assertEquals(
                 TEST_AGENT_BODY_URI,
                 bodyDeletionMessage.requestIri(),
@@ -173,11 +181,13 @@ public class RdfStoreVerticleDeleteTest {
                 ),
                 subWorkspaceDeletionMessage.content()
             );
+            System.out.println("7");
             Assertions.assertEquals(
                 SUB_WORKSPACE_URI,
                 subWorkspaceDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
+            System.out.println("8");
             final var artifactDeletionMessage =
                 (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -187,6 +197,7 @@ public class RdfStoreVerticleDeleteTest {
                 ),
                 artifactDeletionMessage.content()
             );
+            System.out.println("9");
             Assertions.assertEquals(
                 COUNTER_ARTIFACT_URI,
                 artifactDeletionMessage.requestIri(),
@@ -556,5 +567,6 @@ public class RdfStoreVerticleDeleteTest {
                    ctx.failNow(e);
                  }
                });
+
   }
 }

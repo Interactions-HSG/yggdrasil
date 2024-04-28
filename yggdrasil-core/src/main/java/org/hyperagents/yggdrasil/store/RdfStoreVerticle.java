@@ -486,18 +486,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleDeleteEntity(final IRI requestIri, final Message<RdfStoreMessage> message)
       throws IllegalArgumentException, IOException {
+
+    String entityIriString = requestIri.toString();
+    String fixedIri = entityIriString.endsWith("/") ? entityIriString.substring(0,entityIriString.length() - 1) : entityIriString;
+    var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
     this.store
-        .getEntityModel(requestIri)
+        .getEntityModel(fixedEntityIri)
         .ifPresentOrElse(
           Failable.asConsumer(entityModel -> {
             final var entityModelString =
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             if (entityModel.contains(
-                requestIri,
+              fixedEntityIri,
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                 RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
             )) {
-              final var artifactIri = requestIri.toString();
+              final var artifactIri = fixedEntityIri.toString();
               final var workspaceIri =
                   RdfModelUtils.createIri(
                       Pattern
@@ -516,10 +521,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     workspaceModel.remove(
                         workspaceIri,
                         RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                        requestIri
+                      fixedEntityIri
                     );
                     workspaceModel.remove(
-                        requestIri,
+                      fixedEntityIri,
                         RDF.TYPE,
                         RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
                     );
@@ -531,24 +536,24 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       )
                     );
                   }));
-              this.store.removeEntityModel(requestIri);
+              this.store.removeEntityModel(fixedEntityIri);
               this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.EntityDeleted(
-                  requestIri.toString(),
+                  fixedEntityIri.toString(),
                   entityModelString
                 )
               );
             } else if (entityModel.contains(
-                requestIri,
+              fixedEntityIri,
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                 RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
             )) {
-              final var workspaceIri = requestIri.toString();
+              final var workspaceIri = fixedEntityIri.toString();
               final var platformIri = RdfModelUtils.createIri(
                   workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
               );
               if (entityModel.contains(
-                  requestIri,
+                fixedEntityIri,
                   RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
                   platformIri
               )) {
@@ -558,10 +563,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       platformModel.remove(
                           platformIri,
                           RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
-                          requestIri
+                        fixedEntityIri
                       );
                       platformModel.remove(
-                          requestIri,
+                        fixedEntityIri,
                           RDF.TYPE,
                           RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                       );
@@ -576,7 +581,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               } else {
                 entityModel
                     .filter(
-                      requestIri,
+                      fixedEntityIri,
                       RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
                       null
                     )
@@ -592,10 +597,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
                             parentModel.remove(
                                 parentIri,
                                 RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                                requestIri
+                              fixedEntityIri
                             );
                             parentModel.remove(
-                                requestIri,
+                              fixedEntityIri,
                                 RDF.TYPE,
                                 RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                             );
@@ -609,7 +614,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           }))
                     ));
               }
-              this.removeResourcesRecursively(requestIri);
+              this.removeResourcesRecursively(fixedEntityIri);
             }
             this.replyWithPayload(message, entityModelString);
           }),
