@@ -62,3 +62,18 @@ API:
  -> Util clas would need to have access to RepresentationFactory
  -> Util class would create the artifactRepresentations and merge it with the request turtle representation
 
+!MISSING FEATURES
+- WebID
+- issues by matteo
+
+list of critical points still missing for next week
+
+TESTS
+
++ ADD TEST FOR TURTLE ARTIFACT CREATION
++ ADD TEST FOR TURTLE WORKSPACE CREATION
++ STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
+
++ TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
+
+++ LIST OF FEATURES ++
