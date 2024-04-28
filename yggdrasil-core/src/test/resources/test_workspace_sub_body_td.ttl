@@ -8,9 +8,6 @@
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
 <workspaces/test> a td:Thing, hmas:Workspace;
-  td:title "test";
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ];
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "makeArtifact";
       td:hasForm [
@@ -70,11 +67,17 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
+    ];
+  hmas:contains <workspaces/sub>;
+  td:title "test";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
 <workspaces/test/#workspace> hmas:isHostedOn <#platform>;
   hmas:contains <workspaces/test/artifacts/kai/#artifact> .
 
 <#platform> a hmas:HypermediaMASPlatform .
+
+<workspaces/sub> a hmas:Workspace .
 
 <workspaces/test/artifacts/kai/#artifact> a hmas:Artifact .
