@@ -37,7 +37,7 @@ public class AgentBodyHttpHandlersTest {
   private static final String TEST_HOST = "localhost";
   private static final String TEST_AGENT_ID = "test_agent";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";
-  private static final String BODIES_PATH = "/workspaces/test/agents/";
+  private static final String BODIES_PATH = "/workspaces/test/artifacts/";
   private static final String BODY_PATH = BODIES_PATH + TEST_AGENT_ID;
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String BODY_FILE = "test_agent_body.ttl";
