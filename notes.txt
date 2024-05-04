@@ -77,3 +77,29 @@ TESTS
 + TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
 
 ++ LIST OF FEATURES ++
+- WebID
+- Issues on Github:
+  - Artifacts currently expose Thing Descriptions but agents have no such profile. Profiles for agents should be created.
+    - This is implemented in HMAS?
+  - The actions that the agents use to interact with the Web of Things and process JSON documents are defined within the agent architecture. These actions should instead be made available through libraries.
+    - Not relevant for me?
+  - Issue 39 & 40 - Regarding WebID & Change of join / leave API
+    - Change that join and leave refer to agent body resource.
+      - Joining would be done by POST request to body.
+      - Leaving would be done by DELETE request to body.
+    - Allow more WebIDs
+      - Comply with the Web ID Standard
+      - Future support for SOLID OIDC
+  - Implement authentication mechanism
+  - Issue 42 - Should be implemented now, atleast with HMAS
+    - The agent representations could be redundant, notably if no other motivating use case can be found.
+      - Agents are representations are just artifacts
+  - Issue 43 - Should be solved with RepresentationFactoryFactory
+  - Issue 44 - Update architecture file
+  - Issue 45 - Remove last singleton -> HypermediaArtifactRegistry
+    - make it a class only used by cartago verticle
+    -> Should only be used by cartago verticle already
+    -> Except for 1 method in HttpHandler for handleAction
+- Check Correct URIs everywhere
+- Add Tests
+
