@@ -63,7 +63,7 @@ public class AgentBodyHttpHandlersTest {
          .put("default",
               new EnvironmentConfigImpl(JsonObject.of(
                 "environment-config",
-                JsonObject.of("enabled", true)
+                JsonObject.of("enabled", true, "ontology", "td")
               )));
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(
