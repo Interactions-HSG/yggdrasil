@@ -1,54 +1,7 @@
-General:
-	- No need to differentiate between focus / subscribe WebSub artifact -> All artifacts are cartago artifacts
-
-API:
-	Platform:
-	+ / - GET
-	+ /query/ - GET POST ?- missing
-	- /hub/ - NO LONGER NEEDED
-
-	Workspace:
-	+ /workspaces/ - POST
-	+ /workspaces/{wrkspid}/ - GET POST PUT DELETE
-	+ /workspaces/{wrkspid}/join - POST
-	+ /workspaces/{wrkspid}/leave - POST
-	- /workspaces/{wrkspid}/focus - NO LONGER NEEDED -> In artifact itself
-
-	Artifact:
-	+ /workspaces/{wrkspid}/artifacts/ - POST
-	+ /workspaces/{wrkspid}/artifacts/{artifact}/ - GET POST PUT DELETE
-	+ /workspaces/{wrkspid}/artifacts/{artifact}/focus/ - NEW POST
-
-	body:
-	-> REMOVED? since we give agents now also artifact uri in platform?
-
-
-
-
-# New
-
-- Combined all classes where it was possible
-- Most classes do not depend on ontology anymore
-- Only rdfstoreverticle and cartagoVerticle have a if statement to decide which RepresentationFactor to use
-
-- Made it so that when you create an artifact through turtle it is built on top of cartago base artifact
--> this artifact needs to be in the environment config.
-
-- Need solution for adding artifacts and workspaces through turtle on how to modify the graph
--> need to overwrite certain uris and delete others while keeping all others
-
--> The API for /../../artifacts/artifact/{action} could be removed?
- -> Add the endpoints to the artifacts themselves? would make more sense?
- -> URL would be the same in the end just not in presented in the swagger specs and handles by artifacts themselves and not rdfverticle?
-
-// question of base cartago artifact
-
-+ add list of missing features (e.g.: WebID, Interface to Cartago(feedbackParams, etc) )
-
 ! MOST IMPORTANT FOR RELEASE !
-+ Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action
-+ look at feedbackParams specifically
-+ add slug to body for joinworkspace
++ Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action <- DONE
++ look at feedbackParams specifically <- DONE theyre there
++ add slug to body for joinworkspace <- DONE
 
 + websub check
 
@@ -57,24 +10,6 @@ API:
 + Implement small version with xArm example
 + think of interesting domain use case for context aware signifiers
 
-+ create new util class to make artifacts from turtle
- -> do not need cartago for it anymore
- -> Util clas would need to have access to RepresentationFactory
- -> Util class would create the artifactRepresentations and merge it with the request turtle representation
-
-!MISSING FEATURES
-- WebID
-- issues by matteo
-
-list of critical points still missing for next week
-
-TESTS
-
-+ ADD TEST FOR TURTLE ARTIFACT CREATION
-+ ADD TEST FOR TURTLE WORKSPACE CREATION
-+ STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
-
-+ TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
 
 ++ LIST OF FEATURES ++
 - WebID
@@ -102,4 +37,8 @@ TESTS
     -> Except for 1 method in HttpHandler for handleAction
 - Check Correct URIs everywhere
 - Add Tests
+  - TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
+  - ADD TEST FOR TURTLE ARTIFACT CREATION
+  - ADD TEST FOR TURTLE WORKSPACE CREATION
+  - STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
 
