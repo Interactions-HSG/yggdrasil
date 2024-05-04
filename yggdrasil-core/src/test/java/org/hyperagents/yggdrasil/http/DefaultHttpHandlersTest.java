@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
@@ -79,7 +78,7 @@ public class DefaultHttpHandlersTest {
          .put("default",
               new EnvironmentConfigImpl(JsonObject.of(
                 "environment-config",
-                JsonObject.of("enabled", true)
+                JsonObject.of("enabled", true, "ontology", "td")
               )));
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(

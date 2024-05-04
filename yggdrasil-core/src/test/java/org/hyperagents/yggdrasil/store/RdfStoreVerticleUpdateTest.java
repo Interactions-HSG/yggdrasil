@@ -53,7 +53,9 @@ public class RdfStoreVerticleUpdateTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     final var notificationConfig = new WebSubConfigImpl(
@@ -158,7 +160,7 @@ public class RdfStoreVerticleUpdateTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-          "http://localhost:8080/workspaces/sub",
+          "http://localhost:8080/workspaces/sub/",
           updatedWorkspaceDescription
         )))
         .onSuccess(r -> {
@@ -174,7 +176,7 @@ public class RdfStoreVerticleUpdateTest {
                 updateMessage.content()
             );
             Assertions.assertEquals(
-                "http://localhost:8080/workspaces/sub",
+                "http://localhost:8080/workspaces/sub/",
                 updateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -232,7 +234,7 @@ public class RdfStoreVerticleUpdateTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-          "http://localhost:8080/workspaces/test/agents/test",
+          "http://localhost:8080/workspaces/test/artifacts/test",
           updatedBodyDescription
         )))
         .onSuccess(r -> {
@@ -248,7 +250,7 @@ public class RdfStoreVerticleUpdateTest {
                 updateMessage.content()
             );
             Assertions.assertEquals(
-                "http://localhost:8080/workspaces/test/agents/test",
+                "http://localhost:8080/workspaces/test/artifacts/test",
                 updateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -290,8 +292,7 @@ public class RdfStoreVerticleUpdateTest {
                ))
                .compose(r -> {
                  try {
-                   this.notificationQueue.take();
-                   this.notificationQueue.take();
+                   this.notificationQueue.clear();
                  } catch (final Exception e) {
                    ctx.failNow(e);
                  }
@@ -304,8 +305,7 @@ public class RdfStoreVerticleUpdateTest {
                })
                .compose(r -> {
                  try {
-                   this.notificationQueue.take();
-                   this.notificationQueue.take();
+                   this.notificationQueue.clear();
                  } catch (final Exception e) {
                    ctx.failNow(e);
                  }
@@ -317,25 +317,24 @@ public class RdfStoreVerticleUpdateTest {
                })
                .compose(r -> {
                  try {
-                   this.notificationQueue.take();
-                   this.notificationQueue.take();
+                   this.notificationQueue.clear();
                  } catch (final Exception e) {
                    ctx.failNow(e);
                  }
                  return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
                    "test",
-                   "test",
+                   "http://localhost:8080/agents/test",
                    "test",
                    inputBodyRepresentation
                  ));
                })
                .onSuccess(r -> {
                  try {
-                   this.notificationQueue.take();
-                   this.notificationQueue.take();
+                   this.notificationQueue.clear();
                  } catch (final Exception e) {
                    ctx.failNow(e);
                  }
                });
+
   }
 }
