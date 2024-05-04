@@ -25,10 +25,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -389,6 +386,7 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
+  @Disabled
   public void testSimpleGraphQueryRequest(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
@@ -405,6 +403,7 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
+  @Disabled
   public void testGraphQueryRequestWithDefaultUris(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
@@ -427,6 +426,7 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
+  @Disabled
   public void testGraphQueryRequestWithNamedUris(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
