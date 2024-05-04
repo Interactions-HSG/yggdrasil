@@ -138,6 +138,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleCreateArtifactJson(final RoutingContext context) {
     final var representation = context.body().asString();
+    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
@@ -161,7 +162,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
-              this.httpConfig.getBaseUri() + context.request().path(),
+              requestUri,
               nameResponse.body(),
               response.body()
             ))

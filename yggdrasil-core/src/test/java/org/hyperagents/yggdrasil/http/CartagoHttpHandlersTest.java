@@ -128,7 +128,6 @@ public class CartagoHttpHandlersTest {
   }
 
   @Test
-  @Disabled
   public void testPostWorkspacesSucceeds(final VertxTestContext ctx)
       throws InterruptedException, URISyntaxException, IOException {
     final var expectedWorkspaceRepresentation =
@@ -139,8 +138,8 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
-                                   .send().onComplete(r -> System.out.println(r.result())
-                                    );
+                                   .send();
+    this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
 
     final var createWorkspaceMessage = (CartagoMessage.CreateWorkspace) cartagoMessage.body();
@@ -320,7 +319,6 @@ public class CartagoHttpHandlersTest {
     );
   }
 
-  @Disabled
   @Test
   public void testPostArtifactSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
@@ -345,6 +343,7 @@ public class CartagoHttpHandlersTest {
                                      ContentType.APPLICATION_JSON.getMimeType()
                                    )
                                    .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createArtifactMessage =
         (CartagoMessage.CreateArtifact) cartagoMessage.body();
@@ -404,7 +403,6 @@ public class CartagoHttpHandlersTest {
   }
 
   @Test
-  @Disabled
   public void testPostArtifactWithWorkspaceNotFound(final VertxTestContext ctx)
       throws InterruptedException {
     final var artifactInitialization =
@@ -428,6 +426,7 @@ public class CartagoHttpHandlersTest {
                                      ContentType.APPLICATION_JSON.getMimeType()
                                    )
                                    .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
     Assertions.assertEquals(
