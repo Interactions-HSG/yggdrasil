@@ -150,7 +150,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(
-      this.httpConfig.getBaseUri() + context.request().path(), artifactName)
+      requestUri, artifactName)
     ).compose(nameResponse ->
       this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
