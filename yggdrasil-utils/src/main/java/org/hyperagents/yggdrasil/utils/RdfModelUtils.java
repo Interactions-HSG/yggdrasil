@@ -40,18 +40,41 @@ public final class RdfModelUtils {
     return -1;
   }
 
-  // TODO: Remove last dependency on this method
-  public static String modelToString(final Model model, final RDFFormat format) throws IOException {
-      var firstStatement = model.getStatements(null,null,createIri("https://purl.org/hmas/ResourceProfile")).iterator().next();
-      var base = firstStatement.getSubject().toString();
-      int index = findSlash(base,'/');
-      if (index < 0) {
-      // this is a normal base
-        return modelToString(model, format, base);
+  public static String modelToString(final Model model, final RDFFormat format)
+    throws IllegalArgumentException, IOException {
+    try (var out = new ByteArrayOutputStream()) {
+
+      RDFWriter writer;
+      writer = Rio.createWriter(format, out);
+
+      if (format.equals(RDFFormat.JSONLD)) {
+        writer.getWriterConfig()
+          .set(JSONLDSettings.JSONLD_MODE,
+            JSONLDMode.FLATTEN)
+          .set(JSONLDSettings.USE_NATIVE_TYPES, true)
+          .set(JSONLDSettings.OPTIMIZE, true);
       }
-    // this is platform uri as base
-      return modelToString(model, format, base.substring(0,index+1));
+
+      writer.getWriterConfig()
+        .set(BasicWriterSettings.PRETTY_PRINT, true)
+        .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
+        .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
+        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+      try {
+        writer.startRDF();
+        model.getNamespaces().forEach(namespace ->
+          writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
+        model.forEach(writer::handleStatement);
+        writer.endRDF();
+      } catch (final RDFHandlerException e) {
+        throw new IOException("RDF handler exception: " + e.getMessage());
+      }
+      return out.toString(StandardCharsets.UTF_8);
+    } catch (final UnsupportedRDFormatException e) {
+      throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
+    }
   }
+
   /**
    * Converts a given RDF model to a string representation in the specified format.
    *
@@ -62,7 +85,7 @@ public final class RdfModelUtils {
    * @throws IOException              if an I/O error occurs during serialization
    */
   public static String modelToString(final Model model, final RDFFormat format, final String base)
-      throws IllegalArgumentException, IOException {
+    throws IllegalArgumentException, IOException {
     try (var out = new ByteArrayOutputStream()) {
 
 
@@ -71,21 +94,21 @@ public final class RdfModelUtils {
 
       if (format.equals(RDFFormat.JSONLD)) {
         writer.getWriterConfig()
-              .set(JSONLDSettings.JSONLD_MODE,
-                JSONLDMode.FLATTEN)
-              .set(JSONLDSettings.USE_NATIVE_TYPES, true)
-              .set(JSONLDSettings.OPTIMIZE, true);
+          .set(JSONLDSettings.JSONLD_MODE,
+            JSONLDMode.FLATTEN)
+          .set(JSONLDSettings.USE_NATIVE_TYPES, true)
+          .set(JSONLDSettings.OPTIMIZE, true);
       }
 
       writer.getWriterConfig()
-            .set(BasicWriterSettings.PRETTY_PRINT, true)
-            .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
-            .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
-            .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+        .set(BasicWriterSettings.PRETTY_PRINT, true)
+        .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
+        .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
+        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
       try {
         writer.startRDF();
         model.getNamespaces().forEach(namespace ->
-            writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
+          writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
         model.forEach(writer::handleStatement);
         writer.endRDF();
       } catch (final RDFHandlerException e) {
@@ -110,9 +133,9 @@ public final class RdfModelUtils {
    * @throws IOException              if an I/O error occurs during parsing
    */
   public static Model stringToModel(
-      final String graphString,
-      final IRI baseIri,
-      final RDFFormat format
+    final String graphString,
+    final IRI baseIri,
+    final RDFFormat format
   ) throws IllegalArgumentException, IOException {
     try (var stringReader = new StringReader(graphString)) {
       final var rdfParser = Rio.createParser(format);
