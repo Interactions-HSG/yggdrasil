@@ -386,7 +386,6 @@ public class RdfStoreVerticleQueryTest {
   }
 
   @Test
-  @Disabled
   public void testSimpleGraphQueryRequest(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var result =
@@ -394,6 +393,8 @@ public class RdfStoreVerticleQueryTest {
           Path.of(ClassLoader.getSystemResource("simple_query_result.ttl").toURI()),
           StandardCharsets.UTF_8
         );
+    this.messagebox.sendMessage(new RdfStoreMessage.GetEntity("http://localhost:8080/workspaces/sub/")).onSuccess(r -> System.out.println(r.body()));
+
     this.testGraphQueryRequest(List.of(), List.of())
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
             result,
@@ -460,13 +461,11 @@ public class RdfStoreVerticleQueryTest {
                    PREFIX hmas: <https://purl.org/hmas/>
                    PREFIX ex: <http://example.org/>
 
-                   DESCRIBE ?workspace ?artifact
+                   DESCRIBE ?workspace
                    WHERE {
                        ?workspace hmas:contains [
-                           a hmas:Artifact, ex:Counter;
-                           td:title ?artifact;
-                       ];
-                       a hmas:Workspace.
+                           a ?desc;
+                       ].
                    }
                    """,
                    defaultGraphUris,
