@@ -346,7 +346,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     // Create IRI for new entity
     final var workspaceIri =
         this.generateEntityIri(requestIri.toString(), content.workspaceName());
-    final var resourceIRI = RdfModelUtils.createIri(workspaceIri);
+    final var resourceIRI = RdfModelUtils.createIri(workspaceIri.endsWith("/") ? workspaceIri : workspaceIri + "/");
 
     IRI workspaceIRI;
     if (workspaceIri.endsWith("/")) {
@@ -365,7 +365,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
 
             if (content.parentWorkspaceUri().isPresent()) {
-              final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get().substring(0, content.parentWorkspaceUri().get().length() - 1));
+              final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get().endsWith("/") ? content.parentWorkspaceUri().get() : content.parentWorkspaceUri().get() + "/");
+              System.out.println(resourceIRI);
               entityModel.add(
                 resourceIRI,
                   RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
@@ -708,7 +709,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var candidateIri = fullRequestIri.concat(optHint.get()).replaceAll(regexPattern, "/");
 
       if (!this.store.containsEntityModel(RdfModelUtils.createIri(candidateIri))) {
-        return candidateIri;
+        return candidateIri + "/";
       }
     }
     // Generate a new IRI
