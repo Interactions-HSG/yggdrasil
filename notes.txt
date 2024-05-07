@@ -38,7 +38,20 @@
 - Check Correct URIs everywhere
 - Add Tests
   - TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
+    - Added testcase for Workspaces
   - ADD TEST FOR TURTLE ARTIFACT CREATION
+    - tests present
   - ADD TEST FOR TURTLE WORKSPACE CREATION
+    - tests present
   - STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
 
+QUESTIONS:
+ - Graph queries
+ -> Correct representation of resource profile and the actual #things
+  -> <workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
+  -> <workspaces/test/> a hmas:Workspace .
+  BUT
+  -> <workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
+  -> <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .
+
+  -> Would need to overhaul the TDs a bit so that graph queries work?
