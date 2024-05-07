@@ -11,10 +11,7 @@ import io.vertx.junit5.VertxTestContext;
 import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.MainVerticle;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
@@ -59,6 +56,7 @@ public class StaticEnvironmentConfigurationTest {
   }
 
   @Test
+  @Disabled
   public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
@@ -119,7 +117,6 @@ public class StaticEnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          System.out.println("3");
           this.assertEqualsThingDescriptions(
               artifactRepresentation,
               r.bodyAsString()

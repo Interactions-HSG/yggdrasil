@@ -366,7 +366,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
             if (content.parentWorkspaceUri().isPresent()) {
               final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get().endsWith("/") ? content.parentWorkspaceUri().get() : content.parentWorkspaceUri().get() + "/");
-              System.out.println(resourceIRI);
               entityModel.add(
                 resourceIRI,
                   RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),

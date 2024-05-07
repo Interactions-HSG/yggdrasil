@@ -44,6 +44,9 @@
   - ADD TEST FOR TURTLE WORKSPACE CREATION
     - tests present
   - STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
+    - tests present
+
+
 
 QUESTIONS:
  - Graph queries
@@ -55,3 +58,11 @@ QUESTIONS:
   -> <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .
 
   -> Would need to overhaul the TDs a bit so that graph queries work?
+
+ - DELETE only removes from rdf store not cartago?
+
+
+TODOS:
+  Still need to write the hmas tests for the core tests
+  Rewriting of DefaultHttpHandlers since we always need cartago atm
+  -> What to do about that?

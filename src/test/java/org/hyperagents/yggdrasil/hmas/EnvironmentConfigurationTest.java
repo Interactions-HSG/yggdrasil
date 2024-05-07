@@ -108,6 +108,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
+
           this.assertEqualsThingDescriptions(
               workspaceRepresentation,
               r.bodyAsString()
@@ -122,6 +123,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
+
           this.assertEqualsThingDescriptions(
               subWorkspaceRepresentation,
               r.bodyAsString()

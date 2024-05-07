@@ -251,7 +251,7 @@ public class MainVerticleTest {
           HUB_MODE_PARAM,
           HUB_MODE_SUBSCRIBE,
           HUB_TOPIC_PARAM,
-          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
           HUB_CALLBACK_PARAM,
           CALLBACK_URL
         )))
@@ -282,7 +282,7 @@ public class MainVerticleTest {
       .compose(r -> this.callbackMessages.get(2).future())
       .onSuccess(m -> {
         Assertions.assertEquals(
-          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );

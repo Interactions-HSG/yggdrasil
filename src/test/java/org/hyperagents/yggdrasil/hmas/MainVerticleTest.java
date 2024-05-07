@@ -233,6 +233,7 @@ public class MainVerticleTest {
                      platformRepresentation,
                      m.getValue()
                  );
+                 System.out.println("Checked platform after first workspace created");
                })
                .compose(r -> this.callbackMessages.get(1).future())
                .onSuccess(m -> {
@@ -245,6 +246,7 @@ public class MainVerticleTest {
                      workspaceRepresentation,
                      m.getValue()
                  );
+                 System.out.println("Checked representation of first workspace");
                })
                .compose(r -> this.client
                                  .post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -252,7 +254,7 @@ public class MainVerticleTest {
                                    HUB_MODE_PARAM,
                                    HUB_MODE_SUBSCRIBE,
                                    HUB_TOPIC_PARAM,
-                                   this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+                                   this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
                                    HUB_CALLBACK_PARAM,
                                    CALLBACK_URL
                                  )))
@@ -275,6 +277,7 @@ public class MainVerticleTest {
                      r.statusCode(),
                      CREATED_STATUS_MESSAGE
                  );
+
                  this.assertEqualsThingDescriptions(
                      subWorkspaceRepresentation,
                      r.bodyAsString()
@@ -283,7 +286,7 @@ public class MainVerticleTest {
                .compose(r -> this.callbackMessages.get(2).future())
                .onSuccess(m -> {
                  Assertions.assertEquals(
-                     this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+                     this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
                      m.getKey(),
                      URIS_EQUAL_MESSAGE
                  );
