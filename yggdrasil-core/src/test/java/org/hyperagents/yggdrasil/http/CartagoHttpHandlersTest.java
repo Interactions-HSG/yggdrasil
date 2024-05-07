@@ -264,6 +264,45 @@ public class CartagoHttpHandlersTest {
   }
 
   @Test
+  public void testCreateTwoWorkspacesWithTheSameName(final VertxTestContext ctx)
+    throws InterruptedException, URISyntaxException, IOException {
+    this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+      .send();
+
+    this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
+    final var cartagoMessage = this.cartagoMessageQueue.take();
+    final var createWorkspaceMessage = (CartagoMessage.CreateWorkspace) cartagoMessage.body();
+
+    Assertions.assertEquals(
+      MAIN_WORKSPACE_NAME,
+      createWorkspaceMessage.workspaceName(),
+      NAMES_EQUAL_MESSAGE
+    );
+
+    ctx.checkpoint();
+
+    this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+      .send();
+
+    this.storeMessageQueue.take().reply("UUID");
+    final var cartagoMessage2 = this.cartagoMessageQueue.take();
+    final var createWorkspaceMessage2 = (CartagoMessage.CreateWorkspace) cartagoMessage2.body();
+
+    Assertions.assertEquals(
+      "UUID",
+      createWorkspaceMessage2.workspaceName(),
+      NAMES_EQUAL_MESSAGE
+    );
+
+    ctx.completeNow();
+
+  }
+
+  @Test
   public void testPostSubWorkspaceWithParentNotFound(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
