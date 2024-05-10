@@ -13,6 +13,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.cartago.artifacts.AdderTD;
 import org.hyperagents.yggdrasil.cartago.artifacts.CounterTD;
+import org.hyperagents.yggdrasil.cartago.artifacts.MathTD;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -51,6 +52,7 @@ public class CartagoVerticleTDTest {
   private static final String TEST_AGENT_BODY_URI =
     "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/test/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
+  private static final String MATH_SEMANTIC_TYPE = "http://example.org/Math";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
@@ -110,6 +112,12 @@ public class CartagoVerticleTDTest {
               COUNTER_SEMANTIC_TYPE,
               "template",
               CounterTD.class.getCanonicalName()
+            ),
+            JsonObject.of(
+              "class",
+              MATH_SEMANTIC_TYPE,
+              "template",
+              MathTD.class.getCanonicalName()
             )
           )
         )
@@ -853,6 +861,42 @@ public class CartagoVerticleTDTest {
       .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testDoActionWithMultipleFeedbackParameterSucceeds(final VertxTestContext ctx) {
+    this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(
+          TEST_AGENT_IRI,
+          MAIN_WORKSPACE_NAME,
+          "m0",
+          Json.encode(Map.of(
+            ARTIFACT_SEMANTIC_TYPE_PARAM,
+            MATH_SEMANTIC_TYPE,
+            ARTIFACT_INIT_PARAMS,
+            List.of()
+          ))
+        )))
+      .compose(r -> {
+        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
+        return this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.DoAction(
+              TEST_AGENT_IRI,
+              MAIN_WORKSPACE_NAME,
+              "m0",
+              "egcd",
+              r.body(),
+              "[18,6]"
+            )
+          );
+      })
+      .onSuccess(r -> Assertions.assertEquals(
+        "6, 0, 1",
+        r.body(),
+        "The results should be equal"
+      ))
+      .onComplete(ctx.succeedingThenComplete());
+  }
   @Test
   public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox

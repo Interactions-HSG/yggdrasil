@@ -18,6 +18,7 @@ public class CounterHMAS extends HypermediaHMASArtifact {
   public void inc() {
     final var prop = this.getObsProperty("count");
     prop.updateValue(prop.intValue() + 1);
+    // signal("tick");
     System.out.println("count incremented");
   }
 

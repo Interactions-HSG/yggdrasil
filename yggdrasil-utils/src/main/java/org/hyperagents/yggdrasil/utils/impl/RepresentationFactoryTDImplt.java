@@ -137,7 +137,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final ListMultimap<String, ActionAffordance> actionAffordances
   ) {
     final var td =
-      new ThingDescription.Builder(artifactName)
+      new ThingDescription.Builder(artifactName + "#artifact")
         .addSecurityScheme(securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType(semanticType)
