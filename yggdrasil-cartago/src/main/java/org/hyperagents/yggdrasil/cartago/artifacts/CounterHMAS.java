@@ -18,13 +18,19 @@ public class CounterHMAS extends HypermediaHMASArtifact {
   public void inc() {
     final var prop = this.getObsProperty("count");
     prop.updateValue(prop.intValue() + 1);
-    // signal("tick");
     System.out.println("count incremented");
+  }
+
+  @OPERATION
+  public void sign() {
+    signal("tick");
+    System.out.println("tick");
   }
 
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
     this.registerSignifier("http://example.org/Increment", "inc", "increment");
+    this.registerSignifier("http://example.org/Sign","sign","sign");
   }
 }

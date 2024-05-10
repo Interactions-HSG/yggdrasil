@@ -30,9 +30,13 @@ public class NotificationCallback implements ICartagoCallback {
       final var percept = new Percept(e);
 
       // Signals don't have an artifact source
+      // TODO
       if (percept.hasSignal()) {
+        System.out.println(percept.getSignal().toString());
         return;
       }
+
+
 
       final var source = percept.getArtifactSource();
       Stream

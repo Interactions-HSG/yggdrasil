@@ -56,6 +56,7 @@ public class CartagoVerticleHMASTest {
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
   private static final String INCREMENT_OPERATION = "inc";
+  private static final String SIGN_OPERATION = "sign";
   private static final String ADD_OPERATION = "add";
   private static final String TDS_EQUAL_MESSAGE = "The Thing Descriptions should be equal";
   private static final String OPERATION_FAIL_MESSAGE =
@@ -690,6 +691,68 @@ public class CartagoVerticleHMASTest {
         OPERATION_SUCCESS_MESSAGE
       ))
       .onComplete(ctx.succeedingThenComplete());
+  }
+
+  // TODO
+  @Test
+  public void testDoActionSendsSignalSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException, InterruptedException {
+    final var COUNTER_ARTIFACT_HMAS =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/counter_artifact_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    var temp = this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateSubWorkspace(
+          MAIN_WORKSPACE_NAME,
+          SUB_WORKSPACE_NAME
+        )))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(
+          TEST_AGENT_IRI,
+          SUB_WORKSPACE_NAME,
+          "c1",
+          Json.encode(Map.of(
+            ARTIFACT_SEMANTIC_TYPE_PARAM,
+            COUNTER_SEMANTIC_TYPE,
+            ARTIFACT_INIT_PARAMS,
+            List.of(5)
+          ))
+        )))
+      .compose(r ->
+        this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.Focus(
+            FOCUSING_AGENT_IRI,
+            SUB_WORKSPACE_NAME,
+            "c1"
+          )))
+      .compose(r ->
+        this.cartagoMessagebox
+          .sendMessage(new CartagoMessage.DoAction(
+            TEST_AGENT_IRI,
+            SUB_WORKSPACE_NAME,
+            "c1",
+            SIGN_OPERATION,
+            COUNTER_ARTIFACT_HMAS,
+            ""
+          )));
+
+
+    temp.onComplete(r -> {
+      try {
+        var test = this.notificationQueue.take();
+        System.out.println(test);
+        test = this.notificationQueue.take();
+        System.out.println(test);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+
+
+    }).andThen(ctx.succeedingThenComplete());
+
+
   }
 
   @Test
