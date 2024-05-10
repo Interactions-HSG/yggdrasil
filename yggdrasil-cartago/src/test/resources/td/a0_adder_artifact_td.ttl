@@ -8,7 +8,7 @@
 @prefix ex: <http://example.org/> .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/> a td:Thing, ex:Adder, hmas:Artifact;
-  td:title "a0";
+  td:title "a0#artifact";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance, ex:add;

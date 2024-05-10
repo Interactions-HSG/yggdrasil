@@ -22,7 +22,7 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
               js:propertyName "artifactClass";
-              js:enum ex:Adder, ex:Counter
+              js:enum ex:Adder, ex:Counter, ex:Math
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;

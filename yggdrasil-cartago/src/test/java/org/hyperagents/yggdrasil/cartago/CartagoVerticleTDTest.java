@@ -161,11 +161,9 @@ public class CartagoVerticleTDTest {
       );
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
-      .onSuccess(r -> Assertions.assertEquals(
-        expectedThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
-      ))
+      .onSuccess(r -> {
+        assertEqualsThingDescriptions(expectedThingDescription, r.body());
+      })
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -253,11 +251,9 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           SUB_WORKSPACE_NAME
         )))
-      .onSuccess(r -> Assertions.assertEquals(
-        expectedWorkspaceThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
-      ))
+      .onSuccess(r -> {
+        assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body());
+      })
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -281,11 +277,9 @@ public class CartagoVerticleTDTest {
           SUB_WORKSPACE_NAME,
           "sub2"
         )))
-      .onSuccess(r -> Assertions.assertEquals(
-        expectedWorkspaceThingDescription,
-        r.body(),
-        TDS_EQUAL_MESSAGE
-      ))
+      .onSuccess(r -> {
+        assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body());
+      })
       .onComplete(ctx.succeedingThenComplete());
   }
 
