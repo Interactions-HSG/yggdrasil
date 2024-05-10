@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonObject;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.function.Failable;
@@ -356,16 +357,22 @@ public class CartagoVerticle extends AbstractVerticle {
     }
 
 
-    final var feedbackParameter = new OpFeedbackParam<>();
+    var listOfParams = new ArrayList<OpFeedbackParam<>>();
+    for (int i = 0; i < registry.getFeedbackParam(artifactName,action); i++) {
+      listOfParams.add(new OpFeedbackParam<>());
+    }
+
+
     Optional<String> finalPayload = payload;
     final var operation =
       payload
         .map(p -> {
           final var params = CartagoDataBundle.fromJson(finalPayload.get());
+
           return new Op(
             action,
             registry.hasFeedbackParam(artifactName, action)
-              ? Stream.concat(Arrays.stream(params), Stream.of(feedbackParameter))
+              ? Stream.concat(Arrays.stream(params), listOfParams.stream())
               .toArray()
               : params
           );
@@ -408,16 +415,17 @@ public class CartagoVerticle extends AbstractVerticle {
       -1,
       null);
     return promise.future()
-      .map(ignored ->
-        Optional.ofNullable(feedbackParameter.get())
-          .map(r ->
-            registry.hasFeedbackResponseConverter(artifactName, action)
-              ? registry.getFeedbackResponseConverter(artifactName, action)
-              .apply(r)
-              : r
-          )
-          .map(Object::toString)
-      );
+      .map(ignored -> {
+        // TODO: add feedbackConversion into the logik as well
+        if (!listOfParams.isEmpty()) {
+          return listOfParams.stream()
+            .map(OpFeedbackParam::get)
+            .map(Object::toString)
+            .collect(Collectors.joining(", "))
+            .describeConstable();
+        }
+        return Optional.empty();
+      });
   }
 
   private JsonObject getActionNotificationContent(final String artifactName, final String action) {

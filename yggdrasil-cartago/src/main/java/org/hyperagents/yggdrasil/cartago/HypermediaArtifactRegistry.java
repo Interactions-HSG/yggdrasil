@@ -1,7 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
 
@@ -42,7 +40,7 @@ public final class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactApiKeys;
   private final Map<String, String> artifactNames;
-  private final SetMultimap<String, String> feedbackActions;
+  private final Map<String, Map<String, Integer>> feedbackActions;
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
 
@@ -53,8 +51,7 @@ public final class HypermediaArtifactRegistry {
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
     this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
     this.artifactNames = Collections.synchronizedMap(new HashMap<>());
-    this.feedbackActions =
-      Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
+    this.feedbackActions = Collections.synchronizedMap(new HashMap<>());
     this.feedbackResponseConverters = Collections.synchronizedMap(new HashMap<>());
     this.counter = 0;
   }
@@ -88,7 +85,7 @@ public final class HypermediaArtifactRegistry {
           );
         }
       }));
-    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.feedbackActions.put(artifactTemplate, artifact.getFeedbackActions());
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
 
@@ -113,7 +110,7 @@ public final class HypermediaArtifactRegistry {
           );
         }
       }));
-    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.feedbackActions.put(artifactTemplate, artifact.getFeedbackActions());
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
 
@@ -176,7 +173,11 @@ public final class HypermediaArtifactRegistry {
   }
 
   public boolean hasFeedbackParam(final String artifactName, final String action) {
-    return this.feedbackActions.get(artifactName).contains(action);
+    return this.feedbackActions.get(artifactName).containsKey(action);
+  }
+
+  public Integer getFeedbackParam(final String artifactName, final String action) {
+    return this.feedbackActions.get(artifactName).getOrDefault(action,0);
   }
 
   public boolean hasFeedbackResponseConverter(final String artifactName, final String action) {

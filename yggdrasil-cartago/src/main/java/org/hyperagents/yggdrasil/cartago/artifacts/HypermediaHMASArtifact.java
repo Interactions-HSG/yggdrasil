@@ -34,7 +34,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   private final ListMultimap<String, Signifier> signifiers =
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
-  private final Set<String> feedbackActions = new HashSet<>();
+  private final Map<String, Integer> feedbackActions = new HashMap<>();
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
   private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
   private RepresentationFactory representationFactory =
@@ -74,8 +74,8 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public final Set<String> getFeedbackActions() {
-    return new HashSet<>(this.feedbackActions);
+  public final Map<String, Integer> getFeedbackActions() {
+    return feedbackActions;
   }
 
   public final Map<String, List<Signifier>> getSignifiers() {
@@ -179,14 +179,20 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
   protected final void registerFeedbackParameter(final String actionName) {
-    this.feedbackActions.add(actionName);
+    final int params = this.feedbackActions.getOrDefault(actionName, 0);
+    this.feedbackActions.put(actionName, params + 1);
+  }
+
+  protected final void registerFeedbackParameters(final String actionName, int numberOfParameters) {
+    final int params = this.feedbackActions.getOrDefault(actionName, 0);
+    this.feedbackActions.put(actionName,params + numberOfParameters);
   }
 
   protected final void registerFeedbackParameter(
       final String actionName,
       final UnaryOperator<Object> responseConverter
   ) {
-    this.feedbackActions.add(actionName);
+    registerFeedbackParameter(actionName);
     this.responseConverterMap.put(actionName, responseConverter);
   }
 

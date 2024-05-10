@@ -2,12 +2,9 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
+
 
 
 public class AdderTD extends HypermediaTDArtifact {
@@ -29,6 +26,6 @@ public class AdderTD extends HypermediaTDArtifact {
         .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    this.registerFeedbackParameter("add");
+    this.registerFeedbackParameters("add",1);
   }
 }
