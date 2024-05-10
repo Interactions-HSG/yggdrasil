@@ -15,9 +15,12 @@
 - WebID
 - Issues on Github:
   - Artifacts currently expose Thing Descriptions but agents have no such profile. Profiles for agents should be created.
-    - This is implemented in HMAS?
-  - The actions that the agents use to interact with the Web of Things and process JSON documents are defined within the agent architecture. These actions should instead be made available through libraries.
-    - Not relevant for me?
+    - tbd
+  - The actions that the agents use to interact with the Web of Things and process JSON documents are defined within the agent architecture.
+    These actions should instead be made available through libraries.
+    - close issue
+
+
   - Issue 39 & 40 - Regarding WebID & Change of join / leave API
     - Change that join and leave refer to agent body resource.
       - Joining would be done by POST request to body.
@@ -29,13 +32,23 @@
   - Issue 42 - Should be implemented now, atleast with HMAS
     - The agent representations could be redundant, notably if no other motivating use case can be found.
       - Agents are representations are just artifacts
+
+
   - Issue 43 - Should be solved with RepresentationFactoryFactory
+
+
   - Issue 44 - Update architecture file
+
+
   - Issue 45 - Remove last singleton -> HypermediaArtifactRegistry
     - make it a class only used by cartago verticle
     -> Should only be used by cartago verticle already
     -> Except for 1 method in HttpHandler for handleAction
+
+
 - Check Correct URIs everywhere
+
+
 - Add Tests
   - TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
     - Added testcase for Workspaces
@@ -60,9 +73,12 @@ QUESTIONS:
   -> Would need to overhaul the TDs a bit so that graph queries work?
 
  - DELETE only removes from rdf store not cartago?
-
+ - ADD TO CARTAGO
 
 TODOS:
   Still need to write the hmas tests for the core tests
   Rewriting of DefaultHttpHandlers since we always need cartago atm
   -> What to do about that?
+
+++ TESTING OPFEEDBACK PARAMS ++ EXTENDABLE OR NOT
+++ Cartago Events            ++
