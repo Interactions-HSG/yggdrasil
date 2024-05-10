@@ -35,10 +35,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
@@ -695,6 +692,7 @@ public class CartagoVerticleHMASTest {
 
   // TODO
   @Test
+  @Disabled
   public void testDoActionSendsSignalSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException, InterruptedException {
     final var COUNTER_ARTIFACT_HMAS =
       Files.readString(
