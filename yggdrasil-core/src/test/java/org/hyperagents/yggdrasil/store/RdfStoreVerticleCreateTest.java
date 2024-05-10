@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -195,9 +196,9 @@ public class RdfStoreVerticleCreateTest {
                 r.body()
             );
             final var entityUpdatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH,
+                WORKSPACES_PATH + "test/",
                 entityUpdatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );

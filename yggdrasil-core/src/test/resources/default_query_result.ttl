@@ -7,7 +7,7 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix saref: <https://w3id.org/saref#> .
 
-<http://localhost:8080/workspaces/sub> a hmas:Workspace, td:Thing;
+<http://localhost:8080/workspaces/sub/#workspace> a hmas:Workspace, td:Thing;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -71,8 +71,8 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <http://localhost:8080/workspaces/test>;
-  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+  hmas:isContainedIn <http://localhost:8080/workspaces/test/#workspace>;
+  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0/#artifact> .
 
-<http://localhost:8080/workspaces/sub/artifacts/c0> hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
+<http://localhost:8080/workspaces/sub/artifacts/c0/#artifact> hmas:isContainedIn <http://localhost:8080/workspaces/sub/#workspace>;
   td:title "c0" .

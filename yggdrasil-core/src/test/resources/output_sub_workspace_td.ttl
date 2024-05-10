@@ -7,7 +7,7 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<workspaces/sub> a td:Thing, hmas:Workspace;
+<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -71,6 +71,8 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <workspaces/test>, <workspaces/tes> .
+  hmas:isContainedIn <workspaces/test/#workspace> .
 
-<workspaces/tes> a hmas:Workspace .
+<workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
+
+<workspaces/test/> a hmas:Workspace .
