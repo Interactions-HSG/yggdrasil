@@ -357,7 +357,7 @@ public class CartagoVerticle extends AbstractVerticle {
     }
 
 
-    var listOfParams = new ArrayList<OpFeedbackParam<>>();
+    var listOfParams = new ArrayList<OpFeedbackParam>();
     for (int i = 0; i < registry.getFeedbackParam(artifactName,action); i++) {
       listOfParams.add(new OpFeedbackParam<>());
     }
