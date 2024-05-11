@@ -11,7 +11,6 @@ public class SignalerHMAS extends HypermediaHMASArtifact {
   @OPERATION
   public void sign() {
     signal("tick");
-    System.out.println("tick");
   }
 
   @Override

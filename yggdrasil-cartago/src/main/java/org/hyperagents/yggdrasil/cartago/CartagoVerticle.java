@@ -301,7 +301,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .focus(
         this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
         p -> true,
-        new NotificationCallback(this.httpConfig, this.dispatcherMessagebox),
+        new NotificationCallback(this.httpConfig, this.dispatcherMessagebox, workspaceName, artifactName),
         Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
       )
       .forEach(p -> this.dispatcherMessagebox.sendMessage(

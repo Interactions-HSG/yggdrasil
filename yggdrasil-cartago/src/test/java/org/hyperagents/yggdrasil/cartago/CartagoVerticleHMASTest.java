@@ -24,6 +24,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS;
 import org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS;
+import org.hyperagents.yggdrasil.cartago.artifacts.SignalerHMAS;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -49,6 +50,7 @@ public class CartagoVerticleHMASTest {
     "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/test/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
+  private static final String SIGNAL_SEMANTIC_TYPE = "http://example.org/Sign";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
@@ -108,6 +110,12 @@ public class CartagoVerticleHMASTest {
               COUNTER_SEMANTIC_TYPE,
               "template",
               CounterHMAS.class.getCanonicalName()
+            ),
+            JsonObject.of(
+              "class",
+              SIGNAL_SEMANTIC_TYPE,
+              "template",
+              SignalerHMAS.class.getCanonicalName()
             )
           )
         )
@@ -692,14 +700,13 @@ public class CartagoVerticleHMASTest {
 
   // TODO
   @Test
-  @Disabled
   public void testDoActionSendsSignalSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException, InterruptedException {
-    final var COUNTER_ARTIFACT_HMAS =
+    final var SIGNAL_ARTIFACT_HMAS =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/counter_artifact_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("hmas/signal_artifact_hmas.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    var temp = this.cartagoMessagebox
+    var TestRequests = this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(
@@ -713,18 +720,17 @@ public class CartagoVerticleHMASTest {
           "c1",
           Json.encode(Map.of(
             ARTIFACT_SEMANTIC_TYPE_PARAM,
-            COUNTER_SEMANTIC_TYPE,
+            SIGNAL_SEMANTIC_TYPE,
             ARTIFACT_INIT_PARAMS,
-            List.of(5)
+            List.of()
           ))
         )))
-      .compose(r ->
-        this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.Focus(
-            FOCUSING_AGENT_IRI,
-            SUB_WORKSPACE_NAME,
-            "c1"
-          )))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.Focus(
+          FOCUSING_AGENT_IRI,
+          SUB_WORKSPACE_NAME,
+          "c1"
+        )))
       .compose(r ->
         this.cartagoMessagebox
           .sendMessage(new CartagoMessage.DoAction(
@@ -732,17 +738,31 @@ public class CartagoVerticleHMASTest {
             SUB_WORKSPACE_NAME,
             "c1",
             SIGN_OPERATION,
-            COUNTER_ARTIFACT_HMAS,
+            SIGNAL_ARTIFACT_HMAS,
             ""
           )));
 
 
-    temp.onComplete(r -> {
+    TestRequests.onComplete(r -> {
       try {
-        var test = this.notificationQueue.take();
-        System.out.println(test);
-        test = this.notificationQueue.take();
-        System.out.println(test);
+        var actionRequested = (HttpNotificationDispatcherMessage.ActionRequested) this.notificationQueue.take();
+        Assertions.assertEquals(
+          actionRequested.requestIri(),
+          "http://localhost:8080/workspaces/sub/artifacts/test/",
+          URIS_EQUAL_MESSAGE
+        );
+        var artifactObsPropertyUpdated = (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated) this.notificationQueue.take();
+        Assertions.assertEquals(
+          artifactObsPropertyUpdated.content(),
+          "tick",
+          "Content should be equal"
+        );
+        var actionSucceeded = (HttpNotificationDispatcherMessage.ActionSucceeded) this.notificationQueue.take();
+        Assertions.assertEquals(
+          actionSucceeded.requestIri(),
+          "http://localhost:8080/workspaces/sub/artifacts/test/",
+          URIS_EQUAL_MESSAGE
+        );
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
@@ -991,7 +1011,6 @@ public class CartagoVerticleHMASTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,

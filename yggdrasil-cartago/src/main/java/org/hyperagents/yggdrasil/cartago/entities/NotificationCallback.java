@@ -5,6 +5,7 @@ import cartago.ICartagoCallback;
 import cartago.events.ArtifactObsEvent;
 import cartago.util.agent.Percept;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -15,13 +16,19 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 public class NotificationCallback implements ICartagoCallback {
   private final HttpInterfaceConfig httpConfig;
   private final HttpNotificationDispatcherMessagebox messagebox;
+  private final String workspaceName;
+  private final String artifactName;
 
   public NotificationCallback(
       final HttpInterfaceConfig httpConfig,
-      final HttpNotificationDispatcherMessagebox messagebox
+      final HttpNotificationDispatcherMessagebox messagebox,
+      final String workspaceName,
+      final String artifactName
   ) {
     this.httpConfig = httpConfig;
     this.messagebox = messagebox;
+    this.workspaceName = workspaceName;
+    this.artifactName = artifactName;
   }
 
   @Override
@@ -29,16 +36,27 @@ public class NotificationCallback implements ICartagoCallback {
     if (event instanceof ArtifactObsEvent e) {
       final var percept = new Percept(e);
 
-      // Signals don't have an artifact source
-      // TODO
       if (percept.hasSignal()) {
-        System.out.println(percept.getSignal().toString());
+        Stream
+          .of(
+            Optional.ofNullable(percept.getSignal())
+          )
+          .flatMap(Optional::stream)
+          .forEach(p -> this.messagebox.sendMessage(
+            new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+              this.httpConfig.getArtifactUri(
+                workspaceName,
+                artifactName
+              ),
+              p.toString()
+            )
+          ));
         return;
       }
 
+      assert percept.getArtifactSource().getName().equals(artifactName);
+      assert percept.getArtifactSource().getWorkspaceId().getName().equals(workspaceName);
 
-
-      final var source = percept.getArtifactSource();
       Stream
           .of(
             Optional.ofNullable(percept.getPropChanged()),
@@ -50,8 +68,8 @@ public class NotificationCallback implements ICartagoCallback {
           .forEach(p -> this.messagebox.sendMessage(
             new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
               this.httpConfig.getArtifactUri(
-                source.getWorkspaceId().getName(),
-                source.getName()
+                workspaceName,
+                artifactName
               ),
               p.toString()
             )
