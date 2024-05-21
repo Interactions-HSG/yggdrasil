@@ -144,6 +144,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       final String methodName,
       final String relativeUri,
       final IOSpecification inputSchema
+      // IO Output
   ) {
 
 

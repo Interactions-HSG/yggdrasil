@@ -82,3 +82,15 @@ TODOS:
 
 ++ TESTING OPFEEDBACK PARAMS ++ EXTENDABLE OR NOT
 ++ Cartago Events            ++
+
+
+++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
+  ++ NEW REPRESENTATION
+
+++ Extend Signals with testing
+
+
+++ Add javamo bodyOf in workspace containing body
+
+
+++ Add tests together so that no copy and paste

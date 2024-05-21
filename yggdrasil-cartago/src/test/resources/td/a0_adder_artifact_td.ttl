@@ -25,4 +25,7 @@
             ], [ a js:IntegerSchema
             ]
         ]
+      td:hasOutputSchema [ a js:ArraySchema;
+          js:items [ a js:IntegerSchema]
+        ]
     ] .

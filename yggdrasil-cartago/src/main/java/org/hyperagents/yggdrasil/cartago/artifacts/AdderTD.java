@@ -26,6 +26,6 @@ public class AdderTD extends HypermediaTDArtifact {
         .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    this.registerFeedbackParameters("add",1);
+    // this.registerFeedbackParameters("add",1);
   }
 }

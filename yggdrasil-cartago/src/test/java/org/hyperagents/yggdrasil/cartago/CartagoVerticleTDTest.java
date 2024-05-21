@@ -872,6 +872,7 @@ public class CartagoVerticleTDTest {
           ))
         )))
       .compose(r -> {
+        System.out.println(r.body());
         // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         return this.cartagoMessagebox
           .sendMessage(new CartagoMessage.DoAction(

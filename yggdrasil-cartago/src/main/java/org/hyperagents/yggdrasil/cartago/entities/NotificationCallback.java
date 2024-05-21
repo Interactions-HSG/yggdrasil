@@ -37,6 +37,8 @@ public class NotificationCallback implements ICartagoCallback {
       final var percept = new Percept(e);
 
       if (percept.hasSignal()) {
+        var t = percept.getSignal();
+        t.getContents();
         Stream
           .of(
             Optional.ofNullable(percept.getSignal())

@@ -46,6 +46,11 @@
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
+        ],[
+          sh:qualifiedValueShape ex:result;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasOutput
         ]
     ] .
 
@@ -80,6 +85,22 @@ ex:addendsRest a sh:Shape;
     ], [ a sh:Shape;
       sh:datatype xs:int;
       sh:name "2nd Parameter";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:first
+    ] .
+
+ex:result a sh:Shape;
+  sh:class rdf:List;
+  sh:property [ a sh:Shape;
+      sh:hasValue rdf:nil;
+      sh:datatype rdf:List;
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:rest
+    ], [ a sh:Shape;
+      sh:datatype xs:int;
+      sh:name "Result";
       sh:minCount "1"^^xs:int;
       sh:maxCount "1"^^xs:int;
       sh:path rdf:first
