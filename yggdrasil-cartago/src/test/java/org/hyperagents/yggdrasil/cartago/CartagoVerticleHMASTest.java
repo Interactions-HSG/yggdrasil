@@ -150,7 +150,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateWorkspaceSucceedsHMAS(final VertxTestContext ctx)
     throws IOException, URISyntaxException {
     final var expectedThingDescription =
       Files.readString(
@@ -159,7 +159,7 @@ public class CartagoVerticleHMASTest {
       );
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedThingDescription,
         r.body()
       ))
@@ -167,7 +167,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateWorkspaceFailsWithAlreadyCreatedOne(final VertxTestContext ctx) {
+  public void testCreateWorkspaceFailsWithAlreadyCreatedOneHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -181,7 +181,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testJoinWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testJoinWorkspaceSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedBodyThingDescription =
       Files.readString(
@@ -196,7 +196,7 @@ public class CartagoVerticleHMASTest {
           null,
           MAIN_WORKSPACE_NAME
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedBodyThingDescription,
         r.body()
       ))
@@ -204,7 +204,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testJoinWorkspaceIsIdempotent(final VertxTestContext ctx) {
+  public void testJoinWorkspaceIsIdempotentHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -223,7 +223,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testJoinWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
+  public void testJoinWorkspaceFailsOnNonExistingOneHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI, null, NONEXISTENT_NAME))
       .onFailure(t -> Assertions.assertEquals(
@@ -235,7 +235,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateSubWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateSubWorkspaceSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
       Files.readString(
@@ -249,7 +249,7 @@ public class CartagoVerticleHMASTest {
           MAIN_WORKSPACE_NAME,
           SUB_WORKSPACE_NAME
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedWorkspaceThingDescription,
         r.body()
       ))
@@ -257,7 +257,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateSubWorkspaceOfSubWorkspaceSucceeds(final VertxTestContext ctx)
+  public void testCreateSubWorkspaceOfSubWorkspaceSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedWorkspaceThingDescription =
       Files.readString(
@@ -276,7 +276,7 @@ public class CartagoVerticleHMASTest {
           SUB_WORKSPACE_NAME,
           "sub2"
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedWorkspaceThingDescription,
         r.body()
       ))
@@ -284,7 +284,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateSubWorkspaceFailsOnNonExistingOne(final VertxTestContext ctx) {
+  public void testCreateSubWorkspaceFailsOnNonExistingOneHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateSubWorkspace(NONEXISTENT_NAME, SUB_WORKSPACE_NAME))
       .onFailure(t -> Assertions.assertEquals(
@@ -296,7 +296,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateSubWorkspaceFailsOnAlreadyCreatedOne(final VertxTestContext ctx) {
+  public void testCreateSubWorkspaceFailsOnAlreadyCreatedOneHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -318,7 +318,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testLeaveWorkspaceSucceeds(final VertxTestContext ctx) {
+  public void testLeaveWorkspaceSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -341,7 +341,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testLeaveWorkspaceFailsOnNotJoinedOne(final VertxTestContext ctx) {
+  public void testLeaveWorkspaceFailsOnNotJoinedOneHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.LeaveWorkspace(TEST_AGENT_IRI, MAIN_WORKSPACE_NAME))
       .onFailure(t -> Assertions.assertEquals(
@@ -353,7 +353,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactWithoutParametersSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithoutParametersSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
       Files.readString(
@@ -374,7 +374,7 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedCounterArtifactThingDescription,
         r.body()
       ))
@@ -382,7 +382,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactWithParametersSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithParametersSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedCounterArtifactThingDescription =
       Files.readString(
@@ -408,7 +408,7 @@ public class CartagoVerticleHMASTest {
             List.of(5)
           ))
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedCounterArtifactThingDescription,
         r.body()
       ))
@@ -416,7 +416,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactWithFeedbackParameterSucceeds(final VertxTestContext ctx)
+  public void testCreateArtifactWithFeedbackParameterSucceedsHMAS(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var expectedAdderArtifactThingDescription =
       Files.readString(
@@ -437,7 +437,7 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .onSuccess(r -> assertEqualsThingDescriptions(
+      .onSuccess(r -> assertEqualsHMASDescriptions(
         expectedAdderArtifactThingDescription,
         r.body()
       ))
@@ -445,7 +445,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactFailsWithUnknownClass(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithUnknownClassHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -469,7 +469,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactFailsWithUnknownWorkspace(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithUnknownWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -493,7 +493,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testCreateArtifactFailsWithWrongParameters(final VertxTestContext ctx) {
+  public void testCreateArtifactFailsWithWrongParametersHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -517,7 +517,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testFocusSucceeds(final VertxTestContext ctx) {
+  public void testFocusSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -558,7 +558,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testFocusFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
+  public void testFocusFailsWithNonexistentWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -588,7 +588,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testFocusFailsWithNonexistentArtifactName(final VertxTestContext ctx) {
+  public void testFocusFailsWithNonexistentArtifactNameHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -618,7 +618,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testFocusIsIdempotent(final VertxTestContext ctx) {
+  public void testFocusIsIdempotentHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -665,7 +665,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionSucceeds(final VertxTestContext ctx) {
+  public void testDoActionSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -681,7 +681,6 @@ public class CartagoVerticleHMASTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
@@ -700,7 +699,7 @@ public class CartagoVerticleHMASTest {
 
   // TODO
   @Test
-  public void testDoActionSendsSignalSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException, InterruptedException {
+  public void testDoActionSendsSignalSucceedsHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var SIGNAL_ARTIFACT_HMAS =
       Files.readString(
         Path.of(ClassLoader.getSystemResource("hmas/signal_artifact_hmas.ttl").toURI()),
@@ -774,7 +773,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionAfterFocusSucceeds(final VertxTestContext ctx) throws URISyntaxException, IOException {
+  public void testDoActionAfterFocusSucceedsHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var COUNTER_ARTIFACT_HMAS =
       Files.readString(
         Path.of(ClassLoader.getSystemResource("hmas/counter_artifact_hmas.ttl").toURI()),
@@ -822,7 +821,6 @@ public class CartagoVerticleHMASTest {
         } catch (final Exception e) {
           ctx.failNow(e);
         }
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         return this.cartagoMessagebox.sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
@@ -892,7 +890,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionWithFeedbackParameterSucceeds(final VertxTestContext ctx) {
+  public void testDoActionWithFeedbackParameterSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -907,10 +905,8 @@ public class CartagoVerticleHMASTest {
             List.of()
           ))
         )))
-      .compose(r -> {
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
-        return this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.DoAction(
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.DoAction(
             TEST_AGENT_IRI,
             MAIN_WORKSPACE_NAME,
             "a0",
@@ -918,8 +914,7 @@ public class CartagoVerticleHMASTest {
             r.body(),
             "[2,2]"
           )
-      );
-      })
+        ))
       .onSuccess(r -> Assertions.assertEquals(
         String.valueOf(4),
         r.body(),
@@ -929,7 +924,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -962,7 +957,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionFailsWithNonexistentArtifact(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentArtifactHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -995,7 +990,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionFailsWithNonexistentOperation(final VertxTestContext ctx) {
+  public void testDoActionFailsWithNonexistentOperationHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -1028,7 +1023,7 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
-  public void testDoActionFailsWithWrongParameters(final VertxTestContext ctx) {
+  public void testDoActionFailsWithWrongParametersHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
@@ -1044,7 +1039,6 @@ public class CartagoVerticleHMASTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
@@ -1081,7 +1075,7 @@ public class CartagoVerticleHMASTest {
     );
   }
 
-  private void assertEqualsThingDescriptions(final String expected, final String actual) {
+  private void assertEqualsHMASDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
       Models.isomorphic(
         ResourceProfileGraphReader.getModelFromString(expected),

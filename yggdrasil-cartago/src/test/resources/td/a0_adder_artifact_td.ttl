@@ -16,7 +16,7 @@
       td:title "add";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0//add>;
+          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/add>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
@@ -24,8 +24,5 @@
           js:items [ a js:IntegerSchema
             ], [ a js:IntegerSchema
             ]
-        ]
-      td:hasOutputSchema [ a js:ArraySchema;
-          js:items [ a js:IntegerSchema]
         ]
     ] .

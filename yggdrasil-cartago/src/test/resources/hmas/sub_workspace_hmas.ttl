@@ -211,7 +211,7 @@ ex:artifact-shape a sh:Shape;
 <http://localhost:8080/workspaces/sub/#getCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/sub/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/sub/#leaveWorkspaceForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/sub/leave/>;
@@ -264,6 +264,6 @@ ex:artifact-shape a sh:Shape;
 <http://localhost:8080/workspaces/sub/#updateCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/sub/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/sub/#workspace> a hmas:Workspace .

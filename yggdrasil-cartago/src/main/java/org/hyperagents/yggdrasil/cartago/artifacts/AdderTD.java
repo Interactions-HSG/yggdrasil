@@ -20,12 +20,12 @@ public class AdderTD extends HypermediaTDArtifact {
     this.registerActionAffordance(
       "http://example.org/add",
       "add",
-      "/add",
+      "add",
       new ArraySchema.Builder()
         .addItem(new IntegerSchema.Builder().build())
         .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    // this.registerFeedbackParameters("add",1);
+    this.registerFeedbackParameters("add",1);
   }
 }

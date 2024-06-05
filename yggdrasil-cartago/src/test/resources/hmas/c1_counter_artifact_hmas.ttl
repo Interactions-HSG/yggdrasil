@@ -139,7 +139,7 @@
   a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -155,7 +155,7 @@
 <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifactForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/sub/artifacts/c1/#focusArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;

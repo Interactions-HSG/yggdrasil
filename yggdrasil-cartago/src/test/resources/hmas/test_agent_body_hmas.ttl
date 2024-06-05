@@ -38,7 +38,7 @@
   a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/test/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/test/artifacts/test/#subscribeToAgent> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -131,7 +131,7 @@
 <http://localhost:8080/workspaces/test/artifacts/test/#updateBodyForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/test/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/test/artifacts/test/#artifact> a hmas:Artifact,
     jacamo:Body .

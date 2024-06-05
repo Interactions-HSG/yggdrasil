@@ -161,9 +161,7 @@ public class CartagoVerticleTDTest {
       );
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
-      .onSuccess(r -> {
-        assertEqualsThingDescriptions(expectedThingDescription, r.body());
-      })
+      .onSuccess(r -> assertEqualsThingDescriptions(expectedThingDescription, r.body()))
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -251,9 +249,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           SUB_WORKSPACE_NAME
         )))
-      .onSuccess(r -> {
-        assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body());
-      })
+      .onSuccess(r -> assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body()))
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -277,9 +273,7 @@ public class CartagoVerticleTDTest {
           SUB_WORKSPACE_NAME,
           "sub2"
         )))
-      .onSuccess(r -> {
-        assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body());
-      })
+      .onSuccess(r -> assertEqualsThingDescriptions(expectedWorkspaceThingDescription, r.body()))
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -683,7 +677,6 @@ public class CartagoVerticleTDTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
@@ -749,7 +742,6 @@ public class CartagoVerticleTDTest {
         } catch (final Exception e) {
           ctx.failNow(e);
         }
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         return this.cartagoMessagebox.sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
@@ -834,19 +826,16 @@ public class CartagoVerticleTDTest {
             List.of()
           ))
         )))
-      .compose(r -> {
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
-        return this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.DoAction(
-            TEST_AGENT_IRI,
-            MAIN_WORKSPACE_NAME,
-            "a0",
-            ADD_OPERATION,
-            r.body(),
-            "[2,2]"
-          )
-      );
-      })
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.DoAction(
+          TEST_AGENT_IRI,
+          MAIN_WORKSPACE_NAME,
+          "a0",
+          ADD_OPERATION,
+          r.body(),
+          "[2,2]"
+        )
+    ))
       .onSuccess(r -> Assertions.assertEquals(
         String.valueOf(4),
         r.body(),
@@ -871,20 +860,16 @@ public class CartagoVerticleTDTest {
             List.of()
           ))
         )))
-      .compose(r -> {
-        System.out.println(r.body());
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
-        return this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.DoAction(
-              TEST_AGENT_IRI,
-              MAIN_WORKSPACE_NAME,
-              "m0",
-              "egcd",
-              r.body(),
-              "[18,6]"
-            )
-          );
-      })
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.DoAction(
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "m0",
+            "egcd",
+            r.body(),
+            "[18,6]"
+          )
+        ))
       .onSuccess(r -> Assertions.assertEquals(
         "6, 0, 1",
         r.body(),
@@ -975,7 +960,6 @@ public class CartagoVerticleTDTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
@@ -1009,7 +993,6 @@ public class CartagoVerticleTDTest {
           ))
         )))
       .compose(r -> this.cartagoMessagebox
-        // TODO: I NEED TO HARDCODE THE "STORE RESPONSE" and "CONTEXT" parameters
         .sendMessage(new CartagoMessage.DoAction(
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
