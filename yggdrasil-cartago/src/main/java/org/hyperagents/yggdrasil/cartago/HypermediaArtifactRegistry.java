@@ -147,8 +147,8 @@ public final class HypermediaArtifactRegistry {
     return this.artifactTemplateDescriptions.get(artifactName);
   }
 
-  public String getActionName(final String method, final String requestUri) {
-    return this.artifactActionRouter.get(method + requestUri);
+  public String getActionName(final String method) {
+    return this.artifactActionRouter.get(method);
   }
 
   public void setApiKeyForArtifact(final String artifactId, final String apiKey) {

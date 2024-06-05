@@ -55,7 +55,6 @@ public class CartagoVerticleHMASTest {
   private static final String ARTIFACT_SEMANTIC_TYPE_PARAM = "artifactClass";
   private static final String ARTIFACT_INIT_PARAMS = "initParams";
   private static final String INCREMENT_OPERATION = "inc";
-  private static final String SIGN_OPERATION = "sign";
   private static final String ADD_OPERATION = "add";
   private static final String TDS_EQUAL_MESSAGE = "The Thing Descriptions should be equal";
   private static final String OPERATION_FAIL_MESSAGE =
@@ -685,15 +684,11 @@ public class CartagoVerticleHMASTest {
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "c0",
-          INCREMENT_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
           r.body(),
           ctx.toString()
         )))
-      .onSuccess(r -> Assertions.assertEquals(
-        String.valueOf(HttpStatus.SC_OK),
-        r.body(),
-        OPERATION_SUCCESS_MESSAGE
-      ))
+      .onSuccess(r -> Assertions.assertNull(r.body(), OPERATION_SUCCESS_MESSAGE))
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -736,7 +731,7 @@ public class CartagoVerticleHMASTest {
             TEST_AGENT_IRI,
             SUB_WORKSPACE_NAME,
             "c1",
-            SIGN_OPERATION,
+            "POSThttp://localhost:8080/workspaces/sub/artifacts/c1/sign",
             SIGNAL_ARTIFACT_HMAS,
             ""
           )));
@@ -825,17 +820,13 @@ public class CartagoVerticleHMASTest {
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
           "c1",
-          INCREMENT_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
           COUNTER_ARTIFACT_HMAS,
           ""
         ));
       })
       .onSuccess(r -> {
-        Assertions.assertEquals(
-          String.valueOf(HttpStatus.SC_OK),
-          r.body(),
-          OPERATION_SUCCESS_MESSAGE
-        );
+        Assertions.assertNull(r.body(), OPERATION_SUCCESS_MESSAGE);
         try {
           final var notifyActionRequestedMessage =
             (HttpNotificationDispatcherMessage.ActionRequested)
@@ -910,7 +901,7 @@ public class CartagoVerticleHMASTest {
             TEST_AGENT_IRI,
             MAIN_WORKSPACE_NAME,
             "a0",
-            ADD_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
             r.body(),
             "[2,2]"
           )

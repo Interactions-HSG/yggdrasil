@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -31,7 +30,6 @@ import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -81,7 +79,8 @@ public class CartagoArtifactActionHandlerTest {
          .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
         "environment-config",
-        JsonObject.of("enabled", true)
+        JsonObject.of("enabled", true, "ontology","td"
+        )
     ));
     vertx.sharedData()
          .<String, EnvironmentConfig>getLocalMap("environment-config")
@@ -112,9 +111,9 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @Test
-  @Disabled
   public void testPostArtifactActionSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
+
     final var artifactRepresentation = Files.readString(
         Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
         StandardCharsets.UTF_8
@@ -126,6 +125,10 @@ public class CartagoArtifactActionHandlerTest {
                                    )
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .sendJson(ADD_PARAMS);
+
+
+
+
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
@@ -147,7 +150,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        ADD_ACTION_NAME,
+        "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
         doActionMessage.actionName(),
         NAMES_EQUAL_MESSAGE
     );
@@ -157,7 +160,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(CartagoDataBundle.toJson(ADD_PARAMS)),
+        Optional.of("[2,3]"),
         Optional.of(doActionMessage.context()),
         CONTENTS_EQUAL_MESSAGE
     );
@@ -179,7 +182,6 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @Test
-  @Disabled
   public void testPostArtifactActionWithoutFeedbackSucceeds(final VertxTestContext ctx)
       throws InterruptedException, URISyntaxException, IOException {
     final var artifactRepresentation = Files.readString(
@@ -214,7 +216,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        INCREMENT_ACTION_NAME,
+        "POSThttp://localhost:8080/workspaces/test/artifacts/c0/inc",
         doActionMessage.actionName(),
         NAMES_EQUAL_MESSAGE
     );
@@ -223,12 +225,8 @@ public class CartagoArtifactActionHandlerTest {
         doActionMessage.agentId(),
         NAMES_EQUAL_MESSAGE
     );
-    Assertions.assertEquals(
-        Optional.empty(),
-        Optional.of(doActionMessage.context()),
-        CONTENTS_EQUAL_MESSAGE
-    );
-    cartagoMessage.reply(String.valueOf(5));
+    Assertions.assertNull(doActionMessage.context(), CONTENTS_EQUAL_MESSAGE);
+    cartagoMessage.reply("");
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -275,6 +273,7 @@ public class CartagoArtifactActionHandlerTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
+  // TODO: Should be tested in the cartagoVerticle makes more sense
   @Test
   public void testPostArtifactActionFailsWithWrongActionName(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
@@ -309,9 +308,10 @@ public class CartagoArtifactActionHandlerTest {
         doActionMessage.workspaceName(),
         NAMES_EQUAL_MESSAGE
     );
-    Assertions.assertNull(
-        doActionMessage.actionName(),
-        "The action name should be null"
+    Assertions.assertEquals(
+      "POSThttp://localhost:8080/workspaces/test/artifacts/a0/inc",
+      doActionMessage.actionName(),
+      NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         TEST_AGENT_ID,

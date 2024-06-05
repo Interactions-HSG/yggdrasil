@@ -22,7 +22,7 @@ public class MathTD extends HypermediaTDArtifact {
     this.registerActionAffordance(
       "http://example.org/egcd",
       "egcd",
-      "/egcd",
+      "egcd",
       new ArraySchema.Builder()
         .addItem(new IntegerSchema.Builder().build())
         .addItem(new IntegerSchema.Builder().build())

@@ -63,7 +63,7 @@ public class CartagoVerticleTDTest {
   private static final String OPERATION_FAIL_MESSAGE =
     "The operation should have failed with 'Internal Server Error' status code";
   private static final String OPERATION_SUCCESS_MESSAGE =
-    "The operation should have succeeded with an Ok status code";
+    "The operation should have succeeded returning null if no feedback params";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
@@ -681,15 +681,11 @@ public class CartagoVerticleTDTest {
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "c0",
-          INCREMENT_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
           r.body(),
           ctx.toString()
         )))
-      .onSuccess(r -> Assertions.assertEquals(
-        String.valueOf(HttpStatus.SC_OK),
-        r.body(),
-        OPERATION_SUCCESS_MESSAGE
-      ))
+      .onSuccess(r -> Assertions.assertNull(r.body(), OPERATION_SUCCESS_MESSAGE))
       .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -746,17 +742,13 @@ public class CartagoVerticleTDTest {
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
           "c1",
-          INCREMENT_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
           COUNTER_ARTIFACT_TD,
           ""
         ));
       })
       .onSuccess(r -> {
-        Assertions.assertEquals(
-          String.valueOf(HttpStatus.SC_OK),
-          r.body(),
-          OPERATION_SUCCESS_MESSAGE
-        );
+        Assertions.assertNull(r.body(), OPERATION_SUCCESS_MESSAGE);
         try {
           final var notifyActionRequestedMessage =
             (HttpNotificationDispatcherMessage.ActionRequested)
@@ -831,7 +823,7 @@ public class CartagoVerticleTDTest {
           TEST_AGENT_IRI,
           MAIN_WORKSPACE_NAME,
           "a0",
-          ADD_OPERATION,
+          "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
           r.body(),
           "[2,2]"
         )
@@ -865,7 +857,7 @@ public class CartagoVerticleTDTest {
             TEST_AGENT_IRI,
             MAIN_WORKSPACE_NAME,
             "m0",
-            "egcd",
+            "POSThttp://localhost:8080/workspaces/test/artifacts/m0/egcd",
             r.body(),
             "[18,6]"
           )

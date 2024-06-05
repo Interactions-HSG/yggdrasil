@@ -40,7 +40,6 @@ import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 
-
 /**
  * This class implements handlers for all HTTP requests. Requests related to CArtAgO operations
  * (e.g., creating a workspace, executing an action) are redirected to the
@@ -210,11 +209,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           actualEntityName.body(),
           String.format(
             """
-            {
-              "artifactName": "%s",
-              "artifactClass": "http://example.org/Artifact"
-            }
-            """,
+              {
+                "artifactName": "%s",
+                "artifactClass": "http://example.org/Artifact"
+              }
+              """,
             actualEntityName.body()
           )
         ))
@@ -231,12 +230,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
           return this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
-              this.httpConfig.getBaseUri() + context.request().path(),
+              requestUri,
               actualEntityName.body(),
               artifactRepresentation//artifactRepresentation
             ))
-            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end());
+            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end(r.body()))
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end());
         }).onFailure(context::fail));
   }
 
@@ -446,10 +445,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
-    final var actionName =
-      registry.getActionName(request.method().name(), request.absoluteURI());
+    final var actionName = request.method().name() + request.absoluteURI();
 
-    // TODO: artifact cant have trailing backslash in rdfStore?
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.GetEntity(artifactIri.substring(0, artifactIri.length() - 1)))
       .onSuccess(storeResponse -> {
@@ -469,10 +466,10 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           ))
           .onSuccess(cartagoResponse -> {
             final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
-            if (registry.hasFeedbackParam(artifactName, actionName)) {
-              httpResponse.end(cartagoResponse.body());
-            } else {
+            if (cartagoResponse.body() == null) {
               httpResponse.end();
+            } else {
+              httpResponse.end(cartagoResponse.body());
             }
           })
           .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
@@ -608,7 +605,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private void handleCreateWorkspaceTurtle(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
     final var hint = context.request().getHeader("Slug");
-    final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
+    final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
 
     try {
@@ -633,7 +630,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
                 entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                 baseModel.getNamespaces().forEach(entityGraph::setNamespace);
-                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
+                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
               } catch (IOException e) {
                 throw new RuntimeException(e);
               }
@@ -643,7 +640,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                   actualEntityName.body(),
                   entityGraph.stream()
                     .filter(t ->
-                      t.getSubject().equals(entityIri)
+                      t.getSubject().toString().contains(entityIri.stringValue())
                         && t.getPredicate().equals(RdfModelUtils.createIri(
                         "https://purl.org/hmas/isContainedIn"
                       ))
@@ -655,8 +652,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                     .findFirst(),
                   workspaceRepresentation
                 ));
-            }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+            }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end(r.body()))
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end())
             .onFailure(context::fail)
       );
     } catch (final Exception e) {

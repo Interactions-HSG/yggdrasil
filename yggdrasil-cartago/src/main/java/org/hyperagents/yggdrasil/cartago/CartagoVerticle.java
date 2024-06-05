@@ -225,7 +225,7 @@ public class CartagoVerticle extends AbstractVerticle {
           String storeResponse,
           String context
         ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse,context)
-          .onSuccess(o -> message.reply(o.orElse(String.valueOf(HttpStatus.SC_OK))))
+          .onSuccess(o -> message.reply(o.orElse(null)))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
       }
     } catch (final DecodeException | NoSuchElementException | CartagoException e) {
@@ -341,13 +341,17 @@ public class CartagoVerticle extends AbstractVerticle {
     final String agentUri,
     final String workspaceName,
     final String artifactName,
-    final String action,
+    final String actionUri,
     final String storeResponse,
     final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var registry = HypermediaArtifactRegistry.getInstance();
     final var hypermediaArtifact = registry.getArtifact(artifactName);
+
+
+    final var action = registry.getActionName(actionUri);
+    if(action == null) return Future.failedFuture("No action");
 
     Optional<String> payload;
     try {
