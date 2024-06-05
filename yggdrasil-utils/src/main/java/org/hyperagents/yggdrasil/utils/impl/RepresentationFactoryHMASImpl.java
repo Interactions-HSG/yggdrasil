@@ -231,6 +231,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     Form getCurrentWorkspaceForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
       .setIRIAsString(baseUri + "#getCurrentWorkspaceForm")
+      .setContentType("text/turtle")
       .build();
 
     // update current workspace representation
@@ -306,6 +307,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     Form getArtifactRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
       .setIRIAsString(baseUri + "#getArtifactRepresentationForm")
+      .setContentType("text/turtle")
       .build();
 
     // update this artifact
@@ -380,6 +382,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     Form getBodyRepresentationForm = new Form.Builder(baseUri)
       .setMethodName(HttpMethod.GET.name())
       .setIRIAsString(baseUri + "#getBodyRepresentationForm")
+      .setContentType("text/turtle")
       .build();
 
     Form updateBodyForm = new Form.Builder(baseUri)
