@@ -102,7 +102,8 @@
             ]
         ]
     ], <workspaces/test/#subscribeToWorkspace>;
-  hmas:isProfileOf <workspaces/test/#workspace> .
+  hmas:isProfileOf <workspaces/test/#workspace>;
+  hmas:contains <workspaces/sub/>.
 
 <workspaces/test/#unsubscribeFromWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -170,7 +171,7 @@
 <workspaces/test/#getCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#makeArtifactForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/artifacts/>;
@@ -221,7 +222,7 @@ ex:artifact-shape a sh:Shape;
 <workspaces/test/#updateCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#subscribeToWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -271,6 +272,4 @@ ex:artifact-shape a sh:Shape;
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/test> hmas:contains <workspaces/sub> .
-
-<workspaces/sub> a hmas:Workspace .
+<workspaces/sub/> a hmas:Workspace .

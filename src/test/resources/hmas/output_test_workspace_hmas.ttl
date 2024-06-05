@@ -219,7 +219,7 @@
 <workspaces/test/#updateCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#makeArtifactForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/artifacts/>;
@@ -265,7 +265,7 @@ ex:artifact-shape a sh:Shape;
 <workspaces/test/#getCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#workspace> a hmas:Workspace;
   hmas:isHostedOn <#platform> .

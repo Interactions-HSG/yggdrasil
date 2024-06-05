@@ -80,7 +80,7 @@
 <workspaces/test/artifacts/c0/#updateArtifactForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/artifacts/c0/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/artifacts/c0/#getArtifactRepresentation> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -96,7 +96,7 @@
 <workspaces/test/artifacts/c0/#getArtifactRepresentationForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/artifacts/c0/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/artifacts/c0/#deleteArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;

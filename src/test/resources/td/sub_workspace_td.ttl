@@ -72,9 +72,9 @@
         ]
     ] .
 
-<workspaces/sub> hmas:isContainedIn <workspaces/test> .
+<workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
 
-<workspaces/test> a hmas:Workspace .
+<workspaces/test/> a hmas:Workspace .
 
 <workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
 

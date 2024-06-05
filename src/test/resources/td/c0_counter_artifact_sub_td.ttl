@@ -7,7 +7,7 @@
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
 <workspaces/sub/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
-  td:title "c0";
+  td:title "c0#artifact";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;

@@ -38,7 +38,7 @@
 <workspaces/sub/artifacts/test_agent/#updateBodyForm> a hctl:Form;
   hctl:hasTarget <workspaces/sub/artifacts/test_agent/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/sub/artifacts/test_agent/#subscribeToAgent> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -104,7 +104,7 @@
 <workspaces/sub/artifacts/test_agent/#getBodyRepresentationForm> a hctl:Form;
   hctl:hasTarget <workspaces/sub/artifacts/test_agent/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/sub/artifacts/test_agent/#webSubSubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;

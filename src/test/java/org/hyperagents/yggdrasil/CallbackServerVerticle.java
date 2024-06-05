@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.td;
+package org.hyperagents.yggdrasil;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;

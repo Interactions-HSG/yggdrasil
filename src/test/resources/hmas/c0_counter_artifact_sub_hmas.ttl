@@ -153,7 +153,7 @@
 <workspaces/sub/artifacts/c0/#updateArtifactForm> a hctl:Form;
   hctl:hasTarget <workspaces/sub/artifacts/c0/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/sub/artifacts/c0/#inc-Signifier> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape, ex:Increment;
@@ -185,7 +185,7 @@
 <workspaces/sub/artifacts/c0/#getArtifactRepresentationForm> a hctl:Form;
   hctl:hasTarget <workspaces/sub/artifacts/c0/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact, ex:Counter;
   hmas:isContainedIn <workspaces/sub/#workspace> .

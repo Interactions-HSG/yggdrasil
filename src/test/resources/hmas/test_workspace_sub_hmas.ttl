@@ -161,7 +161,7 @@
 <workspaces/test/#updateCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "PUT";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#unsubscribeFromWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -255,7 +255,7 @@ ex:artifact-shape a sh:Shape;
 <workspaces/test/#getCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;
   htv:methodName "GET";
-  hctl:forContentType "application/json" .
+  hctl:forContentType "text/turtle" .
 
 <workspaces/test/#deleteCurrentWorkspaceForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/>;

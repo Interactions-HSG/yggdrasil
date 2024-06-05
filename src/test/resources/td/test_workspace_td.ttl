@@ -76,6 +76,6 @@
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/test> hmas:contains <workspaces/sub> .
+<workspaces/test/> hmas:contains <workspaces/sub/> .
 
-<workspaces/sub> a hmas:Workspace .
+<workspaces/sub/> a hmas:Workspace .

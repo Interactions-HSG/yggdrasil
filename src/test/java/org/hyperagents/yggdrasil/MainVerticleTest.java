@@ -1,5 +1,6 @@
-package org.hyperagents.yggdrasil.td;
+package org.hyperagents.yggdrasil;
 
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
@@ -12,11 +13,7 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
-import org.hyperagents.yggdrasil.MainVerticle;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
@@ -60,8 +57,63 @@ public class MainVerticleTest {
   private WebClient client;
   private int promiseIndex;
 
+  static JsonObject TDEnv = JsonObject.of(
+    "enabled",
+    true,
+    "known-artifacts",
+    JsonArray.of(
+      JsonObject.of(
+        "class",
+        COUNTER_ARTIFACT_CLASS,
+        "template",
+        "org.hyperagents.yggdrasil.artifacts.CounterTD"
+      ),
+      JsonObject.of(
+        "class",
+        BASE_ARTIFACT_CLASS,
+        "template",
+        "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
+      )
+    ),
+    "ontology",
+    "td"
+  );
+
+  static JsonObject HMASEnv = JsonObject.of(
+    "enabled",
+    true,
+    "known-artifacts",
+    JsonArray.of(
+      JsonObject.of(
+        "class",
+        COUNTER_ARTIFACT_CLASS,
+        "template",
+        "org.hyperagents.yggdrasil.artifacts.CounterHMAS"
+      ),
+      JsonObject.of(
+        "class",
+        BASE_ARTIFACT_CLASS,
+        "template",
+        "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
+      )
+    ),
+    "ontology",
+    "hmas"
+  );
+
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo) {
+
+    JsonObject env;
+    String testName = testInfo.getTestMethod().get().getName();
+    if (testName.contains("TD")) {
+      env = TDEnv;
+    } else if (testName.contains("HMAS")) {
+      env = HMASEnv;
+    } else {
+      throw new RuntimeException("No Ontology Specified in Test");
+    }
+
     this.client = WebClient.create(vertx);
     this.callbackMessages =
       Stream.generate(Promise::<Map.Entry<String, String>>promise)
@@ -96,28 +148,7 @@ public class MainVerticleTest {
             true
           ),
           "environment-config",
-          JsonObject.of(
-            "enabled",
-            true,
-            "known-artifacts",
-            JsonArray.of(
-              JsonObject.of(
-                "class",
-                COUNTER_ARTIFACT_CLASS,
-                "template",
-                "org.hyperagents.yggdrasil.artifacts.CounterTD"
-              ),
-              JsonObject.of(
-                "class",
-                BASE_ARTIFACT_CLASS,
-                "template",
-                "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
-              )
-
-            ),
-            "ontology",
-            "td"
-          )
+          env
         ))
       ))
       .onComplete(ctx.succeedingThenComplete());
@@ -129,7 +160,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
+  public void testRunTD(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var platformRepresentation =
       Files.readString(
         Path.of(ClassLoader.getSystemResource("td/platform_test_td.ttl").toURI()),
@@ -510,6 +541,391 @@ public class MainVerticleTest {
       .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testRunHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var platformRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/platform_test_td.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var workspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/output_test_workspace_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var subWorkspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/output_sub_workspace_td.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var workspaceWithSubWorkspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/test_workspace_sub_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var artifactRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var subWorkspaceWithArtifactRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var testAgentBodyRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_sub.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var subWorkspaceWithArtifactAndBodyRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_body.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
+      .sendJsonObject(JsonObject.of(
+        HUB_MODE_PARAM,
+        HUB_MODE_SUBSCRIBE,
+        HUB_TOPIC_PARAM,
+        this.getUrl("/"),
+        HUB_CALLBACK_PARAM,
+        CALLBACK_URL
+      ))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, HUB_PATH)
+        .sendJsonObject(JsonObject.of(
+          HUB_MODE_PARAM,
+          HUB_MODE_SUBSCRIBE,
+          HUB_TOPIC_PARAM,
+          this.getUrl(WORKSPACES_PATH),
+          HUB_CALLBACK_PARAM,
+          CALLBACK_URL
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_CREATED,
+          r.statusCode(),
+          CREATED_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          workspaceRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.callbackMessages.getFirst().future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl("/"),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          platformRepresentation,
+          m.getValue()
+        );
+        System.out.println("Checked platform after first workspace created");
+      })
+      .compose(r -> this.callbackMessages.get(1).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          workspaceRepresentation,
+          m.getValue()
+        );
+        System.out.println("Checked representation of first workspace");
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, HUB_PATH)
+        .sendJsonObject(JsonObject.of(
+          HUB_MODE_PARAM,
+          HUB_MODE_SUBSCRIBE,
+          HUB_TOPIC_PARAM,
+          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
+          HUB_CALLBACK_PARAM,
+          CALLBACK_URL
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HINT_HEADER, SUB_WORKSPACE_NAME)
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_CREATED,
+          r.statusCode(),
+          CREATED_STATUS_MESSAGE
+        );
+
+        this.assertEqualsHMASDescriptions(
+          subWorkspaceRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.callbackMessages.get(2).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/"),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          workspaceWithSubWorkspaceRepresentation,
+          m.getValue()
+        );
+      })
+      .compose(r -> this.callbackMessages.get(3).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          subWorkspaceRepresentation,
+          m.getValue()
+        );
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, HUB_PATH)
+        .sendJsonObject(JsonObject.of(
+          HUB_MODE_PARAM,
+          HUB_MODE_SUBSCRIBE,
+          HUB_TOPIC_PARAM,
+          this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+          HUB_CALLBACK_PARAM,
+          CALLBACK_URL
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.client
+        .post(TEST_PORT, TEST_HOST, HUB_PATH)
+        .sendJsonObject(JsonObject.of(
+          HUB_MODE_PARAM,
+          HUB_MODE_SUBSCRIBE,
+          HUB_TOPIC_PARAM,
+          this.getUrl(
+            WORKSPACES_PATH
+              + SUB_WORKSPACE_NAME
+              + ARTIFACTS_PATH
+          ),
+          HUB_CALLBACK_PARAM,
+          CALLBACK_URL
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.client
+        .post(
+          TEST_PORT,
+          TEST_HOST,
+          WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH
+        )
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .sendJsonObject(JsonObject.of(
+          "artifactName",
+          COUNTER_ARTIFACT_NAME,
+          "artifactClass",
+          COUNTER_ARTIFACT_CLASS,
+          "initParams",
+          JsonArray.of(5)
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_CREATED,
+          r.statusCode(),
+          CREATED_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          artifactRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.callbackMessages.get(4).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          subWorkspaceWithArtifactRepresentation,
+          m.getValue()
+        );
+      })
+      .compose(r -> this.callbackMessages.get(5).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          artifactRepresentation,
+          m.getValue()
+        );
+      })
+      .compose(r -> this.client
+        .post(
+          TEST_PORT,
+          TEST_HOST,
+          WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join"
+        )
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          testAgentBodyRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.callbackMessages.get(6).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          subWorkspaceWithArtifactAndBodyRepresentation,
+          m.getValue()
+        );
+      })
+      .compose(r -> this.client
+        .post(
+          TEST_PORT,
+          TEST_HOST,
+          WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/focus"
+        )
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .sendJsonObject(JsonObject.of(
+          "artifactName",
+          COUNTER_ARTIFACT_NAME,
+          "callbackIri",
+          CALLBACK_URL
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertEquals(
+          String.valueOf(HttpStatus.SC_OK),
+          r.bodyAsString(),
+          "The response body should contain the OK status code"
+        );
+      })
+      .compose(r -> this.callbackMessages.get(8).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(
+            WORKSPACES_PATH
+              + SUB_WORKSPACE_NAME
+              + ARTIFACTS_PATH
+              + COUNTER_ARTIFACT_NAME
+              + "/"
+          ),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        Assertions.assertEquals(
+          "count(5)",
+          m.getValue(),
+          REPRESENTATIONS_EQUAL_MESSAGE
+        );
+      })
+      .compose(r -> this.client
+        .post(
+          TEST_PORT,
+          TEST_HOST,
+          WORKSPACES_PATH
+            + SUB_WORKSPACE_NAME
+            + ARTIFACTS_PATH
+            + COUNTER_ARTIFACT_NAME
+            + "/increment"
+        )
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
+      })
+      .compose(r -> this.callbackMessages.get(9).future())
+      .onSuccess(m -> {
+        Assertions.assertEquals(
+          this.getUrl(
+            WORKSPACES_PATH
+              + SUB_WORKSPACE_NAME
+              + ARTIFACTS_PATH
+              + COUNTER_ARTIFACT_NAME
+              + "/"
+          ),
+          m.getKey(),
+          URIS_EQUAL_MESSAGE
+        );
+        Assertions.assertEquals(
+          "count(6)",
+          m.getValue(),
+          REPRESENTATIONS_EQUAL_MESSAGE
+        );
+      })
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
   private String getUrl(final String path) {
     return "http://" + TEST_HOST + ":" + TEST_PORT + path;
   }
@@ -517,8 +933,17 @@ public class MainVerticleTest {
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
     Assertions.assertTrue(
       Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
+      ),
+      REPRESENTATIONS_EQUAL_MESSAGE
+    );
+  }
+  private void assertEqualsHMASDescriptions(final String expected, final String actual) {
+    Assertions.assertTrue(
+      Models.isomorphic(
+        ResourceProfileGraphReader.getModelFromString(expected),
+        ResourceProfileGraphReader.getModelFromString(actual)
       ),
       REPRESENTATIONS_EQUAL_MESSAGE
     );
