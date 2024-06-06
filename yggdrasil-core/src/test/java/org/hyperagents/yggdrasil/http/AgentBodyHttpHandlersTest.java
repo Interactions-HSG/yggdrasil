@@ -105,11 +105,26 @@ public class AgentBodyHttpHandlersTest {
   }
 
   @Test
+  public void testGetBodySucceedsHMAS(final VertxTestContext ctx)
+      throws URISyntaxException, IOException, InterruptedException{
+    this.helper.testGetResourceSucceeds(ctx, BODY_FILE_HMAS, BODY_PATH);
+  }
+
+  @Test
   public void testGetBodyRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
         HttpMethod.GET,
         BODY_PATH + "/"
+    );
+  }
+
+  @Test
+  public void testGetBodyRedirectsWithSlashHMAS(final VertxTestContext ctx) {
+    this.helper.testResourceRequestRedirectsWithAddedSlash(
+      ctx,
+      HttpMethod.GET,
+      BODY_PATH + "/"
     );
   }
 
@@ -124,12 +139,32 @@ public class AgentBodyHttpHandlersTest {
   }
 
   @Test
+  public void testGetBodyFailsWithNotFoundHMAS(final VertxTestContext ctx)
+      throws InterruptedException {
+    this.helper.testResourceRequestFailsWithNotFound(
+      ctx,
+      BODIES_PATH + NONEXISTENT_NAME,
+      this.client.get(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME).send()
+    );
+  }
+
+  @Test
   public void testPutTurtleArtifactSucceedsTD(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
     this.helper.testPutTurtleResourceSucceeds(
         ctx,
         BODY_PATH,
       BODY_FILE_TD
+    );
+  }
+
+  @Test
+  public void testPutTurtleArtifactSucceedsHMAS(final VertxTestContext ctx)
+    throws URISyntaxException, IOException, InterruptedException {
+    this.helper.testPutTurtleResourceSucceeds(
+      ctx,
+      BODY_PATH,
+      BODY_FILE_HMAS
     );
   }
 
@@ -150,6 +185,22 @@ public class AgentBodyHttpHandlersTest {
   }
 
   @Test
+  public void testPutTurtleArtifactFailsWithNotFoundHMAS(final VertxTestContext ctx)
+    throws URISyntaxException, IOException, InterruptedException {
+    this.helper.testResourceRequestFailsWithNotFound(
+      ctx,
+      BODIES_PATH + NONEXISTENT_NAME,
+      this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
+        .putHeader("X-Agent-WebID", TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+        .sendBuffer(Buffer.buffer(Files.readString(
+          Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+          StandardCharsets.UTF_8
+        )))
+    );
+  }
+
+  @Test
   public void testPutTurtleArtifactFailsWithoutWebIdTD(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     this.helper.testResourceRequestFailsWithoutWebId(
@@ -160,6 +211,20 @@ public class AgentBodyHttpHandlersTest {
                      Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
                      StandardCharsets.UTF_8
                    )))
+    );
+  }
+
+  @Test
+  public void testPutTurtleArtifactFailsWithoutWebIdHMAS(final VertxTestContext ctx)
+    throws URISyntaxException, IOException {
+    this.helper.testResourceRequestFailsWithoutWebId(
+      ctx,
+      this.client.put(TEST_PORT, TEST_HOST, BODY_PATH)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+        .sendBuffer(Buffer.buffer(Files.readString(
+          Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+          StandardCharsets.UTF_8
+        )))
     );
   }
 
@@ -178,6 +243,20 @@ public class AgentBodyHttpHandlersTest {
   }
 
   @Test
+  public void testPutTurtleArtifactFailsWithoutContentTypeHMAS(final VertxTestContext ctx)
+    throws URISyntaxException, IOException {
+    this.helper.testResourceRequestFailsWithoutContentType(
+      ctx,
+      HttpMethod.PUT,
+      BODY_PATH,
+      Buffer.buffer(Files.readString(
+        Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+        StandardCharsets.UTF_8
+      ))
+    );
+  }
+
+  @Test
   public void testPutTurtleArtifactRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
@@ -185,4 +264,14 @@ public class AgentBodyHttpHandlersTest {
         BODY_PATH
     );
   }
+
+  @Test
+  public void testPutTurtleArtifactRedirectsWithSlashHMAS(final VertxTestContext ctx) {
+    this.helper.testResourceRequestRedirectsWithAddedSlash(
+      ctx,
+      HttpMethod.PUT,
+      BODY_PATH
+    );
+  }
+
 }
