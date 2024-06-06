@@ -36,7 +36,7 @@ public class RdfStoreVerticleDeleteTest {
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
   private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/artifacts/test";
   private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
-  private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "/artifacts/c0";
+  private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "/artifacts/c0/";
   private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_sub_td.ttl";
 
   private final BlockingQueue<HttpNotificationDispatcherMessage> notificationQueue;
@@ -510,18 +510,39 @@ public class RdfStoreVerticleDeleteTest {
         "test",
         Optional.empty(),
         inputWorkspaceRepresentation
-      ))
+      )).onSuccess(r -> {
+        try {
+          var platformChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+          var mainWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      })
       .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
         "http://localhost:8080/workspaces/",
         "sub",
         Optional.of(TEST_WORKSPACE_URI),
         inputSubWorkspaceRepresentation
-      )))
+      ))).onSuccess(r -> {
+        try {
+          var mainWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+          var subWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      })
       .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
         "http://localhost:8080/workspaces/sub/artifacts/",
         "c0",
         inputArtifactRepresentation
-      )))
+      ))).onSuccess(r -> {
+        try {
+          var subWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+          var artifactCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      })
       .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
         "test",
         "http://localhost:8080/agents/test",
@@ -530,7 +551,8 @@ public class RdfStoreVerticleDeleteTest {
       )))
       .onSuccess(r -> {
         try {
-          this.notificationQueue.clear();
+          var mainWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+          var agentBodyCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
         } catch (final Exception e) {
           ctx.failNow(e);
         }

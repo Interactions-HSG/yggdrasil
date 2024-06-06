@@ -14,7 +14,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -202,13 +201,11 @@ public class RdfStoreVerticleQueryTest {
           StandardCharsets.UTF_8
         );
     this.testTupleQueryRequest(List.of(), List.of(), "application/sparql-results+xml")
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-            result,
-            r.body(),
-            CONTENTS_EQUAL_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+          result,
+          r.body(),
+          CONTENTS_EQUAL_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -434,8 +431,8 @@ public class RdfStoreVerticleQueryTest {
     this.testGraphQueryRequest(
             List.of(),
             List.of(
-              SUB_WORKSPACE_URI+"/#workspace",
-              C0_ARTIFACT_URI+"/"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             )
         )
         .onSuccess(r -> Assertions.assertEquals(

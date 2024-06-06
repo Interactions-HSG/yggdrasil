@@ -498,7 +498,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var entityModelString =
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
             if (entityModel.contains(
-              fixedEntityIri,
+                RdfModelUtils.createIri(fixedIri + "/#artifact"),
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                 RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
             )) {
