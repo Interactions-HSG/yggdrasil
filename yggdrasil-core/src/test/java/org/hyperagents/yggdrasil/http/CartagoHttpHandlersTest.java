@@ -553,7 +553,7 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var initialBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var fullBodyRepresentation =
