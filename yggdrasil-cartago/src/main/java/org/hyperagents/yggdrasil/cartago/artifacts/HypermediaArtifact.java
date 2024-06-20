@@ -10,6 +10,7 @@ import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import java.net.URI;
 import java.util.ArrayList;
@@ -30,12 +31,18 @@ import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryImpl;
 
 public abstract class HypermediaArtifact extends Artifact {
+  private static final String DEFAULT_CONFIG_VALUE = "default";
+
   private final ListMultimap<String, ActionAffordance> actionAffordances =
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Set<String> feedbackActions = new HashSet<>();
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
-  private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+  private HttpInterfaceConfig httpConfig = Vertx.currentContext()
+                                                .owner()
+                                                .sharedData()
+                                                .<String, HttpInterfaceConfig>getLocalMap("http-config")
+                                                .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
       new RepresentationFactoryImpl(this.httpConfig);
   private SecurityScheme securityScheme = new NoSecurityScheme();
