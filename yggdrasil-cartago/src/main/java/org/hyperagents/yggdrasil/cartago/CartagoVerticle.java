@@ -338,7 +338,9 @@ public class CartagoVerticle extends AbstractVerticle {
               : params
             );
           })
-          .orElseGet(() -> new Op(action));
+          .orElseGet(() -> registry.hasFeedbackParam(artifactName, action)
+                           ? new Op(action, feedbackParameter)
+                           : new Op(action));
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     final var agentName = this.getAgentNameFromAgentUri(agentUri);
