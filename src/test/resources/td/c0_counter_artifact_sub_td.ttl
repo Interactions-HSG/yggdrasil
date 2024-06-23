@@ -6,8 +6,8 @@
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
-  td:title "c0#artifact";
+<workspaces/sub/artifacts/c0/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
+  td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
@@ -19,8 +19,6 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] .
-
-<workspaces/sub/artifacts/c0/#artifact> hmas:isContainedIn <workspaces/sub/#workspace> .
-
+    ] ;
+    hmas:isContainedIn <workspaces/sub/#workspace> .
 <workspaces/sub/#workspace> a hmas:Workspace .

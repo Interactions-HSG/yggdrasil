@@ -8,8 +8,8 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 
-<workspaces/test/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
-  td:title "c0#artifact";
+<workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
+  td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
@@ -21,8 +21,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] .
-
-<workspaces/test/artifacts/c0/#artifact> hmas:isContainedIn <workspaces/test/#workspace> .
+    ] ;
+    hmas:isContainedIn <workspaces/test/#workspace> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
