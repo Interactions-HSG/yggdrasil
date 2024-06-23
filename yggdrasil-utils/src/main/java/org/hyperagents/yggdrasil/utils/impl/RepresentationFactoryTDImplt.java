@@ -54,7 +54,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     return serializeThingDescription(
       new ThingDescription
         .Builder(workspaceName)
-        .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName))
+        .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName) + "#workspace")
         .addSemanticType("https://purl.org/hmas/Workspace")
         .addAction(
           new ActionAffordance.Builder(

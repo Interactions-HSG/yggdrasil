@@ -16,12 +16,20 @@ public final class RdfStoreVerticleTestHelpers {
   private RdfStoreVerticleTestHelpers() {}
 
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
-    System.out.println(actual);
+    var theSame =
+      Models.isomorphic(
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+      );
+    if(!theSame) {
+      System.out.println("===============================");
+      System.out.println(actual);
+      System.out.println("===============================");
+      System.out.println(expected);
+      System.out.println("===============================");
+    }
     Assertions.assertTrue(
-        Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
-        ),
+        theSame,
         REPRESENTATIONS_EQUAL_MESSAGE
     );
   }

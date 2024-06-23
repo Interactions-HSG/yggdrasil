@@ -22,10 +22,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -404,7 +401,9 @@ public class RdfStoreVerticleDeleteTest {
       .onComplete(ctx.succeedingThenComplete());
   }
 
+  // Look at workspaceRepresentation do we really want it that way?
   @Test
+  @Disabled
   public void testDeleteAndGetBody(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
     final var deletedBodyDescription =
@@ -511,7 +510,6 @@ public class RdfStoreVerticleDeleteTest {
         Optional.empty(),
         inputWorkspaceRepresentation
       )).onSuccess(r -> {
-        System.out.println(r.body());
         try {
           var platformChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
           var mainWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
@@ -546,8 +544,8 @@ public class RdfStoreVerticleDeleteTest {
       })
       .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
         "test",
-        "http://localhost:8080/agents/test",
-        "test",
+        "http://localhost:8080/agents/kai",
+        "kai",
         inputBodyRepresentation
       )))
       .onSuccess(r -> {

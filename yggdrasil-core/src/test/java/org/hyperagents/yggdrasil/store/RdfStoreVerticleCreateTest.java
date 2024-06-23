@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -202,7 +201,6 @@ public class RdfStoreVerticleCreateTest {
                 entityUpdatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            System.out.println(entityUpdatedMessage.content());
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
