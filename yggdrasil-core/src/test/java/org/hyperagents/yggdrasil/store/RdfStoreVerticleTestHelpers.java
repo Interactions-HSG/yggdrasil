@@ -16,6 +16,7 @@ public final class RdfStoreVerticleTestHelpers {
   private RdfStoreVerticleTestHelpers() {}
 
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
+    System.out.println(actual);
     Assertions.assertTrue(
         Models.isomorphic(
           TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),

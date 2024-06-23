@@ -1,19 +1,15 @@
 @base <http://localhost:8080/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/test/agents/test> a td:Thing, <https://example.org/Body>, hmas:Artifact;
-  td:title "test";
+<workspaces/test/artifacts/kai/#artifact> a td:Thing, jacamo:Body, hmas:Artifact;
+  td:title "kai";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-    ] .
-
-<workspaces/test/artifacts/kai/#artifact> hmas:isContainedIn <workspaces/test/#workspace>;
-  <https://purl.org/hmas/jacamo/isBodyOf> <agent/kai> .
+    ];
+  hmas:isContainedIn <workspaces/test/#workspace>;
+  jacamo:isBodyOf <agent/kai> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
 

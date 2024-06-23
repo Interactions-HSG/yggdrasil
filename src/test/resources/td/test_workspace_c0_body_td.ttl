@@ -6,6 +6,7 @@
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
 <workspaces/test/> a td:Thing, hmas:Workspace;
   td:title "test";
@@ -79,4 +80,4 @@
 
 <workspaces/test/artifacts/c0/#artifact> a hmas:Artifact .
 
-<workspaces/test/artifacts/test_agent/#artifact> a hmas:Artifact .
+<workspaces/test/artifacts/test_agent/#artifact> a hmas:Artifact, jacamo:Body .

@@ -6,15 +6,16 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix ex: <http://example.org/> .
 
-<workspaces/sub/artifacts/test_agent/> a td:Thing, hmas:Artifact, <https://example.org/Body>;
+<workspaces/sub/artifacts/test_agent/> a td:Thing, hmas:Artifact, jacamo:Body;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
 <workspaces/sub/artifacts/test_agent/#artifact> hmas:isContainedIn <workspaces/sub/#workspace>;
-  <https://purl.org/hmas/jacamo/isBodyOf> <agents/test_agent> .
+  jacamo:isBodyOf <agents/test_agent> .
 
 <workspaces/sub/#workspace> a hmas:Workspace .
 

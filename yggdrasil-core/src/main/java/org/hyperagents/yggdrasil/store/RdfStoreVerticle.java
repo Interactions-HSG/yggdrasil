@@ -224,7 +224,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
             final var workspaceIri = this.httpConfig.getWorkspaceUri(content.workspaceName());
             final var workspaceActualIri = workspaceIri.endsWith("/") ? RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) : RdfModelUtils.createIri(workspaceIri);
-            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceActualIri);
+            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceActualIri, true);
             final var agentIri =
                 RdfModelUtils.createIri(content.agentID());
             entityModel.add(
@@ -276,7 +276,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var workspaceIri = RdfModelUtils.createIri(
                 artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
             );
-            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri);
+            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
             this.store.addEntityModel(entityIri, entityModel);
             final var stringGraphResult =
                 RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri());
@@ -295,7 +295,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private void enrichArtifactGraphWithWorkspace(
       final IRI entityIri,
       final Model entityModel,
-      final IRI workspaceIri
+      final IRI workspaceIri,
+      boolean isBody
   ) throws IOException {
     final var artifactIRI = entityIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(entityIri + "#artifact") : RdfModelUtils.createIri(entityIri + "/#artifact");
     final var workspaceActualIRI = workspaceIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(workspaceIri + "#workspace") : RdfModelUtils.createIri(workspaceIri + "/#workspace");
@@ -322,6 +323,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
               RDF.TYPE,
               RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
           );
+          if (isBody) {
+            workspaceModel.add(
+              artifactIRI,
+              RDF.TYPE,
+              RdfModelUtils.createIri("https://purl.org/hmas/jacamo/Body")
+            );
+            workspaceModel.setNamespace("jacamo", "https://purl.org/hmas/jacamo/");
+          }
           this.store.replaceEntityModel(workspaceIri, workspaceModel);
           this.dispatcherMessagebox.sendMessage(
             new HttpNotificationDispatcherMessage.EntityChanged(

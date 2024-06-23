@@ -7,14 +7,15 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/test/artifacts/test_agent/> a td:Thing, hmas:Artifact, <https://example.org/Body>;
+<workspaces/test/artifacts/test_agent/> a td:Thing, hmas:Artifact, jacamo:Body;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
 <workspaces/test/artifacts/test_agent/#artifact> hmas:isContainedIn <workspaces/test/#workspace>;
-  <https://purl.org/hmas/jacamo/isBodyOf> <agents/test_agent> .
+  jacamo:isBodyOf <agents/test_agent> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
 

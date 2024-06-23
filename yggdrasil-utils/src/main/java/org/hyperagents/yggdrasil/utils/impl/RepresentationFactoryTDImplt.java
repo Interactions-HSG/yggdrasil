@@ -169,7 +169,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .Builder(agentName)
         .addSecurityScheme(securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
-        .addSemanticType("https://example.org/Body")
+        .addSemanticType("https://purl.org/hmas/jacamo/Body")
         .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
         .addGraph(metadata);
     return serializeThingDescription(td);
@@ -185,6 +185,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
       .setNamespace("hmas", "https://purl.org/hmas/")
       .setNamespace("ex","http://example.org/")
+      .setNamespace("jacamo", "https://purl.org/hmas/jacamo/")
       .write();
   }
 }

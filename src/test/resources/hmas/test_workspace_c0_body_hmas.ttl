@@ -274,4 +274,4 @@ ex:artifact-shape a sh:Shape;
 
 <workspaces/test/artifacts/c0/#artifact> a hmas:Artifact .
 
-<workspaces/test/artifacts/test_agent/#artifact> a hmas:Artifact .
+<workspaces/test/artifacts/test_agent/#artifact> a hmas:Artifact, jacamo:Body .
