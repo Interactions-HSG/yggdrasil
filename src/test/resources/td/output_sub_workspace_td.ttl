@@ -8,7 +8,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 
-<workspaces/sub/> a td:Thing, hmas:Workspace;
+<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -71,7 +71,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ];
-  hmas:isContainedIn <workspaces/test/> .
+    ].
+<workspaces/sub/>  hmas:isContainedIn <workspaces/test/> .
 
 <workspaces/test/> a hmas:Workspace .

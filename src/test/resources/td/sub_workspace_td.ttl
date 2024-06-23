@@ -7,7 +7,7 @@
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/> a td:Thing, hmas:Workspace;
+<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -70,12 +70,12 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] .
+    ] ;
+    hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
 
 <workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
 
 <workspaces/test/> a hmas:Workspace .
 
-<workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
 
 <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .

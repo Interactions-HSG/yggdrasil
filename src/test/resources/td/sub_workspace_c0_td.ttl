@@ -1,13 +1,13 @@
 @base <http://localhost:8080/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
+@prefix hmas: <https://purl.org/hmas/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/> a td:Thing, hmas:Workspace;
+<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -71,10 +71,10 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <workspaces/test/> .
+  hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
+
+<workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
 
 <workspaces/test/> a hmas:Workspace .
-
-<workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
 
 <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .

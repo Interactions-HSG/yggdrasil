@@ -7,7 +7,7 @@
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/test/> a td:Thing, hmas:Workspace;
+<workspaces/test/#workspace> a td:Thing, hmas:Workspace;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -71,10 +71,10 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:contains <workspaces/sub/> .
-
-<workspaces/test/#workspace> hmas:isHostedOn <#platform> .
+  hmas:isHostedOn <#platform> .
 
 <#platform> a hmas:HypermediaMASPlatform .
+
+<workspaces/test/> hmas:contains <workspaces/sub/> .
 
 <workspaces/sub/> a hmas:Workspace .
