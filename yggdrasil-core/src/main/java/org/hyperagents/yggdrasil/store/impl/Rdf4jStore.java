@@ -191,11 +191,12 @@ public class Rdf4jStore implements RdfStore {
                     )
             )
                     .handleBoolean(preparedBooleanQuery.evaluate());
-            case GraphQuery preparedGraphQuery -> out.writeBytes(
+            case GraphQuery preparedGraphQuery -> {
+               out.writeBytes(
                     RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
                                     RDFFormat.TURTLE)
                             .getBytes(StandardCharsets.UTF_8)
-            );
+            );}
             default -> {
             }
         }
