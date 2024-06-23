@@ -137,12 +137,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final ListMultimap<String, ActionAffordance> actionAffordances
   ) {
     final var td =
-      new ThingDescription.Builder(artifactName + "#artifact")
+      new ThingDescription.Builder(artifactName)
         .addSecurityScheme(securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType(semanticType)
         .addThingURI(this.httpConfig
-          .getArtifactUri(workspaceName, artifactName))
+          .getArtifactUri(workspaceName, artifactName) + "#artifact")
         .addGraph(metadata);
     actionAffordances.values().forEach(td::addAction);
     return serializeThingDescription(td);
@@ -170,7 +170,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addSecurityScheme(securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType("https://purl.org/hmas/jacamo/Body")
-        .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName))
+        .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#artifact")
         .addGraph(metadata);
     return serializeThingDescription(td);
   }
