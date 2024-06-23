@@ -8,8 +8,9 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<http://localhost:8080/workspaces/test/artifacts/c0/> a td:Thing, hmas:Artifact, ex:Counter;
-  td:title "c0#artifact";
+<http://localhost:8080/workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact,
+    ex:Counter;
+  td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;

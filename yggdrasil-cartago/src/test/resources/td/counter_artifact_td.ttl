@@ -7,7 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 
-<http://localhost:8080/workspaces/sub/artifacts/c1/> a td:Thing, hmas:Artifact, ex:Counter;
+<http://localhost:8080/workspaces/sub/artifacts/c1/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
   td:title "c1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
