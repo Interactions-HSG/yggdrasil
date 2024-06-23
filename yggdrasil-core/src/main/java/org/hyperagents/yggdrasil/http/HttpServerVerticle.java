@@ -17,7 +17,6 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public class HttpServerVerticle extends AbstractVerticle {
 
-  // TODO: We said agents bodies should also use artifacts path
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";

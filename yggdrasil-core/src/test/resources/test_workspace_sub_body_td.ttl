@@ -5,9 +5,10 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/test> a td:Thing, hmas:Workspace;
+<workspaces/test/#workspace> a td:Thing, hmas:Workspace;
   td:hasActionAffordance [ a td:ActionAffordance;
       td:name "makeArtifact";
       td:hasForm [
@@ -68,16 +69,16 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:contains <workspaces/sub>;
+  hmas:isHostedOn <#platform>;
+  hmas:contains <workspaces/test/artifacts/test/#artifact>;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
-<workspaces/test/#workspace> hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/test/artifacts/kai/#artifact> .
-
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/sub> a hmas:Workspace .
+<workspaces/test/> hmas:contains <workspaces/sub/> .
 
-<workspaces/test/artifacts/kai/#artifact> a hmas:Artifact .
+<workspaces/sub/> a hmas:Workspace .
+
+<workspaces/test/artifacts/test/#artifact> a hmas:Artifact, jacamo:Body .

@@ -49,6 +49,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
+  private static final String AGENT_LOCALNAME_HEADER = "X-Agent-LocalName";
 
   private final Messagebox<CartagoMessage> cartagoMessagebox;
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
@@ -341,7 +342,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
-    var hint = routingContext.request().getHeader("Slug");
+    var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -381,6 +382,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleLeaveWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
+    final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -393,13 +395,23 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         agentId,
         workspaceName
       ))
-      .compose(r -> this.rdfStoreMessagebox
+      .compose(r -> {
+        if (hint == null) {
+        return this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.DeleteEntity(
           this.httpConfig.getAgentBodyUri(
             workspaceName,
             this.getAgentNameFromId(agentId)
           )
-        )))
+        ));}
+        return this.rdfStoreMessagebox
+          .sendMessage(new RdfStoreMessage.DeleteEntity(
+            this.httpConfig.getAgentBodyUri(
+              workspaceName,
+              hint
+            )
+          ));
+      })
       .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
       .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
   }

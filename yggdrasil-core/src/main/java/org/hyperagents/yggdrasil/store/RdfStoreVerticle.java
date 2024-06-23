@@ -363,7 +363,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     } else {
       workspaceIRI = RdfModelUtils.createIri(workspaceIri + "/#workspace");
     }
-
     Optional
         .ofNullable(content.workspaceRepresentation())
         .filter(s -> !s.isEmpty())
@@ -528,14 +527,19 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   .getEntityModel(workspaceIri)
                   .ifPresent(Failable.asConsumer(workspaceModel -> {
                     workspaceModel.remove(
-                        workspaceIri,
+                        RdfModelUtils.createIri(workspaceIri.toString() + "/#workspace"),
                         RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                      fixedEntityIri
+                        RdfModelUtils.createIri(fixedIri + "/#artifact")
                     );
                     workspaceModel.remove(
-                      fixedEntityIri,
+                      RdfModelUtils.createIri(fixedIri + "/#artifact"),
                         RDF.TYPE,
                         RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
+                    );
+                    workspaceModel.remove(
+                      RdfModelUtils.createIri(fixedIri + "/#artifact"),
+                      RDF.TYPE,
+                      RdfModelUtils.createIri("https://purl.org/hmas/jacamo/Body")
                     );
                     this.store.replaceEntityModel(workspaceIri, workspaceModel);
                     this.dispatcherMessagebox.sendMessage(
@@ -717,7 +721,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var candidateIri = fullRequestIri.concat(optHint.get()).replaceAll(regexPattern, "/");
 
       if (!this.store.containsEntityModel(RdfModelUtils.createIri(candidateIri))) {
-        return candidateIri + "/";
+        return candidateIri;
       }
     }
     // Generate a new IRI

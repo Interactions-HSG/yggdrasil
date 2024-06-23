@@ -511,6 +511,7 @@ public class RdfStoreVerticleDeleteTest {
         Optional.empty(),
         inputWorkspaceRepresentation
       )).onSuccess(r -> {
+        System.out.println(r.body());
         try {
           var platformChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
           var mainWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
