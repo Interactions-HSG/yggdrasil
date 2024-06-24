@@ -121,12 +121,8 @@ public class HttpServerVerticle extends AbstractVerticle {
                                  .consumes(ContentType.APPLICATION_JSON.getMimeType())
                                  .handler(handler::handleFocus);
 
-    router.post("/workspaces/:wkspid/artifacts/")
-          .consumes(TURTLE_CONTENT_TYPE)
-          .handler(handler::handleCreateArtifactTurtle);
     final var createArtifactRoute = router.post("/workspaces/:wkspid/artifacts/")
-                                          .consumes(ContentType.APPLICATION_JSON.getMimeType())
-                                          .handler(handler::handleCreateArtifactJson);
+                                          .handler(handler::handleCreateArtifact);
 
     router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);

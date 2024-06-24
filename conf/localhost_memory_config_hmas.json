@@ -14,7 +14,7 @@
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
       },
       {
-        "class": "http://example.org/Artifact",
+        "class": "https://purl.org/hmas/Artifact",
         "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
       },
       {

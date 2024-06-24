@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -136,16 +137,23 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.handleCreateWorkspaceTurtle(routingContext, routingContext.body().asString());
   }
 
-  public void handleCreateArtifactJson(final RoutingContext context) {
-    final var representation = context.body().asString();
-    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
+  public void handleCreateArtifact(final RoutingContext context) {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
-
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
       return;
     }
+    var contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
+    switch (contentType) {
+      case "application/json" -> handleCreateArtifactJson(context);
+      case "text/turtle" -> handleCreateArtifactTurtle(context);
+    }
+  }
 
+  public void handleCreateArtifactJson(final RoutingContext context) {
+    final var representation = context.body().asString();
+    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
+    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var artifactName =
       ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
@@ -169,15 +177,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
             .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
         )
-        .onFailure(context::fail))
+        .onFailure(r -> {
+          context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+        }))
     ;
   }
 
   public void handleCreateArtifactTurtle(final RoutingContext routingContext) {
-    if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
-      return;
-    }
     this.handleCreateArtifactTurtle(routingContext, routingContext.body().asString());
   }
 
@@ -212,7 +218,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             """
               {
                 "artifactName": "%s",
-                "artifactClass": "http://example.org/Artifact"
+                "artifactClass": "https://purl.org/hmas/Artifact"
               }
               """,
             actualEntityName.body()
@@ -237,7 +243,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             ))
             .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end(r.body()))
             .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end());
-        }).onFailure(context::fail));
+        }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()));
   }
 
   public void handleFocus(final RoutingContext context) {
