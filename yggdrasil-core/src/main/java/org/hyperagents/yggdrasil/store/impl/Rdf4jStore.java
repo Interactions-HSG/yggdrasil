@@ -86,7 +86,6 @@ public class Rdf4jStore implements RdfStore {
           model.setNamespace(connectionNamespaces.get(iri));
         }
       }
-
       return Optional.of(model).filter(r -> !r.isEmpty());
     } catch (final RepositoryException e) {
       throw new IOException(e);
