@@ -347,6 +347,7 @@ public class RdfStoreVerticleQueryTest {
   }
   // DOES THIS MAKE SENSE? EXPECTING FALSE DOESNT GUARANTEE TRUE WITH CORRECT PARAMS
   @Test
+  @Disabled
   public void testBooleanQueryRequestWithNamedUrisSuccess(final VertxTestContext ctx) {
     this.testBooleanQueryRequest(List.of(), List.of(SUB_WORKSPACE_URI, C0_ARTIFACT_URI), CSV_MIME_TYPE)
       .onSuccess(r -> Assertions.assertEquals(

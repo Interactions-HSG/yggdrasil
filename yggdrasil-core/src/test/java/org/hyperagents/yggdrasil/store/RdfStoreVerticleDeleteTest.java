@@ -545,7 +545,7 @@ public class RdfStoreVerticleDeleteTest {
       })
       .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
         "test",
-        "http://localhost:8080/agents/kai",
+        "http://localhost:8080/agent/kai",
         "kai",
         inputBodyRepresentation
       )))
