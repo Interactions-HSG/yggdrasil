@@ -25,10 +25,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -110,7 +107,12 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testGetResourceSucceeds(ctx, BODY_FILE_HMAS, BODY_PATH);
   }
 
+  /**
+   * No longer need this test as we simply handle both cases the same way
+   * -> Result of this request is now a 400 Bad Request as it tries to get a resource that does not exist
+   */
   @Test
+  @Disabled
   public void testGetBodyRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
@@ -256,7 +258,11 @@ public class AgentBodyHttpHandlersTest {
     );
   }
 
+  /**
+   * No longer needed
+   */
   @Test
+  @Disabled
   public void testPutTurtleArtifactRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
@@ -265,7 +271,13 @@ public class AgentBodyHttpHandlersTest {
     );
   }
 
+  /**
+   * No longer need this test as we can handle both cases of slash and without slash
+   * -> This test returns a 400 because it tries to change an artifact that does not exist
+   * @param ctx
+   */
   @Test
+  @Disabled
   public void testPutTurtleArtifactRedirectsWithSlashHMAS(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,

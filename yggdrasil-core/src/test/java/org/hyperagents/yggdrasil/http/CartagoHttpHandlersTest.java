@@ -61,6 +61,8 @@ public class CartagoHttpHandlersTest {
       "The response body should contain the status code description";
   private static final String INTERNAL_SERVER_ERROR_STATUS_MESSAGE =
       "The status code should be INTERNAL SERVER ERROR";
+  private static final String BAD_REQUEST_ERROR_STATUS_MESSAGE =
+      "The status code should be BAD REQUEST";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String INTERNAL_SERVER_ERROR_BODY = "Internal Server Error";
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
@@ -488,16 +490,15 @@ public class CartagoHttpHandlersTest {
         Json.decodeValue(createArtifactMessage.representation()),
         "The initialization parameters should be the same"
     );
-    message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The workspace was not found");
+    message.fail(HttpStatus.SC_BAD_REQUEST, "The workspace was not found");
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
+              HttpStatus.SC_BAD_REQUEST,
               r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+              BAD_REQUEST_ERROR_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
+          Assertions.assertNull(
               r.bodyAsString(),
               RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
