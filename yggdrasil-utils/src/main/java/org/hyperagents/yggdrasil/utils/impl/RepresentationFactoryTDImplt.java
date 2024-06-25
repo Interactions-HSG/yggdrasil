@@ -31,7 +31,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   public String createPlatformRepresentation() {
     return serializeThingDescription(
       new ThingDescription
-        .Builder("yggdrasil")
+        .Builder("Yggdrasil Node")
         .addThingURI(this.httpConfig.getBaseUri())
         .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
         .addAction(
@@ -40,7 +40,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             new Form.Builder(this.httpConfig.getWorkspacesUri())
               .setMethodName(HttpMethod.POST.name())
               .build()
-          ).addSemanticType("https://purl.org/hmas/jacamo/CreateArtifact")
+          ).addSemanticType("https://purl.org/hmas/jacamo/CreateWorkspace")
            .build()
         )
     );
@@ -70,11 +70,11 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                     .addSemanticType("https://purl.org/hmas/jacamo/ArtifactTemplate")
                     .build()
                 )
-                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
-                .addProperty("initParams", new ArraySchema.Builder().build())
+                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().addSemanticType("https://purl.org/hmas/jacamo/ArtifactName").build())
+                .addProperty("initParams", new ArraySchema.Builder().addSemanticType("https://purl.org/hmas/jacamo/InitParams").build())
                 .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
                 .build()
-            )
+            ).addSemanticType("https://purl.org/hmas/jacamo/MakeArtifact")
             .build()
         )
         .addAction(
@@ -83,7 +83,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "join")
               .setMethodName(HttpMethod.POST.name())
               .build()
-          )
+          ).addSemanticType("https://purl.org/hmas/jacamo/JoinWorkspace")
             .build()
         )
         .addAction(
@@ -92,7 +92,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "leave")
               .setMethodName(HttpMethod.POST.name())
               .build()
-          )
+          ).addSemanticType("https://purl.org/hmas/jacamo/QuitWorkspace")
             .build()
         )
         .addAction(
@@ -109,7 +109,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                 .addProperty("callbackIri", new StringSchema.Builder().build())
                 .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
                 .build()
-            )
+            ).addSemanticType("https://purl.org/hmas/jacamo/Focus")
             .build()
         )
         .addAction(
@@ -118,7 +118,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName))
               .setMethodName(HttpMethod.POST.name())
               .build()
-          )
+          ).addSemanticType("https://purl.org/hmas/jacamo/CreateSubWorkspace")
             .build()
         )
     );
