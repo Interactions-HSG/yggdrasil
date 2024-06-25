@@ -87,10 +87,14 @@ TODOS:
 ++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
   ++ NEW REPRESENTATION
 
-++ Extend Signals with testing
 
+++++++++++++++++++++++
 
-++ Add javamo bodyOf in workspace containing body
++ Tests refactored so they use same classes if appropriate
 
++ Jacamo:Body is added to workspace containing body artifact
 
-++ Add tests together so that no copy and paste
++ Signal works
+
++ Deleting an Entity doesnt delete it from cartago
+
