@@ -628,7 +628,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                             this.store.replaceEntityModel(RdfModelUtils.createIri(parentIriDefragmented), parentModel);
                             this.dispatcherMessagebox.sendMessage(
                               new HttpNotificationDispatcherMessage.EntityChanged(
-                                parentIri.toString(),
+                                parentIriDefragmented,
                                 RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                               )
                             );
