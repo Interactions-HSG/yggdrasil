@@ -20,6 +20,10 @@
       {
         "class" : "http://example.org/Adder",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS"
+      },
+      {
+        "class" : "http://example.org/Math",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathHMAS"
       }
     ],
     "enabled" : true,
