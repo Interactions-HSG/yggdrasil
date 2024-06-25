@@ -98,3 +98,14 @@ TODOS:
 
 + Deleting an Entity doesnt delete it from cartago
 
++ Question on uniform representation of how containment is represented:
+    <workspaces/sub/> a hmas:ResourceProfile;
+      hmas:isContainedIn <workspaces/test/> .
+    <workspaces/test/> a hmas:Workspace .
+
+    vs:
+    <workspaces/test/> a hmas:ResourceProfile;
+      hmas:isProfileOf <workspaces/test/#workspace>.
+
+    <workspaces/test/#workspace> a hmas:Workspace;
+      hmas:isHostedOn <#platform> .
