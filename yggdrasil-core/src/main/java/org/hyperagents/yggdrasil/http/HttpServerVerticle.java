@@ -103,7 +103,9 @@ public class HttpServerVerticle extends AbstractVerticle {
           .handler(handler::handleCreateWorkspaceTurtle);
     final var createSubWorkspaceRoute = router.post(WORKSPACE_PATH)
                                               .handler(handler::handleCreateSubWorkspace);
-    router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.put(WORKSPACE_PATH + "/")
+          .consumes(TURTLE_CONTENT_TYPE)
+          .handler(handler::handleUpdateEntity);
     router.put(WORKSPACE_PATH)
           .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
@@ -126,7 +128,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
-    router.put(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.put(ARTIFACT_PATH + "/")
+          .consumes(TURTLE_CONTENT_TYPE)
+          .handler(handler::handleUpdateEntity);
     router.put(ARTIFACT_PATH)
           .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);

@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.http;
 
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -144,6 +143,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     var contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
+
+    if (contentType == null) {
+      context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+      return;
+    }
+
     switch (contentType) {
       case "application/json" -> handleCreateArtifactJson(context);
       case "text/turtle" -> handleCreateArtifactTurtle(context);
