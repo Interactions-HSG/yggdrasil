@@ -650,9 +650,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var iri = stack.removeLast();
       this.store.getEntityModel(iri)
                 .ifPresent(Failable.asConsumer(model -> {
+                  final var iriResource = RdfModelUtils.createIri(iri + "/#workspace");
                   model
                       .filter(
-                        iri,
+                        iriResource,
                         RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
                         null
                       )
@@ -660,6 +661,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       .stream()
                       .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
                       .flatMap(Optional::stream)
+                      .map(fragmentedIri -> RdfModelUtils.createIri(fragmentedIri.getNamespace().replace("#","")))
                       .peek(irisToDelete::add)
                       .forEach(stack::add);
                   this.dispatcherMessagebox.sendMessage(

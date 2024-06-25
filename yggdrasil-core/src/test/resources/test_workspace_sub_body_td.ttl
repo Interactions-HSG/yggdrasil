@@ -70,15 +70,13 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/test/artifacts/test/#artifact>;
+  hmas:contains <workspaces/sub/#workspace>, <workspaces/test/artifacts/kai/#artifact>;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ] .
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/test/> hmas:contains <workspaces/sub/> .
+<workspaces/sub/#workspace> a hmas:Workspace .
 
-<workspaces/sub/> a hmas:Workspace .
-
-<workspaces/test/artifacts/test/#artifact> a hmas:Artifact, jacamo:Body .
+<workspaces/test/artifacts/kai/#artifact> a hmas:Artifact, jacamo:Body .

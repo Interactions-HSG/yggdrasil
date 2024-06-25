@@ -31,7 +31,7 @@ public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
-  private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/artifacts/test";
+  private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/artifacts/kai/";
   private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
   private static final String COUNTER_ARTIFACT_URI = SUB_WORKSPACE_URI + "/artifacts/c0/";
   private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_sub_td.ttl";
@@ -136,17 +136,20 @@ public class RdfStoreVerticleDeleteTest {
             platformUpdateMessage.requestIri(),
             URIS_EQUAL_MESSAGE
           );
+
           final var deletionMessage =
             (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
             deletedWorkspaceDescription,
             deletionMessage.content()
           );
+
           Assertions.assertEquals(
             TEST_WORKSPACE_URI,
             deletionMessage.requestIri(),
             URIS_EQUAL_MESSAGE
           );
+
           final var bodyDeletionMessage =
             (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -171,7 +174,7 @@ public class RdfStoreVerticleDeleteTest {
             subWorkspaceDeletionMessage.content()
           );
           Assertions.assertEquals(
-            SUB_WORKSPACE_URI,
+            SUB_WORKSPACE_URI + "/",
             subWorkspaceDeletionMessage.requestIri(),
             URIS_EQUAL_MESSAGE
           );

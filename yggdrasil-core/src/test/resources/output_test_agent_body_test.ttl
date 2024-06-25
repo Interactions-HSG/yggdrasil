@@ -9,8 +9,8 @@
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
   hmas:isContainedIn <workspaces/test/#workspace>;
-  jacamo:isBodyOf <agent/kai> .
+  jacamo:isBodyOf <agents/kai> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
 
-<agent/kai> a hmas:Agent .
+<agents/kai> a hmas:Agent .
