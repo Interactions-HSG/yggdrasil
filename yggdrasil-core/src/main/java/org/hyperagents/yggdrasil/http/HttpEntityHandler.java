@@ -86,7 +86,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   public void handleGetEntity(final RoutingContext routingContext) {
-    final var entityIri = this.httpConfig.getBaseUri() + routingContext.request().path().substring(1);
+    final var entityIri = routingContext.request().absoluteURI();
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
       .onComplete(
@@ -97,12 +97,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleCreateWorkspaceJson(final RoutingContext context) {
     final var workspaceName = context.request().getHeader("Slug");
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
-    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
-
-    // remove any double slashes that are not part of the protocol
-    String regex = "(?<!:)//";
-
-    final var cleanRequestUri = requestUri.replaceAll(regex, "/");
+    final var requestUri = context.request().absoluteURI();
 
     if (agentId == null) {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -116,7 +111,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              cleanRequestUri,
+              requestUri,
               nameResponse.body(),
               Optional.empty(),
               response.body()
@@ -157,7 +152,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleCreateArtifactJson(final RoutingContext context) {
     final var representation = context.body().asString();
-    final var requestUri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1) + context.request().path();
+    final var requestUri = context.request().absoluteURI();
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var artifactName =
       ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
@@ -194,7 +189,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleCreateArtifactTurtle(final RoutingContext context, final String entityRepresentation) {
     // TODO: FORGETTING TO ADD ENTITY REPRESENTATION TO MODEL?
-    final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
+    final var requestUri = context.request().absoluteURI();
     final var hint = context.request().getHeader("Slug");
     final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
