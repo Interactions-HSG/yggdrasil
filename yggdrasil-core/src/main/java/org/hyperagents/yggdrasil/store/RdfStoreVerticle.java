@@ -375,12 +375,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
             if (content.parentWorkspaceUri().isPresent()) {
               final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get().endsWith("/") ? content.parentWorkspaceUri().get() : content.parentWorkspaceUri().get() + "/");
               entityModel.add(
-                resourceIRI,
+                workspaceIRI,
                   RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-                  parentIri
+                  RdfModelUtils.createIri(parentIri + "#workspace")
               );
               entityModel.add(
-                  parentIri,
+                  RdfModelUtils.createIri(parentIri + "#workspace"),
                   RDF.TYPE,
                   RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
               );
@@ -388,12 +388,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   .getEntityModel(parentIri)
                   .ifPresent(Failable.asConsumer(parentModel -> {
                     parentModel.add(
-                        parentIri,
+                        RdfModelUtils.createIri(parentIri + "#workspace"),
                         RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                      resourceIRI
+                      workspaceIRI
                     );
                     parentModel.add(
-                      resourceIRI,
+                      workspaceIRI,
                         RDF.TYPE,
                         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                     );
@@ -600,7 +600,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               } else {
                 entityModel
                     .filter(
-                      fixedEntityIri,
+                      workspaceIriResource,
                       RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
                       null
                     )
@@ -609,29 +609,31 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
                     .flatMap(Optional::stream)
                     .findFirst()
-                    .ifPresent(Failable.asConsumer(parentIri ->
+                    .ifPresent(Failable.asConsumer(parentIri ->{
+                      // strip fragments
+                      final var parentIriDefragmented = parentIri.getNamespace().replace("#","");
                       this.store
-                          .getEntityModel(parentIri)
+                          .getEntityModel(RdfModelUtils.createIri(parentIriDefragmented))
                           .ifPresent(Failable.asConsumer(parentModel -> {
                             parentModel.remove(
                                 parentIri,
                                 RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                              fixedEntityIri
+                              workspaceIriResource
                             );
                             parentModel.remove(
-                              fixedEntityIri,
+                              workspaceIriResource,
                                 RDF.TYPE,
                                 RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                             );
-                            this.store.replaceEntityModel(parentIri, parentModel);
+                            this.store.replaceEntityModel(RdfModelUtils.createIri(parentIriDefragmented), parentModel);
                             this.dispatcherMessagebox.sendMessage(
                               new HttpNotificationDispatcherMessage.EntityChanged(
                                 parentIri.toString(),
                                 RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,this.httpConfig.getBaseUri())
                               )
                             );
-                          }))
-                    ));
+                          }));
+              }));
               }
               this.removeResourcesRecursively(fixedEntityIri);
             }
