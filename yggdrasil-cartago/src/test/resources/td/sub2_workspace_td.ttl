@@ -8,7 +8,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<http://localhost:8080/workspaces/sub2/> a td:Thing, hmas:Workspace;
+<http://localhost:8080/workspaces/sub2/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub2";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -23,7 +23,7 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema;
               js:propertyName "artifactClass";
-              js:enum ex:Adder, ex:Counter, ex:Sign, ex:Math
+              js:enum ex:Adder, ex:Counter, ex:Math
             ], [ a js:ArraySchema;
               js:propertyName "initParams"
             ], [ a js:StringSchema;
