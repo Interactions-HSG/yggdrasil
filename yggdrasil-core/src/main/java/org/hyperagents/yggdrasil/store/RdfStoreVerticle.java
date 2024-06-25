@@ -650,7 +650,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var iri = stack.removeLast();
       this.store.getEntityModel(iri)
                 .ifPresent(Failable.asConsumer(model -> {
-                  final var iriResource = RdfModelUtils.createIri(iri + "/#workspace");
+                  final var iriResource = RdfModelUtils.createIri(iri.toString().endsWith("/") ? iri + "#workspace" : iri + "/#workspace");
                   model
                       .filter(
                         iriResource,
