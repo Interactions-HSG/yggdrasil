@@ -14,6 +14,7 @@ import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.JsonParser;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
@@ -30,12 +31,18 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 public abstract class HypermediaTDArtifact extends Artifact implements HypermediaArtifact {
+  private static final String DEFAULT_CONFIG_VALUE = "default";
+
   private final ListMultimap<String, ActionAffordance> actionAffordances =
     Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Map<String, Integer> feedbackActions = new HashMap<>();
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
-  private HttpInterfaceConfig httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
+  private HttpInterfaceConfig httpConfig = Vertx.currentContext()
+    .owner()
+    .sharedData()
+    .<String, HttpInterfaceConfig>getLocalMap("http-config")
+    .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
     new RepresentationFactoryTDImplt(this.httpConfig);
   private SecurityScheme securityScheme = new NoSecurityScheme();
