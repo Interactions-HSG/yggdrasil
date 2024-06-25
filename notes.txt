@@ -80,9 +80,6 @@ TODOS:
   Rewriting of DefaultHttpHandlers since we always need cartago atm
   -> What to do about that?
 
-++ TESTING OPFEEDBACK PARAMS ++ EXTENDABLE OR NOT
-++ Cartago Events            ++
-
 
 ++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
   ++ NEW REPRESENTATION
@@ -98,14 +95,12 @@ TODOS:
 
 + Deleting an Entity doesnt delete it from cartago
 
-+ Question on uniform representation of how containment is represented:
-    <workspaces/sub/> a hmas:ResourceProfile;
-      hmas:isContainedIn <workspaces/test/> .
-    <workspaces/test/> a hmas:Workspace .
++ update TD representation same as HMAS
 
-    vs:
-    <workspaces/test/> a hmas:ResourceProfile;
-      hmas:isProfileOf <workspaces/test/#workspace>.
++ description of feedbackparams
 
-    <workspaces/test/#workspace> a hmas:Workspace;
-      hmas:isHostedOn <#platform> .
++ display error if user tries to start yggdrasil without specifying ontology in environment conf
+
++ add testcase for artifact with feedbackparam and no payload
+
+

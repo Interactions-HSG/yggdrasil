@@ -366,7 +366,6 @@ public class CartagoVerticle extends AbstractVerticle {
       listOfParams.add(new OpFeedbackParam<>());
     }
 
-
     Optional<String> finalPayload = payload;
     final var operation =
       payload
@@ -381,7 +380,12 @@ public class CartagoVerticle extends AbstractVerticle {
               : params
           );
         })
-        .orElseGet(() -> new Op(action));
+        .orElseGet(() -> {
+          if (registry.hasFeedbackParam(artifactName, action)) {
+            return new Op(action, listOfParams.stream().toArray());
+          }
+          return new Op(action);
+        });
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     final var agentName = this.getAgentNameFromAgentUri(agentUri);

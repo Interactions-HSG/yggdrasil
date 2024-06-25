@@ -40,8 +40,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             new Form.Builder(this.httpConfig.getWorkspacesUri())
               .setMethodName(HttpMethod.POST.name())
               .build()
-          )
-            .build()
+          ).addSemanticType("https://purl.org/hmas/jacamo/CreateArtifact")
+           .build()
         )
     );
   }
@@ -66,7 +66,9 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                 .Builder()
                 .addProperty(
                   "artifactClass",
-                  new StringSchema.Builder().addEnum(artifactTemplates).build()
+                  new StringSchema.Builder().addEnum(artifactTemplates)
+                    .addSemanticType("https://purl.org/hmas/jacamo/ArtifactTemplate")
+                    .build()
                 )
                 .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
                 .addProperty("initParams", new ArraySchema.Builder().build())
