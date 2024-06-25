@@ -109,7 +109,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put(WORKSPACE_PATH)
           .consumes(TURTLE_CONTENT_TYPE)
           .handler(handler::handleUpdateEntity);
-    router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    router.delete(WORKSPACE_PATH + "/").handler(handler::handleDeleteEntity);
     router.delete(WORKSPACE_PATH).handler(handler::handleDeleteEntity);
 
     router.post(WORKSPACE_PATH + "/join/").handler(handler::handleRedirectWithoutSlash);

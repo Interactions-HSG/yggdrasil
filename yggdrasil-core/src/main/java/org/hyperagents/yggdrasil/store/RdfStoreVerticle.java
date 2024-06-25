@@ -557,29 +557,35 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 )
               );
             } else if (entityModel.contains(
-              fixedEntityIri,
+                RdfModelUtils.createIri(fixedIri + "/#workspace"),
                 RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                 RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
             )) {
               final var workspaceIri = fixedEntityIri.toString();
+              final var workspaceIriResource = RdfModelUtils.createIri(
+                fixedEntityIri + "/#workspace"
+              );
               final var platformIri = RdfModelUtils.createIri(
                   workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
               );
+              final var platformIriResource = RdfModelUtils.createIri(
+                this.httpConfig.getBaseUri() + "#platform"
+              );
               if (entityModel.contains(
-                fixedEntityIri,
+                workspaceIriResource,
                   RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
-                  platformIri
+                  platformIriResource
               )) {
                 this.store
                     .getEntityModel(platformIri)
                     .ifPresent(Failable.asConsumer(platformModel -> {
                       platformModel.remove(
-                          platformIri,
+                          platformIriResource,
                           RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
-                        fixedEntityIri
+                        workspaceIriResource
                       );
                       platformModel.remove(
-                        fixedEntityIri,
+                        workspaceIriResource,
                           RDF.TYPE,
                           RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                       );
