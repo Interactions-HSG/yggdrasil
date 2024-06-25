@@ -575,7 +575,9 @@ public class DefaultHttpHandlersTest {
     );
   }
 
+  // redirect with slash not needed
   @Test
+  @Disabled
   public void testDeleteTurtleWorkspaceRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,

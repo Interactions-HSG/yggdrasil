@@ -2,14 +2,15 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
 <> a td:Thing, hmas:HypermediaMASPlatform;
-  td:title "yggdrasil";
+  td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance;
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:CreateWorkspace;
       td:name "createWorkspace";
       td:hasForm [
           htv:methodName "POST";
