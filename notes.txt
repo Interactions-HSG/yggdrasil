@@ -103,5 +103,7 @@ TODOS:
 
 + add testcase for artifact with feedbackparam and no payload
 
++ add testcase where base is not localhost:8080
+
 + update swagger api docs
 

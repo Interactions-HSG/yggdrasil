@@ -103,8 +103,7 @@
             ]
         ]
     ];
-  hmas:isProfileOf <workspaces/sub/#workspace>;
-  hmas:isContainedIn <workspaces/test/>.
+  hmas:isProfileOf <workspaces/sub/#workspace>.
 
 <workspaces/sub/#registerArtifactForm> a hctl:Form;
   hctl:hasTarget <workspaces/sub/artifacts/>;
@@ -268,6 +267,7 @@ ex:artifact-shape a sh:Shape;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<workspaces/sub/#workspace> a hmas:Workspace .
+<workspaces/sub/#workspace> a hmas:Workspace;
+  hmas:isContainedIn <workspaces/test/#workspace> .
 
-<workspaces/test/> a hmas:Workspace .
+<workspaces/test/#workspace> a hmas:Workspace .

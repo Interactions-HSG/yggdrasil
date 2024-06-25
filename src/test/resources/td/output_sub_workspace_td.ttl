@@ -7,12 +7,13 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
 <workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance;
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:MakeArtifact;
       td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -21,17 +22,17 @@
           hctl:hasOperationType td:invokeAction
         ];
       td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
+          js:properties [ a js:StringSchema, jacamo:ArtifactTemplate;
               js:propertyName "artifactClass";
               js:enum ex:Counter, ex:Artifact
-            ], [ a js:ArraySchema;
+            ], [ a js:ArraySchema, jacamo:InitParams;
               js:propertyName "initParams"
-            ], [ a js:StringSchema;
+            ], [ a js:StringSchema, jacamo:ArtifactName;
               js:propertyName "artifactName"
             ];
           js:required "artifactClass", "artifactName"
         ]
-    ], [ a td:ActionAffordance;
+    ], [ a td:ActionAffordance, jacamo:JoinWorkspace;
       td:name "joinWorkspace";
       td:hasForm [
           htv:methodName "POST";
@@ -39,7 +40,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance;
+    ], [ a td:ActionAffordance, jacamo:QuitWorkspace;
       td:name "quitWorkspace";
       td:hasForm [
           htv:methodName "POST";
@@ -47,7 +48,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance;
+    ], [ a td:ActionAffordance, jacamo:Focus;
       td:name "focus";
       td:hasForm [
           htv:methodName "POST";
@@ -63,7 +64,7 @@
             ];
           js:required "artifactName", "callbackIri"
         ]
-    ], [ a td:ActionAffordance;
+    ], [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
       td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
@@ -71,7 +72,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ].
-<workspaces/sub/>  hmas:isContainedIn <workspaces/test/> .
+    ];
+  hmas:isContainedIn <workspaces/test/#workspace> .
 
-<workspaces/test/> a hmas:Workspace .
+<workspaces/test/#workspace> a hmas:Workspace .

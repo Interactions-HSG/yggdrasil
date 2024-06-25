@@ -102,8 +102,7 @@
             ]
         ]
     ], <workspaces/test/#subscribeToWorkspace>;
-  hmas:isProfileOf <workspaces/test/#workspace>;
-  hmas:contains <workspaces/sub/>.
+  hmas:isProfileOf <workspaces/test/#workspace>.
 
 <workspaces/test/#unsubscribeFromWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -268,8 +267,9 @@ ex:artifact-shape a sh:Shape;
     ] .
 
 <workspaces/test/#workspace> a hmas:Workspace;
+  hmas:contains <workspaces/sub/#workspace> ;
   hmas:isHostedOn <#platform> .
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/sub/> a hmas:Workspace .
+<workspaces/sub/#workspace> a hmas:Workspace .

@@ -617,11 +617,16 @@ public class BodyNotificationTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
+    var areEqual =
+      Models.isomorphic(
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+      );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-        Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
-        ),
+        areEqual,
         REPRESENTATIONS_EQUAL_MESSAGE
     );
   }

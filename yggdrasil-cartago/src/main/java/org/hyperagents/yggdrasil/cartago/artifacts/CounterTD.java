@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
-import cartago.OpFeedbackParam;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
@@ -16,10 +15,9 @@ public class CounterTD extends HypermediaTDArtifact {
   }
 
   @OPERATION
-  public void inc(OpFeedbackParam<Integer> test) {
+  public void inc() {
     final var prop = this.getObsProperty("count");
     prop.updateValue(prop.intValue() + 1);
-    test.set(10);
     System.out.println("count incremented");
   }
 
@@ -27,6 +25,5 @@ public class CounterTD extends HypermediaTDArtifact {
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema
     this.registerActionAffordance("http://example.org/Increment", "inc", "increment");
-    this.registerFeedbackParameters("inc", 1);
   }
 }

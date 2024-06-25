@@ -214,6 +214,7 @@ public class StaticEnvironmentConfigurationTest {
     );
   }
   private void assertEqualsHMASDescriptions(final String expected, final String actual) {
+    System.out.println(actual);
     Assertions.assertTrue(
       Models.isomorphic(
         ResourceProfileGraphReader.getModelFromString(expected),
