@@ -46,21 +46,32 @@ public class MathTD extends HypermediaTDArtifact {
       new ArraySchema.Builder()
         .addItem(new IntegerSchema.Builder().build())
         .addItem(new IntegerSchema.Builder().build())
+        .build(),
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    this.registerFeedbackParameters("egcd",3);
     this.registerActionAffordance(
       "http://example.org/rand",
       "rand",
-      "rand"
+      "rand",
+      null,
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .build()
     );
-    this.registerFeedbackParameters("rand",1);
     this.registerActionAffordance(
       "http://example.org/rand2",
       "rand2",
-      "rand2"
+      "rand2",
+      null,
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
+        .build()
     );
-    this.registerFeedbackParameters("rand2",2);
   }
 
   public static int[] extendedEuclidean(int a, int b) {

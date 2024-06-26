@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -142,7 +143,17 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       final String relativeUri,
       final IOSpecification inputSchema
   ) {
-    this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema);
+    this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema, null);
+  }
+
+  protected final void registerSignifier(
+    final String actionClass,
+    final String actionName,
+    final String relativeUri,
+    final IOSpecification inputSchema,
+    final IOSpecification outputSchema
+  ) {
+    this.registerSignifier(actionClass,actionName, "POST", relativeUri, inputSchema, outputSchema);
   }
 
   protected final void registerSignifier(
@@ -150,7 +161,8 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       final String actionName,
       final String methodName,
       final String relativeUri,
-      final IOSpecification inputSchema
+      final IOSpecification inputSchema,
+      final IOSpecification outputSchema
       // IO Output
   ) {
 
@@ -167,6 +179,10 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
     if (inputSchema != null) {
       actionSpecification.setInputSpecification(inputSchema);
+    }
+
+    if (outputSchema != null) {
+      actionSpecification.setOutputSpecification(outputSchema);
     }
 
     final var signifier = new Signifier.Builder(actionSpecification.build())
@@ -209,7 +225,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
 
-  public Optional<String> handleAction(String storeResponse, String actionName, String context)
+  public Optional<String> handleInput(String storeResponse, String actionName, String context)
   {
 
     final var workspaceName = this.getId().getWorkspaceId().getName();
@@ -235,6 +251,42 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
         ).describeConstable();
       }
     return description;
+  }
+  public Integer handleOutputParams(String storeResponse, String actionName, String context) {
+    final var workspaceName = this.getId().getWorkspaceId().getName();
+    final var artifactName = this.getId().getName();
+
+    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+
+
+    final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
+
+
+    var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
+      .filter(sig -> sig.getIRIAsString().isPresent())
+      .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
+      .findFirst();
+    if (signifier.isPresent() && signifier.get().getActionSpecification().getOutputSpecification().isPresent()) {
+      var output = signifier.get().getActionSpecification().getOutputSpecification().get();
+      QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) output;
+      return getLengthOfQualifiedValueSpecificationList(qualifiedValueSpecification);
+    }
+    return 0;
+  }
+
+  private int getLengthOfQualifiedValueSpecificationList(final QualifiedValueSpecification qualifiedValueSpecification) {
+    final var temp = qualifiedValueSpecification.getPropertySpecifications();
+    int lengthOfList = 0;
+
+    while(!temp.isEmpty()) {
+      lengthOfList++;
+      temp.remove(RDF.FIRST.stringValue());
+      var rest = temp.remove(RDF.REST.stringValue());
+      if(rest instanceof QualifiedValueSpecification) {
+        temp.putAll(((QualifiedValueSpecification) rest).getPropertySpecifications());
+      }
+    }
+    return lengthOfList;
   }
 
 }

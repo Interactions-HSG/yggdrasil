@@ -6,7 +6,6 @@ import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
 
-
 public class AdderTD extends HypermediaTDArtifact {
   @OPERATION
   public void add(final int x, final int y, final OpFeedbackParam<Integer> sumParam) {
@@ -24,8 +23,10 @@ public class AdderTD extends HypermediaTDArtifact {
       new ArraySchema.Builder()
         .addItem(new IntegerSchema.Builder().build())
         .addItem(new IntegerSchema.Builder().build())
+        .build(),
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    this.registerFeedbackParameters("add",1);
   }
 }

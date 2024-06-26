@@ -142,7 +142,17 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     final String relativeUri,
     final DataSchema inputSchema
   ) {
-    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
+    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema, null);
+  }
+
+  protected final void registerActionAffordance(
+    final String actionClass,
+    final String actionName,
+    final String relativeUri,
+    final DataSchema inputSchema,
+    final DataSchema outputSchema
+    ) {
+    this.registerActionAffordance(actionClass,actionName,"POST",relativeUri,inputSchema,outputSchema);
   }
 
   protected final void registerActionAffordance(
@@ -150,7 +160,8 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     final String actionName,
     final String methodName,
     final String relativeUri,
-    final DataSchema inputSchema
+    final DataSchema inputSchema,
+    final DataSchema outputSchema
   ) {
     final var actionBuilder =
       new ActionAffordance
@@ -162,12 +173,17 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       )
         .addSemanticType(actionClass)
         .addTitle(actionName);
+
+    if (inputSchema != null) {
+      actionBuilder.addInputSchema(inputSchema);
+    }
+    if (outputSchema != null) {
+      actionBuilder.addOutputSchema(outputSchema);
+    }
+
     this.registerActionAffordance(
       actionName,
-      Optional.ofNullable(inputSchema)
-        .map(actionBuilder::addInputSchema)
-        .orElse(actionBuilder)
-        .build()
+      actionBuilder.build()
     );
   }
 
@@ -204,7 +220,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.metadata.addAll(model);
   }
 
-  public Optional<String> handleAction(String storeResponse, String actionName, String context)
+  public Optional<String> handleInput(String storeResponse, String actionName, String context)
   {
     return TDGraphReader
       .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
@@ -221,6 +237,26 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
         ((ArraySchema) inputSchema)
           .parseJson(JsonParser.parseString(context))
       ));
+  }
+
+  public Integer handleOutputParams(String storeResponse, String actionName, String context) {
+    final var action = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
+      .getActions()
+      .stream()
+      .filter(
+        a -> a.getTitle().isPresent()
+        && a.getTitle().get().equals(actionName)
+      ).findFirst();
+
+
+    if(action.isPresent() && action.get().getOutputSchema().isPresent()) {
+      final var outputSchema = action.get().getOutputSchema().get();
+      if (outputSchema.getDatatype().equals(DataSchema.ARRAY)) {
+        final var arraySchema = (ArraySchema) outputSchema;
+        return arraySchema.getItems().size();
+      }
+    }
+    return 0;
   }
 
 }

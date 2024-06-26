@@ -57,6 +57,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
 
+  private final boolean environment;
+
   public HttpEntityHandler(
     final Vertx vertx,
     final HttpInterfaceConfig httpConfig,
@@ -72,6 +74,10 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     this.notificationMessagebox =
       new HttpNotificationDispatcherMessagebox(vertx.eventBus(), this.notificationConfig);
+
+    // Should be able to use this boolean value to decide if we use cartago messages or not
+    // that way the router does not need to check for routes itself
+    this.environment = environmentConfig.isEnabled();
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -177,9 +183,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
             .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
         )
-        .onFailure(r -> {
-          context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
-        }))
+        .onFailure(r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()))
     ;
   }
 
@@ -290,6 +294,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
       return;
     }
+
+
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
       .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));

@@ -16,6 +16,14 @@
       {
         "class": "http://example.org/Artifact",
         "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
+      },
+      {
+        "class" : "http://example.org/Math",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathTD"
+      },
+      {
+        "class" : "http://example.org/Adder",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderTD"
       }
     ],
     "enabled" : true,

@@ -355,14 +355,15 @@ public class CartagoVerticle extends AbstractVerticle {
 
     Optional<String> payload;
     try {
-      payload = hypermediaArtifact.handleAction(storeResponse,action,context);
+      payload = hypermediaArtifact.handleInput(storeResponse,action,context);
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
 
 
     var listOfParams = new ArrayList<OpFeedbackParam>();
-    for (int i = 0; i < registry.getFeedbackParam(artifactName,action); i++) {
+    var numberOfFeedbackParams = hypermediaArtifact.handleOutputParams(storeResponse,action,context);
+    for (int i = 0; i < numberOfFeedbackParams; i++) {
       listOfParams.add(new OpFeedbackParam<>());
     }
 
@@ -374,15 +375,15 @@ public class CartagoVerticle extends AbstractVerticle {
 
           return new Op(
             action,
-            registry.hasFeedbackParam(artifactName, action)
+            numberOfFeedbackParams > 0
               ? Stream.concat(Arrays.stream(params), listOfParams.stream())
               .toArray()
               : params
           );
         })
         .orElseGet(() -> {
-          if (registry.hasFeedbackParam(artifactName, action)) {
-            return new Op(action, listOfParams.stream().toArray());
+          if (numberOfFeedbackParams > 0) {
+            return new Op(action, listOfParams.toArray());
           }
           return new Op(action);
         });

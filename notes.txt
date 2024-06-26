@@ -49,18 +49,21 @@ TODOS:
 + Signal works
 
 + Deleting an Entity doesnt delete it from cartago
+  Currently Deleting is not a cartago message need to add that handling
 
 + update TD representation same as HMAS
+  Need to add basics such as websub handling
 
 + description of feedbackparams
+  -> artifacts should also register the output representation the same as input
 
 + display error if user tries to start yggdrasil without specifying ontology in environment conf
 
-+ add testcase for artifact with feedbackparam and no payload
 
 + add testcase where base is not localhost:8080
 
 + update swagger api docs
+  leaveWorkspace also needs AgentLocalName
 
 
 TESTS:

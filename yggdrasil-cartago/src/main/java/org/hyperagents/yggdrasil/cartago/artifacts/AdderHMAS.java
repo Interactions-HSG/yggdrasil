@@ -52,8 +52,27 @@ public class AdderHMAS extends HypermediaHMASArtifact {
                 .build()
             )
             .build())
+        .build(),
+      new QualifiedValueSpecification.Builder()
+        .setIRIAsString("http://example.org/AddResult")
+        .setRequired(true)
+        .addRequiredSemanticType(RDF.LIST.stringValue())
+        .addPropertySpecification(
+          RDF.FIRST.stringValue(),
+          new IntegerSpecification.Builder()
+            .setName("Result")
+            .setRequired(true)
+            .build()
+        )
+        .addPropertySpecification(
+          RDF.REST.stringValue(),
+          new ValueSpecification.Builder()
+            .addRequiredSemanticType(RDF.LIST.stringValue())
+            .setValueAsString(RDF.NIL.stringValue())
+            .setRequired(true)
+            .build()
+        )
         .build()
     );
-    this.registerFeedbackParameter("add");
   }
 }
