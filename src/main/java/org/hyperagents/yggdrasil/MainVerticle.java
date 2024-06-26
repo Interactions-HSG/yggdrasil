@@ -16,9 +16,6 @@ import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
 
-import java.util.Objects;
-
-
 /**
  * This is the MainVerticle of the Application.
  * <p>
@@ -30,37 +27,56 @@ public class MainVerticle extends AbstractVerticle {
 
   @Override
   public void start(final Promise<Void> startPromise) {
-    var config = ConfigRetriever.create(this.vertx).getConfig().result();
+    ConfigRetriever.create(this.vertx)
+                   .getConfig()
+                   .compose(c -> {
 
-    // HttpConfig
-    final var httpConfig = new HttpInterfaceConfigImpl(config);
-    this.vertx.sharedData()
-              .<String, HttpInterfaceConfig>getLocalMap("http-config")
-              .put(DEFAULT_CONF_VALUE, httpConfig);
+                     // HttpConfig
+                     final var httpConfig = new HttpInterfaceConfigImpl(c);
+                     this.vertx.sharedData()
+                               .<String, HttpInterfaceConfig>getLocalMap("http-config")
+                               .put(DEFAULT_CONF_VALUE, httpConfig);
 
-    // EnvironmentConfig
-    final var environmentConfig = new EnvironmentConfigImpl(config);
-    this.vertx.sharedData()
-              .<String, EnvironmentConfig>getLocalMap("environment-config")
-              .put(DEFAULT_CONF_VALUE, environmentConfig);
+                     // EnvironmentConfig
+                     final var environmentConfig = new EnvironmentConfigImpl(c);
+                     this.vertx.sharedData()
+                               .<String, EnvironmentConfig>getLocalMap("environment-config")
+                               .put(DEFAULT_CONF_VALUE, environmentConfig);
 
-    // NotificationConfig
-    final var notificationConfig = new WebSubConfigImpl(config, httpConfig);
-    this.vertx.sharedData()
-              .<String, WebSubConfig>getLocalMap("notification-config")
-              .put(DEFAULT_CONF_VALUE, notificationConfig);
+                     // NotificationConfig
+                     final var notificationConfig = new WebSubConfigImpl(c, httpConfig);
+                     this.vertx.sharedData()
+                               .<String, WebSubConfig>getLocalMap("notification-config")
+                               .put(DEFAULT_CONF_VALUE, notificationConfig);
 
-    // Environment
-    this.vertx.sharedData()
-              .<String, Environment>getLocalMap("environment")
-              .put(DEFAULT_CONF_VALUE, EnvironmentParser.parse(config));
+                     // Environment
+                     this.vertx.sharedData()
+                               .<String, Environment>getLocalMap("environment")
+                               .put(DEFAULT_CONF_VALUE, EnvironmentParser.parse(c));
 
-    // start the verticles
-    this.vertx.deployVerticle(new HttpServerVerticle())
-              .compose(v -> this.vertx.deployVerticle(new RdfStoreVerticle(), new DeploymentOptions().setConfig(config)))
-              .compose(v -> notificationConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.websub.HttpNotificationVerticle") : Future.succeededFuture())
-              .compose(v -> environmentConfig.isEnabled() ? this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticle") : Future.succeededFuture())
-              .<Void>mapEmpty()
-              .onComplete(startPromise);
+                     // start the verticles
+                     return this.vertx
+                                .deployVerticle(new HttpServerVerticle())
+                                .compose(v -> this.vertx.deployVerticle(
+                                  new RdfStoreVerticle(),
+                                  new DeploymentOptions().setConfig(c)
+                                ))
+                                .compose(v ->
+                                  notificationConfig.isEnabled()
+                                  ? this.vertx.deployVerticle(
+                                      "org.hyperagents.yggdrasil.websub.HttpNotificationVerticle"
+                                    )
+                                  : Future.succeededFuture()
+                                )
+                                .compose(v ->
+                                  new EnvironmentConfigImpl(c).isEnabled()
+                                  ? this.vertx.deployVerticle(
+                                      "org.hyperagents.yggdrasil.cartago.CartagoVerticle"
+                                    )
+                                  : Future.succeededFuture()
+                                );
+                   })
+                   .<Void>mapEmpty()
+                   .onComplete(startPromise);
   }
 }
