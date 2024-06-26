@@ -869,6 +869,73 @@ public class CartagoVerticleTDTest {
       ))
       .onComplete(ctx.succeedingThenComplete());
   }
+
+  @Test
+  public void testDoActionSucceedsWithNoPayloadButOneFeedBackParams(final VertxTestContext ctx) {
+    this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(
+          TEST_AGENT_IRI,
+          MAIN_WORKSPACE_NAME,
+          "m0",
+          Json.encode(Map.of(
+            ARTIFACT_SEMANTIC_TYPE_PARAM,
+            MATH_SEMANTIC_TYPE,
+            ARTIFACT_INIT_PARAMS,
+            List.of()
+          ))
+        )))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.DoAction(
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "m0",
+            "POSThttp://localhost:8080/workspaces/test/artifacts/m0/rand",
+            r.body(),
+            ""
+          )
+        ))
+      .onSuccess(r -> Assertions.assertNotNull(
+        r.body(),
+        "Should be random integer"
+      ))
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testDoActionSucceedsWithNoPayloadButTwoFeedBackParams(final VertxTestContext ctx) {
+    this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.CreateArtifact(
+          TEST_AGENT_IRI,
+          MAIN_WORKSPACE_NAME,
+          "m0",
+          Json.encode(Map.of(
+            ARTIFACT_SEMANTIC_TYPE_PARAM,
+            MATH_SEMANTIC_TYPE,
+            ARTIFACT_INIT_PARAMS,
+            List.of()
+          ))
+        )))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.DoAction(
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "m0",
+            "POSThttp://localhost:8080/workspaces/test/artifacts/m0/rand2",
+            r.body(),
+            ""
+          )
+        ))
+      .onSuccess(r -> Assertions.assertNotNull(
+        r.body(),
+        "Should be two random integer"
+      ))
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
   @Test
   public void testDoActionFailsWithNonexistentWorkspace(final VertxTestContext ctx) {
     this.cartagoMessagebox

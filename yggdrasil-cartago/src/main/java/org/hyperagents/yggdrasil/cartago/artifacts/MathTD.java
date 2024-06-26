@@ -5,6 +5,8 @@ import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 
+import java.util.Random;
+
 
 public class MathTD extends HypermediaTDArtifact {
   @OPERATION
@@ -15,6 +17,24 @@ public class MathTD extends HypermediaTDArtifact {
     x.set(temp[1]);
     y.set(temp[2]);
     this.log("GCD: "+ gcd.get() +",x: " + x.get() + ",y: " + y.get());
+  }
+
+  @OPERATION
+  public void rand(final OpFeedbackParam<Integer> randomInt) {
+    Random rand = new Random();
+    int randInt = rand.nextInt();
+    System.out.println("Random Integer: " + randInt);
+    randomInt.set(randInt);
+  }
+
+  @OPERATION
+  public void rand2(final OpFeedbackParam<Integer> randInt1, final OpFeedbackParam<Integer> randInt2) {
+    Random rand = new Random();
+    int one = rand.nextInt();
+    int two = rand.nextInt();
+    System.out.println("one: " + one + " two: " + two);
+    randInt1.set(one);
+    randInt2.set(two);
   }
 
   @Override
@@ -29,6 +49,18 @@ public class MathTD extends HypermediaTDArtifact {
         .build()
     );
     this.registerFeedbackParameters("egcd",3);
+    this.registerActionAffordance(
+      "http://example.org/rand",
+      "rand",
+      "rand"
+    );
+    this.registerFeedbackParameters("rand",1);
+    this.registerActionAffordance(
+      "http://example.org/rand2",
+      "rand2",
+      "rand2"
+    );
+    this.registerFeedbackParameters("rand2",2);
   }
 
   public static int[] extendedEuclidean(int a, int b) {

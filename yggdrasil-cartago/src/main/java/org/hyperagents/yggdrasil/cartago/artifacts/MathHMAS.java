@@ -7,6 +7,8 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
+import java.util.Random;
+
 
 public class MathHMAS extends HypermediaHMASArtifact {
   @OPERATION
@@ -19,6 +21,22 @@ public class MathHMAS extends HypermediaHMASArtifact {
     this.log("GCD: "+ gcd.get() +",x: " + x.get() + ",y: " + y.get());
   }
 
+  @OPERATION
+  public void rand(final OpFeedbackParam<Integer> randomInt) {
+   Random rand = new Random();
+   int randInt = rand.nextInt();
+   System.out.println("Random int: " + randInt);
+   randomInt.set(randInt);
+  }
+  @OPERATION
+  public void rand2(final OpFeedbackParam<Integer> randInt1, final OpFeedbackParam<Integer> randInt2) {
+    Random rand = new Random();
+    int one = rand.nextInt();
+    int two = rand.nextInt();
+    System.out.println("one: " + one + " two: " + two);
+    randInt1.set(one);
+    randInt2.set(two);
+  }
   @Override
   protected void registerInteractionAffordances() {
     this.registerSignifier(
@@ -58,6 +76,18 @@ public class MathHMAS extends HypermediaHMASArtifact {
         .build()
     );
     this.registerFeedbackParameters("egcd",3);
+    this.registerSignifier(
+      "http://example.org/rand",
+      "rand",
+      "rand"
+    );
+    this.registerFeedbackParameters("rand",1);
+    this.registerSignifier(
+      "http://example.org/rand2",
+      "rand2",
+      "rand2"
+    );
+    this.registerFeedbackParameters("rand2",2);
   }
 
   public static int[] extendedEuclidean(int a, int b) {

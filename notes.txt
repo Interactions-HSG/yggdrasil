@@ -1,7 +1,4 @@
 ! MOST IMPORTANT FOR RELEASE !
-+ Try to pull handleAction method into Artifacts themselves -> HypermediaArtifact should handle the action <- DONE
-+ look at feedbackParams specifically <- DONE theyre there
-+ add slug to body for joinworkspace <- DONE
 
 + websub check
 
@@ -13,14 +10,6 @@
 
 ++ LIST OF FEATURES ++
 - WebID
-- Issues on Github:
-  - Artifacts currently expose Thing Descriptions but agents have no such profile. Profiles for agents should be created.
-    - tbd
-  - The actions that the agents use to interact with the Web of Things and process JSON documents are defined within the agent architecture.
-    These actions should instead be made available through libraries.
-    - close issue
-
-
   - Issue 39 & 40 - Regarding WebID & Change of join / leave API
     - Change that join and leave refer to agent body resource.
       - Joining would be done by POST request to body.
@@ -34,9 +23,6 @@
       - Agents are representations are just artifacts
 
 
-  - Issue 43 - Should be solved with RepresentationFactoryFactory
-
-
   - Issue 44 - Update architecture file
 
 
@@ -45,35 +31,7 @@
     -> Should only be used by cartago verticle already
     -> Except for 1 method in HttpHandler for handleAction
 
-
 - Check Correct URIs everywhere
-
-
-- Add Tests
-  - TEST CASES WITH DIFFERENT SLUG CASES -> what happens if slug already taken
-    - Added testcase for Workspaces
-  - ADD TEST FOR TURTLE ARTIFACT CREATION
-    - tests present
-  - ADD TEST FOR TURTLE WORKSPACE CREATION
-    - tests present
-  - STATUS CODE TESTS ACCORDING TO SWAGGER SPECS
-    - tests present
-
-
-
-QUESTIONS:
- - Graph queries
- -> Correct representation of resource profile and the actual #things
-  -> <workspaces/sub/> hmas:isContainedIn <workspaces/test/> .
-  -> <workspaces/test/> a hmas:Workspace .
-  BUT
-  -> <workspaces/sub/#workspace> hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
-  -> <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .
-
-  -> Would need to overhaul the TDs a bit so that graph queries work?
-
- - DELETE only removes from rdf store not cartago?
- - ADD TO CARTAGO
 
 TODOS:
   Still need to write the hmas tests for the core tests
@@ -84,12 +42,9 @@ TODOS:
 ++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
   ++ NEW REPRESENTATION
 
-
 ++++++++++++++++++++++
 
 + Tests refactored so they use same classes if appropriate
-
-+ Jacamo:Body is added to workspace containing body artifact
 
 + Signal works
 
@@ -106,4 +61,10 @@ TODOS:
 + add testcase where base is not localhost:8080
 
 + update swagger api docs
+
+
+TESTS:
+  CARTAGO:
+    Do action without payload but with feedbackparams
+
 
