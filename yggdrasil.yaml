@@ -1562,8 +1562,14 @@ paths:
           schema:
             type: string
             examples:
-              - "agent"
+              - "https://wiser-solid-xi.interactions.ics.unisg.ch/JamesBond/profile/card#me"
           required: true
+        - in: header
+          name: X-Agent-LocalName
+          schema:
+            type: string
+            examples:
+              - "JamesBond"
         - in: path
           name: workspaceName
           schema:
