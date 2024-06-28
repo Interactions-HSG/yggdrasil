@@ -25,4 +25,10 @@ public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
     return Optional.ofNullable(this.workspaceDescriptors.get(name))
                    .map(WorkspaceDescriptor::getWorkspace);
   }
+
+  @Override
+  public int deleteWorkspace(final String name) {
+    var workspace = this.workspaceDescriptors.remove(name);
+    return 1;
+  }
 }

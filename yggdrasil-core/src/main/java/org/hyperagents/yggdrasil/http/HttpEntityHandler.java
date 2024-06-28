@@ -296,6 +296,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
 
+    if (environment) {
+      final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
+      this.cartagoMessagebox.sendMessage(
+        new CartagoMessage.DeleteEntity(workspaceName, routingContext.request().absoluteURI())
+      );
+    }
+
 
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))

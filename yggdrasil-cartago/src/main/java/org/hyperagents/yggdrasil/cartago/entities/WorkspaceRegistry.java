@@ -8,4 +8,6 @@ public interface WorkspaceRegistry {
   void registerWorkspace(final WorkspaceDescriptor descriptor, final String uri);
 
   Optional<Workspace> getWorkspace(final String name);
+
+  int deleteWorkspace(final String name);
 }

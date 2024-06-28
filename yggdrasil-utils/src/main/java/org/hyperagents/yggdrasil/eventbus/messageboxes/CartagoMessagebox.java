@@ -77,6 +77,13 @@ public class CartagoMessagebox implements Messagebox<CartagoMessage> {
             new CartagoMessageMarshaller()
           )
       );
+      this.eventBus.registerDefaultCodec(
+        CartagoMessage.DeleteEntity.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.DeleteEntity.class,
+          new CartagoMessageMarshaller()
+        )
+      );
     } else {
       LOGGER.warn("Dynamic environments are not enabled, message exchange will not be initialized");
     }

@@ -1,15 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import cartago.AgentCredential;
-import cartago.AgentId;
-import cartago.AgentIdCredential;
-import cartago.ArtifactConfig;
-import cartago.CartagoEnvironment;
-import cartago.CartagoException;
-import cartago.Op;
-import cartago.OpFeedbackParam;
-import cartago.Workspace;
-import cartago.WorkspaceId;
+import cartago.*;
 import cartago.events.ActionFailedEvent;
 import cartago.events.ActionSucceededEvent;
 import cartago.utils.BasicLogger;
@@ -227,6 +218,10 @@ public class CartagoVerticle extends AbstractVerticle {
         ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse,context)
           .onSuccess(o -> message.reply(o.orElse(null)))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
+        case CartagoMessage.DeleteEntity(
+          String workspaceName,
+          String entityUri
+        ) -> this.deleteEntity(workspaceName, entityUri);
       }
     } catch (final DecodeException | NoSuchElementException | CartagoException e) {
       message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -435,6 +430,30 @@ public class CartagoVerticle extends AbstractVerticle {
         }
         return Optional.empty();
       });
+  }
+
+  private void deleteEntity(String workspaceName, String requestUri) {
+    System.out.println("workspace: " + workspaceName);
+    System.out.println("Full uri: " + requestUri);
+
+    var temp = getAgentCredential("http://example.org/agent/tester");
+    var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+    var root = CartagoEnvironment.getInstance().getRootWSP().getWorkspace();
+    var agentId = getAgentId(temp, root.getId());
+
+
+    try {
+      root.disposeArtifact(agentId, workspace.getWspArtifactId());
+    } catch (CartagoException e) {
+      throw new RuntimeException(e);
+    }
+
+
+    this.workspaceRegistry.deleteWorkspace(workspaceName);
+
+
+
+
   }
 
   private JsonObject getActionNotificationContent(final String artifactName, final String action) {
