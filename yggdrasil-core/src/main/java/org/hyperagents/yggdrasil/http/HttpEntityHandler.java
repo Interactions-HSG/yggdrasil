@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.http;
 
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -493,7 +494,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             if (cartagoResponse.body() == null) {
               httpResponse.end();
             } else {
-              httpResponse.end(cartagoResponse.body());
+              // TODO: Once we remove constriction on return type being json array this will move into CartagoVerticle
+              var responseString = "[" + cartagoResponse.body() + "]";
+              httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON).end(responseString);
             }
           })
           .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
