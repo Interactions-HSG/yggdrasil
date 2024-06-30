@@ -54,7 +54,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
                                 .get("default");
 
-    EnvironmentConfig environmentConfig = this.vertx.sharedData()
+    final EnvironmentConfig environmentConfig = this.vertx.sharedData()
                                 .<String, EnvironmentConfig>getLocalMap("environment-config")
                                 .get("default");
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
@@ -296,7 +296,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final IRI entityIri,
       final Model entityModel,
       final IRI workspaceIri,
-      boolean isBody
+      final boolean isBody
   ) throws IOException {
     final var artifactIRI = entityIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(entityIri + "#artifact") : RdfModelUtils.createIri(entityIri + "/#artifact");
     final var workspaceActualIRI = workspaceIri.stringValue().endsWith("/") ? RdfModelUtils.createIri(workspaceIri + "#workspace") : RdfModelUtils.createIri(workspaceIri + "/#workspace");

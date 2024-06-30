@@ -79,7 +79,7 @@ public class HttpServerVerticle extends AbstractVerticle {
                               .allowedHeader("Origin"))
           .handler(BodyHandler.create());
 
-    HttpEntityHandlerInterface handler = new HttpEntityHandler(
+    final HttpEntityHandlerInterface handler = new HttpEntityHandler(
         this.vertx,
         httpConfig,
         environmentConfig,

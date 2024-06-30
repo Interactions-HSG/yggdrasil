@@ -51,6 +51,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private static final String WORKSPACE_ID_PARAM = "wkspid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
   private static final String AGENT_LOCALNAME_HEADER = "X-Agent-LocalName";
+  private static final String SLUG_HEADER = "Slug";
+  private static final String TURTLE_CONTENT_TYPE = "text/turtle";
 
   private final Messagebox<CartagoMessage> cartagoMessagebox;
   private final Messagebox<RdfStoreMessage> rdfStoreMessagebox;
@@ -102,7 +104,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   public void handleCreateWorkspaceJson(final RoutingContext context) {
-    final var workspaceName = context.request().getHeader("Slug");
+    final var workspaceName = context.request().getHeader(SLUG_HEADER);
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var requestUri = context.request().absoluteURI();
 
@@ -144,7 +146,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       context.fail(HttpStatus.SC_UNAUTHORIZED);
       return;
     }
-    var contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
+    final var contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
 
     if (contentType == null) {
       context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
@@ -153,7 +155,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     switch (contentType) {
       case "application/json" -> handleCreateArtifactJson(context);
-      case "text/turtle" -> handleCreateArtifactTurtle(context);
+      case TURTLE_CONTENT_TYPE -> handleCreateArtifactTurtle(context);
+      default -> context.response().setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).end();
     }
   }
 
@@ -195,7 +198,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleCreateArtifactTurtle(final RoutingContext context, final String entityRepresentation) {
     // TODO: FORGETTING TO ADD ENTITY REPRESENTATION TO MODEL?
     final var requestUri = context.request().absoluteURI();
-    final var hint = context.request().getHeader("Slug");
+    final var hint = context.request().getHeader(SLUG_HEADER);
     final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
@@ -212,7 +215,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
 
 
-    Model finalEntityGraph = entityGraph;
+    final Model finalEntityGraph = entityGraph;
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
       actualEntityName -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateArtifact(
@@ -232,7 +235,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response -> {
           var artifactRepresentation = response.body();
           try {
-            var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
+            final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
             finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));
             baseModel.getNamespaces().forEach(finalEntityGraph::setNamespace);
             artifactRepresentation = RdfModelUtils.modelToString(finalEntityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
@@ -246,8 +249,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
               actualEntityName.body(),
               artifactRepresentation//artifactRepresentation
             ))
-            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end());
+            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end(r.body()))
+            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end());
         }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()));
   }
 
@@ -362,7 +365,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
-    var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
+    final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
       routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
@@ -444,7 +447,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
 
-    final var subWorkspaceName = context.request().getHeader("Slug");
+    final var subWorkspaceName = context.request().getHeader(SLUG_HEADER);
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateSubWorkspace(
         context.pathParam(WORKSPACE_ID_PARAM),
@@ -502,7 +505,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
               httpResponse.end();
             } else {
               // TODO: Once we remove constriction on return type being json array this will move into CartagoVerticle
-              var responseString = "[" + cartagoResponse.body() + "]";
+              final var responseString = "[" + cartagoResponse.body() + "]";
               httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON).end(responseString);
             }
           })
@@ -589,7 +592,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   // TODO getAgentNameFromId is also in CartagoVerticle needs to be linked!
   private String getAgentNameFromId(final String agentId) {
-    var returnVal = Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
+    final var returnVal = Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
       .matcher(agentId)
       .results()
       .findFirst();
@@ -638,7 +641,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   // TODO: support different content types
   private void handleCreateWorkspaceTurtle(final RoutingContext context, final String entityRepresentation) {
     final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
-    final var hint = context.request().getHeader("Slug");
+    final var hint = context.request().getHeader(SLUG_HEADER);
     final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
 
@@ -661,7 +664,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             .compose(response -> {
               var workspaceRepresentation = response.body();
               try {
-                var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
+                final var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
                 entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                 baseModel.getNamespaces().forEach(entityGraph::setNamespace);
                 workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
@@ -712,7 +715,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       if (reply.succeeded()) {
         final var httpResponse = routingContext.response();
         httpResponse.setStatusCode(succeededStatusCode);
-        httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle");
+        httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE);
 
         headers.forEach((headerName, headerValue) -> {
           if (headerName.equalsIgnoreCase("Link")) {
