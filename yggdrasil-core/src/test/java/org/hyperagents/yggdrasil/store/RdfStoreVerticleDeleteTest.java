@@ -512,8 +512,8 @@ public class RdfStoreVerticleDeleteTest {
         inputWorkspaceRepresentation
       )).onSuccess(r -> {
         try {
-          var platformChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
-          var mainWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+          this.notificationQueue.take();
+          this.notificationQueue.take();
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
@@ -525,8 +525,8 @@ public class RdfStoreVerticleDeleteTest {
         inputSubWorkspaceRepresentation
       ))).onSuccess(r -> {
         try {
-          var mainWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
-          var subWorkspaceCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+          this.notificationQueue.take();
+          this.notificationQueue.take();
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
@@ -537,8 +537,8 @@ public class RdfStoreVerticleDeleteTest {
         inputArtifactRepresentation
       ))).onSuccess(r -> {
         try {
-          var subWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
-          var artifactCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+          this.notificationQueue.take();
+          this.notificationQueue.take();
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
@@ -551,8 +551,8 @@ public class RdfStoreVerticleDeleteTest {
       )))
       .onSuccess(r -> {
         try {
-          var mainWorkspaceChanged = (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
-          var agentBodyCreated = (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+          this.notificationQueue.take();
+          this.notificationQueue.take();
         } catch (final Exception e) {
           ctx.failNow(e);
         }

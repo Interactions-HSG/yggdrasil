@@ -35,8 +35,13 @@ public class BodyNotificationTest {
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/" + TEST_AGENT_NAME;
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
   private static final String MAIN_WORKSPACE_NAME = "test";
+  private static final String ARTIFACT_NAME = "artifactName";
+  private static final String ACTION_NAME = "actionName";
+  private static final String ARTIFACT_CLASS = "artifactClass";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
+  private static final String COUNTER_ARTIFACT_ACTION_NAME = "inc";
+  private static final String EVENT_TYPE = "eventType";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
@@ -58,9 +63,9 @@ public class BodyNotificationTest {
   private int promiseIndex;
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
     JsonObject env;
-    String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().get().getName();
     if(testName.contains("TD")) {
       env =TDEnv;
     } else if (testName.contains("HMAS")) {
@@ -159,9 +164,9 @@ public class BodyNotificationTest {
                           )
                           .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
                           .sendJsonObject(JsonObject.of(
-                            "artifactName",
+                            ARTIFACT_NAME,
                             COUNTER_ARTIFACT_NAME,
-                            "artifactClass",
+                            ARTIFACT_CLASS,
                             COUNTER_ARTIFACT_CLASS
                           )))
         .onSuccess(r -> {
@@ -319,11 +324,11 @@ public class BodyNotificationTest {
           Assertions.assertEquals(
               JsonObject
                 .of(
-                  "artifactName",
+                  ARTIFACT_NAME,
                   COUNTER_ARTIFACT_NAME,
-                  "actionName",
-                  "inc",
-                  "eventType",
+                  ACTION_NAME,
+                  COUNTER_ARTIFACT_ACTION_NAME,
+                  EVENT_TYPE,
                   "actionRequested"
                 )
                 .encode(),
@@ -347,11 +352,11 @@ public class BodyNotificationTest {
           Assertions.assertEquals(
               JsonObject
                 .of(
-                  "artifactName",
+                  ARTIFACT_NAME,
                   COUNTER_ARTIFACT_NAME,
-                  "actionName",
-                  "inc",
-                  "eventType",
+                  ACTION_NAME,
+                  COUNTER_ARTIFACT_ACTION_NAME,
+                  EVENT_TYPE,
                   "actionSucceeded"
                 )
                 .encode(),
@@ -408,9 +413,9 @@ public class BodyNotificationTest {
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .sendJsonObject(JsonObject.of(
-          "artifactName",
+          ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
-          "artifactClass",
+          ARTIFACT_CLASS,
           COUNTER_ARTIFACT_CLASS
         )))
       .onSuccess(r -> {
@@ -568,11 +573,11 @@ public class BodyNotificationTest {
         Assertions.assertEquals(
           JsonObject
             .of(
-              "artifactName",
+              ARTIFACT_NAME,
               COUNTER_ARTIFACT_NAME,
-              "actionName",
-              "inc",
-              "eventType",
+              ACTION_NAME,
+              COUNTER_ARTIFACT_ACTION_NAME,
+              EVENT_TYPE,
               "actionRequested"
             )
             .encode(),
@@ -596,11 +601,11 @@ public class BodyNotificationTest {
         Assertions.assertEquals(
           JsonObject
             .of(
-              "artifactName",
+              ARTIFACT_NAME,
               COUNTER_ARTIFACT_NAME,
-              "actionName",
-              "inc",
-              "eventType",
+              ACTION_NAME,
+              COUNTER_ARTIFACT_ACTION_NAME,
+              EVENT_TYPE,
               "actionSucceeded"
             )
             .encode(),
@@ -617,7 +622,7 @@ public class BodyNotificationTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    var areEqual =
+    final var areEqual =
       Models.isomorphic(
         TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
         TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()

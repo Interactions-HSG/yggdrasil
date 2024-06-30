@@ -186,9 +186,9 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(MAIN_WORKSPACE_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
+    final var cartagoMessage = this.cartagoMessageQueue.take();
     cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
@@ -268,9 +268,9 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(SUB_WORKSPACE_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
+    final var cartagoMessage = this.cartagoMessageQueue.take();
     cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
@@ -350,9 +350,9 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(COUNTER_ARTIFACT_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
+    final var cartagoMessage = this.cartagoMessageQueue.take();
     // TODO: Cartago should reply with representation of Base Artifact
     cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();

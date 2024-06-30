@@ -30,6 +30,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class EnvironmentConfigurationTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
+  private static final String COUNTER_ARTIFACT_URI = "http://localhost:8080/workspaces/sub/artifacts/c0/";
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
@@ -43,7 +44,7 @@ public class EnvironmentConfigurationTest {
   private int promiseIndex;
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo)
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo)
       throws URISyntaxException, IOException {
     this.client = WebClient.create(vertx);
     this.callbackMessages =
@@ -62,7 +63,7 @@ public class EnvironmentConfigurationTest {
             this.promiseIndex++;
           }
         );
-    String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().get().getName();
     String conf;
     if (testName.contains("TD")) {
       conf = "td/cartago_config.json";
@@ -157,7 +158,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
+            COUNTER_ARTIFACT_URI,
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -190,7 +191,7 @@ public class EnvironmentConfigurationTest {
         .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
+              COUNTER_ARTIFACT_URI,
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -273,7 +274,7 @@ public class EnvironmentConfigurationTest {
       .compose(r -> this.callbackMessages.getFirst().future())
       .onSuccess(m -> {
         Assertions.assertEquals(
-          "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
+          COUNTER_ARTIFACT_URI,
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
@@ -306,7 +307,7 @@ public class EnvironmentConfigurationTest {
       .compose(r -> this.callbackMessages.get(1).future())
       .onSuccess(m -> {
         Assertions.assertEquals(
-          "http://" + TEST_HOST + ":" + TEST_PORT + "/workspaces/sub/artifacts/c0/",
+          COUNTER_ARTIFACT_URI,
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );

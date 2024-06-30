@@ -67,9 +67,9 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
     String ontology;
-    String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().get().getName();
     if (testName.contains("TD")) {
       ontology = "td";
     } else if (testName.contains("HMAS")) {

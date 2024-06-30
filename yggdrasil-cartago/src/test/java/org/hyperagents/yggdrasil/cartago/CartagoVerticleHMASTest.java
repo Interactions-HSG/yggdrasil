@@ -42,6 +42,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class CartagoVerticleHMASTest {
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
+  private static final String CLASS = "class";
+  private static final String TEMPLATE = "template";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
@@ -98,27 +100,27 @@ public class CartagoVerticleHMASTest {
           "known-artifacts",
           JsonArray.of(
             JsonObject.of(
-              "class",
+              CLASS,
               ADDER_SEMANTIC_TYPE,
-              "template",
+              TEMPLATE,
               AdderHMAS.class.getCanonicalName()
             ),
             JsonObject.of(
-              "class",
+              CLASS,
               COUNTER_SEMANTIC_TYPE,
-              "template",
+              TEMPLATE,
               CounterHMAS.class.getCanonicalName()
             ),
             JsonObject.of(
-              "class",
+              CLASS,
               SIGNAL_SEMANTIC_TYPE,
-              "template",
+              TEMPLATE,
               SignalerHMAS.class.getCanonicalName()
             ),
             JsonObject.of(
-              "class",
+              CLASS,
               MATH_SEMANTIC_TYPE,
-              "template",
+              TEMPLATE,
               MathHMAS.class.getCanonicalName()
             )
           )
@@ -705,7 +707,7 @@ public class CartagoVerticleHMASTest {
         Path.of(ClassLoader.getSystemResource("hmas/signal_artifact_hmas.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    var TestRequests = this.cartagoMessagebox
+    final var TestRequests = this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(
@@ -744,19 +746,19 @@ public class CartagoVerticleHMASTest {
 
     TestRequests.onComplete(r -> {
       try {
-        var actionRequested = (HttpNotificationDispatcherMessage.ActionRequested) this.notificationQueue.take();
+        final var actionRequested = (HttpNotificationDispatcherMessage.ActionRequested) this.notificationQueue.take();
         Assertions.assertEquals(
           actionRequested.requestIri(),
           "http://localhost:8080/workspaces/sub/artifacts/test/",
           URIS_EQUAL_MESSAGE
         );
-        var artifactObsPropertyUpdated = (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated) this.notificationQueue.take();
+        final var artifactObsPropertyUpdated = (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated) this.notificationQueue.take();
         Assertions.assertEquals(
           artifactObsPropertyUpdated.content(),
           "tick",
           "Content should be equal"
         );
-        var actionSucceeded = (HttpNotificationDispatcherMessage.ActionSucceeded) this.notificationQueue.take();
+        final var actionSucceeded = (HttpNotificationDispatcherMessage.ActionSucceeded) this.notificationQueue.take();
         Assertions.assertEquals(
           actionSucceeded.requestIri(),
           "http://localhost:8080/workspaces/sub/artifacts/test/",
