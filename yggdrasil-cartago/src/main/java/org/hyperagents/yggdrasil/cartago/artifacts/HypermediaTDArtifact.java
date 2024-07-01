@@ -81,8 +81,19 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     return new HashMap<>(this.responseConverterMap);
   }
 
+  @Override
+  public Optional<String> getMethodNameAndTarget(Object action) {
+    final var ActionAffordance = (ActionAffordance) action;
+    if (ActionAffordance.getFirstForm().isPresent()) {
+      final var form = ActionAffordance.getFirstForm().get();
+      if (form.getMethodName().isPresent()) {
+        return Optional.of(form.getMethodName().get() + form.getTarget());
+      }
+    }
+    return Optional.empty();
+  }
 
-  public final Map<String, List<Object>> getActionAffordances() {
+  public final Map<String, List<Object>> getArtifactActions() {
     return this.actionAffordances
       .asMap()
       .entrySet()

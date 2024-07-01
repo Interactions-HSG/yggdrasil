@@ -83,8 +83,20 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     return new HashMap<>(this.responseConverterMap);
   }
 
+  public final Optional<String> getMethodNameAndTarget(final Object action) {
+    final var signifier = (Signifier) action;
+    final var form = signifier.getActionSpecification().getForms().stream().findFirst();
 
-  public final Map<String, List<Object>> getSignifiers() {
+    if (form.isPresent()) {
+      final var formValue = form.get();
+      if (formValue.getMethodName().isPresent()) {
+        return Optional.of(formValue.getMethodName().get() + formValue.getTarget());
+      }
+    }
+    return Optional.empty();
+  }
+
+  public final Map<String, List<Object>> getArtifactActions() {
     return this.signifiers
       .asMap()
       .entrySet()

@@ -1,7 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
 
@@ -15,8 +13,6 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
-import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
-import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact;
 
 /**
  * A singleton used to manage CArtAgO artifacts. An equivalent implementation can be obtained with
@@ -64,11 +60,11 @@ public final class HypermediaArtifactRegistry {
     return REGISTRY;
   }
 
-  public void register(final HypermediaHMASArtifact artifact) {
+  public void register(final HypermediaArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifacts.put(artifactTemplate, artifact);
     this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
-    artifact.getSignifiers()
+    artifact.getArtifactActions()
       .entrySet()
       .stream()
       .flatMap(signifierEntry -> signifierEntry.getValue()
@@ -77,41 +73,13 @@ public final class HypermediaArtifactRegistry {
           signifierEntry.getKey(),
           signifier
         )))
-      .forEach(signifier -> ((Signifier) signifier.getValue()).getActionSpecification().getForms().stream().findFirst().ifPresent(value -> {
-        if (value.getMethodName().isPresent()) {
-          this.artifactActionRouter.put(
-            value.getMethodName().get() + value.getTarget(),
-            signifier.getKey()
-          );
-        }
-      }));
+      .forEach(signifier -> artifact.getMethodNameAndTarget(signifier.getValue())
+        .ifPresent(s -> this.artifactActionRouter.put(
+          s,
+          signifier.getKey()
+        )));
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
-
-  public void register(final HypermediaTDArtifact artifact) {
-    final var artifactTemplate = artifact.getArtifactId().getName();
-    this.artifacts.put(artifactTemplate, artifact);
-    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
-    artifact.getActionAffordances()
-      .entrySet()
-      .stream()
-      .flatMap(actionEntry -> actionEntry.getValue()
-        .stream()
-        .map(action -> Map.entry(
-          actionEntry.getKey(),
-          action
-        )))
-      .forEach(action -> ((ActionAffordance) action.getValue()).getFirstForm().ifPresent(value -> {
-        if (value.getMethodName().isPresent()) {
-          this.artifactActionRouter.put(
-            value.getMethodName().get() + value.getTarget(),
-            action.getKey()
-          );
-        }
-      }));
-    this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
-  }
-
 
   public void addArtifactTemplate(final String key, final String value) {
     this.artifactSemanticTypes.put(key, value);
