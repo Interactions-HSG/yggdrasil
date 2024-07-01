@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.http;
 
+import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
+import com.google.common.collect.Multimaps;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -25,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
@@ -39,6 +42,8 @@ import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
+import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 
 
 /**
@@ -59,6 +64,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private final Messagebox<HttpNotificationDispatcherMessage> notificationMessagebox;
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
+  private final RepresentationFactory representationFactory;
 
   private final boolean environment;
 
@@ -81,6 +87,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     // Should be able to use this boolean value to decide if we use cartago messages or not
     // that way the router does not need to check for routes itself
     this.environment = environmentConfig.isEnabled();
+    this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(environmentConfig.getOntology(), httpConfig);
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -200,7 +207,6 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var requestUri = context.request().absoluteURI();
     final var hint = context.request().getHeader(SLUG_HEADER);
     final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
-    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
     Model entityGraph = null;
     try {
@@ -217,36 +223,33 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final Model finalEntityGraph = entityGraph;
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
-      actualEntityName -> this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          agentId,
+      actualEntityName -> {
+
+        var artifactRepresentation = this.representationFactory.createArtifactRepresentation(
           context.pathParam(WORKSPACE_ID_PARAM),
           actualEntityName.body(),
-          String.format("{%n \"artifactName\": \"%s\",%n \"artifactClass\": \"https://purl.org/hmas/Artifact\"%n}%n"
-           ,
-            actualEntityName.body()
-          )
-        ))
-        .compose(response -> {
-          var artifactRepresentation = response.body();
-          try {
-            final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
-            finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));
-            baseModel.getNamespaces().forEach(finalEntityGraph::setNamespace);
-            artifactRepresentation = RdfModelUtils.modelToString(finalEntityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
+          new NoSecurityScheme(),
+          "https://purl.org/hmas/Artifact",
+          new LinkedHashModel(),
+          Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
+        try {
+          final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
+          finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));
+          baseModel.getNamespaces().forEach(finalEntityGraph::setNamespace);
+          artifactRepresentation = RdfModelUtils.modelToString(finalEntityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
 
-          return this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateArtifact(
-              requestUri,
-              actualEntityName.body(),
-              artifactRepresentation//artifactRepresentation
-            ))
-            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end());
-        }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()));
+        return this.rdfStoreMessagebox
+          .sendMessage(new RdfStoreMessage.CreateArtifact(
+            requestUri,
+            actualEntityName.body(),
+            artifactRepresentation//artifactRepresentation
+          ))
+          .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end(r.body()))
+          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end());
+      }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
   public void handleFocus(final RoutingContext context) {
@@ -302,19 +305,16 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var parts = temp.split("/");
     final var artifactName = parts[parts.length - 1];
 
-    System.out.println(artifactName);
     if (environment) {
       final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
       if (artifactName.equals(workspaceName)) {
         System.out.println("cannot delete workspaces in cartago atm");
       } else {
-      this.cartagoMessagebox.sendMessage(
-        new CartagoMessage.DeleteEntity(workspaceName,artifactName)
-      );
+        this.cartagoMessagebox.sendMessage(
+          new CartagoMessage.DeleteEntity(workspaceName, artifactName)
+        );
       }
     }
-
-
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
       .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
@@ -428,13 +428,14 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       ))
       .compose(r -> {
         if (hint == null) {
-        return this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity(
-          this.httpConfig.getAgentBodyUri(
-            workspaceName,
-            this.getAgentNameFromId(agentId)
-          )
-        ));}
+          return this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.DeleteEntity(
+              this.httpConfig.getAgentBodyUri(
+                workspaceName,
+                this.getAgentNameFromId(agentId)
+              )
+            ));
+        }
         return this.rdfStoreMessagebox
           .sendMessage(new RdfStoreMessage.DeleteEntity(
             this.httpConfig.getAgentBodyUri(
@@ -655,7 +656,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     Model entityGraph;
     try {
-        entityGraph = RdfModelUtils.stringToModel(
+      entityGraph = RdfModelUtils.stringToModel(
         entityRepresentation,
         entityIri,
         RDFFormat.TURTLE
@@ -665,48 +666,42 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
 
-      // TODO: if slug is without trailing backslash and representation is with then doesnt work
+    // TODO: if slug is without trailing backslash and representation is with then doesnt work
 
-      entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/ResourceProfile"));
-      entityGraph.remove(null, RdfModelUtils.createIri("https://purl.org/hmas/isProfileOf"), null);
-      entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/Workspace"));
-      this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
-        actualEntityName ->
-          this.cartagoMessagebox
-            .sendMessage(new CartagoMessage.CreateWorkspace(actualEntityName.body()))
-            .compose(response -> {
-              var workspaceRepresentation = response.body();
-              try {
-                final var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
-                entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
-                baseModel.getNamespaces().forEach(entityGraph::setNamespace);
-                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
-              } catch (IOException e) {
-                throw new RuntimeException(e);
-              }
-              return this.rdfStoreMessagebox
-                .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                  requestUri,
-                  actualEntityName.body(),
-                  entityGraph.stream()
-                    .filter(t ->
-                      t.getSubject().toString().contains(entityIri.stringValue())
-                        && t.getPredicate().equals(RdfModelUtils.createIri(
-                        "https://purl.org/hmas/isContainedIn"
-                      ))
-                    )
-                    .map(Statement::getObject)
-                    .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                    .flatMap(Optional::stream)
-                    .map(IRI::toString)
-                    .findFirst(),
-                  workspaceRepresentation
-                ));
-            }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end())
-            .onFailure(context::fail)
-      );
-
+    entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/ResourceProfile"));
+    entityGraph.remove(null, RdfModelUtils.createIri("https://purl.org/hmas/isProfileOf"), null);
+    entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/Workspace"));
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
+        actualEntityName -> {
+          var workspaceRepresentation = this.representationFactory.createWorkspaceRepresentation(actualEntityName.body(), new HashSet<>());
+          try {
+            final var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
+            entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
+            baseModel.getNamespaces().forEach(entityGraph::setNamespace);
+            workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          return this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateWorkspace(
+              requestUri,
+              actualEntityName.body(),
+              entityGraph.stream()
+                .filter(t ->
+                  t.getSubject().toString().contains(entityIri.stringValue())
+                    && t.getPredicate().equals(RdfModelUtils.createIri(
+                    "https://purl.org/hmas/isContainedIn"
+                  ))
+                )
+                .map(Statement::getObject)
+                .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                .flatMap(Optional::stream)
+                .map(IRI::toString)
+                .findFirst(),
+              workspaceRepresentation
+            ));
+        }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle").end(r.body()))
+      .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle").end());
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(
