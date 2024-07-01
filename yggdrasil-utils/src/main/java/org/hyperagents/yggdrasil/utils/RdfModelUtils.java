@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
@@ -25,20 +24,6 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
  */
 public final class RdfModelUtils {
   private RdfModelUtils() {}
-
-  public static int findSlash(String base, char ch) {
-    int occurrence = 0;
-    for (int i = 0; i < base.length(); i++) {
-      if (base.charAt(i) == ch) {
-        occurrence++;
-        if (occurrence == 3) {
-          return i;
-        }
-      }
-    }
-    // Return -1 if the character does not occur at least three times
-    return -1;
-  }
 
   public static String modelToString(final Model model, final RDFFormat format)
     throws IllegalArgumentException, IOException {
@@ -161,14 +146,10 @@ public final class RdfModelUtils {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }
 
-  public static Resource createBNode() {
-    return SimpleValueFactory.getInstance().createBNode();
-  }
+  public static Set<String> collectAllIriNamespaces(final Model model) {
+    final Set<String> iris = new HashSet<>();
 
-  public static Set<String> collectAllIriNamespaces(Model model) {
-    Set<String> iris = new HashSet<>();
-
-    for (Statement statement : model) {
+    for (final Statement statement : model) {
       if (statement.getSubject() instanceof IRI) {
         iris.add(((IRI) statement.getSubject()).getNamespace());
       }

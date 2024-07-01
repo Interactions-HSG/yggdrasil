@@ -76,7 +76,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getArtifactUri(final String workspaceName, final String artifactName) {
-    var cleanArtifactName = validateInput(artifactName);
+    final var cleanArtifactName = validateInput(artifactName);
     return this.getArtifactsUri(workspaceName) + cleanArtifactName + "/";
   }
 
@@ -87,13 +87,13 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
-    var cleanAgentName = validateInput(agentName);
+    final var cleanAgentName = validateInput(agentName);
     return this.getAgentBodiesUri(workspaceName) + cleanAgentName + "/";
   }
 
   @Override
   public String getAgentUri(final String agentName) {
-    var cleanAgentName = validateInput(agentName);
+    final var cleanAgentName = validateInput(agentName);
     return this.baseUri + "artifacts/" + cleanAgentName + "/";
   }
 
@@ -107,7 +107,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
    * @param StringInput The input string to validate.
    * @return The validated string.
    */
-  private String validateInput(String StringInput) {
+  private String validateInput(final String StringInput) {
     if (StringInput == null) {
       return "";
     }
