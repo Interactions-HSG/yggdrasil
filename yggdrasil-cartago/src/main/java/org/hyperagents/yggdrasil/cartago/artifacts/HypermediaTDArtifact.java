@@ -82,7 +82,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   }
 
   @Override
-  public Optional<String> getMethodNameAndTarget(Object action) {
+  public Optional<String> getMethodNameAndTarget(final Object action) {
     final var ActionAffordance = (ActionAffordance) action;
     if (ActionAffordance.getFirstForm().isPresent()) {
       final var form = ActionAffordance.getFirstForm().get();

@@ -290,7 +290,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   }
 
   @Override
-  public String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType) {
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,

@@ -128,7 +128,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   }
 
   @Override
-  public String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType) {
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
@@ -139,7 +139,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     );
   }
   @Override
-  public String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType, Model metadata, ListMultimap<String, Object> actionAffordances) {
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType,final Model metadata,final ListMultimap<String, Object> actionAffordances) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
