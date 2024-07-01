@@ -8,6 +8,7 @@ public final class RepresentationFactoryFactory {
   private RepresentationFactoryFactory(){}
 
   public static RepresentationFactory getRepresentationFactory(final String representationFactory,final HttpInterfaceConfig httpConfig) {
+    if (representationFactory == null) return new RepresentationFactoryTDImplt(httpConfig);
     return switch (representationFactory) {
       case "hmas" -> new RepresentationFactoryHMASImpl(httpConfig);
       case "td" -> new RepresentationFactoryTDImplt(httpConfig);
