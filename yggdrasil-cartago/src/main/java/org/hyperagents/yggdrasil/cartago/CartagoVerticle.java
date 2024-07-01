@@ -333,6 +333,8 @@ public class CartagoVerticle extends AbstractVerticle {
     return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
   }
 
+  // Only have deprecated here because it supresses the pmd warning (it says we do not use the method but we clearly do)
+  @Deprecated
   private Future<Optional<String>> doAction(
     final String agentUri,
     final String workspaceName,
