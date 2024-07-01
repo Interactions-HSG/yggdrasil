@@ -7,8 +7,18 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
-
+/**
+ * This class represents a Hypermedia HMAS Artifact with addition functionality.
+ */
 public class AdderHMAS extends HypermediaHMASArtifact {
+
+  /**
+   * This operation performs the addition of two integers.
+   *
+   * @param x The first integer to add.
+   * @param y The second integer to add.
+   * @param sumParam The parameter to store the result of the addition.
+   */
   @OPERATION
   public void add(final int x, final int y, final OpFeedbackParam<Integer> sumParam) {
     this.log("adder performs add");
@@ -16,6 +26,9 @@ public class AdderHMAS extends HypermediaHMASArtifact {
     this.log("result in adder: " + sumParam.get());
   }
 
+  /**
+   * This method registers the interaction affordances for the AdderHMAS artifact.
+   */
   @Override
   protected void registerInteractionAffordances() {
     this.registerSignifier(

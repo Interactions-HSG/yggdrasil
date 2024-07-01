@@ -28,7 +28,7 @@ public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
 
   @Override
   public int deleteWorkspace(final String name) {
-    var workspace = this.workspaceDescriptors.remove(name);
+    this.workspaceDescriptors.remove(name);
     return 1;
   }
 }

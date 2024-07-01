@@ -5,9 +5,7 @@ import cartago.ICartagoCallback;
 import cartago.events.ArtifactObsEvent;
 import cartago.util.agent.Percept;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
@@ -37,7 +35,7 @@ public class NotificationCallback implements ICartagoCallback {
       final var percept = new Percept(e);
 
       if (percept.hasSignal()) {
-        var t = percept.getSignal();
+        final var t = percept.getSignal();
         t.getContents();
         Stream
           .of(

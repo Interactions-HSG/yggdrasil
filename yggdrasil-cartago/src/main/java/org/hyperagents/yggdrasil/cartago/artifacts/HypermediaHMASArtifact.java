@@ -15,6 +15,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+
 import java.net.URI;
 import java.util.*;
 import java.util.function.UnaryOperator;
@@ -36,7 +37,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
   private final ListMultimap<String, Signifier> signifiers =
-      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+    Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Map<String, Integer> feedbackActions = new HashMap<>();
   private final Map<String, UnaryOperator<Object>> responseConverterMap = new HashMap<>();
@@ -46,7 +47,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     .<String, HttpInterfaceConfig>getLocalMap("http-config")
     .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
-      new RepresentationFactoryHMASImpl(this.httpConfig);
+    new RepresentationFactoryHMASImpl(this.httpConfig);
 
 
   /**
@@ -60,10 +61,10 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
       HypermediaArtifactRegistry.getInstance()
-                                .getArtifactSemanticType(this.getClass().getCanonicalName())
-                                .orElseThrow(
-                                  () -> new RuntimeException("Artifact was not registered!")
-                                ),
+        .getArtifactSemanticType(this.getClass().getCanonicalName())
+        .orElseThrow(
+          () -> new RuntimeException("Artifact was not registered!")
+        ),
       this.metadata,
       this.signifiers
     );
@@ -88,10 +89,10 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
   public final Map<String, List<Signifier>> getSignifiers() {
     return this.signifiers
-               .asMap()
-               .entrySet()
-               .stream()
-               .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
+      .asMap()
+      .entrySet()
+      .stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
   }
 
   protected abstract void registerInteractionAffordances();
@@ -130,18 +131,18 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
   protected final void registerSignifier(
-      final String actionClass,
-      final String actionName,
-      final String relativeUri
+    final String actionClass,
+    final String actionName,
+    final String relativeUri
   ) {
     this.registerSignifier(actionClass, actionName, relativeUri, null);
   }
 
   protected final void registerSignifier(
-      final String actionClass,
-      final String actionName,
-      final String relativeUri,
-      final IOSpecification inputSchema
+    final String actionClass,
+    final String actionName,
+    final String relativeUri,
+    final IOSpecification inputSchema
   ) {
     this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema, null);
   }
@@ -153,17 +154,17 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     final IOSpecification inputSchema,
     final IOSpecification outputSchema
   ) {
-    this.registerSignifier(actionClass,actionName, "POST", relativeUri, inputSchema, outputSchema);
+    this.registerSignifier(actionClass, actionName, "POST", relativeUri, inputSchema, outputSchema);
   }
 
   protected final void registerSignifier(
-      final String actionClass,
-      final String actionName,
-      final String methodName,
-      final String relativeUri,
-      final IOSpecification inputSchema,
-      final IOSpecification outputSchema
-      // IO Output
+    final String actionClass,
+    final String actionName,
+    final String methodName,
+    final String relativeUri,
+    final IOSpecification inputSchema,
+    final IOSpecification outputSchema
+    // IO Output
   ) {
 
 
@@ -190,14 +191,14 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       .build();
 
     this.registerSignifier(
-        actionName,
-        signifier
+      actionName,
+      signifier
     );
   }
 
   protected final void registerSignifier(
-      final String actionName,
-      final Signifier signifier
+    final String actionName,
+    final Signifier signifier
   ) {
     this.signifiers.put(actionName, signifier);
   }
@@ -207,14 +208,14 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     this.feedbackActions.put(actionName, params + 1);
   }
 
-  protected final void registerFeedbackParameters(final String actionName, int numberOfParameters) {
+  protected final void registerFeedbackParameters(final String actionName, final int numberOfParameters) {
     final int params = this.feedbackActions.getOrDefault(actionName, 0);
-    this.feedbackActions.put(actionName,params + numberOfParameters);
+    this.feedbackActions.put(actionName, params + numberOfParameters);
   }
 
   protected final void registerFeedbackParameter(
-      final String actionName,
-      final UnaryOperator<Object> responseConverter
+    final String actionName,
+    final UnaryOperator<Object> responseConverter
   ) {
     registerFeedbackParameter(actionName);
     this.responseConverterMap.put(actionName, responseConverter);
@@ -225,8 +226,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
 
-  public Optional<String> handleInput(String storeResponse, String actionName, String context)
-  {
+  public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {
 
     final var workspaceName = this.getId().getWorkspaceId().getName();
     final var artifactName = this.getId().getName();
@@ -237,22 +237,23 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
 
 
-    var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
+    final var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
       .filter(sig -> sig.getIRIAsString().isPresent())
       .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
       .findFirst();
-      Optional<String> description = Optional.empty();
-      if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
-        JsonElement jsonElement = JsonParser.parseString(context);
-        var input = signifier.get().getActionSpecification().getInputSpecification().get();
-        QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
-        description = CartagoDataBundle.toJson(
-          parseInput(jsonElement, qualifiedValueSpecification, new ArrayList<>())
-        ).describeConstable();
-      }
+    Optional<String> description = Optional.empty();
+    if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
+      final JsonElement jsonElement = JsonParser.parseString(context);
+      final var input = signifier.get().getActionSpecification().getInputSpecification().get();
+      final QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+      description = CartagoDataBundle.toJson(
+        parseInput(jsonElement, qualifiedValueSpecification, new ArrayList<>())
+      ).describeConstable();
+    }
     return description;
   }
-  public Integer handleOutputParams(String storeResponse, String actionName, String context) {
+
+  public Integer handleOutputParams(final String storeResponse, final String actionName, final String context) {
     final var workspaceName = this.getId().getWorkspaceId().getName();
     final var artifactName = this.getId().getName();
 
@@ -262,13 +263,13 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
 
 
-    var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
+    final var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
       .filter(sig -> sig.getIRIAsString().isPresent())
       .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
       .findFirst();
     if (signifier.isPresent() && signifier.get().getActionSpecification().getOutputSpecification().isPresent()) {
-      var output = signifier.get().getActionSpecification().getOutputSpecification().get();
-      QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) output;
+      final var output = signifier.get().getActionSpecification().getOutputSpecification().get();
+      final QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) output;
       return getLengthOfQualifiedValueSpecificationList(qualifiedValueSpecification);
     }
     return 0;
@@ -278,11 +279,11 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     final var temp = qualifiedValueSpecification.getPropertySpecifications();
     int lengthOfList = 0;
 
-    while(!temp.isEmpty()) {
+    while (!temp.isEmpty()) {
       lengthOfList++;
       temp.remove(RDF.FIRST.stringValue());
-      var rest = temp.remove(RDF.REST.stringValue());
-      if(rest instanceof QualifiedValueSpecification) {
+      final var rest = temp.remove(RDF.REST.stringValue());
+      if (rest instanceof QualifiedValueSpecification) {
         temp.putAll(((QualifiedValueSpecification) rest).getPropertySpecifications());
       }
     }

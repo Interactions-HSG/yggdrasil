@@ -20,6 +20,7 @@ public class CounterHMAS extends HypermediaHMASArtifact {
     prop.updateValue(prop.intValue() + 1);
     System.out.println("count incremented");
   }
+
   @Override
   protected void registerInteractionAffordances() {
     // Register one action affordance with an input schema

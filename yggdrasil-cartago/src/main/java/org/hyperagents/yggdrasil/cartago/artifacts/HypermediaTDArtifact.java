@@ -151,8 +151,8 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     final String relativeUri,
     final DataSchema inputSchema,
     final DataSchema outputSchema
-    ) {
-    this.registerActionAffordance(actionClass,actionName,"POST",relativeUri,inputSchema,outputSchema);
+  ) {
+    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema, outputSchema);
   }
 
   protected final void registerActionAffordance(
@@ -199,9 +199,9 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.feedbackActions.put(actionName, params + 1);
   }
 
-  protected final void registerFeedbackParameters(final String actionName, int numberOfParameters) {
+  protected final void registerFeedbackParameters(final String actionName, final int numberOfParameters) {
     final int params = this.feedbackActions.getOrDefault(actionName, 0);
-    this.feedbackActions.put(actionName,params + numberOfParameters);
+    this.feedbackActions.put(actionName, params + numberOfParameters);
   }
 
   protected final void registerFeedbackParameter(
@@ -220,8 +220,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.metadata.addAll(model);
   }
 
-  public Optional<String> handleInput(String storeResponse, String actionName, String context)
-  {
+  public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {
     return TDGraphReader
       .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
       .getActions()
@@ -239,17 +238,17 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       ));
   }
 
-  public Integer handleOutputParams(String storeResponse, String actionName, String context) {
+  public Integer handleOutputParams(final String storeResponse, final String actionName, final String context) {
     final var action = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
       .getActions()
       .stream()
       .filter(
         a -> a.getTitle().isPresent()
-        && a.getTitle().get().equals(actionName)
+          && a.getTitle().get().equals(actionName)
       ).findFirst();
 
 
-    if(action.isPresent() && action.get().getOutputSchema().isPresent()) {
+    if (action.isPresent() && action.get().getOutputSchema().isPresent()) {
       final var outputSchema = action.get().getOutputSchema().get();
       if (outputSchema.getDatatype().equals(DataSchema.ARRAY)) {
         final var arraySchema = (ArraySchema) outputSchema;

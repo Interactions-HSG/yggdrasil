@@ -299,11 +299,24 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
 
+    // remove trailing slash
+    var temp = routingContext.request().absoluteURI().endsWith("/") ?
+      routingContext.request().absoluteURI().substring(0, routingContext.request().absoluteURI().length() - 1) :
+      routingContext.request().absoluteURI();
+
+    var parts = temp.split("/");
+    var artifactName = parts[parts.length - 1];
+
+    System.out.println(artifactName);
     if (environment) {
       final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
+      if (artifactName.equals(workspaceName)) {
+        System.out.println("cannot delete workspaces in cartago atm");
+      } else {
       this.cartagoMessagebox.sendMessage(
-        new CartagoMessage.DeleteEntity(workspaceName, routingContext.request().absoluteURI())
+        new CartagoMessage.DeleteEntity(workspaceName,artifactName)
       );
+      }
     }
 
 
