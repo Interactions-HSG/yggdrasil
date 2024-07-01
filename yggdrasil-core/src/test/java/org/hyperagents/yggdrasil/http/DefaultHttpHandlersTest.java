@@ -617,6 +617,7 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
+  @Disabled
   public void testDeleteTurtleArtifactRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,

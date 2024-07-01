@@ -12,9 +12,9 @@
 
 <http://localhost:8080/workspaces/test/artifacts/a0/> a hmas:ResourceProfile;
   hmas:exposesSignifier <http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifact>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier>, <http://localhost:8080/workspaces/test/artifacts/a0/#unsubscribeFromArtifact>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifact>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#subscribeToArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation>;
+    <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#unsubscribeFromArtifact>,
+    <http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation>,
+    <http://localhost:8080/workspaces/test/artifacts/a0/#subscribeToArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier>;
   hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/a0/#artifact> .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifact> a hmas:Signifier;
@@ -33,57 +33,21 @@
   htv:methodName "DELETE";
   hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape, ex:Add;
-      sh:class hmas:ActionExecution, ex:Add;
+<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#add>
-        ], [
-          sh:qualifiedValueShape ex:addends;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm>
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#add> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/add>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-ex:addends a sh:Shape;
-  sh:class rdf:List;
-  sh:property [
-      sh:qualifiedValueShape ex:addendsRest;
-      sh:qualifiedMinCount "1"^^xs:int;
-      sh:qualifiedMaxCount "1"^^xs:int;
-      sh:path rdf:rest
-    ], [ a sh:Shape;
-      sh:datatype xs:int;
-      sh:name "1st Parameter";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path rdf:first
-    ] .
-
-ex:addendsRest a sh:Shape;
-  sh:class rdf:List;
-  sh:property [ a sh:Shape;
-      sh:hasValue rdf:nil;
-      sh:datatype rdf:List;
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path rdf:rest
-    ], [ a sh:Shape;
-      sh:datatype xs:int;
-      sh:name "2nd Parameter";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path rdf:first
-    ] .
+<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/>;
+  htv:methodName "PUT";
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/#unsubscribeFromArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -133,22 +97,6 @@ ex:addendsRest a sh:Shape;
       sh:path websub:mode
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm>
-        ]
-    ] .
-
-<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/>;
-  htv:methodName "PUT";
-  hctl:forContentType "text/turtle" .
-
 <http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution;
@@ -164,6 +112,24 @@ ex:addendsRest a sh:Shape;
   hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/focus/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation> a
+    hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
+  a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/>;
+  htv:methodName "GET";
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/#subscribeToArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -208,22 +174,77 @@ ex:addendsRest a sh:Shape;
       sh:path websub:mode
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation> a
-    hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
+<http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape, ex:Add;
+      sh:class hmas:ActionExecution, ex:Add;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#add>
+        ], [
+          sh:qualifiedValueShape ex:addends;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ], [
+          sh:qualifiedValueShape ex:AddResult;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasOutput
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
-  a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
+<http://localhost:8080/workspaces/test/artifacts/a0/#add> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/add>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+ex:addends a sh:Shape;
+  sh:class rdf:List;
+  sh:property [
+      sh:qualifiedValueShape ex:addendsRest;
+      sh:qualifiedMinCount "1"^^xs:int;
+      sh:qualifiedMaxCount "1"^^xs:int;
+      sh:path rdf:rest
+    ], [ a sh:Shape;
+      sh:datatype xs:int;
+      sh:name "1st Parameter";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:first
+    ] .
+
+ex:addendsRest a sh:Shape;
+  sh:class rdf:List;
+  sh:property [ a sh:Shape;
+      sh:hasValue rdf:nil;
+      sh:datatype rdf:List;
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:rest
+    ], [ a sh:Shape;
+      sh:datatype xs:int;
+      sh:name "2nd Parameter";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:first
+    ] .
+
+ex:AddResult a sh:Shape;
+  sh:class rdf:List;
+  sh:property [ a sh:Shape;
+      sh:hasValue rdf:nil;
+      sh:datatype rdf:List;
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:rest
+    ], [ a sh:Shape;
+      sh:datatype xs:int;
+      sh:name "Result";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:first
+    ] .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/#artifact> a hmas:Artifact, ex:Adder .

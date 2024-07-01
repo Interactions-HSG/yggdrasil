@@ -282,7 +282,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   // TODO: add payload validation
   public void handleUpdateEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
     this.rdfStoreMessagebox

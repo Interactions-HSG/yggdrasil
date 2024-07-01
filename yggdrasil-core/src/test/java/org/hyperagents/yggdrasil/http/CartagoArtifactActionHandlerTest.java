@@ -304,7 +304,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertNull(doActionMessage.context(), CONTENTS_EQUAL_MESSAGE);
-    cartagoMessage.reply("");
+    cartagoMessage.reply(null);
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
