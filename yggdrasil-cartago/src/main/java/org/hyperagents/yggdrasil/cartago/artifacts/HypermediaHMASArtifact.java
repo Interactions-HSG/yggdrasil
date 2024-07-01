@@ -36,7 +36,7 @@ import static org.hyperagents.yggdrasil.utils.JsonObjectUtils.parseInput;
 public abstract class HypermediaHMASArtifact extends Artifact implements HypermediaArtifact {
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
-  private final ListMultimap<String, Signifier> signifiers =
+  private final ListMultimap<String, Object> signifiers =
     Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Map<String, Integer> feedbackActions = new HashMap<>();
@@ -84,7 +84,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   }
 
 
-  public final Map<String, List<Signifier>> getSignifiers() {
+  public final Map<String, List<Object>> getSignifiers() {
     return this.signifiers
       .asMap()
       .entrySet()

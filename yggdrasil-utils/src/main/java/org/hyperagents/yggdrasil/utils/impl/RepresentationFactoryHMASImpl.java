@@ -10,17 +10,20 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecifica
 import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import io.vertx.core.http.HttpMethod;
 
 
+import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Set;
 
 
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
@@ -287,12 +290,23 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   }
 
   @Override
+  public String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType) {
+    return createArtifactRepresentation(
+      workspaceName,
+      artifactName,
+      semanticType,
+      new LinkedHashModel(),
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
+    );
+  }
+
+  @Override
   public String createArtifactRepresentation(
       final String workspaceName,
       final String artifactName,
       final String semanticType,
       final Model metadata,
-      final ListMultimap<String, Signifier> signifiers
+      final ListMultimap<String, Object> signifiers
   ) {
     final String baseUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
@@ -303,7 +317,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     final ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
       .setIRIAsString(baseUri);
-    signifiers.values().forEach(resourceProfileBuilder::exposeSignifier);
+    signifiers.values().forEach(obj -> resourceProfileBuilder.exposeSignifier((Signifier) obj));
 
     // add Signifiers that are always given
     // get the representation for this artifact
@@ -412,13 +426,23 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   }
 
   @Override
-  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final SecurityScheme securityScheme,final String semanticType,final Model metadata,final ListMultimap<String, ActionAffordance> actionAffordances) {
-    return null;
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final SecurityScheme securityScheme,final String semanticType,final Model metadata,final ListMultimap<String, Object> actionAffordances) {
+    return createArtifactRepresentation(
+      workspaceName,
+      artifactName,
+      semanticType,
+      metadata,
+      actionAffordances
+    );
   }
 
   @Override
   public String createBodyRepresentation(final String workspaceName,final String agentName,final SecurityScheme securityScheme,final Model metadata) {
-    return null;
+    return createBodyRepresentation(
+      workspaceName,
+      agentName,
+      metadata
+    );
   }
 
   private String serializeHmasResourceProfile(final ResourceProfile profile) {

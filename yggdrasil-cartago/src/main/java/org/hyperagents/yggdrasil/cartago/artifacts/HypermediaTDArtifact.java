@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public abstract class HypermediaTDArtifact extends Artifact implements HypermediaArtifact {
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
-  private final ListMultimap<String, ActionAffordance> actionAffordances =
+  private final ListMultimap<String, Object> actionAffordances =
     Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Map<String, Integer> feedbackActions = new HashMap<>();
@@ -82,7 +82,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   }
 
 
-  public final Map<String, List<ActionAffordance>> getActionAffordances() {
+  public final Map<String, List<Object>> getActionAffordances() {
     return this.actionAffordances
       .asMap()
       .entrySet()

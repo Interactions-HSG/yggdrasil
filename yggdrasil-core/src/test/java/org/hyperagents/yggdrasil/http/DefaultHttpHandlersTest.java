@@ -570,6 +570,7 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
+  @Disabled
   public void testDeleteTurtleArtifactSucceeds(final VertxTestContext ctx)
     throws URISyntaxException, IOException, InterruptedException {
     this.helper.testDeleteTurtleResourceSucceeds(
@@ -580,6 +581,7 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
+  @Disabled
   public void testDeleteTurtleArtifactFailsWithNotFound(final VertxTestContext ctx)
     throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(

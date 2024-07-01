@@ -1,7 +1,5 @@
 package org.hyperagents.yggdrasil.http;
 
-import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
-import com.google.common.collect.Multimaps;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -27,7 +25,6 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
@@ -228,10 +225,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         var artifactRepresentation = this.representationFactory.createArtifactRepresentation(
           context.pathParam(WORKSPACE_ID_PARAM),
           actualEntityName.body(),
-          new NoSecurityScheme(),
-          "https://purl.org/hmas/Artifact",
-          new LinkedHashModel(),
-          Multimaps.newListMultimap(new HashMap<>(), ArrayList::new));
+          "https://purl.org/hmas/Artifact"
+        );
         try {
           final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
           finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));

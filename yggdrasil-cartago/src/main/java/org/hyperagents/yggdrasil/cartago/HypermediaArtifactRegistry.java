@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.cartago;
 
+import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
+import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
 
@@ -75,7 +77,7 @@ public final class HypermediaArtifactRegistry {
           signifierEntry.getKey(),
           signifier
         )))
-      .forEach(signifier -> signifier.getValue().getActionSpecification().getForms().stream().findFirst().ifPresent(value -> {
+      .forEach(signifier -> ((Signifier) signifier.getValue()).getActionSpecification().getForms().stream().findFirst().ifPresent(value -> {
         if (value.getMethodName().isPresent()) {
           this.artifactActionRouter.put(
             value.getMethodName().get() + value.getTarget(),
@@ -99,7 +101,7 @@ public final class HypermediaArtifactRegistry {
           actionEntry.getKey(),
           action
         )))
-      .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
+      .forEach(action -> ((ActionAffordance) action.getValue()).getFirstForm().ifPresent(value -> {
         if (value.getMethodName().isPresent()) {
           this.artifactActionRouter.put(
             value.getMethodName().get() + value.getTarget(),
