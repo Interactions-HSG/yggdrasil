@@ -222,13 +222,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           agentId,
           context.pathParam(WORKSPACE_ID_PARAM),
           actualEntityName.body(),
-          String.format(
-            """
-              {
-                "artifactName": "%s",
-                "artifactClass": "https://purl.org/hmas/Artifact"
-              }
-              """,
+          String.format("{%n \"artifactName\": \"%s\",%n \"artifactClass\": \"https://purl.org/hmas/Artifact\"%n}%n"
+           ,
             actualEntityName.body()
           )
         ))

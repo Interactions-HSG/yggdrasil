@@ -11,6 +11,9 @@ import java.util.Random;
 
 
 public class MathHMAS extends HypermediaHMASArtifact {
+
+  private static final Random random = new Random();
+
   @OPERATION
   public void egcd(final int a, final int b, final OpFeedbackParam<Integer> gcd, final OpFeedbackParam<Integer> x,final OpFeedbackParam<Integer> y) {
     this.log("Calculating egcd of " + a + " and " + b);
@@ -23,16 +26,14 @@ public class MathHMAS extends HypermediaHMASArtifact {
 
   @OPERATION
   public void rand(final OpFeedbackParam<Integer> randomInt) {
-   final Random rand = new Random();
-   final int randInt = rand.nextInt();
+   final int randInt = random.nextInt();
    System.out.println("Random int: " + randInt);
    randomInt.set(randInt);
   }
   @OPERATION
   public void rand2(final OpFeedbackParam<Integer> randInt1, final OpFeedbackParam<Integer> randInt2) {
-    final Random rand = new Random();
-    final int one = rand.nextInt();
-    final int two = rand.nextInt();
+    final int one = random.nextInt();
+    final int two = random.nextInt();
     System.out.println("one: " + one + " two: " + two);
     randInt1.set(one);
     randInt2.set(two);

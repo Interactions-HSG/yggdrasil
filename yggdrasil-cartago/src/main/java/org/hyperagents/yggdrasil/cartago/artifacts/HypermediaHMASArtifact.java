@@ -83,9 +83,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public final Map<String, Integer> getFeedbackActions() {
-    return feedbackActions;
-  }
 
   public final Map<String, List<Signifier>> getSignifiers() {
     return this.signifiers

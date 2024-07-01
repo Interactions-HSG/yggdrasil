@@ -81,9 +81,6 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public final Map<String, Integer> getFeedbackActions() {
-    return feedbackActions;
-  }
 
   public final Map<String, List<ActionAffordance>> getActionAffordances() {
     return this.actionAffordances
