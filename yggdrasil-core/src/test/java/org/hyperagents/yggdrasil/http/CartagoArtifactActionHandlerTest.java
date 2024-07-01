@@ -180,7 +180,7 @@ public class CartagoArtifactActionHandlerTest {
           OK_STATUS_MESSAGE
         );
         Assertions.assertEquals(
-          String.valueOf(5),
+          "[5]",
           r.bodyAsString(),
           "The response bodies should be equal"
         );
@@ -251,7 +251,7 @@ public class CartagoArtifactActionHandlerTest {
               OK_STATUS_MESSAGE
           );
           Assertions.assertEquals(
-              String.valueOf(5),
+              "[5]",
               r.bodyAsString(),
               "The response bodies should be equal"
           );

@@ -300,12 +300,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
 
     // remove trailing slash
-    var temp = routingContext.request().absoluteURI().endsWith("/") ?
+    final var temp = routingContext.request().absoluteURI().endsWith("/") ?
       routingContext.request().absoluteURI().substring(0, routingContext.request().absoluteURI().length() - 1) :
       routingContext.request().absoluteURI();
 
-    var parts = temp.split("/");
-    var artifactName = parts[parts.length - 1];
+    final var parts = temp.split("/");
+    final var artifactName = parts[parts.length - 1];
 
     System.out.println(artifactName);
     if (environment) {
@@ -658,12 +658,17 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
 
+    Model entityGraph;
     try {
-      final var entityGraph = RdfModelUtils.stringToModel(
+        entityGraph = RdfModelUtils.stringToModel(
         entityRepresentation,
         entityIri,
         RDFFormat.TURTLE
       );
+    } catch (Exception e) {
+      context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
+      return;
+    }
 
       // TODO: if slug is without trailing backslash and representation is with then doesnt work
 
@@ -706,10 +711,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader("Content-Type", "text/turtle").end())
             .onFailure(context::fail)
       );
-    } catch (final Exception e) {
-      LOGGER.error(e);
-      context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-    }
+
   }
 
   private Handler<AsyncResult<Message<String>>> handleStoreReply(

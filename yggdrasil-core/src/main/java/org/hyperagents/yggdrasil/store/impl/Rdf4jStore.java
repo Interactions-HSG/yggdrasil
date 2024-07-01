@@ -73,15 +73,15 @@ public class Rdf4jStore implements RdfStore {
 
     try {
       final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, fixedEntityIri));
-      var connectionNamespaces = new HashMap<String, Namespace>();
+      final var connectionNamespaces = new HashMap<String, Namespace>();
 
-      for (Namespace namespace : this.connection.getNamespaces()) {
+      for (final Namespace namespace : this.connection.getNamespaces()) {
         connectionNamespaces.put(namespace.getName(),namespace);
       }
 
       final var modelIris = RdfModelUtils.collectAllIriNamespaces(model);
 
-      for (String iri : modelIris) {
+      for (final String iri : modelIris) {
         if (connectionNamespaces.containsKey(iri)) {
           model.setNamespace(connectionNamespaces.get(iri));
         }
@@ -190,12 +190,11 @@ public class Rdf4jStore implements RdfStore {
                     )
             )
                     .handleBoolean(preparedBooleanQuery.evaluate());
-            case GraphQuery preparedGraphQuery -> {
-               out.writeBytes(
-                    RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
-                                    RDFFormat.TURTLE)
-                            .getBytes(StandardCharsets.UTF_8)
-            );}
+            case GraphQuery preparedGraphQuery -> out.writeBytes(
+                 RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
+                                 RDFFormat.TURTLE)
+                         .getBytes(StandardCharsets.UTF_8)
+         );
             default -> {
             }
         }
