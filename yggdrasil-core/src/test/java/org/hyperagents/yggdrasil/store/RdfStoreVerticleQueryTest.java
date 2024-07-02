@@ -17,6 +17,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
+
+import org.xmlunit.builder.DiffBuilder;
+import org.xmlunit.builder.Input;
+import org.xmlunit.diff.Diff;
+
 import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -200,12 +205,20 @@ public class RdfStoreVerticleQueryTest {
           Path.of(ClassLoader.getSystemResource("xml_tuple_query_result.xml").toURI()),
           StandardCharsets.UTF_8
         );
+
+
     this.testTupleQueryRequest(List.of(), List.of(), "application/sparql-results+xml")
-        .onSuccess(r -> Assertions.assertEquals(
-          result,
-          r.body(),
-          CONTENTS_EQUAL_MESSAGE
-        ))
+        .onSuccess(r ->
+          {
+            Diff diff = DiffBuilder.compare(Input.fromString(result))
+              .withTest(Input.fromString(r.body()))
+              .ignoreWhitespace()
+              .ignoreElementContentWhitespace()
+              .checkForSimilar()
+              .build();
+            Assertions.assertFalse(diff.hasDifferences(), "The contents should be equal");
+          }
+        )
         .onComplete(ctx.succeedingThenComplete());
   }
 
