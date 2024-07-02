@@ -7,7 +7,9 @@ import java.util.Optional;
 public interface WorkspaceRegistry {
   void registerWorkspace(final WorkspaceDescriptor descriptor, final String uri);
 
+  Optional<WorkspaceDescriptor> getWorkspaceDescriptor(final String name);
+
   Optional<Workspace> getWorkspace(final String name);
 
-  int deleteWorkspace(final String name);
+  void deleteWorkspace(final String name);
 }

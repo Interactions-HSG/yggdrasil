@@ -297,13 +297,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     if (environment) {
       final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
-      if (artifactName.equals(workspaceName)) {
-        System.out.println("cannot delete workspaces in cartago atm");
-      } else {
         this.cartagoMessagebox.sendMessage(
           new CartagoMessage.DeleteEntity(workspaceName, artifactName)
         );
-      }
     }
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))

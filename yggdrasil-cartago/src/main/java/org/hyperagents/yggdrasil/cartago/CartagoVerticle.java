@@ -436,14 +436,25 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void deleteEntity(final String workspaceName, final String requestUri) throws CartagoException {
-    System.out.println("workspace: " + workspaceName);
-    System.out.println("Full uri: " + requestUri);
-
     final var credentials = getAgentCredential(this.httpConfig.getAgentUri("yggdrasil"));
-    final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-    final var agentId = getAgentId(credentials, workspace.getId());
-    final var artifact = workspace.getArtifact(requestUri);
-    workspace.disposeArtifact(agentId, artifact);
+
+
+    if (workspaceName.equals(requestUri)) {
+      final var workspaceDescriptor = this.workspaceRegistry.getWorkspaceDescriptor(workspaceName);
+      if (workspaceDescriptor.isEmpty()) {
+        return;
+      }
+      final var parent = workspaceDescriptor.get().getParentInfo();
+      final var parentWorkspace = parent.getWorkspace();
+      parentWorkspace.removeWorkspace(workspaceName);
+      this.workspaceRegistry.deleteWorkspace(workspaceName);
+
+    } else {
+      final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+      final var agentId = getAgentId(credentials, workspace.getId());
+      final var artifact = workspace.getArtifact(requestUri);
+      workspace.disposeArtifact(agentId, artifact);
+    }
   }
 
   private JsonObject getActionNotificationContent(final String artifactName, final String action) {

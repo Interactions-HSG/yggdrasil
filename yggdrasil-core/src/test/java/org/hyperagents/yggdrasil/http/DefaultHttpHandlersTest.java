@@ -78,7 +78,7 @@ public class DefaultHttpHandlersTest {
       .put("default",
         new EnvironmentConfigImpl(JsonObject.of(
           "environment-config",
-          JsonObject.of("enabled", true, "ontology", "td")
+          JsonObject.of("enabled", false, "ontology", "td")
         )));
     final var notificationConfig = new WebSubConfigImpl(
       JsonObject.of(
@@ -570,7 +570,6 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
-  @Disabled
   public void testDeleteTurtleArtifactSucceeds(final VertxTestContext ctx)
     throws URISyntaxException, IOException, InterruptedException {
     this.helper.testDeleteTurtleResourceSucceeds(
@@ -581,7 +580,6 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
-  @Disabled
   public void testDeleteTurtleArtifactFailsWithNotFound(final VertxTestContext ctx)
     throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
