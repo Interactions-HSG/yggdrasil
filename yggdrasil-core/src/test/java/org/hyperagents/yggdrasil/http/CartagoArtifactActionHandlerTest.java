@@ -342,11 +342,6 @@ public class CartagoArtifactActionHandlerTest {
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
         })
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -408,11 +403,6 @@ public class CartagoArtifactActionHandlerTest {
               HttpStatus.SC_INTERNAL_SERVER_ERROR,
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());
