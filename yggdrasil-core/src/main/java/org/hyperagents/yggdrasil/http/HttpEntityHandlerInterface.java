@@ -9,7 +9,7 @@ public interface HttpEntityHandlerInterface {
   void handleCreateWorkspaceJson(final RoutingContext context);
   void handleCreateWorkspaceTurtle(final RoutingContext context);
   void handleCreateArtifact(final RoutingContext context);
-  void handleCreateArtifactJson(final RoutingContext context);
+  void handleCreateArtifactJson(final RoutingContext context, final String agentId);
   void handleCreateArtifactTurtle(final RoutingContext context);
   void handleFocus(final RoutingContext context);
   void handleUpdateEntity(final RoutingContext routingContext);

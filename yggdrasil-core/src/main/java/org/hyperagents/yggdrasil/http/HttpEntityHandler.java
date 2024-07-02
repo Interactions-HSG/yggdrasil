@@ -113,7 +113,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var requestUri = context.request().absoluteURI();
 
     if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
     this.rdfStoreMessagebox.sendMessage(
@@ -138,7 +138,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleCreateWorkspaceTurtle(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
     this.handleCreateWorkspaceTurtle(routingContext, routingContext.body().asString());
@@ -147,7 +147,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleCreateArtifact(final RoutingContext context) {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
     final var contentType = context.request().getHeader(HttpHeaders.CONTENT_TYPE);
@@ -158,16 +158,15 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
 
     switch (contentType) {
-      case "application/json" -> handleCreateArtifactJson(context);
+      case "application/json" -> handleCreateArtifactJson(context, agentId);
       case TURTLE_CONTENT_TYPE -> handleCreateArtifactTurtle(context);
       default -> context.response().setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).end();
     }
   }
 
-  public void handleCreateArtifactJson(final RoutingContext context) {
+  public void handleCreateArtifactJson(final RoutingContext context, final String agentId) {
     final var representation = context.body().asString();
     final var requestUri = context.request().absoluteURI();
-    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
     final var artifactName =
       ((JsonObject) Json.decodeValue(representation)).getString("artifactName");
 
@@ -252,7 +251,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -269,7 +268,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         artifactName
       )))
       .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+      .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
 
   // TODO: add payload validation
@@ -288,7 +287,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleDeleteEntity(final RoutingContext routingContext) {
     if (routingContext.request().getHeader(AGENT_WEBID_HEADER) == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -371,7 +370,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -403,7 +402,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         }
       )
       .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+      .onFailure(t -> routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
 
   public void handleLeaveWorkspace(final RoutingContext routingContext) {
@@ -411,7 +410,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
-      routingContext.fail(HttpStatus.SC_UNAUTHORIZED);
+      routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -440,14 +439,14 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           ));
       })
       .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+      .onFailure(t -> routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
 
   public void handleCreateSubWorkspace(final RoutingContext context) {
     final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -468,7 +467,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
           .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
       )
-      .onFailure(context::fail);
+      .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
 
   public void handleAction(final RoutingContext context) {
@@ -476,7 +475,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var agentId = request.getHeader(AGENT_WEBID_HEADER);
 
     if (agentId == null) {
-      context.fail(HttpStatus.SC_UNAUTHORIZED);
+      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
 
@@ -513,9 +512,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
               httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON).end(responseString);
             }
           })
-          .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
       })
-      .onFailure(t -> context.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
+      .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
 
 
@@ -525,7 +524,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       final var queryParams = request.params();
       final var queries = queryParams.getAll("query");
       if (!routingContext.body().isEmpty() || queries.size() != 1) {
-        routingContext.fail(HttpStatus.SC_BAD_REQUEST);
+        routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
         return;
       }
       this.handleQueryMessage(
@@ -540,7 +539,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       final var formParams = request.formAttributes();
       final var queries = formParams.getAll("query");
       if (queries.size() != 1) {
-        routingContext.fail(HttpStatus.SC_BAD_REQUEST);
+        routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
         return;
       }
       this.handleQueryMessage(
@@ -587,9 +586,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       )
       .onFailure(t -> {
         if (t instanceof ReplyException e) {
-          routingContext.fail(e.failureCode());
+          routingContext.response().setStatusCode(e.failureCode()).end();
         } else {
-          routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+          routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
         }
       });
   }
