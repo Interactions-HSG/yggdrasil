@@ -42,9 +42,9 @@ dependencies {
   implementation(libs.wot.td.java)
 
 
-  implementation(files("../libs/bindings-1.0-SNAPSHOT.jar"))
-  implementation(files("../libs/core-1.0-SNAPSHOT.jar"))
-  implementation(files("../libs/interaction-1.0-SNAPSHOT.jar"))
+  implementation(files("../libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
+  implementation(files("../libs/HMAS/core-1.0-SNAPSHOT.jar"))
+  implementation(files("../libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
   implementation("org.eclipse.rdf4j:rdf4j-runtime:3.7.4@pom") {
     isTransitive = true
   }
