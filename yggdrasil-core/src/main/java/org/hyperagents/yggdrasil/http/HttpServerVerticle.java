@@ -123,7 +123,9 @@ public class HttpServerVerticle extends AbstractVerticle {
                                  .consumes(ContentType.APPLICATION_JSON.getMimeType())
                                  .handler(handler::handleFocus);
 
-    // If cartago will be made optional might have to split route here to optionally disable application/json contenttype
+    router.post("/workspaces/:wkspid/artifacts/")
+          .consumes(TURTLE_CONTENT_TYPE)
+          .handler(handler::handleCreateArtifact);
     final var createArtifactRoute = router.post("/workspaces/:wkspid/artifacts/")
                                           .handler(handler::handleCreateArtifact);
 
