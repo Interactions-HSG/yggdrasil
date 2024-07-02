@@ -124,13 +124,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              requestUri,
-              nameResponse.body(),
-              Optional.empty(),
-              response.body()
-            ))
-            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+                requestUri,
+                nameResponse.body(),
+                Optional.empty(),
+                response.body()
+              )
+            ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
         )
         .onFailure(context::fail)
     );
@@ -183,12 +182,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
           this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
-              requestUri,
-              nameResponse.body(),
-              response.body()
-            ))
-            .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-            .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+                requestUri,
+                nameResponse.body(),
+                response.body()
+              )
+            ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
         )
         .onFailure(r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()))
     ;
@@ -240,9 +238,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             requestUri,
             actualEntityName.body(),
             artifactRepresentation//artifactRepresentation
-          ))
-          .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end(r.body()))
-          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE).end());
+          )
+          ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri+ actualEntityName.body() + "/")));
       }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
@@ -267,8 +264,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         workspaceName,
         artifactName
       )))
-      .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
+      .onComplete(this.handleStoreReply(context, HttpStatus.SC_OK, this.getHeaders(context.request().absoluteURI())));
   }
 
   // TODO: add payload validation
@@ -401,8 +397,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             ));
         }
       )
-      .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
+      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
   }
 
   public void handleLeaveWorkspace(final RoutingContext routingContext) {
@@ -438,8 +433,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             )
           ));
       })
-      .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end(r.body()))
-      .onFailure(t -> routingContext.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
+      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
   }
 
   public void handleCreateSubWorkspace(final RoutingContext context) {
@@ -464,8 +458,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
             response.body()
           ))
-          .onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED).end(r.body()))
-          .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).end())
+          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(this.httpConfig.getWorkspaceUri(subWorkspaceName))))
       )
       .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
