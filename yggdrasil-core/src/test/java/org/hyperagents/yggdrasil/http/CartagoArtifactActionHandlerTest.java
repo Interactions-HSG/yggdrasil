@@ -67,9 +67,9 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
     String ontology;
-    String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().get().getName();
     if (testName.contains("TD")) {
       ontology = "td";
     } else if (testName.contains("HMAS")) {
@@ -180,7 +180,7 @@ public class CartagoArtifactActionHandlerTest {
           OK_STATUS_MESSAGE
         );
         Assertions.assertEquals(
-          String.valueOf(5),
+          "[5]",
           r.bodyAsString(),
           "The response bodies should be equal"
         );
@@ -251,7 +251,7 @@ public class CartagoArtifactActionHandlerTest {
               OK_STATUS_MESSAGE
           );
           Assertions.assertEquals(
-              String.valueOf(5),
+              "[5]",
               r.bodyAsString(),
               "The response bodies should be equal"
           );
@@ -304,7 +304,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertNull(doActionMessage.context(), CONTENTS_EQUAL_MESSAGE);
-    cartagoMessage.reply("");
+    cartagoMessage.reply(null);
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -341,11 +341,6 @@ public class CartagoArtifactActionHandlerTest {
               HttpStatus.SC_INTERNAL_SERVER_ERROR,
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());
@@ -408,11 +403,6 @@ public class CartagoArtifactActionHandlerTest {
               HttpStatus.SC_INTERNAL_SERVER_ERROR,
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());

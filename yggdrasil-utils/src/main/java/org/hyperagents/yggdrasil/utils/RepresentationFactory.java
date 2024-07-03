@@ -1,7 +1,5 @@
 package org.hyperagents.yggdrasil.utils;
 
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
-import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import java.util.Set;
@@ -29,6 +27,9 @@ public interface RepresentationFactory {
    */
   String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates);
 
+
+  String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType);
+
   /**
    * Creates an artifact representation.
    *
@@ -44,7 +45,7 @@ public interface RepresentationFactory {
       String artifactName,
       String semanticType,
       Model metadata,
-      ListMultimap<String, Signifier> actionAffordances
+      ListMultimap<String, Object> actionAffordances
   );
 
   /**
@@ -67,7 +68,7 @@ public interface RepresentationFactory {
     SecurityScheme securityScheme,
     String semanticType,
     Model metadata,
-    ListMultimap<String, ActionAffordance> actionAffordances
+    ListMultimap<String, Object> actionAffordances
   );
 
   String createBodyRepresentation(

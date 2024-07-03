@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
-import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.affordances.ActionAffordance;
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
@@ -11,11 +10,15 @@ import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
 import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimaps;
 import io.vertx.core.http.HttpMethod;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Set;
 
 public class RepresentationFactoryTDImplt implements RepresentationFactory {
@@ -125,9 +128,28 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   }
 
   @Override
-  public String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType, Model metadata, ListMultimap<String, Signifier> actionAffordances) {
-    return null;
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType) {
+    return createArtifactRepresentation(
+      workspaceName,
+      artifactName,
+      new NoSecurityScheme(),
+      semanticType,
+      new LinkedHashModel(),
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
+    );
   }
+  @Override
+  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType,final Model metadata,final ListMultimap<String, Object> actionAffordances) {
+    return createArtifactRepresentation(
+      workspaceName,
+      artifactName,
+      new NoSecurityScheme(),
+      semanticType,
+      metadata,
+      actionAffordances
+    );
+  }
+
 
   @Override
   public String createArtifactRepresentation(
@@ -136,8 +158,14 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final SecurityScheme securityScheme,
     final String semanticType,
     final Model metadata,
-    final ListMultimap<String, ActionAffordance> actionAffordances
+    final ListMultimap<String, Object> actionAffordances
   ) {
+    final ListMultimap<String, ActionAffordance> actionAffordancesMap = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+    actionAffordances.entries().forEach(entry -> {
+      final var actionName = entry.getKey();
+      final var action = (ActionAffordance) entry.getValue();
+      actionAffordancesMap.put(actionName, action);
+    });
     final var td =
       new ThingDescription.Builder(artifactName)
         .addSecurityScheme(securityScheme)
@@ -146,7 +174,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addThingURI(this.httpConfig
           .getArtifactUri(workspaceName, artifactName) + "#artifact")
         .addGraph(metadata);
-    actionAffordances.values().forEach(td::addAction);
+    actionAffordancesMap.values().forEach(td::addAction);
     return serializeThingDescription(td);
   }
 

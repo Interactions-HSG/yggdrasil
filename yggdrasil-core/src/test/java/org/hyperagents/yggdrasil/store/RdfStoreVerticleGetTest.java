@@ -28,16 +28,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.locationtech.jts.util.Assert;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleGetTest {
   private RdfStoreMessagebox storeMessagebox;
-  private BlockingQueue<Message<HttpNotificationDispatcherMessage>> notificationMessageQueue = new LinkedBlockingQueue<>();
+  private static final BlockingQueue<Message<HttpNotificationDispatcherMessage>> notificationMessageQueue = new LinkedBlockingQueue<>();
+
+  private static final String WORKSPACES_URI = "http://yggdrasil:8080/workspaces/";
+  private static final String WORKSPACE_NAME = "test";
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
+    notificationMessageQueue.clear();
     vertx.sharedData()
          .getLocalMap("environment-config")
          .put("default",
@@ -64,13 +67,12 @@ public class RdfStoreVerticleGetTest {
     vertx.sharedData()
       .<String, WebSubConfig>getLocalMap("notification-config")
       .put("default", notificationConfig);
-    notificationMessageQueue = new LinkedBlockingQueue<>();
     final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
       vertx.eventBus(),
       notificationConfig
     );
     notificationMessagebox.init();
-    notificationMessagebox.receiveMessages(this.notificationMessageQueue::add);
+    notificationMessagebox.receiveMessages(notificationMessageQueue::add);
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     vertx.deployVerticle(new RdfStoreVerticle(), ctx.succeedingThenComplete());
   }
@@ -115,14 +117,12 @@ public class RdfStoreVerticleGetTest {
   @Test
   public void testGetEntityIriNonExistent(final VertxTestContext ctx) {
     this.storeMessagebox
-      .sendMessage(new RdfStoreMessage.GetEntityIri("http://yggdrasil:8080/workspaces/","nonexistent"))
-      .onSuccess(r -> {
-        Assertions.assertEquals(
-          "nonexistent",
-          r.body(),
-          "URIs should be the same"
-        );
-      }).onComplete(ctx.succeedingThenComplete());
+      .sendMessage(new RdfStoreMessage.GetEntityIri(WORKSPACES_URI,"nonexistent"))
+      .onSuccess(r -> Assertions.assertEquals(
+        "nonexistent",
+        r.body(),
+        "URIs should be the same"
+      )).onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
@@ -138,40 +138,34 @@ public class RdfStoreVerticleGetTest {
 
     this.storeMessagebox
       .sendMessage(new RdfStoreMessage.CreateWorkspace(
-        "http://yggdrasil:8080/workspaces/",
-        "test",
+        WORKSPACES_URI,
+        WORKSPACE_NAME,
         Optional.empty(),
         workspaceInput
-        )).onSuccess(r -> {
-        Assertions.assertEquals(
+        )).onSuccess(r -> Assertions.assertEquals(
           workspaceRepresentation,
           r.body(),
           "Representations should be equal"
-        );
-      });
+        ));
 
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(
           "http://yggdrasil:8080/workspaces/test"
-        )).onSuccess(r -> {
-        RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+        )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           workspaceRepresentation,
           r.body()
-        );
-      });
+        ));
 
     // trying to get another thing with the same slug
     // should return a UUID that is not the slug
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntityIri(
-          "http://yggdrasil:8080/workspaces/",
-          "test"
-        )).onSuccess(r -> {
-          Assertions.assertNotEquals(
-            "test",
-            r.body()
-          );
-    });
+          WORKSPACES_URI,
+          WORKSPACE_NAME
+        )).onSuccess(r -> Assertions.assertNotEquals(
+          WORKSPACE_NAME,
+          r.body()
+        ));
     ctx.completeNow();
   }
 
@@ -195,37 +189,31 @@ public class RdfStoreVerticleGetTest {
 
     this.storeMessagebox
       .sendMessage(new RdfStoreMessage.CreateWorkspace(
-        "http://yggdrasil:8080/workspaces/",
-        "test",
+        WORKSPACES_URI,
+        WORKSPACE_NAME,
         Optional.empty(),
         workspaceInput
-      )).onSuccess(r -> {
-        Assertions.assertEquals(
-          workspaceRepresentation,
-          r.body(),
-          "Representations should be equal"
-        );
-      });
+      )).onSuccess(r -> Assertions.assertEquals(
+        workspaceRepresentation,
+        r.body(),
+        "Representations should be equal"
+      ));
 
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(
           "http://yggdrasil:8080/workspaces/test"
-        )).onSuccess(r -> {
-        RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+        )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           workspaceRepresentation,
           r.body()
-        );
-      });
+        ));
 
     this.storeMessagebox
       .sendMessage(new RdfStoreMessage.GetEntity(
         "http://yggdrasil:8080/workspaces/test/"
-      )).onSuccess(r -> {
-        RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          workspaceRepresentation,
-          r.body()
-        );
-      });
+      )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+        workspaceRepresentation,
+        r.body()
+      ));
 
     ctx.completeNow();
   }

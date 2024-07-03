@@ -120,4 +120,9 @@ public sealed interface CartagoMessage {
       String context
   ) implements CartagoMessage {
   }
+  record DeleteEntity(
+    String workspaceName,
+    String requestUri
+  ) implements CartagoMessage {
+  }
 }

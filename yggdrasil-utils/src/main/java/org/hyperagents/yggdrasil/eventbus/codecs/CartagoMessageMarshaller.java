@@ -71,6 +71,10 @@ public class CartagoMessageMarshaller
         jsonObject.get(MessageFields.STORE_RESPONSE.getName()).getAsString(),
         jsonObject.get(MessageFields.CONTEXT.getName()).getAsString()
       );
+      case DELETE_ENTITY -> new CartagoMessage.DeleteEntity(
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+      );
       default -> throw new JsonParseException("The request method is not valid");
     };
   }
@@ -139,6 +143,13 @@ public class CartagoMessageMarshaller
         json.addProperty(MessageFields.ACTION_NAME.getName(), m.actionName());
         json.addProperty(MessageFields.STORE_RESPONSE.getName(), m.storeResponse());
         json.addProperty(MessageFields.CONTEXT.getName(), m.context());
+      }
+      case CartagoMessage.DeleteEntity m -> {
+        json.addProperty(
+          MessageFields.REQUEST_METHOD.getName(),
+          MessageRequestMethods.DELETE_ENTITY.getName()
+        );
+        json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
       }
     }
     return json;

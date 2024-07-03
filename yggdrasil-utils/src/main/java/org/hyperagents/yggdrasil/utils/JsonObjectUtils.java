@@ -119,16 +119,16 @@ public final class JsonObjectUtils {
 
 
   // TODO: Put into HMAS Lib
-  public static List<Object> parseInput(JsonElement jsonElement, QualifiedValueSpecification qualifiedValueSpecification, List<Object> result) {
-    var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
-    var properties = qualifiedValueSpecification.getPropertySpecifications();
+  public static List<Object> parseInput(final JsonElement jsonElement,final QualifiedValueSpecification qualifiedValueSpecification,final List<Object> result) {
+    final var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
+    final var properties = qualifiedValueSpecification.getPropertySpecifications();
 
     if (semanticTypes.contains(RDF.LIST.stringValue())) {
       assert jsonElement.isJsonArray();
-      var jsonArray = jsonElement.getAsJsonArray();
-      var firstProperty = properties.get(RDF.FIRST.stringValue());
-      var restProperty = properties.get(RDF.REST.stringValue());
-      var firstElement = jsonArray.remove(0);
+      final var jsonArray = jsonElement.getAsJsonArray();
+      final var firstProperty = properties.get(RDF.FIRST.stringValue());
+      final var restProperty = properties.get(RDF.REST.stringValue());
+      final var firstElement = jsonArray.remove(0);
 
       if (firstProperty instanceof IntegerSpecification) {
         result.add(firstElement.getAsInt());

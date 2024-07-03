@@ -3,9 +3,12 @@ package org.hyperagents.yggdrasil.utils.impl;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 
-public class RepresentationFactoryFactory {
+public final class RepresentationFactoryFactory {
 
-  public static RepresentationFactory getRepresentationFactory(final String representationFactory, HttpInterfaceConfig httpConfig) {
+  private RepresentationFactoryFactory(){}
+
+  public static RepresentationFactory getRepresentationFactory(final String representationFactory,final HttpInterfaceConfig httpConfig) {
+    if (representationFactory == null) return new RepresentationFactoryTDImplt(httpConfig);
     return switch (representationFactory) {
       case "hmas" -> new RepresentationFactoryHMASImpl(httpConfig);
       case "td" -> new RepresentationFactoryTDImplt(httpConfig);

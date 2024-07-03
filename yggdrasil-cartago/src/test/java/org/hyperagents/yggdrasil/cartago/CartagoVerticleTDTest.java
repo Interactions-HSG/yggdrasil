@@ -1089,7 +1089,7 @@ public class CartagoVerticleTDTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    var theSame =   Models.isomorphic(
+    final var theSame =   Models.isomorphic(
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
     );

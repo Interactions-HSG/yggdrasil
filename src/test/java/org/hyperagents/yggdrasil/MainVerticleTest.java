@@ -32,6 +32,9 @@ public class MainVerticleTest {
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
   private static final String HINT_HEADER = "Slug";
+  private static final String CLASS = "class";
+  private static final String TEMPLATE = "template";
+  private static final String ARTIFACT_NAME = "artifactName";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
@@ -63,15 +66,15 @@ public class MainVerticleTest {
     "known-artifacts",
     JsonArray.of(
       JsonObject.of(
-        "class",
+        CLASS,
         COUNTER_ARTIFACT_CLASS,
-        "template",
+        TEMPLATE,
         "org.hyperagents.yggdrasil.artifacts.CounterTD"
       ),
       JsonObject.of(
-        "class",
+        CLASS,
         BASE_ARTIFACT_CLASS,
-        "template",
+        TEMPLATE,
         "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
       )
     ),
@@ -85,15 +88,15 @@ public class MainVerticleTest {
     "known-artifacts",
     JsonArray.of(
       JsonObject.of(
-        "class",
+        CLASS,
         COUNTER_ARTIFACT_CLASS,
-        "template",
+        TEMPLATE,
         "org.hyperagents.yggdrasil.artifacts.CounterHMAS"
       ),
       JsonObject.of(
-        "class",
+        CLASS,
         BASE_ARTIFACT_CLASS,
-        "template",
+        TEMPLATE,
         "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
       )
     ),
@@ -102,10 +105,10 @@ public class MainVerticleTest {
   );
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx, TestInfo testInfo) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
 
     JsonObject env;
-    String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().get().getName();
     if (testName.contains("TD")) {
       env = TDEnv;
     } else if (testName.contains("HMAS")) {
@@ -382,7 +385,7 @@ public class MainVerticleTest {
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .sendJsonObject(JsonObject.of(
-          "artifactName",
+          ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
           "artifactClass",
           COUNTER_ARTIFACT_CLASS,
@@ -463,7 +466,7 @@ public class MainVerticleTest {
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .sendJsonObject(JsonObject.of(
-          "artifactName",
+          ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
           "callbackIri",
           CALLBACK_URL
@@ -767,7 +770,7 @@ public class MainVerticleTest {
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .sendJsonObject(JsonObject.of(
-          "artifactName",
+          ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
           "artifactClass",
           COUNTER_ARTIFACT_CLASS,
@@ -848,7 +851,7 @@ public class MainVerticleTest {
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .sendJsonObject(JsonObject.of(
-          "artifactName",
+          ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
           "callbackIri",
           CALLBACK_URL
@@ -931,22 +934,28 @@ public class MainVerticleTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    System.out.println(actual);
+    final var areEqual = Models.isomorphic(
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
+    );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-      Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
-      ),
+      areEqual,
       REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
   private void assertEqualsHMASDescriptions(final String expected, final String actual) {
-    System.out.println(actual);
+    final var areEqual = Models.isomorphic(
+      ResourceProfileGraphReader.getModelFromString(expected),
+      ResourceProfileGraphReader.getModelFromString(actual)
+    );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-      Models.isomorphic(
-        ResourceProfileGraphReader.getModelFromString(expected),
-        ResourceProfileGraphReader.getModelFromString(actual)
-      ),
+      areEqual,
       REPRESENTATIONS_EQUAL_MESSAGE
     );
   }

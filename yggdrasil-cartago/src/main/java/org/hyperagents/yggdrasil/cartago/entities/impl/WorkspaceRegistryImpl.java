@@ -21,8 +21,18 @@ public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
   }
 
   @Override
+  public Optional<WorkspaceDescriptor> getWorkspaceDescriptor(final String name) {
+    return Optional.ofNullable(this.workspaceDescriptors.get(name));
+  }
+
+  @Override
   public Optional<Workspace> getWorkspace(final String name) {
     return Optional.ofNullable(this.workspaceDescriptors.get(name))
                    .map(WorkspaceDescriptor::getWorkspace);
+  }
+
+  @Override
+  public void deleteWorkspace(final String name) {
+    this.workspaceDescriptors.remove(name);
   }
 }

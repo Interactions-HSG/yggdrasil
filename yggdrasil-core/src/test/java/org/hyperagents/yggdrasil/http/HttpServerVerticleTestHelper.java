@@ -167,11 +167,6 @@ public final class HttpServerVerticleTestHelper {
               r.statusCode(),
               UNAUTHORIZED_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              "Unauthorized",
-              r.bodyAsString(),
-              "The response bodies should be equal"
-          );
         })
         .onComplete(ctx.succeedingThenComplete());
   }

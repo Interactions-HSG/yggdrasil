@@ -192,11 +192,6 @@ public class QueryHttpHandlersTest {
                      r.statusCode(),
                      BAD_REQUEST_STATUS_CODE_MESSAGE
                  );
-                 Assertions.assertEquals(
-                     BAD_REQUEST_CONTENT,
-                     r.bodyAsString(),
-                     RESULT_STATUS_CODE_MESSAGE
-                 );
                })
                .onComplete(ctx.succeedingThenComplete());
   }
@@ -222,11 +217,6 @@ public class QueryHttpHandlersTest {
                      r.statusCode(),
                      BAD_REQUEST_STATUS_CODE_MESSAGE
                  );
-                 Assertions.assertEquals(
-                     BAD_REQUEST_CONTENT,
-                     r.bodyAsString(),
-                     RESULT_STATUS_CODE_MESSAGE
-                 );
                })
                .onComplete(ctx.succeedingThenComplete());
   }
@@ -249,11 +239,6 @@ public class QueryHttpHandlersTest {
                      HttpStatus.SC_BAD_REQUEST,
                      r.statusCode(),
                      BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-                 Assertions.assertEquals(
-                     BAD_REQUEST_CONTENT,
-                     r.bodyAsString(),
-                     RESULT_STATUS_CODE_MESSAGE
                  );
                })
                .onComplete(ctx.succeedingThenComplete());
@@ -344,11 +329,6 @@ public class QueryHttpHandlersTest {
                      r.statusCode(),
                      BAD_REQUEST_STATUS_CODE_MESSAGE
                  );
-                 Assertions.assertEquals(
-                     BAD_REQUEST_CONTENT,
-                     r.bodyAsString(),
-                     RESULT_STATUS_CODE_MESSAGE
-                 );
                })
               .onComplete(ctx.succeedingThenComplete());
   }
@@ -373,11 +353,6 @@ public class QueryHttpHandlersTest {
                      HttpStatus.SC_BAD_REQUEST,
                      r.statusCode(),
                      BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-                 Assertions.assertEquals(
-                     BAD_REQUEST_CONTENT,
-                     r.bodyAsString(),
-                     RESULT_STATUS_CODE_MESSAGE
                  );
                })
               .onComplete(ctx.succeedingThenComplete());

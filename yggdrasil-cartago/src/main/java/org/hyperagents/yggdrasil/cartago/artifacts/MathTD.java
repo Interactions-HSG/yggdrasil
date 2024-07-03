@@ -9,10 +9,13 @@ import java.util.Random;
 
 
 public class MathTD extends HypermediaTDArtifact {
+
+  private static final Random random = new Random();
+
   @OPERATION
   public void egcd(final int a, final int b, final OpFeedbackParam<Integer> gcd, final OpFeedbackParam<Integer> x,final OpFeedbackParam<Integer> y) {
     this.log("Calculating egcd of " + a + " and " + b);
-    var temp = extendedEuclidean(a,b);
+    final var temp = extendedEuclidean(a,b);
     gcd.set(temp[0]);
     x.set(temp[1]);
     y.set(temp[2]);
@@ -21,17 +24,15 @@ public class MathTD extends HypermediaTDArtifact {
 
   @OPERATION
   public void rand(final OpFeedbackParam<Integer> randomInt) {
-    Random rand = new Random();
-    int randInt = rand.nextInt();
+    final int randInt = random.nextInt();
     System.out.println("Random Integer: " + randInt);
     randomInt.set(randInt);
   }
 
   @OPERATION
   public void rand2(final OpFeedbackParam<Integer> randInt1, final OpFeedbackParam<Integer> randInt2) {
-    Random rand = new Random();
-    int one = rand.nextInt();
-    int two = rand.nextInt();
+    final int one = random.nextInt();
+    final int two = random.nextInt();
     System.out.println("one: " + one + " two: " + two);
     randInt1.set(one);
     randInt2.set(two);
@@ -46,31 +47,42 @@ public class MathTD extends HypermediaTDArtifact {
       new ArraySchema.Builder()
         .addItem(new IntegerSchema.Builder().build())
         .addItem(new IntegerSchema.Builder().build())
+        .build(),
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
         .build()
     );
-    this.registerFeedbackParameters("egcd",3);
     this.registerActionAffordance(
       "http://example.org/rand",
       "rand",
-      "rand"
+      "rand",
+      null,
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .build()
     );
-    this.registerFeedbackParameters("rand",1);
     this.registerActionAffordance(
       "http://example.org/rand2",
       "rand2",
-      "rand2"
+      "rand2",
+      null,
+      new ArraySchema.Builder()
+        .addItem(new IntegerSchema.Builder().build())
+        .addItem(new IntegerSchema.Builder().build())
+        .build()
     );
-    this.registerFeedbackParameters("rand2",2);
   }
 
-  public static int[] extendedEuclidean(int a, int b) {
+  public static int[] extendedEuclidean(final int a,final int b) {
     if (b == 0) {
       return new int[] {a, 1, 0};
     } else {
-      int[] arr = extendedEuclidean(b, a % b);
-      int gcd = arr[0];
-      int x = arr[2];
-      int y = arr[1] - (a / b) * arr[2];
+      final int[] arr = extendedEuclidean(b, a % b);
+      final int gcd = arr[0];
+      final int x = arr[2];
+      final int y = arr[1] - (a / b) * arr[2];
       return new int[] {gcd, x, y};
     }
   }

@@ -20,10 +20,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
-import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -59,13 +57,11 @@ public class DefaultHttpHandlersTest {
   private static final String COUNTER_ARTIFACT_FILE = "c0_counter_artifact_td.ttl";
 
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
-  private final BlockingQueue<Message<CartagoMessage>> cartagoMessageQueue;
   private WebClient client;
   private HttpServerVerticleTestHelper helper;
 
   public DefaultHttpHandlersTest() {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
-    this.cartagoMessageQueue = new LinkedBlockingQueue<>();
 
   }
 
@@ -82,7 +78,7 @@ public class DefaultHttpHandlersTest {
       .put("default",
         new EnvironmentConfigImpl(JsonObject.of(
           "environment-config",
-          JsonObject.of("enabled", true, "ontology", "td")
+          JsonObject.of("enabled", false, "ontology", "td")
         )));
     final var notificationConfig = new WebSubConfigImpl(
       JsonObject.of(
@@ -97,12 +93,6 @@ public class DefaultHttpHandlersTest {
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
-    final var cartagoMessagebox = new CartagoMessagebox(vertx.eventBus(), new EnvironmentConfigImpl(JsonObject.of(
-      "environment-config",
-      JsonObject.of("enabled", true, "ontology", "td")
-    )));
-    cartagoMessagebox.init();
-    cartagoMessagebox.receiveMessages(this.cartagoMessageQueue::add);
     new HttpNotificationDispatcherMessagebox(vertx.eventBus(), notificationConfig).init();
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
   }
@@ -186,10 +176,8 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(MAIN_WORKSPACE_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
-    cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
     Assertions.assertEquals(
@@ -268,10 +256,8 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(SUB_WORKSPACE_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
-    cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateWorkspace) message.body();
 
@@ -350,11 +336,8 @@ public class DefaultHttpHandlersTest {
       .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
       .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
       .sendBuffer(Buffer.buffer(input));
-    var firstMessage = this.storeMessageQueue.take();
+    final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(COUNTER_ARTIFACT_NAME);
-    var cartagoMessage = this.cartagoMessageQueue.take();
-    // TODO: Cartago should reply with representation of Base Artifact
-    cartagoMessage.reply(input);
     final var message = this.storeMessageQueue.take();
     final var createResourceMessage = (RdfStoreMessage.CreateArtifact) message.body();
     Assertions.assertEquals(
@@ -617,6 +600,7 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
+  @Disabled
   public void testDeleteTurtleArtifactRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,

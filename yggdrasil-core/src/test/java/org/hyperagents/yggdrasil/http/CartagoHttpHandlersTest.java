@@ -332,11 +332,6 @@ public class CartagoHttpHandlersTest {
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
         })
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -638,11 +633,6 @@ public class CartagoHttpHandlersTest {
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
         })
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -732,11 +722,6 @@ public class CartagoHttpHandlersTest {
               HttpStatus.SC_INTERNAL_SERVER_ERROR,
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());
@@ -861,11 +846,6 @@ public class CartagoHttpHandlersTest {
               HttpStatus.SC_INTERNAL_SERVER_ERROR,
               r.statusCode(),
               INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());

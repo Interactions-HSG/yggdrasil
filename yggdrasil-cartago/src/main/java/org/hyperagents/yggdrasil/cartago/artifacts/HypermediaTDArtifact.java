@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 public abstract class HypermediaTDArtifact extends Artifact implements HypermediaArtifact {
   private static final String DEFAULT_CONFIG_VALUE = "default";
 
-  private final ListMultimap<String, ActionAffordance> actionAffordances =
+  private final ListMultimap<String, Object> actionAffordances =
     Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
   private final Model metadata = new LinkedHashModel();
   private final Map<String, Integer> feedbackActions = new HashMap<>();
@@ -81,11 +81,19 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public final Map<String, Integer> getFeedbackActions() {
-    return feedbackActions;
+  @Override
+  public Optional<String> getMethodNameAndTarget(final Object action) {
+    final var ActionAffordance = (ActionAffordance) action;
+    if (ActionAffordance.getFirstForm().isPresent()) {
+      final var form = ActionAffordance.getFirstForm().get();
+      if (form.getMethodName().isPresent()) {
+        return Optional.of(form.getMethodName().get() + form.getTarget());
+      }
+    }
+    return Optional.empty();
   }
 
-  public final Map<String, List<ActionAffordance>> getActionAffordances() {
+  public final Map<String, List<Object>> getArtifactActions() {
     return this.actionAffordances
       .asMap()
       .entrySet()
@@ -142,7 +150,17 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     final String relativeUri,
     final DataSchema inputSchema
   ) {
-    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema);
+    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema, null);
+  }
+
+  protected final void registerActionAffordance(
+    final String actionClass,
+    final String actionName,
+    final String relativeUri,
+    final DataSchema inputSchema,
+    final DataSchema outputSchema
+  ) {
+    this.registerActionAffordance(actionClass, actionName, "POST", relativeUri, inputSchema, outputSchema);
   }
 
   protected final void registerActionAffordance(
@@ -150,7 +168,8 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     final String actionName,
     final String methodName,
     final String relativeUri,
-    final DataSchema inputSchema
+    final DataSchema inputSchema,
+    final DataSchema outputSchema
   ) {
     final var actionBuilder =
       new ActionAffordance
@@ -162,12 +181,17 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       )
         .addSemanticType(actionClass)
         .addTitle(actionName);
+
+    if (inputSchema != null) {
+      actionBuilder.addInputSchema(inputSchema);
+    }
+    if (outputSchema != null) {
+      actionBuilder.addOutputSchema(outputSchema);
+    }
+
     this.registerActionAffordance(
       actionName,
-      Optional.ofNullable(inputSchema)
-        .map(actionBuilder::addInputSchema)
-        .orElse(actionBuilder)
-        .build()
+      actionBuilder.build()
     );
   }
 
@@ -183,9 +207,9 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.feedbackActions.put(actionName, params + 1);
   }
 
-  protected final void registerFeedbackParameters(final String actionName, int numberOfParameters) {
+  protected final void registerFeedbackParameters(final String actionName, final int numberOfParameters) {
     final int params = this.feedbackActions.getOrDefault(actionName, 0);
-    this.feedbackActions.put(actionName,params + numberOfParameters);
+    this.feedbackActions.put(actionName, params + numberOfParameters);
   }
 
   protected final void registerFeedbackParameter(
@@ -204,8 +228,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     this.metadata.addAll(model);
   }
 
-  public Optional<String> handleAction(String storeResponse, String actionName, String context)
-  {
+  public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {
     return TDGraphReader
       .readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
       .getActions()
@@ -221,6 +244,26 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
         ((ArraySchema) inputSchema)
           .parseJson(JsonParser.parseString(context))
       ));
+  }
+
+  public Integer handleOutputParams(final String storeResponse, final String actionName, final String context) {
+    final var action = TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, storeResponse)
+      .getActions()
+      .stream()
+      .filter(
+        a -> a.getTitle().isPresent()
+          && a.getTitle().get().equals(actionName)
+      ).findFirst();
+
+
+    if (action.isPresent() && action.get().getOutputSchema().isPresent()) {
+      final var outputSchema = action.get().getOutputSchema().get();
+      if (outputSchema.getDatatype().equals(DataSchema.ARRAY)) {
+        final var arraySchema = (ArraySchema) outputSchema;
+        return arraySchema.getItems().size();
+      }
+    }
+    return 0;
   }
 
 }

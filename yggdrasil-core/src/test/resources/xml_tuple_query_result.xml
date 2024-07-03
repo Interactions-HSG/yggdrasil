@@ -1,41 +1,57 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
-	<head>
-		<variable name='workspace'/>
-		<variable name='artifact'/>
-	</head>
-	<results>
-		<result>
-			<binding name='artifact'>
-				<literal>c0</literal>
-			</binding>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-		<result>
-			<binding name='artifact'>
-				<literal>c0</literal>
-			</binding>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-		<result>
-			<binding name='artifact'>
-				<literal>c0</literal>
-			</binding>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-		<result>
-			<binding name='artifact'>
-				<literal>c0</literal>
-			</binding>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-	</results>
+  <head>
+    <variable name='workspace'/>
+    <variable name='artifact'/>
+  </head>
+  <results>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+    <result>
+      <binding name='artifact'>
+        <literal>c0</literal>
+      </binding>
+      <binding name='workspace'>
+        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
+      </binding>
+    </result>
+  </results>
 </sparql>
