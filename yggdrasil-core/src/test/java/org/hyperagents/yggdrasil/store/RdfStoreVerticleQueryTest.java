@@ -210,7 +210,7 @@ public class RdfStoreVerticleQueryTest {
     this.testTupleQueryRequest(List.of(), List.of(), "application/sparql-results+xml")
         .onSuccess(r ->
           {
-            Diff diff = DiffBuilder.compare(Input.fromString(result))
+            final Diff diff = DiffBuilder.compare(Input.fromString(result))
               .withTest(Input.fromString(r.body()))
               .ignoreWhitespace()
               .ignoreElementContentWhitespace()
