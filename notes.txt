@@ -26,48 +26,33 @@
   - Issue 44 - Update architecture file
 
 
-  - Issue 45 - Remove last singleton -> HypermediaArtifactRegistry
-    - make it a class only used by cartago verticle
-    -> Should only be used by cartago verticle already
-    -> Except for 1 method in HttpHandler for handleAction
-
 - Check Correct URIs everywhere
 
-TODOS:
-  Still need to write the hmas tests for the core tests
-  Rewriting of DefaultHttpHandlers since we always need cartago atm
-  -> What to do about that?
-
-
-++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
-  ++ NEW REPRESENTATION
 
 ++++++++++++++++++++++
-
-+ Tests refactored so they use same classes if appropriate
-
-+ Signal works
-
-+ Deleting an Entity doesnt delete it from cartago
-  Currently Deleting is not a cartago message need to add that handling
 
 + update TD representation same as HMAS
   Need to add basics such as websub handling
 
-+ description of feedbackparams
-  -> artifacts should also register the output representation the same as input
-
-+ display error if user tries to start yggdrasil without specifying ontology in environment conf
-
 
 + add testcase where base is not localhost:8080
 
-+ update swagger api docs
-  leaveWorkspace also needs AgentLocalName
+IMPLEMENTED:
+- HypermediaArtifactRegistry no longer a singleton (ISSUE 45)
+  - Only problem is that spotBugs complains. Registry is mutable and not final
+  org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.init(HypermediaArtifactRegistry) may expose internal representation by storing an externally mutable object into HypermediaTDArtifact.registry
+  Bug type EI_EXPOSE_REP2 (click for details)
+  In class org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact
+  In method org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.init(HypermediaArtifactRegistry)
+  Field org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.registry
+  Local variable named registry
+  At HypermediaTDArtifact.java:[line 52]
 
+- Cartago updated, all actions should work + deletion of workspaces
+  - Only problem is do not know what I am missing from Matteos version
 
-TESTS:
-  CARTAGO:
-    Do action without payload but with feedbackparams
+- Artifacts refactored, output specifications are now needed
+  - Same as input, but for output
+  - Could be extended to typesafe input / output representations
 
-
+- Default ontology is TD
