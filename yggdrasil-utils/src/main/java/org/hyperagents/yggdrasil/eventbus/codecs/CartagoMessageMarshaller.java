@@ -9,6 +9,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
+import java.util.Optional;
 
 
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
@@ -68,6 +69,9 @@ public class CartagoMessageMarshaller
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ACTION_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.API_KEY.getName()).isJsonNull()
+          ? Optional.empty()
+          : Optional.of(jsonObject.get(MessageFields.API_KEY.getName()).getAsString()),
         jsonObject.get(MessageFields.STORE_RESPONSE.getName()).getAsString(),
         jsonObject.get(MessageFields.CONTEXT.getName()).getAsString()
       );
@@ -141,6 +145,10 @@ public class CartagoMessageMarshaller
         json.addProperty(MessageFields.AGENT_ID.getName(), m.agentId());
         json.addProperty(MessageFields.ARTIFACT_NAME.getName(), m.artifactName());
         json.addProperty(MessageFields.ACTION_NAME.getName(), m.actionName());
+        json.addProperty(
+          MessageFields.API_KEY.getName(),
+          m.apiKey().orElse(null)
+        );
         json.addProperty(MessageFields.STORE_RESPONSE.getName(), m.storeResponse());
         json.addProperty(MessageFields.CONTEXT.getName(), m.context());
       }

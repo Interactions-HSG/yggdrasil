@@ -6,7 +6,6 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class SignalerHMAS extends HypermediaHMASArtifact {
 
-  public void init() {}
 
   @OPERATION
   public void sign() {

@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -682,6 +683,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           "c0",
           "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
+          Optional.empty(),
           r.body(),
           ctx.toString()
         )))
@@ -743,6 +745,7 @@ public class CartagoVerticleTDTest {
           SUB_WORKSPACE_NAME,
           "c1",
           "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
+          Optional.empty(),
           COUNTER_ARTIFACT_TD,
           ""
         ));
@@ -824,6 +827,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           "a0",
           "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
+          Optional.empty(),
           r.body(),
           "[2,2]"
         )
@@ -858,6 +862,7 @@ public class CartagoVerticleTDTest {
             MAIN_WORKSPACE_NAME,
             "m0",
             "POSThttp://localhost:8080/workspaces/test/artifacts/m0/egcd",
+            Optional.empty(),
             r.body(),
             "[18,6]"
           )
@@ -892,6 +897,7 @@ public class CartagoVerticleTDTest {
             MAIN_WORKSPACE_NAME,
             "m0",
             "POSThttp://localhost:8080/workspaces/test/artifacts/m0/rand",
+            Optional.empty(),
             r.body(),
             ""
           )
@@ -925,6 +931,7 @@ public class CartagoVerticleTDTest {
             MAIN_WORKSPACE_NAME,
             "m0",
             "POSThttp://localhost:8080/workspaces/test/artifacts/m0/rand2",
+            Optional.empty(),
             r.body(),
             ""
           )
@@ -958,6 +965,7 @@ public class CartagoVerticleTDTest {
           NONEXISTENT_NAME,
           "a0",
           ADD_OPERATION,
+          Optional.empty(),
           r.body(),
           Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
@@ -991,6 +999,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           NONEXISTENT_NAME,
           ADD_OPERATION,
+          Optional.empty(),
           r.body(),
           Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
@@ -1024,6 +1033,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           "a0",
           NONEXISTENT_NAME,
+          Optional.empty(),
           r.body(),
           Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
         )))
@@ -1057,6 +1067,7 @@ public class CartagoVerticleTDTest {
           MAIN_WORKSPACE_NAME,
           "a0",
           ADD_OPERATION,
+          Optional.empty(),
           r.body(),
           "[2,3,5,6]"
         )))

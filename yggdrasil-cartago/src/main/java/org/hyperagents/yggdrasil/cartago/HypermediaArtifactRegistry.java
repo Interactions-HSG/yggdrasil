@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
 
 import java.util.Collections;
@@ -20,8 +19,6 @@ import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
  */
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public final class HypermediaArtifactRegistry {
-  private static HypermediaArtifactRegistry REGISTRY;
-
   // Maps the canonical name of a CArtAgO artifact class to the corresponding HypermediaArtifact
   private final Map<String, HypermediaArtifact> artifacts;
 
@@ -41,7 +38,7 @@ public final class HypermediaArtifactRegistry {
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
 
-  private HypermediaArtifactRegistry() {
+  public HypermediaArtifactRegistry() {
     this.artifactSemanticTypes = new Hashtable<>();
     this.artifacts = Collections.synchronizedMap(new HashMap<>());
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
@@ -52,18 +49,15 @@ public final class HypermediaArtifactRegistry {
     this.counter = 0;
   }
 
-  @SuppressFBWarnings({"MS_EXPOSE_REP"})
-  public static synchronized HypermediaArtifactRegistry getInstance() {
-    if (REGISTRY == null) {
-      REGISTRY = new HypermediaArtifactRegistry();
-    }
-    return REGISTRY;
-  }
-
   public void register(final HypermediaArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifacts.put(artifactTemplate, artifact);
-    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
+    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription(
+      this
+        .getArtifactSemanticType(artifact.getClass().getCanonicalName())
+        .orElseThrow(
+          () -> new RuntimeException("Artifact was not registered!")
+        )));
     artifact.getArtifactActions()
       .entrySet()
       .stream()

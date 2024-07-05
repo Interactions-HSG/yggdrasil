@@ -50,6 +50,7 @@ public class CartagoVerticle extends AbstractVerticle {
   private Map<String, AgentCredential> agentCredentials;
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
+  private HypermediaArtifactRegistry registry;
 
   @Override
   public void start(final Promise<Void> startPromise) {
@@ -58,6 +59,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .<String, HttpInterfaceConfig>getLocalMap("http-config")
       .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
+    this.registry = new HypermediaArtifactRegistry();
 
 
     final EnvironmentConfig environmentConfig = this.vertx.sharedData()
@@ -112,7 +114,6 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void initializeFromConfiguration() {
-    final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
       .sharedData()
       .<String, Environment>getLocalMap("environment")
@@ -193,7 +194,7 @@ public class CartagoVerticle extends AbstractVerticle {
             agentId,
             workspaceName,
             JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-              .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
+              .flatMap(registry::getArtifactTemplate)
               .orElseThrow(),
             artifactName,
             JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
@@ -213,9 +214,10 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceName,
           String artifactName,
           String actionName,
+          Optional<String> apiKey,
           String storeResponse,
           String context
-        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse, context)
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName,apiKey, storeResponse, context)
           .onSuccess(o -> message.reply(o.orElse(null)))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
         case CartagoMessage.DeleteEntity(
@@ -237,7 +239,7 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      registry.getArtifactTemplates()
     );
   }
 
@@ -251,7 +253,7 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      registry.getArtifactTemplates()
     );
   }
 
@@ -324,13 +326,22 @@ public class CartagoVerticle extends AbstractVerticle {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
 
+    final Object[] paramsArray = new Object[params.orElse(new Object[0]).length + 1];
+    paramsArray[0] = registry;
+    for (int i = 0; i < params.orElse(new Object[0]).length; i++) {
+      paramsArray[i + 1] = params.get()[i];
+    }
+
+    final ArtifactConfig config = new ArtifactConfig(paramsArray);
+
     workspace.makeArtifact(
       this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
       artifactName,
       artifactClass,
-      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+      config
     );
-    return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
+
+    return registry.getArtifactDescription(artifactName);
   }
 
   // Only have deprecated here because it supresses the pmd warning (it says we do not use the method but we clearly do)
@@ -340,11 +351,17 @@ public class CartagoVerticle extends AbstractVerticle {
     final String workspaceName,
     final String artifactName,
     final String actionUri,
+    final Optional<String> apiKey,
     final String storeResponse,
     final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
-    final var registry = HypermediaArtifactRegistry.getInstance();
+
+    apiKey.ifPresent(
+      a -> registry.setApiKeyForArtifact(this.httpConfig.getArtifactUri(workspaceName,artifactName), a)
+    );
+
+
     final var hypermediaArtifact = registry.getArtifact(artifactName);
 
 

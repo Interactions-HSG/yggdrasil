@@ -48,7 +48,13 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
     new RepresentationFactoryHMASImpl(this.httpConfig);
+  HypermediaArtifactRegistry registry;
 
+  public void init(final HypermediaArtifactRegistry registry) {
+    this.registry = registry;
+    this.registerInteractionAffordances();
+    this.registry.register(this);
+  }
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -56,15 +62,11 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
    *
    * @return An RDF description of the artifact and its interface.
    */
-  public final String getHypermediaDescription() {
+  public final String getHypermediaDescription(final String semanticType) {
     return this.representationFactory.createArtifactRepresentation(
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
-      HypermediaArtifactRegistry.getInstance()
-        .getArtifactSemanticType(this.getClass().getCanonicalName())
-        .orElseThrow(
-          () -> new RuntimeException("Artifact was not registered!")
-        ),
+      semanticType,
       this.metadata,
       this.signifiers
     );
@@ -129,7 +131,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     }
     this.registerInteractionAffordances();
-    HypermediaArtifactRegistry.getInstance().register(this);
   }
 
   protected final String getArtifactUri() {

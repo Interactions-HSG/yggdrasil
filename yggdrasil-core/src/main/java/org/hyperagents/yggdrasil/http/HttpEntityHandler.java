@@ -27,7 +27,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.Messagebox;
@@ -470,17 +469,14 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var registry = HypermediaArtifactRegistry.getInstance();
     final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
     final var actionName = request.method().name() + request.absoluteURI();
 
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.GetEntity(artifactIri.substring(0, artifactIri.length() - 1)))
       .onSuccess(storeResponse -> {
-        Optional.ofNullable(context.request().getHeader("X-API-Key"))
-          .filter(a -> !a.isEmpty())
-          .ifPresent(a -> registry.setApiKeyForArtifact(artifactIri, a));
 
+        final var apiKey = Optional.ofNullable(context.request().getHeader("X-API-Key"));
 
         this.cartagoMessagebox
           .sendMessage(new CartagoMessage.DoAction(
@@ -488,6 +484,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             workspaceName,
             artifactName,
             actionName,
+            apiKey,
             storeResponse.body(),
             context.body().asString()
           ))

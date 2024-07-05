@@ -10,7 +10,6 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
 public class PhantomX3D extends HypermediaHMASArtifact {
   private static final String PREFIX = "https://ci.mines-stetienne.fr/kg/ontology#";
@@ -166,8 +165,7 @@ public class PhantomX3D extends HypermediaHMASArtifact {
       final var request =
           new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
 
-      final var apiKey =
-          HypermediaArtifactRegistry.getInstance().getApiKeyForArtifact(getArtifactUri());
+      final var apiKey = registry.getApiKeyForArtifact(getArtifactUri());
       request.setHeader("X-API-Key", apiKey);
 
       request.setEntity(
