@@ -8,9 +8,9 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
  * Implementation of the WebSubConfig interface.
- * This class represents the configuration for WebSub, 
+ * This class represents the configuration for WebSub,
  * a protocol for distributed publish-subscribe communication on the web.
- * It provides methods to retrieve the configuration settings for WebSub, 
+ * It provides methods to retrieve the configuration settings for WebSub,
  * such as whether it is enabled and the WebSub hub URI.
  */
 public class WebSubConfigImpl implements WebSubConfig {
@@ -20,7 +20,7 @@ public class WebSubConfigImpl implements WebSubConfig {
   private final String webSubHubUri;
 
   /**
-   * Constructs a new WebSubConfigImpl object with the specified configuration 
+   * Constructs a new WebSubConfigImpl object with the specified configuration
    * and HTTP interface configuration.
    *
    * @param config The JSON object containing the WebSub configuration settings.
@@ -35,7 +35,7 @@ public class WebSubConfigImpl implements WebSubConfig {
     this.webSubHubUri =
       webSubConfig.flatMap(c -> JsonObjectUtils.getString(c, "websub-hub-base-uri", LOGGER::error))
                   .orElse(httpConfig.getBaseUri())
-      + "/hub/";
+      + "hub/";
   }
 
   @Override
