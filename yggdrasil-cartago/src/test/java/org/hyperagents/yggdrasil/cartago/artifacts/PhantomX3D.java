@@ -163,8 +163,8 @@ public class PhantomX3D extends HypermediaTDArtifact {
       final var request =
           new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
 
-      final var apiKey = getApiKeyForArtifact(getArtifactUri());
-      request.setHeader("X-API-Key", apiKey);
+      //final var apiKey = getApiKeyForArtifact(getArtifactUri());
+      // request.setHeader("X-API-Key", apiKey);
 
       request.setEntity(
           new StringEntity("{\"value\" : " + value + "}",

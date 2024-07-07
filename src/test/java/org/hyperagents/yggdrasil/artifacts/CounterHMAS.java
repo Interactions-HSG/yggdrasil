@@ -8,13 +8,11 @@ import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class CounterHMAS extends HypermediaHMASArtifact {
 
-  public void init(final HypermediaArtifactRegistry registry) {
-    super.init(registry);
+  public void init() {
     this.defineObsProperty("count", 0);
   }
 
-  public void init(final HypermediaArtifactRegistry registry, final int count) {
-    super.init(registry);
+  public void init( final int count) {
     this.defineObsProperty("count", count);
   }
 

@@ -8,17 +8,11 @@ import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact;
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class CounterTD extends HypermediaTDArtifact {
 
-  public void init(final HypermediaArtifactRegistry registry) {
-    this.registry = registry;
-    this.registerInteractionAffordances();
-    this.registry.register(this);
+  public void init() {
     this.defineObsProperty("count", 0);
   }
 
-  public void init(final HypermediaArtifactRegistry registry, final int count) {
-    this.registry = registry;
-    this.registerInteractionAffordances();
-    this.registry.register(this);
+  public void init(final int count) {
     this.defineObsProperty("count", count);
   }
 
