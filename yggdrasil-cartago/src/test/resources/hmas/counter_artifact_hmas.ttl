@@ -12,8 +12,8 @@
 
 <http://localhost:8080/workspaces/sub/artifacts/c1/> a hmas:ResourceProfile;
   hmas:exposesSignifier <http://localhost:8080/workspaces/sub/artifacts/c1/#inc-Signifier>,
-    <http://localhost:8080/workspaces/sub/artifacts/c1/#getArtifactRepresentation>, <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact>,
-    <http://localhost:8080/workspaces/sub/artifacts/c1/#focusArtifact>, <http://localhost:8080/workspaces/sub/artifacts/c1/#subscribeToArtifact>,
+    <http://localhost:8080/workspaces/sub/artifacts/c1/#getArtifactRepresentation>, <http://localhost:8080/workspaces/sub/artifacts/c1/#focusArtifact>,
+    <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact>, <http://localhost:8080/workspaces/sub/artifacts/c1/#subscribeToArtifact>,
     <http://localhost:8080/workspaces/sub/artifacts/c1/#deleteArtifact>, <http://localhost:8080/workspaces/sub/artifacts/c1/#unsubscribeFromArtifact>;
   hmas:isProfileOf <http://localhost:8080/workspaces/sub/artifacts/c1/#artifact> .
 
@@ -50,22 +50,6 @@
   htv:methodName "GET";
   hctl:forContentType "text/turtle" .
 
-<http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifactForm>
-        ]
-    ] .
-
-<http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifactForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/>;
-  htv:methodName "PUT";
-  hctl:forContentType "text/turtle" .
-
 <http://localhost:8080/workspaces/sub/artifacts/c1/#focusArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution;
@@ -81,6 +65,22 @@
   hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/focus/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
+
+<http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifactForm>
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifactForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/>;
+  htv:methodName "PUT";
+  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/sub/artifacts/c1/#subscribeToArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;

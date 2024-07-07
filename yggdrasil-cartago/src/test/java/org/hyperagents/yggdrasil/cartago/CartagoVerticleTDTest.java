@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -744,7 +743,7 @@ public class CartagoVerticleTDTest {
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
           "c1",
-          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
+          "POSThttp://localhost:8080/workspaces/sub/artifacts/c1/increment",
           Optional.empty(),
           COUNTER_ARTIFACT_TD,
           ""

@@ -803,13 +803,12 @@ public class CartagoVerticleHMASTest {
             List.of(5)
           ))
         )))
-      .compose(r ->
-        this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          SUB_WORKSPACE_NAME,
-          "c1"
-        )))
+      .compose(r -> this.cartagoMessagebox
+     .sendMessage(new CartagoMessage.Focus(
+       FOCUSING_AGENT_IRI,
+       SUB_WORKSPACE_NAME,
+       "c1"
+     )))
       .compose(r -> {
         Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
@@ -829,7 +828,7 @@ public class CartagoVerticleHMASTest {
           TEST_AGENT_IRI,
           SUB_WORKSPACE_NAME,
           "c1",
-          "POSThttp://localhost:8080/workspaces/test/artifacts/c0/increment",
+          "POSThttp://localhost:8080/workspaces/sub/artifacts/c1/increment",
           Optional.empty(),
           COUNTER_ARTIFACT_HMAS,
           ""
