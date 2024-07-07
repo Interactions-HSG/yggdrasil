@@ -156,7 +156,7 @@ public class CartagoVerticle extends AbstractVerticle {
               a.getName(),
               Optional.of(a.getInitializationParameters())
                 .filter(p -> !p.isEmpty())
-                .map(List::toArray)
+                .map(List::toArray).orElse(null)
             )
           ));
           a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
@@ -191,6 +191,7 @@ public class CartagoVerticle extends AbstractVerticle {
           String representation
         ) -> {
           final var artifactInit = new JsonObject(representation);
+
           message.reply(this.instantiateArtifact(
             agentId,
             workspaceName,
@@ -199,7 +200,7 @@ public class CartagoVerticle extends AbstractVerticle {
               .orElseThrow(),
             artifactName,
             JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
-              .map(i -> i.getList().toArray())
+              .map(i -> i.getList().toArray()).orElse(null)
           ));
         }
         case CartagoMessage.Focus(
@@ -217,8 +218,8 @@ public class CartagoVerticle extends AbstractVerticle {
           String actionName,
           Optional<String> apiKey,
           String storeResponse,
-          String context
-        ) -> this.doAction(agentId, workspaceName, artifactName, actionName,apiKey, storeResponse, context)
+          String requestContext
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null), storeResponse, requestContext)
           .onSuccess(o -> message.reply(o.orElse(null)))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
         case CartagoMessage.DeleteEntity(
@@ -322,7 +323,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final String workspaceName,
     final String artifactClass,
     final String artifactName,
-    final Optional<Object[]> params
+    final Object[] params
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
@@ -331,7 +332,7 @@ public class CartagoVerticle extends AbstractVerticle {
       this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
       artifactName,
       artifactClass,
-      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+      new ArtifactConfig(params != null ? params : new Object[0])
     );
 
     final var artifact = (HypermediaArtifact) workspace.getArtifactDescriptor(artifactId.getName()).getArtifact();
@@ -341,26 +342,24 @@ public class CartagoVerticle extends AbstractVerticle {
     return registry.getArtifactDescription(artifactName);
   }
 
-  // Only have deprecated here because it supresses the pmd warning (it says we do not use the method but we clearly do)
-  @Deprecated
+  // for some reason pmd thinks this method is not used
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private Future<Optional<String>> doAction(
     final String agentUri,
     final String workspaceName,
     final String artifactName,
     final String actionUri,
-    final Optional<String> apiKey,
+    final String apiKey,
     final String storeResponse,
     final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
 
-    apiKey.ifPresent(
-      a -> registry.setApiKeyForArtifact(this.httpConfig.getArtifactUri(workspaceName,artifactName), a)
-    );
-
+    if(apiKey != null) {
+      registry.setApiKeyForArtifact(this.httpConfig.getArtifactUri(workspaceName, artifactName), apiKey);
+    }
 
     final var hypermediaArtifact = registry.getArtifact(artifactName);
-
 
     final var action = registry.getActionName(actionUri);
     if (action == null) return Future.failedFuture("No action");
@@ -373,7 +372,7 @@ public class CartagoVerticle extends AbstractVerticle {
     }
 
 
-    final var listOfParams = new ArrayList<OpFeedbackParam>();
+    final var listOfParams = new ArrayList<OpFeedbackParam<Object>>();
     final var numberOfFeedbackParams = hypermediaArtifact.handleOutputParams(storeResponse, action, context);
     for (int i = 0; i < numberOfFeedbackParams; i++) {
       listOfParams.add(new OpFeedbackParam<>());
