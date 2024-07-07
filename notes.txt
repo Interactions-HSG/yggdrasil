@@ -47,6 +47,5 @@ IMPLEMENTED:
 
 - Artifacts refactored, output specifications are now needed
   - Same as input, but for output
-  - Could be extended to typesafe input / output representations
 
 - Default ontology is TD
