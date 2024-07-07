@@ -21,6 +21,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
@@ -326,20 +327,16 @@ public class CartagoVerticle extends AbstractVerticle {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
 
-    final Object[] paramsArray = new Object[params.orElse(new Object[0]).length + 1];
-    paramsArray[0] = registry;
-    for (int i = 0; i < params.orElse(new Object[0]).length; i++) {
-      paramsArray[i + 1] = params.get()[i];
-    }
-
-    final ArtifactConfig config = new ArtifactConfig(paramsArray);
-
-    workspace.makeArtifact(
+    final var artifactId = workspace.makeArtifact(
       this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
       artifactName,
       artifactClass,
-      config
+      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
     );
+
+    final var artifact = (HypermediaArtifact) workspace.getArtifactDescriptor(artifactId.getName()).getArtifact();
+    registry.register(artifact);
+
 
     return registry.getArtifactDescription(artifactName);
   }

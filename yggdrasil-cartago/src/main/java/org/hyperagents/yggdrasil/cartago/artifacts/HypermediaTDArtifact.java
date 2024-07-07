@@ -19,7 +19,6 @@ import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -46,13 +45,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   private RepresentationFactory representationFactory =
     new RepresentationFactoryTDImplt(this.httpConfig);
   private SecurityScheme securityScheme = new NoSecurityScheme();
-  protected HypermediaArtifactRegistry registry;
 
-  public void init(final HypermediaArtifactRegistry registry) {
-    this.registry = registry;
-    this.registerInteractionAffordances();
-    this.registry.register(this);
-  }
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
    * on the W3C Web of Things <a href="https://www.w3.org/TR/wot-thing-description/">Thing Description</a>.
@@ -127,6 +120,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       ));
       this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
     }
+    this.registerInteractionAffordances();
   }
 
   protected final String getArtifactUri() {

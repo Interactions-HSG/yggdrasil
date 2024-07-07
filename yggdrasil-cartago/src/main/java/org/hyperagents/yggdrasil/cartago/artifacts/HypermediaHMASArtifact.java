@@ -25,7 +25,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -48,13 +47,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
     new RepresentationFactoryHMASImpl(this.httpConfig);
-  HypermediaArtifactRegistry registry;
-
-  public void init(final HypermediaArtifactRegistry registry) {
-    this.registry = registry;
-    this.registerInteractionAffordances();
-    this.registry.register(this);
-  }
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -234,6 +226,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
   }
+
 
 
   public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {

@@ -39,14 +39,8 @@
 
 IMPLEMENTED:
 - HypermediaArtifactRegistry no longer a singleton (ISSUE 45)
-  - Only problem is that spotBugs complains. Registry is mutable and not final
-  org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.init(HypermediaArtifactRegistry) may expose internal representation by storing an externally mutable object into HypermediaTDArtifact.registry
-  Bug type EI_EXPOSE_REP2 (click for details)
-  In class org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact
-  In method org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.init(HypermediaArtifactRegistry)
-  Field org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact.registry
-  Local variable named registry
-  At HypermediaTDArtifact.java:[line 52]
+  - Only problem is the apiKey since artifacts cannot access the registry in their methods (PhantomX3D)
+  - Could make it so that apiKeys are input params to @Operation methods
 
 - Cartago updated, all actions should work + deletion of workspaces
   - Only problem is do not know what I am missing from Matteos version

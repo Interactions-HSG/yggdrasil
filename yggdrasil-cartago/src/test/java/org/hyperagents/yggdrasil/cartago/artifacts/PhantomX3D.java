@@ -1,7 +1,8 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
+import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -11,7 +12,7 @@ import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 
-public class PhantomX3D extends HypermediaHMASArtifact {
+public class PhantomX3D extends HypermediaTDArtifact {
   private static final String PREFIX = "https://ci.mines-stetienne.fr/kg/ontology#";
 
   private static final String SET_BASE_URI = "/base";
@@ -72,41 +73,38 @@ public class PhantomX3D extends HypermediaHMASArtifact {
       this.moveToPickUpLocationFromNeural();
     }
   }
-  // TODO: Set correct input
-  /*
-          new ObjectSchema.Builder()
-                        .addSemanticType(PREFIX + "FactoryFloorPosition")
-                        .addProperty(
-                          "x",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "XCoordinate")
-                                          .build()
-                        )
-                        .addProperty(
-                          "y",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "YCoordinate")
-                                          .build()
-                        )
-                        .addProperty(
-                          "z",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "ZCoordinate")
-                                          .build()
-                        )
-                        .build()
-   */
+
   @Override
   protected void registerInteractionAffordances() {
-    this.registerSignifier(
+    this.registerActionAffordance(
         PREFIX + "MoveTo",
         "moveTo",
-        "/moveTo",
-      new QualifiedValueSpecification.Builder().build()
+        "moveTo",
+      new ObjectSchema.Builder()
+        .addSemanticType(PREFIX + "FactoryFloorPosition")
+        .addProperty(
+          "x",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "XCoordinate")
+            .build()
+        )
+        .addProperty(
+          "y",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "YCoordinate")
+            .build()
+        )
+        .addProperty(
+          "z",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "ZCoordinate")
+            .build()
+        )
+        .build()
     );
-    this.registerSignifier(PREFIX + "Grasp", "grasp", "/grasp");
-    this.registerSignifier(PREFIX + "Release", "release", "/release");
-    this.registerSignifier(PREFIX + "Reset", "reset", "/reset");
+    this.registerActionAffordance(PREFIX + "Grasp", "grasp", "grasp");
+    this.registerActionAffordance(PREFIX + "Release", "release", "release");
+    this.registerActionAffordance(PREFIX + "Reset", "reset", "reset");
 
     // Add initial coordinates, these are currently hard-coded
     final var builder = new ModelBuilder();
@@ -165,7 +163,7 @@ public class PhantomX3D extends HypermediaHMASArtifact {
       final var request =
           new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
 
-      final var apiKey = registry.getApiKeyForArtifact(getArtifactUri());
+      final var apiKey = getApiKeyForArtifact(getArtifactUri());
       request.setHeader("X-API-Key", apiKey);
 
       request.setEntity(
