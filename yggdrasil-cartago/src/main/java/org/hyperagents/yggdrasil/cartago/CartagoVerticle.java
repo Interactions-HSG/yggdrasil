@@ -323,7 +323,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final String workspaceName,
     final String artifactClass,
     final String artifactName,
-    final Object[] params
+    final Object... params
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
