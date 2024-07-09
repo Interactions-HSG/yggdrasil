@@ -72,7 +72,6 @@ USE CASES:
     That way only when uris change you need to query the representation again
 
 
-
 ++++++++++++
 NEW:
   add getKey() and setKey() to hypermediaArtifact to enable apiKeys
@@ -82,3 +81,14 @@ NEW:
 
   Signifiers -> mechanism
   Jacamo Hypermedia jitpack cannot be used to build
+HMAS JAVA:
+recommended abilities
+agent context
+recommended abilitites extracted from signifier compare to agent context
+
+  authentication -> probably happens upon joining
+
+  mailboxes with affordances exposed via the agent body
+  how to support agent messages -> agent to agent communication
+  -> through websub
+  -> can extend body to add affordances and signifiers
