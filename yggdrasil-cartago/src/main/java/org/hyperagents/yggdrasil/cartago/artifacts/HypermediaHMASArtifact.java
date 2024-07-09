@@ -48,6 +48,9 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   private RepresentationFactory representationFactory =
     new RepresentationFactoryHMASImpl(this.httpConfig);
 
+  private String apiKey;
+
+
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
    * on the W3C Web of Things <a href="https://www.w3.org/TR/wot-thing-description/">Thing Description</a>.
@@ -71,6 +74,14 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
    */
   public final ArtifactId getArtifactId() {
     return this.getId();
+  }
+
+  public void setApiKey(String key) {
+    this.apiKey = key;
+  }
+
+  public String getApiKey() {
+    return this.apiKey;
   }
 
   public final Map<String, UnaryOperator<Object>> getResponseConverterMap() {

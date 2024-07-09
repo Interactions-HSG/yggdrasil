@@ -355,11 +355,11 @@ public class CartagoVerticle extends AbstractVerticle {
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
 
+    final var hypermediaArtifact = registry.getArtifact(artifactName);
     if(apiKey != null) {
-      registry.setApiKeyForArtifact(this.httpConfig.getArtifactUri(workspaceName, artifactName), apiKey);
+      hypermediaArtifact.setApiKey(apiKey);
     }
 
-    final var hypermediaArtifact = registry.getArtifact(artifactName);
 
     final var action = registry.getActionName(actionUri);
     if (action == null) return Future.failedFuture("No action");

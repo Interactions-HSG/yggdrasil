@@ -22,4 +22,7 @@ public interface HypermediaArtifact {
   Optional<String> handleInput(String storeResponse, String actionName, String context);
 
   Integer handleOutputParams(String storeResponse, String actionName, String context);
+
+  String getApiKey();
+  void setApiKey(String key);
 }

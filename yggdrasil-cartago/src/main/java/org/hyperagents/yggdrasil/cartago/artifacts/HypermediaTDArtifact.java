@@ -46,6 +46,8 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     new RepresentationFactoryTDImplt(this.httpConfig);
   private SecurityScheme securityScheme = new NoSecurityScheme();
 
+  private String apiKey;
+
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
    * on the W3C Web of Things <a href="https://www.w3.org/TR/wot-thing-description/">Thing Description</a>.
@@ -74,6 +76,14 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
 
   public final Map<String, UnaryOperator<Object>> getResponseConverterMap() {
     return new HashMap<>(this.responseConverterMap);
+  }
+
+  public void setApiKey(String key) {
+    this.apiKey = key;
+  }
+
+  public String getApiKey() {
+    return this.apiKey;
   }
 
   @Override
