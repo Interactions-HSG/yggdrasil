@@ -81,7 +81,6 @@ public class MathHMAS extends HypermediaHMASArtifact {
         .setRequired(true)
         .addPropertySpecification(RDF.FIRST.stringValue(),
           new IntegerSpecification.Builder()
-            .setName("GCD")
             .setRequired(true)
             .build())
         .addPropertySpecification(RDF.REST.stringValue(),
@@ -92,7 +91,6 @@ public class MathHMAS extends HypermediaHMASArtifact {
             .addPropertySpecification(
               RDF.FIRST.stringValue(),
               new IntegerSpecification.Builder()
-                .setName("X")
                 .setRequired(true)
                 .build()
             )
@@ -105,7 +103,6 @@ public class MathHMAS extends HypermediaHMASArtifact {
                 .addPropertySpecification(
                   RDF.FIRST.stringValue(),
                   new IntegerSpecification.Builder()
-                    .setName("Y")
                     .setRequired(true)
                     .build()
                 ).addPropertySpecification(

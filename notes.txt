@@ -36,6 +36,7 @@ IMPLEMENTED:
   - Could make it so that apiKeys are input params to @Operation methods
   - If apiKey is input param then no need to specify it as header?
   - Or apiKey special case of input param? -> would have to specify that apiKey always first param or something like that
+  - getKey method in Artifact
 
 - Cartago updated, all actions should work + deletion of workspaces
   - Only problem is do not know what I am missing from Matteos version
@@ -57,3 +58,27 @@ QUESTIONS:
 - Base representation currently has websub should this be dependent on notification enabled?
 - Update of TD representation for base things -> can we specify input?
 - Cartago Version -> need some sort of uniformity. Establish our base version
+
+TODO:
+- Still need to fix focus behaviour -> differentiate between cartago focus and websub focus
+- differentiate between resource profiles and cartago events
+- new topic that ends with "focus" for observable events / properties in cartago <- should only be exposed by entity running on cartago
+
+
+USE CASES:
+- Highly distributed system. Where microservices talk to eachother
+- Can use HMAS to dynamically set the used URIs for semantically set endpoints
+  - To increase efficiency just have the microservices subscribed via websub
+    That way only when uris change you need to query the representation again
+
+
+
+++++++++++++
+NEW:
+  add getKey() and setKey() to hypermediaArtifact to enable apiKeys
+  setup specific cartago version for yggdrasil
+  for representations add subProtocol() TD for websub
+  Websub Topics -> what to do
+
+  Signifiers -> mechanism
+  Jacamo Hypermedia jitpack cannot be used to build

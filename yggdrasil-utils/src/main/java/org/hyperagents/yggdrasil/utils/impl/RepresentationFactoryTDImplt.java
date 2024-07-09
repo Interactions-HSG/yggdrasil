@@ -39,6 +39,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       new Form.Builder(this.httpConfig.getBaseUri() + "hub/")
         .setMethodName(HttpMethod.POST.name())
         .setContentType("application/json")
+        .addSubProtocol("websub")// could be used for websub
         .build()
     ).addInputSchema(
       new ObjectSchema
@@ -67,8 +68,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           ).addSemanticType("https://purl.org/hmas/jacamo/CreateWorkspace")
            .build()
         )
-        //.addAction(websubActions("subscribe"))
-        //.addAction(websubActions("unsubscribe"))
+        .addAction(websubActions("subscribe"))
+        .addAction(websubActions("unsubscribe"))
     );
   }
 
