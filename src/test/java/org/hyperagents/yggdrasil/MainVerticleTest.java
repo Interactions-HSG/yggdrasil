@@ -134,7 +134,7 @@ public class MainVerticleTest {
           this.promiseIndex++;
         }
       );
-    vertx.deployVerticle(new CallbackServerVerticle())
+    vertx.deployVerticle(new CallbackServerVerticle(8081))
       .compose(r -> vertx.deployVerticle(
         new MainVerticle(),
         new DeploymentOptions().setConfig(JsonObject.of(

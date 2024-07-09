@@ -11,6 +11,11 @@ import org.apache.hc.core5.http.HttpStatus;
 
 public class CallbackServerVerticle extends AbstractVerticle {
   private HttpServer server;
+  private final int port;
+
+  public CallbackServerVerticle(int port) {
+    this.port = port;
+  }
 
   @Override
   public void start(final Promise<Void> startPromise) {
@@ -40,7 +45,7 @@ public class CallbackServerVerticle extends AbstractVerticle {
           });
     this.server = this.vertx.createHttpServer();
     this.server.requestHandler(router)
-               .listen(8081, "localhost")
+               .listen(port, "localhost")
                .<Void>mapEmpty()
                .onComplete(startPromise);
   }
