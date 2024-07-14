@@ -74,17 +74,16 @@ USE CASES:
 
 ++++++++++++
 NEW:
-  add getKey() and setKey() to hypermediaArtifact to enable apiKeys
   setup specific cartago version for yggdrasil
   for representations add subProtocol() TD for websub
   Websub Topics -> what to do
 
   Signifiers -> mechanism
   Jacamo Hypermedia jitpack cannot be used to build
-HMAS JAVA:
-recommended abilities
-agent context
-recommended abilitites extracted from signifier compare to agent context
+  HMAS JAVA:
+    recommended abilities
+    agent context
+    recommended abilitites extracted from signifier compare to agent context
 
   authentication -> probably happens upon joining
 
