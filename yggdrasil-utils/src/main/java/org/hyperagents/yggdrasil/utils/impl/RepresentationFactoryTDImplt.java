@@ -25,9 +25,32 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
 
   private final HttpInterfaceConfig httpConfig;
-
+  public enum WebSubMode {
+    subscribe,
+    unsubscribe
+  }
   public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig) {
     this.httpConfig = httpConfig;
+  }
+
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
+  private ActionAffordance websubActions(final String actionName) {
+    return new ActionAffordance.Builder(
+      actionName,
+      new Form.Builder(this.httpConfig.getBaseUri() + "hub/")
+        .setMethodName(HttpMethod.POST.name())
+        .setContentType("application/json")
+        .addSubProtocol("websub")// could be used for websub
+        .build()
+    ).addInputSchema(
+      new ObjectSchema
+        .Builder()
+        .addProperty("callbackIri", new StringSchema.Builder().build())
+        .addProperty("mode", new StringSchema.Builder().build())
+        .addProperty("topic", new StringSchema.Builder().build())
+        .build()
+    ).addSemanticType("https://purl.org/hmas/jacamo/" + actionName)
+      .build();
   }
 
   @Override
@@ -46,6 +69,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           ).addSemanticType("https://purl.org/hmas/jacamo/CreateWorkspace")
            .build()
         )
+        // .addAction(websubActions("subscribe"))
+        // .addAction(websubActions("unsubscribe"))
     );
   }
 

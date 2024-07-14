@@ -1,6 +1,7 @@
 package org.hyperagents.yggdrasil.eventbus.messages;
 
 
+import java.util.Optional;
 
 /**
  * Classifies all messages related to Cartago.
@@ -116,6 +117,7 @@ public sealed interface CartagoMessage {
       String workspaceName,
       String artifactName,
       String actionName,
+      Optional<String> apiKey,
       String storeResponse,
       String context
   ) implements CartagoMessage {

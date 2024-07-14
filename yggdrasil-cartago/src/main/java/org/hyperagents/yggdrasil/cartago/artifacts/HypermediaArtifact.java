@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.function.UnaryOperator;
 
 public interface HypermediaArtifact {
-  String getHypermediaDescription();
+  String getHypermediaDescription(String semanticType);
 
   ArtifactId getArtifactId();
 
@@ -22,4 +22,7 @@ public interface HypermediaArtifact {
   Optional<String> handleInput(String storeResponse, String actionName, String context);
 
   Integer handleOutputParams(String storeResponse, String actionName, String context);
+
+  String getApiKey();
+  void setApiKey(String key);
 }

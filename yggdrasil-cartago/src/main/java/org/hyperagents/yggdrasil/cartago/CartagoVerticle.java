@@ -21,6 +21,7 @@ import org.apache.hc.core5.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
@@ -50,6 +51,7 @@ public class CartagoVerticle extends AbstractVerticle {
   private Map<String, AgentCredential> agentCredentials;
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
+  private HypermediaArtifactRegistry registry;
 
   @Override
   public void start(final Promise<Void> startPromise) {
@@ -58,6 +60,7 @@ public class CartagoVerticle extends AbstractVerticle {
       .<String, HttpInterfaceConfig>getLocalMap("http-config")
       .get(DEFAULT_CONFIG_VALUE);
     this.workspaceRegistry = new WorkspaceRegistryImpl();
+    this.registry = new HypermediaArtifactRegistry();
 
 
     final EnvironmentConfig environmentConfig = this.vertx.sharedData()
@@ -112,7 +115,6 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void initializeFromConfiguration() {
-    final var registry = HypermediaArtifactRegistry.getInstance();
     final var environment = this.vertx
       .sharedData()
       .<String, Environment>getLocalMap("environment")
@@ -154,7 +156,7 @@ public class CartagoVerticle extends AbstractVerticle {
               a.getName(),
               Optional.of(a.getInitializationParameters())
                 .filter(p -> !p.isEmpty())
-                .map(List::toArray)
+                .map(List::toArray).orElse(null)
             )
           ));
           a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
@@ -189,15 +191,16 @@ public class CartagoVerticle extends AbstractVerticle {
           String representation
         ) -> {
           final var artifactInit = new JsonObject(representation);
+
           message.reply(this.instantiateArtifact(
             agentId,
             workspaceName,
             JsonObjectUtils.getString(artifactInit, "artifactClass", LOGGER::error)
-              .flatMap(HypermediaArtifactRegistry.getInstance()::getArtifactTemplate)
+              .flatMap(registry::getArtifactTemplate)
               .orElseThrow(),
             artifactName,
             JsonObjectUtils.getJsonArray(artifactInit, "initParams", LOGGER::error)
-              .map(i -> i.getList().toArray())
+              .map(i -> i.getList().toArray()).orElse(null)
           ));
         }
         case CartagoMessage.Focus(
@@ -213,9 +216,10 @@ public class CartagoVerticle extends AbstractVerticle {
           String workspaceName,
           String artifactName,
           String actionName,
+          Optional<String> apiKey,
           String storeResponse,
-          String context
-        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, storeResponse, context)
+          String requestContext
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null), storeResponse, requestContext)
           .onSuccess(o -> message.reply(o.orElse(null)))
           .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
         case CartagoMessage.DeleteEntity(
@@ -237,7 +241,7 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      registry.getArtifactTemplates()
     );
   }
 
@@ -251,7 +255,7 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
-      HypermediaArtifactRegistry.getInstance().getArtifactTemplates()
+      registry.getArtifactTemplates()
     );
   }
 
@@ -319,33 +323,42 @@ public class CartagoVerticle extends AbstractVerticle {
     final String workspaceName,
     final String artifactClass,
     final String artifactName,
-    final Optional<Object[]> params
+    final Object... params
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
 
-    workspace.makeArtifact(
+    final var artifactId = workspace.makeArtifact(
       this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
       artifactName,
       artifactClass,
-      params.map(ArtifactConfig::new).orElse(new ArtifactConfig())
+      new ArtifactConfig(params != null ? params : new Object[0])
     );
-    return HypermediaArtifactRegistry.getInstance().getArtifactDescription(artifactName);
+
+    final var artifact = (HypermediaArtifact) workspace.getArtifactDescriptor(artifactId.getName()).getArtifact();
+    registry.register(artifact);
+
+
+    return registry.getArtifactDescription(artifactName);
   }
 
-  // Only have deprecated here because it supresses the pmd warning (it says we do not use the method but we clearly do)
-  @Deprecated
+  // for some reason pmd thinks this method is not used
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private Future<Optional<String>> doAction(
     final String agentUri,
     final String workspaceName,
     final String artifactName,
     final String actionUri,
+    final String apiKey,
     final String storeResponse,
     final String context
   ) throws CartagoException {
     this.joinWorkspace(agentUri, workspaceName);
-    final var registry = HypermediaArtifactRegistry.getInstance();
+
     final var hypermediaArtifact = registry.getArtifact(artifactName);
+    if(apiKey != null) {
+      hypermediaArtifact.setApiKey(apiKey);
+    }
 
 
     final var action = registry.getActionName(actionUri);
@@ -359,7 +372,7 @@ public class CartagoVerticle extends AbstractVerticle {
     }
 
 
-    final var listOfParams = new ArrayList<OpFeedbackParam>();
+    final var listOfParams = new ArrayList<OpFeedbackParam<Object>>();
     final var numberOfFeedbackParams = hypermediaArtifact.handleOutputParams(storeResponse, action, context);
     for (int i = 0; i < numberOfFeedbackParams; i++) {
       listOfParams.add(new OpFeedbackParam<>());

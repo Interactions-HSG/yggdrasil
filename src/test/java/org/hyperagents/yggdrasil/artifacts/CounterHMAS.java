@@ -2,6 +2,7 @@ package org.hyperagents.yggdrasil.artifacts;
 
 import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
 
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
@@ -11,7 +12,7 @@ public class CounterHMAS extends HypermediaHMASArtifact {
     this.defineObsProperty("count", 0);
   }
 
-  public void init(final int count) {
+  public void init( final int count) {
     this.defineObsProperty("count", count);
   }
 

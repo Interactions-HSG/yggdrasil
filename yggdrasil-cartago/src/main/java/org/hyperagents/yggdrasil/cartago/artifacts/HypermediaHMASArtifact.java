@@ -25,7 +25,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -49,6 +48,8 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   private RepresentationFactory representationFactory =
     new RepresentationFactoryHMASImpl(this.httpConfig);
 
+  private String apiKey;
+
 
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
@@ -56,15 +57,11 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
    *
    * @return An RDF description of the artifact and its interface.
    */
-  public final String getHypermediaDescription() {
+  public final String getHypermediaDescription(final String semanticType) {
     return this.representationFactory.createArtifactRepresentation(
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
-      HypermediaArtifactRegistry.getInstance()
-        .getArtifactSemanticType(this.getClass().getCanonicalName())
-        .orElseThrow(
-          () -> new RuntimeException("Artifact was not registered!")
-        ),
+      semanticType,
       this.metadata,
       this.signifiers
     );
@@ -77,6 +74,14 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
    */
   public final ArtifactId getArtifactId() {
     return this.getId();
+  }
+
+  public void setApiKey(final String key) {
+    this.apiKey = key;
+  }
+
+  public String getApiKey() {
+    return this.apiKey;
   }
 
   public final Map<String, UnaryOperator<Object>> getResponseConverterMap() {
@@ -129,7 +134,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
     }
     this.registerInteractionAffordances();
-    HypermediaArtifactRegistry.getInstance().register(this);
   }
 
   protected final String getArtifactUri() {
@@ -233,6 +237,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   protected final void addMetadata(final Model model) {
     this.metadata.addAll(model);
   }
+
 
 
   public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {

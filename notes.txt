@@ -6,6 +6,8 @@
 + Think where signifier exposure mechanism could fit in yggdrasil
 + Implement small version with xArm example
 + think of interesting domain use case for context aware signifiers
+  + still smart factory where agent has public goal and receives only relevant signifiers
+
 
 
 ++ LIST OF FEATURES ++
@@ -26,48 +28,66 @@
   - Issue 44 - Update architecture file
 
 
-  - Issue 45 - Remove last singleton -> HypermediaArtifactRegistry
-    - make it a class only used by cartago verticle
-    -> Should only be used by cartago verticle already
-    -> Except for 1 method in HttpHandler for handleAction
-
-- Check Correct URIs everywhere
-
-TODOS:
-  Still need to write the hmas tests for the core tests
-  Rewriting of DefaultHttpHandlers since we always need cartago atm
-  -> What to do about that?
-
-
-++ OUTPUT SCHEMA IN THE REGISTER ACTION AFFORDANCE -> DEFINE OUTPUT AS ARRAY SPEC
-  ++ NEW REPRESENTATION
-
 ++++++++++++++++++++++
 
-+ Tests refactored so they use same classes if appropriate
+IMPLEMENTED:
+- HypermediaArtifactRegistry no longer a singleton (ISSUE 45)
+  - Only problem is the apiKey since artifacts cannot access the registry in their methods (PhantomX3D)
+  - Could make it so that apiKeys are input params to @Operation methods
+  - If apiKey is input param then no need to specify it as header?
+  - Or apiKey special case of input param? -> would have to specify that apiKey always first param or something like that
+  - getKey method in Artifact
 
-+ Signal works
+- Cartago updated, all actions should work + deletion of workspaces
+  - Only problem is do not know what I am missing from Matteos version
 
-+ Deleting an Entity doesnt delete it from cartago
-  Currently Deleting is not a cartago message need to add that handling
+- Artifacts refactored, output specifications are now needed
+  - Same as input, but for output
 
-+ update TD representation same as HMAS
-  Need to add basics such as websub handling
-
-+ description of feedbackparams
-  -> artifacts should also register the output representation the same as input
-
-+ display error if user tries to start yggdrasil without specifying ontology in environment conf
-
-
-+ add testcase where base is not localhost:8080
-
-+ update swagger api docs
-  leaveWorkspace also needs AgentLocalName
-
-
-TESTS:
-  CARTAGO:
-    Do action without payload but with feedbackparams
+- No longer dependent on Cartago
+  - EntityHandler has representationFactory injected and builds representation in case cartago is not used
+  - There is a case for extending representationFactory as a verticle itself. This would increase flexibility
+    and extensibility. Representation could be part of the message flow, just before the rdf message. Either with called
+    with input from cartago verticle or from entity handler directly.
 
 
+- Default ontology is TD
+
+
+QUESTIONS:
+- Base representation currently has websub should this be dependent on notification enabled?
+- Update of TD representation for base things -> can we specify input?
+- Cartago Version -> need some sort of uniformity. Establish our base version
+
+TODO:
+- Still need to fix focus behaviour -> differentiate between cartago focus and websub focus
+- differentiate between resource profiles and cartago events
+- new topic that ends with "focus" for observable events / properties in cartago <- should only be exposed by entity running on cartago
+
+
+USE CASES:
+- Highly distributed system. Where microservices talk to eachother
+- Can use HMAS to dynamically set the used URIs for semantically set endpoints
+  - To increase efficiency just have the microservices subscribed via websub
+    That way only when uris change you need to query the representation again
+
+
+++++++++++++
+NEW:
+  setup specific cartago version for yggdrasil
+  for representations add subProtocol() TD for websub
+  Websub Topics -> what to do
+
+  Signifiers -> mechanism
+  Jacamo Hypermedia jitpack cannot be used to build
+  HMAS JAVA:
+    recommended abilities
+    agent context
+    recommended abilitites extracted from signifier compare to agent context
+
+  authentication -> probably happens upon joining
+
+  mailboxes with affordances exposed via the agent body
+  how to support agent messages -> agent to agent communication
+  -> through websub
+  -> can extend body to add affordances and signifiers

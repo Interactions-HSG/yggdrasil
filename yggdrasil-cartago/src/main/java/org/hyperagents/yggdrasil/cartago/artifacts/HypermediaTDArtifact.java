@@ -19,7 +19,6 @@ import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
@@ -47,22 +46,20 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     new RepresentationFactoryTDImplt(this.httpConfig);
   private SecurityScheme securityScheme = new NoSecurityScheme();
 
+  private String apiKey;
+
   /**
    * Retrieves a hypermedia description of the artifact's interface. Current implementation is based
    * on the W3C Web of Things <a href="https://www.w3.org/TR/wot-thing-description/">Thing Description</a>.
    *
    * @return An RDF description of the artifact and its interface.
    */
-  public final String getHypermediaDescription() {
+  public final String getHypermediaDescription(final String semanticType) {
     return this.representationFactory.createArtifactRepresentation(
       this.getId().getWorkspaceId().getName(),
       this.getId().getName(),
       this.securityScheme,
-      HypermediaArtifactRegistry.getInstance()
-        .getArtifactSemanticType(this.getClass().getCanonicalName())
-        .orElseThrow(
-          () -> new RuntimeException("Artifact was not registered!")
-        ),
+      semanticType,
       this.metadata,
       this.actionAffordances
     );
@@ -79,6 +76,14 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
 
   public final Map<String, UnaryOperator<Object>> getResponseConverterMap() {
     return new HashMap<>(this.responseConverterMap);
+  }
+
+  public void setApiKey(final String key) {
+    this.apiKey = key;
+  }
+
+  public String getApiKey() {
+    return this.apiKey;
   }
 
   @Override
@@ -108,7 +113,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   }
 
   @Override
-  protected void setupOperations() throws CartagoException {
+  public void setupOperations() throws CartagoException {
     super.setupOperations();
     final var baseUri = this.getBaseUri();
     if (!baseUri.toString().equals(this.httpConfig.getBaseUri())) {
@@ -126,7 +131,6 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
     }
     this.registerInteractionAffordances();
-    HypermediaArtifactRegistry.getInstance().register(this);
   }
 
   protected final String getArtifactUri() {

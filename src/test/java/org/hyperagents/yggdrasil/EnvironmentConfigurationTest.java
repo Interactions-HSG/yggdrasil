@@ -76,7 +76,7 @@ public class EnvironmentConfigurationTest {
         Path.of(ClassLoader.getSystemResource(conf).toURI()),
         StandardCharsets.UTF_8
     );
-    vertx.deployVerticle(new CallbackServerVerticle())
+    vertx.deployVerticle(new CallbackServerVerticle(8081))
         .compose(r -> vertx.deployVerticle(
           new MainVerticle(),
           new DeploymentOptions().setConfig((JsonObject) Json.decodeValue(configuration))

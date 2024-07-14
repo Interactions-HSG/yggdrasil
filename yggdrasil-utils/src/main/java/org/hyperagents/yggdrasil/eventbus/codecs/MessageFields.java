@@ -6,6 +6,7 @@ enum MessageFields {
   ENTITY_URI_HINT("slug"),
   AGENT_ID("agentID"),
   AGENT_NAME("agentName"),
+  API_KEY("apiKey"),
   WORKSPACE_NAME("workspaceName"),
   SUB_WORKSPACE_NAME("subWorkspaceName"),
   ARTIFACT_NAME("artifactName"),

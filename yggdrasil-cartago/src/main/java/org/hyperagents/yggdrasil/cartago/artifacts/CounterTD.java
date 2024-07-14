@@ -6,6 +6,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class CounterTD extends HypermediaTDArtifact {
 
+
   public void init() {
     this.defineObsProperty("count", 0);
   }
