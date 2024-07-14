@@ -76,7 +76,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     return this.getId();
   }
 
-  public void setApiKey(String key) {
+  public void setApiKey(final String key) {
     this.apiKey = key;
   }
 

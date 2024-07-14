@@ -33,6 +33,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     this.httpConfig = httpConfig;
   }
 
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private ActionAffordance websubActions(final String actionName) {
     return new ActionAffordance.Builder(
       actionName,
@@ -68,8 +69,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           ).addSemanticType("https://purl.org/hmas/jacamo/CreateWorkspace")
            .build()
         )
-        .addAction(websubActions("subscribe"))
-        .addAction(websubActions("unsubscribe"))
+        // .addAction(websubActions("subscribe"))
+        // .addAction(websubActions("unsubscribe"))
     );
   }
 

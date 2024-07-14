@@ -78,7 +78,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     return new HashMap<>(this.responseConverterMap);
   }
 
-  public void setApiKey(String key) {
+  public void setApiKey(final String key) {
     this.apiKey = key;
   }
 

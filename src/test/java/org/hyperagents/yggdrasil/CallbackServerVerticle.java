@@ -13,7 +13,8 @@ public class CallbackServerVerticle extends AbstractVerticle {
   private HttpServer server;
   private final int port;
 
-  public CallbackServerVerticle(int port) {
+  public CallbackServerVerticle(final int port) {
+    super();
     this.port = port;
   }
 
