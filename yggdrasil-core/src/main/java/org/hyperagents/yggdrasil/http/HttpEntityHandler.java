@@ -34,6 +34,9 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.oauth.OpenIdClient;
+import org.hyperagents.yggdrasil.oauth.OpenIdProvider;
+import org.hyperagents.yggdrasil.oauth.OpenIdProviders;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
@@ -61,6 +64,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
   private final RepresentationFactory representationFactory;
+  private final OpenIdProviders openIdProviders;
 
   private final boolean environment;
 
@@ -84,6 +88,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     // that way the router does not need to check for routes itself
     this.environment = environmentConfig.isEnabled();
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(environmentConfig.getOntology(), httpConfig);
+    this.openIdProviders = new OpenIdProviders();
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -359,6 +364,18 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
     final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
+
+
+    try {
+      String issuer = openIdProviders.getIssuerFromWebID(agentId);
+      OpenIdProvider provider = openIdProviders.useProvider(issuer);
+      OpenIdClient client = provider.register();
+
+      System.out.println("Issuer: " + issuer);
+    } catch (IOException | InterruptedException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+
 
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
