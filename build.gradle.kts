@@ -57,10 +57,7 @@ dependencies {
   implementation(files("libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
   implementation(files("libs/HMAS/core-1.0-SNAPSHOT.jar"))
   implementation(files("libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-  implementation("org.eclipse.rdf4j:rdf4j-runtime:3.7.4@pom") {
-    isTransitive = true
-  }
-  implementation("com.google.guava:guava:11.0.2")
+  implementation("com.google.guava:guava:33.2.1-jre")
   implementation("io.vavr:vavr:0.10.4")
   implementation("com.google.code.gson:gson:2.10.1")
   implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
@@ -81,6 +78,7 @@ dependencies {
   testImplementation(libs.httpcomponents.core5)
   testImplementation(libs.wot.td.java)
   testImplementation(libs.rdf4j.model)
+  implementation(libs.rdf4j.runtime)
   testImplementation(files("libs/cartago-3.1.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)
