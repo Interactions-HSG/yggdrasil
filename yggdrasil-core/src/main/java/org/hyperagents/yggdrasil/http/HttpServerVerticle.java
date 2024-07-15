@@ -6,6 +6,8 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 import org.apache.http.entity.ContentType;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
@@ -62,6 +64,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   ) {
     final var router = Router.router(this.vertx);
     router.route()
+      .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
       .handler(CorsHandler.create()
         .maxAgeSeconds(86400)
         .allowedMethod(io.vertx.core.http.HttpMethod.GET)
@@ -115,6 +118,12 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post(WORKSPACE_PATH + "/join/").handler(handler::handleRedirectWithoutSlash);
     final var joinRoute = router.post(WORKSPACE_PATH + "/join")
       .handler(handler::handleJoinWorkspace);
+
+
+    router.get("/auth").handler(handler::handleWebIdLoginPage);
+    router.post(WORKSPACE_PATH + "/auth").handler(handler::handleJoinWorkspaceWithAuth);
+    router.get("/callback").handler(handler::handleCallbackAuth);
+
     router.post(WORKSPACE_PATH + "/leave/").handler(handler::handleRedirectWithoutSlash);
     final var leaveRoute = router.post(WORKSPACE_PATH + "/leave")
       .handler(handler::handleLeaveWorkspace);
