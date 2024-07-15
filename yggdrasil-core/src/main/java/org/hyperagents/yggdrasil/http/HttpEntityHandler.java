@@ -362,13 +362,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
   }
   public void handleCallbackAuth(final RoutingContext ctx) {
-    System.out.println(ctx.request().uri());
-    System.out.println(ctx.session().get("state").toString());
-
     String code = ctx.request().getParam("code");
     String state = ctx.request().getParam("state");
 
     if (state.equals(ctx.session().get("state"))) {
+      ctx.session().put("code",code);
       ctx.response().putHeader("Location", this.httpConfig.getBaseUri())
         .setStatusCode(302)
         .end();
@@ -392,14 +390,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   public void handleJoinWorkspaceWithAuth(final RoutingContext ctx) {
-    System.out.println("what");
     final var agentId = ctx.request().getFormAttribute("textInput");
     final var agentName = ctx.request().getHeader(AGENT_LOCALNAME_HEADER);
     if (agentId == null) {
       ctx.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
-
     try {
       String issuer = openIdProviders.getIssuerFromWebID(agentId);
       OpenIdProvider provider = openIdProviders.useProvider(issuer);
