@@ -9,7 +9,6 @@ import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
@@ -44,7 +43,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
     new RepresentationFactoryTDImplt(this.httpConfig);
-  private SecurityScheme securityScheme = new NoSecurityScheme();
+  private SecurityScheme securityScheme = SecurityScheme.getNoSecurityScheme();
 
   private String apiKey;
 

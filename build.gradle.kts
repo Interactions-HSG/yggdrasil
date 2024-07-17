@@ -53,16 +53,6 @@ dependencies {
   implementation(project(":yggdrasil-cartago"))
   implementation(project(":yggdrasil-websub"))
 
-
-  implementation(files("libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
-  implementation(files("libs/HMAS/core-1.0-SNAPSHOT.jar"))
-  implementation(files("libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-  implementation("com.google.guava:guava:33.2.1-jre")
-  implementation("io.vavr:vavr:0.10.4")
-  implementation("com.google.code.gson:gson:2.10.1")
-  implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
-  implementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
-
   implementation(libs.vertx.core)
   implementation(libs.vertx.config)
 
@@ -76,9 +66,18 @@ dependencies {
   testImplementation(libs.vertx.web)
   testImplementation(libs.vertx.web.client)
   testImplementation(libs.httpcomponents.core5)
-  testImplementation(libs.wot.td.java)
   testImplementation(libs.rdf4j.model)
-  implementation(libs.rdf4j.runtime)
+  testImplementation(libs.wot.td.java)
+
+  testImplementation(files("./libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
+  testImplementation(files("./libs/HMAS/core-1.0-SNAPSHOT.jar"))
+  testImplementation(files("./libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
+  testImplementation("com.google.guava:guava:33.2.1-jre")
+  testImplementation("io.vavr:vavr:0.10.4")
+  testImplementation("com.google.code.gson:gson:2.10.1")
+  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
+  testImplementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
+
   testImplementation(files("libs/cartago-3.1.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)

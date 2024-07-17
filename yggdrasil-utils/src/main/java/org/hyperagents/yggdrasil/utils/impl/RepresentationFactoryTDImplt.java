@@ -7,7 +7,6 @@ import ch.unisg.ics.interactions.wot.td.io.TDGraphWriter;
 import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
-import ch.unisg.ics.interactions.wot.td.security.NoSecurityScheme;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
@@ -157,7 +156,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
-      new NoSecurityScheme(),
+      SecurityScheme.getNoSecurityScheme(),
       semanticType,
       new LinkedHashModel(),
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
@@ -168,7 +167,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
-      new NoSecurityScheme(),
+      SecurityScheme.getNoSecurityScheme(),
       semanticType,
       metadata,
       actionAffordances
@@ -193,7 +192,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     });
     final var td =
       new ThingDescription.Builder(artifactName)
-        .addSecurityScheme(securityScheme)
+        .addSecurityScheme(securityScheme.getSchemeName(),securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType(semanticType)
         .addThingURI(this.httpConfig
@@ -209,7 +208,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final String agentName,
     final Model metadata)
   {
-    return createBodyRepresentation(workspaceName, agentName, new NoSecurityScheme(), metadata);
+    return createBodyRepresentation(workspaceName, agentName, SecurityScheme.getNoSecurityScheme(), metadata);
   }
 
   @Override
@@ -222,7 +221,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final var td =
       new ThingDescription
         .Builder(agentName)
-        .addSecurityScheme(securityScheme)
+        .addSecurityScheme(securityScheme.getSchemeName(),securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType("https://purl.org/hmas/jacamo/Body")
         .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#artifact")

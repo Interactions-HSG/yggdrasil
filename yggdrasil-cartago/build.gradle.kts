@@ -41,6 +41,7 @@ dependencies {
   // implementation(files("${rootProject.projectDir}/libs/cartago-3.1.jar"))
   implementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
   implementation(libs.wot.td.java)
+  //implementation(libs.hmas.java)
 
   implementation(libs.rdf4j.model)
   implementation(libs.rdf4j.runtime)

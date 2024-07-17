@@ -1,7 +1,8 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
  * This class provides functionality to retrieve and manage environment configuration settings.
  */
 public class EnvironmentConfigImpl implements EnvironmentConfig {
-  private static final Logger LOGGER = Logger.getLogger(EnvironmentConfigImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(EnvironmentConfigImpl.class);
 
   private final boolean enabled;
 

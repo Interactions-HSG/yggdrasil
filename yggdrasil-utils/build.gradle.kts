@@ -34,20 +34,19 @@ java {
 dependencies {
   implementation(libs.vertx.core)
 
-  implementation(libs.rdf4j.model)
-  implementation(libs.rdf4j.rio.turtle)
-  implementation(libs.rdf4j.rio.jsonld)
+  // currently using full rdf4j lib
+  implementation(libs.rdf4j.storage)
 
   implementation(libs.gson)
   implementation(libs.wot.td.java)
 
+  implementation ("org.apache.logging.log4j:log4j-api:2.23.1")
+  implementation ("org.apache.logging.log4j:log4j-core:2.23.1")
 
+  //implementation(libs.hmas.java)
   implementation(files("../libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
   implementation(files("../libs/HMAS/core-1.0-SNAPSHOT.jar"))
   implementation(files("../libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-  implementation("org.eclipse.rdf4j:rdf4j-runtime:3.7.4@pom") {
-    isTransitive = true
-  }
   implementation("com.google.guava:guava:11.0.2")
   implementation("io.vavr:vavr:0.10.4")
   implementation("com.google.code.gson:gson:2.10.1")
