@@ -71,15 +71,7 @@ dependencies {
   testImplementation(libs.hmas.java)
   testImplementation(libs.gson)
 
-//  testImplementation(files("./libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
-//  testImplementation(files("./libs/HMAS/core-1.0-SNAPSHOT.jar"))
-//  testImplementation(files("./libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-//  testImplementation("com.google.guava:guava:33.2.1-jre")
-//  testImplementation("io.vavr:vavr:0.10.4")
-//  testImplementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
-//  testImplementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
-
-  testImplementation(files("libs/cartago-3.1.jar"))
+  testImplementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)
 }

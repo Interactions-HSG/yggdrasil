@@ -38,7 +38,6 @@ dependencies {
 
   implementation(libs.httpcomponents.core5)
 
-  // implementation(files("${rootProject.projectDir}/libs/cartago-3.1.jar"))
   implementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
   implementation(libs.wot.td.java)
   implementation(libs.hmas.java)
@@ -47,16 +46,6 @@ dependencies {
   implementation(libs.rdf4j.runtime)
 
   implementation(libs.gson)
-
-
-  //implementation(files("../libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
-  //implementation(files("../libs/HMAS/core-1.0-SNAPSHOT.jar"))
-  //implementation(files("../libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
- // implementation("com.google.guava:guava:33.2.1-jre")
- // implementation("io.vavr:vavr:0.10.4")
- // implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
- // implementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
-
 
   implementation(libs.apache.commons.lang3)
 

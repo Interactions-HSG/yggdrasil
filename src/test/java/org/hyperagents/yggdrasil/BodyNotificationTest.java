@@ -636,11 +636,15 @@ public class BodyNotificationTest {
     );
   }
   private void assertEqualsHMASDescriptions(final String expected, final String actual) {
+    final var areEqual = Models.isomorphic(
+      ResourceProfileGraphReader.getModelFromString(expected),
+      ResourceProfileGraphReader.getModelFromString(actual)
+    );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-      Models.isomorphic(
-        ResourceProfileGraphReader.getModelFromString(expected),
-        ResourceProfileGraphReader.getModelFromString(actual)
-      ),
+      areEqual,
       REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
