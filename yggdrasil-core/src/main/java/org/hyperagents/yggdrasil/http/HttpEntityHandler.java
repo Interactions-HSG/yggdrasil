@@ -12,6 +12,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -35,6 +36,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.oauth.OAuthHttpHandler;
 import org.hyperagents.yggdrasil.oauth.OAuthUtils;
 import org.hyperagents.yggdrasil.oauth.OpenIdProvider;
 import org.hyperagents.yggdrasil.oauth.OpenIdProviders;
@@ -367,7 +369,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     if (state.equals(ctx.session().get("state"))) {
       ctx.session().put("code",code);
-      ctx.response().putHeader("Location", this.httpConfig.getBaseUri())
+      ctx.response().putHeader("Location", this.httpConfig.getWorkspaceUri(ctx.session().get(WORKSPACE_ID_PARAM)))
         .setStatusCode(302)
         .end();
       return;
@@ -376,10 +378,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   public void handleWebIdLoginPage(final RoutingContext ctx) {
+    final String workspace = ctx.pathParam(WORKSPACE_ID_PARAM);
     String htmlContent = "<!DOCTYPE html>" +
       "<html>" +
       "<body>" +
-      "<form action='/workspaces/test/auth' method='post'>" +
+      "<form action='/workspaces/"+ workspace +"/auth' method='post'>" +
       "Text Input: <input type='text' name='textInput'>" +
       "<input type='submit' value='Submit'>" +
       "</form>" +
@@ -392,19 +395,21 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   public void handleJoinWorkspaceWithAuth(final RoutingContext ctx) {
     final var agentId = ctx.request().getFormAttribute("textInput");
     final var agentName = ctx.request().getHeader(AGENT_LOCALNAME_HEADER);
+    final var workspce = ctx.pathParam(WORKSPACE_ID_PARAM);
     if (agentId == null) {
       ctx.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
     try {
-      String issuer = openIdProviders.getIssuerFromWebID(agentId);
-      OpenIdProvider provider = openIdProviders.useProvider(issuer);
+      String issuer = OAuthHttpHandler.getIssuerFromWebID(agentId);
+      OpenIdProvider provider = openIdProviders.useProvider(URI.create(issuer));
       provider.register();
       var state = OAuthUtils.generateRandomState();
       var verifier = OAuthUtils.generateCodeVerifier();
 
       ctx.session().put("state", state);
       ctx.session().put("verifier", verifier);
+      ctx.session().put(WORKSPACE_ID_PARAM, workspce);
 
       var authUrl = provider.getAuthUrl(state, OAuthUtils.generateCodeChallenge(verifier));
       // Redirect example using Vert.x
