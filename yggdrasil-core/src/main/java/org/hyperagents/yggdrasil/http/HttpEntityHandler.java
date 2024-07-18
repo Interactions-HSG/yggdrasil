@@ -12,8 +12,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -34,6 +36,10 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
+import org.hyperagents.yggdrasil.oauth.OAuthHttpHandler;
+import org.hyperagents.yggdrasil.oauth.OAuthUtils;
+import org.hyperagents.yggdrasil.oauth.OpenIdProvider;
+import org.hyperagents.yggdrasil.oauth.OpenIdProviders;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
@@ -61,6 +67,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
   private final RepresentationFactory representationFactory;
+  private final OpenIdProviders openIdProviders;
 
   private final boolean environment;
 
@@ -84,6 +91,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     // that way the router does not need to check for routes itself
     this.environment = environmentConfig.isEnabled();
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(environmentConfig.getOntology(), httpConfig);
+    this.openIdProviders = new OpenIdProviders();
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {
@@ -355,10 +363,70 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         break;
     }
   }
+  public void handleCallbackAuth(final RoutingContext ctx) {
+    String code = ctx.request().getParam("code");
+    String state = ctx.request().getParam("state");
+
+    if (state.equals(ctx.session().get("state"))) {
+      ctx.session().put("code",code);
+      ctx.response().putHeader("Location", this.httpConfig.getWorkspaceUri(ctx.session().get(WORKSPACE_ID_PARAM)))
+        .setStatusCode(302)
+        .end();
+      return;
+    }
+    ctx.response().setStatusCode(HttpStatus.SC_FORBIDDEN).end();
+  }
+
+  public void handleWebIdLoginPage(final RoutingContext ctx) {
+    final String workspace = ctx.pathParam(WORKSPACE_ID_PARAM);
+    String htmlContent = "<!DOCTYPE html>" +
+      "<html>" +
+      "<body>" +
+      "<form action='/workspaces/"+ workspace +"/auth' method='post'>" +
+      "Text Input: <input type='text' name='textInput'>" +
+      "<input type='submit' value='Submit'>" +
+      "</form>" +
+      "</body>" +
+      "</html>";
+    ctx.response().putHeader("Content-Type", "text/html").end(htmlContent);
+
+  }
+
+  public void handleJoinWorkspaceWithAuth(final RoutingContext ctx) {
+    final var agentId = ctx.request().getFormAttribute("textInput");
+    final var agentName = ctx.request().getHeader(AGENT_LOCALNAME_HEADER);
+    final var workspce = ctx.pathParam(WORKSPACE_ID_PARAM);
+    if (agentId == null) {
+      ctx.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      return;
+    }
+    try {
+      String issuer = OAuthHttpHandler.getIssuerFromWebID(agentId);
+      OpenIdProvider provider = openIdProviders.useProvider(URI.create(issuer));
+      provider.register();
+      var state = OAuthUtils.generateRandomState();
+      var verifier = OAuthUtils.generateCodeVerifier();
+
+      ctx.session().put("state", state);
+      ctx.session().put("verifier", verifier);
+      ctx.session().put(WORKSPACE_ID_PARAM, workspce);
+
+      var authUrl = provider.getAuthUrl(state, OAuthUtils.generateCodeChallenge(verifier));
+      // Redirect example using Vert.x
+      ctx.response().putHeader("Location", authUrl)
+        .setStatusCode(302)
+        .end();
+    } catch (IOException | InterruptedException | NoSuchAlgorithmException | IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
     final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
+
+
+
 
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();

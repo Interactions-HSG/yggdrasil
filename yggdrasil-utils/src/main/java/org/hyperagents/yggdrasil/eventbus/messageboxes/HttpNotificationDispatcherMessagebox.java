@@ -5,7 +5,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import java.util.function.Consumer;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.codecs.HttpNotificationDispatcherMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
@@ -17,7 +18,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public class HttpNotificationDispatcherMessagebox
     implements Messagebox<HttpNotificationDispatcherMessage> {
-  private static final Logger LOGGER = Logger.getLogger(HttpNotificationDispatcherMessagebox.class);
+  private static final Logger LOGGER = LogManager.getLogger(HttpNotificationDispatcherMessagebox.class);
 
   private final EventBus eventBus;
   private final WebSubConfig config;

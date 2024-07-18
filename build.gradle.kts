@@ -53,19 +53,6 @@ dependencies {
   implementation(project(":yggdrasil-cartago"))
   implementation(project(":yggdrasil-websub"))
 
-
-  implementation(files("libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
-  implementation(files("libs/HMAS/core-1.0-SNAPSHOT.jar"))
-  implementation(files("libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-  implementation("org.eclipse.rdf4j:rdf4j-runtime:3.7.4@pom") {
-    isTransitive = true
-  }
-  implementation("com.google.guava:guava:11.0.2")
-  implementation("io.vavr:vavr:0.10.4")
-  implementation("com.google.code.gson:gson:2.10.1")
-  implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
-  implementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
-
   implementation(libs.vertx.core)
   implementation(libs.vertx.config)
 
@@ -79,9 +66,12 @@ dependencies {
   testImplementation(libs.vertx.web)
   testImplementation(libs.vertx.web.client)
   testImplementation(libs.httpcomponents.core5)
-  testImplementation(libs.wot.td.java)
   testImplementation(libs.rdf4j.model)
-  testImplementation(files("libs/cartago-3.1.jar"))
+  testImplementation(libs.wot.td.java)
+  testImplementation(libs.hmas.java)
+  testImplementation(libs.gson)
+
+  testImplementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)
 }

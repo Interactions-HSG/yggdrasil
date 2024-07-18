@@ -1,8 +1,8 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;

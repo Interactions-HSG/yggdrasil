@@ -1,7 +1,8 @@
 package org.hyperagents.yggdrasil.utils.impl;
 
 import io.vertx.core.json.JsonObject;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
@@ -14,7 +15,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  * such as whether it is enabled and the WebSub hub URI.
  */
 public class WebSubConfigImpl implements WebSubConfig {
-  private static final Logger LOGGER = Logger.getLogger(WebSubConfigImpl.class);
+  private static final Logger LOGGER = LogManager.getLogger(WebSubConfigImpl.class);
 
   private final boolean enabled;
   private final String webSubHubUri;
