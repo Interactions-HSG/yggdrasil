@@ -43,15 +43,14 @@ dependencies {
   implementation ("org.apache.logging.log4j:log4j-api:2.23.1")
   implementation ("org.apache.logging.log4j:log4j-core:2.23.1")
 
-  //implementation(libs.hmas.java)
-  implementation(files("../libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
-  implementation(files("../libs/HMAS/core-1.0-SNAPSHOT.jar"))
-  implementation(files("../libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
-  implementation("com.google.guava:guava:11.0.2")
-  implementation("io.vavr:vavr:0.10.4")
-  implementation("com.google.code.gson:gson:2.10.1")
-  implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
-  implementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
+  implementation(libs.hmas.java)
+//  implementation(files("../libs/HMAS/bindings-1.0-SNAPSHOT.jar"))
+//  implementation(files("../libs/HMAS/core-1.0-SNAPSHOT.jar"))
+//  implementation(files("../libs/HMAS/interaction-1.0-SNAPSHOT.jar"))
+//  implementation("com.google.guava:guava:11.0.2")
+//  implementation("io.vavr:vavr:0.10.4")
+//  implementation("org.apache.httpcomponents.client5:httpclient5:5.2.2")
+//  implementation("org.apache.httpcomponents.core5:httpcore5:5.2.2")
 
 
   compileOnly(libs.spotbugs.annotations)
