@@ -7,15 +7,15 @@ import java.util.Base64;
 
 public class OAuthUtils {
 
+    public static final SecureRandom random = new SecureRandom();
+
     public static String generateRandomState() {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[8];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     public static String generateCodeVerifier() {
-        SecureRandom random = new SecureRandom();
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);

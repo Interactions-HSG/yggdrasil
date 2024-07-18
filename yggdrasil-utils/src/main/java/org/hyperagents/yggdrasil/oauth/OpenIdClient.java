@@ -44,6 +44,8 @@ public class OpenIdClient {
 
     }
 
+
+
     public OpenIdClientMetadata getMetadata() {
         return metadata;
     }
