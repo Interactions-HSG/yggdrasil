@@ -120,11 +120,6 @@ public class HttpServerVerticle extends AbstractVerticle {
       .handler(handler::handleJoinWorkspace);
 
 
-    router.get(WORKSPACE_PATH + "/join/").handler(handler::handleRedirectWithoutSlash);
-    router.get(WORKSPACE_PATH + "/join").handler(handler::handleWebIdLoginPage);
-    router.post(WORKSPACE_PATH + "/auth").handler(handler::handleJoinWorkspaceWithAuth);
-    router.get("/callback").handler(handler::handleCallbackAuth);
-
     router.post(WORKSPACE_PATH + "/leave/").handler(handler::handleRedirectWithoutSlash);
     final var leaveRoute = router.post(WORKSPACE_PATH + "/leave")
       .handler(handler::handleLeaveWorkspace);

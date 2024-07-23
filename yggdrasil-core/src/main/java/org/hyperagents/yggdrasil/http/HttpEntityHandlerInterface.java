@@ -16,11 +16,8 @@ public interface HttpEntityHandlerInterface {
   void handleDeleteEntity(final RoutingContext routingContext);
   void handleEntitySubscription(final RoutingContext routingContext);
   void handleJoinWorkspace(final RoutingContext routingContext);
-  void handleJoinWorkspaceWithAuth(final RoutingContext ctx);
   void handleLeaveWorkspace(final RoutingContext routingContext);
-  void handleCallbackAuth(final RoutingContext ctx);
   void handleCreateSubWorkspace(final RoutingContext context);
-  void handleWebIdLoginPage(final RoutingContext ctx);
   void handleQuery(final RoutingContext routingContext);
   void handleAction(final RoutingContext routingContext);
 }
