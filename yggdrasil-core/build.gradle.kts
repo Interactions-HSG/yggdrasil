@@ -41,7 +41,11 @@ dependencies {
   implementation(libs.vertx.web.client)
 
   implementation(libs.wot.td.java)
-  implementation(libs.hmas.java)
+  // implementation(libs.hmas.java)
+  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-core-1.0-SNAPSHOT-all.jar"))
+  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-interaction-1.0-SNAPSHOT-all.jar"))
+  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-bindings-all.jar"))
+
 
   implementation(libs.httpcomponents.core5)
 
