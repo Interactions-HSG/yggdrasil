@@ -248,14 +248,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
     final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
 
-    System.out.println(storeResponse);
-
-    System.out.println("====================================");
-
-    // final var test = ResourceProfileGraphReader.readFromString(storeResponse);
-    // System.out.println(test);
-    System.out.println("====================================");
-
     final var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
       .filter(sig -> sig.getIRIAsString().isPresent())
       .filter(sig -> sig.getIRIAsString().get().equals(signifierIRI))
