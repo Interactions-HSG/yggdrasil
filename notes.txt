@@ -91,3 +91,9 @@ NEW:
   how to support agent messages -> agent to agent communication
   -> through websub
   -> can extend body to add affordances and signifiers
+
+
+
+
++ Update configs
++ swagger api
