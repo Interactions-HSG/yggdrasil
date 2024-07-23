@@ -68,14 +68,15 @@ dependencies {
   testImplementation(libs.httpcomponents.core5)
   testImplementation(libs.rdf4j.model)
   testImplementation(libs.wot.td.java)
-  // testImplementation(libs.hmas.java)
+  testImplementation(libs.hmas.java)
   testImplementation(libs.gson)
 
   testImplementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
+  /*
   testImplementation(files("${rootProject.projectDir}/libs/hmas/hmas-core-1.0-SNAPSHOT-all.jar"))
   testImplementation(files("${rootProject.projectDir}/libs/hmas/hmas-interaction-1.0-SNAPSHOT-all.jar"))
   testImplementation(files("${rootProject.projectDir}/libs/hmas/hmas-bindings-all.jar"))
-
+  */
 
 
 

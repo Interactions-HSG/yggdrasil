@@ -43,11 +43,12 @@ dependencies {
   implementation ("org.apache.logging.log4j:log4j-api:2.23.1")
   implementation ("org.apache.logging.log4j:log4j-core:2.23.1")
 
-  // implementation(libs.hmas.java)
+  implementation(libs.hmas.java)
+  /*
   implementation(files("${rootProject.projectDir}/libs/hmas/hmas-core-1.0-SNAPSHOT-all.jar"))
   implementation(files("${rootProject.projectDir}/libs/hmas/hmas-interaction-1.0-SNAPSHOT-all.jar"))
   implementation(files("${rootProject.projectDir}/libs/hmas/hmas-bindings-all.jar"))
-
+  */
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
