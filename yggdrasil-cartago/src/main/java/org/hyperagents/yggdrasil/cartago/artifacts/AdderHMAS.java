@@ -3,9 +3,7 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ListSpecification;
 
 /**
  * This class represents a Hypermedia HMAS Artifact with addition functionality.
@@ -35,54 +33,29 @@ public class AdderHMAS extends HypermediaHMASArtifact {
         "http://example.org/Add",
         "add",
         "add",
-      new QualifiedValueSpecification.Builder()
+      new ListSpecification.Builder()
         .setIRIAsString("http://example.org/addends")
-        .addRequiredSemanticType(RDF.LIST.stringValue())
         .setRequired(true)
-        .addPropertySpecification(RDF.FIRST.stringValue(),
+        .addMemberSpecification(
           new IntegerSpecification.Builder()
+            .setRequired(true)
             .setName("1st Parameter")
-            .setRequired(true)
-            .build())
-        .addPropertySpecification(RDF.REST.stringValue(),
-          new QualifiedValueSpecification.Builder()
-            .setIRIAsString("http://example.org/addendsRest")
-            .setRequired(true)
-            .addRequiredSemanticType(RDF.LIST.stringValue())
-            .addPropertySpecification(
-              RDF.FIRST.stringValue(),
-              new IntegerSpecification.Builder()
-                .setName("2nd Parameter")
-                .setRequired(true)
-                .build()
-            )
-            .addPropertySpecification(
-              RDF.REST.stringValue(),
-              new ValueSpecification.Builder()
-                .addRequiredSemanticType(RDF.LIST.stringValue())
-                .setValueAsString(RDF.NIL.stringValue())
-                .setRequired(true)
-                .build()
-            )
-            .build())
-        .build(),
-      new QualifiedValueSpecification.Builder()
-        .setIRIAsString("http://example.org/AddResult")
-        .setRequired(true)
-        .addRequiredSemanticType(RDF.LIST.stringValue())
-        .addPropertySpecification(
-          RDF.FIRST.stringValue(),
-          new IntegerSpecification.Builder()
-            .setName("Result")
-            .setRequired(true)
             .build()
         )
-        .addPropertySpecification(
-          RDF.REST.stringValue(),
-          new ValueSpecification.Builder()
-            .addRequiredSemanticType(RDF.LIST.stringValue())
-            .setValueAsString(RDF.NIL.stringValue())
+        .addMemberSpecification(
+          new IntegerSpecification.Builder()
             .setRequired(true)
+            .setName("2nd Parameter")
+            .build()
+        )
+        .build(),
+      new ListSpecification.Builder()
+        .setIRIAsString("http://example.org/result")
+        .setRequired(true)
+        .addMemberSpecification(
+          new IntegerSpecification.Builder()
+            .setRequired(true)
+            .setName("Result")
             .build()
         )
         .build()

@@ -5,7 +5,7 @@ import cartago.ArtifactId;
 import cartago.CartagoException;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IOSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ListSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.ActionSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Form;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.Signifier;
@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
@@ -241,7 +240,6 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
 
   public Optional<String> handleInput(final String storeResponse, final String actionName, final String context) {
-
     final var workspaceName = this.getId().getWorkspaceId().getName();
     final var artifactName = this.getId().getName();
 
@@ -250,6 +248,13 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
 
     final var signifierIRI = artifactIri + "#" + actionName + "-Signifier";
 
+    System.out.println(storeResponse);
+
+    System.out.println("====================================");
+
+    // final var test = ResourceProfileGraphReader.readFromString(storeResponse);
+    // System.out.println(test);
+    System.out.println("====================================");
 
     final var signifier = ResourceProfileGraphReader.readFromString(storeResponse).getExposedSignifiers().stream()
       .filter(sig -> sig.getIRIAsString().isPresent())
@@ -259,9 +264,9 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     if (signifier.isPresent() && signifier.get().getActionSpecification().getInputSpecification().isPresent()) {
       final JsonElement jsonElement = JsonParser.parseString(context);
       final var input = signifier.get().getActionSpecification().getInputSpecification().get();
-      final QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) input;
+      final ListSpecification listSpecification = (ListSpecification) input;
       description = CartagoDataBundle.toJson(
-        parseInput(jsonElement, qualifiedValueSpecification, new ArrayList<>())
+        parseInput(jsonElement, listSpecification, new ArrayList<>())
       ).describeConstable();
     }
     return description;
@@ -283,24 +288,24 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       .findFirst();
     if (signifier.isPresent() && signifier.get().getActionSpecification().getOutputSpecification().isPresent()) {
       final var output = signifier.get().getActionSpecification().getOutputSpecification().get();
-      final QualifiedValueSpecification qualifiedValueSpecification = (QualifiedValueSpecification) output;
-      return getLengthOfQualifiedValueSpecificationList(qualifiedValueSpecification);
+      final ListSpecification listSpecification = (ListSpecification) output;
+      return getLengthOfQualifiedValueSpecificationList(listSpecification);
     }
     return 0;
   }
 
-  private int getLengthOfQualifiedValueSpecificationList(final QualifiedValueSpecification qualifiedValueSpecification) {
-    final var temp = qualifiedValueSpecification.getPropertySpecifications();
+  private int getLengthOfQualifiedValueSpecificationList(final ListSpecification listSpecification) {
+    final var members = listSpecification.getMemberSpecifications();
     int lengthOfList = 0;
 
-    while (!temp.isEmpty()) {
-      lengthOfList++;
-      temp.remove(RDF.FIRST.stringValue());
-      final var rest = temp.remove(RDF.REST.stringValue());
-      if (rest instanceof QualifiedValueSpecification) {
-        temp.putAll(((QualifiedValueSpecification) rest).getPropertySpecifications());
+    for (var member : members) {
+      if (member instanceof ListSpecification) {
+        lengthOfList += getLengthOfQualifiedValueSpecificationList((ListSpecification) member);
+      } else {
+        lengthOfList++;
       }
     }
+
     return lengthOfList;
   }
 

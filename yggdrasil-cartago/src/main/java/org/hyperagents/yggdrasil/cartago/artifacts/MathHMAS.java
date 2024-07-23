@@ -3,9 +3,7 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ListSpecification;
 
 import java.util.Random;
 
@@ -44,136 +42,67 @@ public class MathHMAS extends HypermediaHMASArtifact {
       "http://example.org/egcd",
       "egcd",
       "egcd",
-      new QualifiedValueSpecification.Builder()
-        .setIRIAsString("http://example.org/egcds")
-        .addRequiredSemanticType(RDF.LIST.stringValue())
+      new ListSpecification.Builder()
+        .setIRIAsString("http://example.org/egcd")
         .setRequired(true)
-        .addPropertySpecification(RDF.FIRST.stringValue(),
-          new IntegerSpecification.Builder()
-            .setName("1st Parameter")
-            .setRequired(true)
-            .build())
-        .addPropertySpecification(RDF.REST.stringValue(),
-          new QualifiedValueSpecification.Builder()
-            .setIRIAsString("http://example.org/egcdsRest")
-            .setRequired(true)
-            .addRequiredSemanticType(RDF.LIST.stringValue())
-            .addPropertySpecification(
-              RDF.FIRST.stringValue(),
-              new IntegerSpecification.Builder()
-                .setName("2nd Parameter")
-                .setRequired(true)
-                .build()
-            )
-            .addPropertySpecification(
-              RDF.REST.stringValue(),
-              new ValueSpecification.Builder()
-                .addRequiredSemanticType(RDF.LIST.stringValue())
-                .setValueAsString(RDF.NIL.stringValue())
-                .setRequired(true)
-                .build()
-            )
-            .build())
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("a")
+          .setRequired(true)
+          .build())
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("b")
+          .setRequired(true)
+          .build())
         .build(),
-      new QualifiedValueSpecification.Builder()
+      new ListSpecification.Builder()
         .setIRIAsString("http://example.org/egcdResult")
-        .addRequiredSemanticType(RDF.LIST.stringValue())
         .setRequired(true)
-        .addPropertySpecification(RDF.FIRST.stringValue(),
-          new IntegerSpecification.Builder()
-            .setRequired(true)
-            .build())
-        .addPropertySpecification(RDF.REST.stringValue(),
-          new QualifiedValueSpecification.Builder()
-            .setIRIAsString("http://example.org/egcdMemberX")
-            .setRequired(true)
-            .addRequiredSemanticType(RDF.LIST.stringValue())
-            .addPropertySpecification(
-              RDF.FIRST.stringValue(),
-              new IntegerSpecification.Builder()
-                .setRequired(true)
-                .build()
-            )
-            .addPropertySpecification(
-              RDF.REST.stringValue(),
-              new QualifiedValueSpecification.Builder()
-                .setIRIAsString("http://example.org/egcdMemberY")
-                .setRequired(true)
-                .addRequiredSemanticType(RDF.LIST.stringValue())
-                .addPropertySpecification(
-                  RDF.FIRST.stringValue(),
-                  new IntegerSpecification.Builder()
-                    .setRequired(true)
-                    .build()
-                ).addPropertySpecification(
-                  RDF.REST.stringValue(),
-              new ValueSpecification.Builder()
-                .addRequiredSemanticType(RDF.LIST.stringValue())
-                .setValueAsString(RDF.NIL.stringValue())
-                .setRequired(true)
-                .build()
-            )
-            .build())
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("gcd")
+          .setRequired(true)
+          .build())
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("x")
+          .setRequired(true)
+          .build())
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("y")
+          .setRequired(true)
+          .build())
         .build()
-    ).build());
+      );
     this.registerSignifier(
       "http://example.org/rand",
       "rand",
       "rand",
       null,
-      new QualifiedValueSpecification.Builder()
+      new ListSpecification.Builder()
         .setIRIAsString("http://example.org/randInt")
         .setRequired(true)
-        .addRequiredSemanticType(RDF.LIST.stringValue())
-        .addPropertySpecification(RDF.FIRST.stringValue(),
-          new IntegerSpecification.Builder()
-            .setName("randomInteger")
-            .setRequired(true)
-            .build())
-        .addPropertySpecification(RDF.REST.stringValue(),
-          new ValueSpecification.Builder()
-            .addRequiredSemanticType(RDF.LIST.stringValue())
-            .setValueAsString(RDF.NIL.stringValue())
-            .setRequired(true)
-            .build()
-        ).build()
-    );
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("randomInteger")
+          .setRequired(true)
+          .build())
+        .build()
+      );
     this.registerSignifier(
       "http://example.org/rand2",
       "rand2",
       "rand2",
       null,
-    new QualifiedValueSpecification.Builder()
-      .setIRIAsString("http://example.org/twoRandomIntegers")
-      .addRequiredSemanticType(RDF.LIST.stringValue())
-      .setRequired(true)
-      .addPropertySpecification(RDF.FIRST.stringValue(),
-        new IntegerSpecification.Builder()
-          .setName("randomInteger")
+      new ListSpecification.Builder()
+        .setIRIAsString("http://example.org/randInts")
+        .setRequired(true)
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("randomInteger1")
           .setRequired(true)
           .build())
-      .addPropertySpecification(RDF.REST.stringValue(),
-        new QualifiedValueSpecification.Builder()
-          .setIRIAsString("http://example.org/randInt")
+        .addMemberSpecification(new IntegerSpecification.Builder()
+          .setName("randomInteger2")
           .setRequired(true)
-          .addRequiredSemanticType(RDF.LIST.stringValue())
-          .addPropertySpecification(
-            RDF.FIRST.stringValue(),
-            new IntegerSpecification.Builder()
-              .setName("randomInteger")
-              .setRequired(true)
-              .build()
-          )
-          .addPropertySpecification(
-            RDF.REST.stringValue(),
-            new ValueSpecification.Builder()
-              .addRequiredSemanticType(RDF.LIST.stringValue())
-              .setValueAsString(RDF.NIL.stringValue())
-              .setRequired(true)
-              .build()
-          )
           .build())
-      .build());
+        .build()
+      );
   }
 
   public static int[] extendedEuclidean(final int a,final int b) {

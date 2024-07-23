@@ -1,11 +1,11 @@
 package org.hyperagents.yggdrasil.utils;
 
 import ch.unisg.ics.interactions.hmas.interaction.shapes.IntegerSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ListSpecification;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
 import com.google.gson.JsonElement;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 
 
 import java.util.List;
@@ -119,26 +119,22 @@ public final class JsonObjectUtils {
 
 
   // TODO: Put into HMAS Lib
-  public static List<Object> parseInput(final JsonElement jsonElement,final QualifiedValueSpecification qualifiedValueSpecification,final List<Object> result) {
-    final var semanticTypes =  qualifiedValueSpecification.getRequiredSemanticTypes();
-    final var properties = qualifiedValueSpecification.getPropertySpecifications();
+  public static List<Object> parseInput(final JsonElement jsonElement, final ListSpecification listSpecification, final List<Object> result) {
+    final var members = listSpecification.getMemberSpecifications();
 
-    if (semanticTypes.contains(RDF.LIST.stringValue())) {
-      assert jsonElement.isJsonArray();
-      final var jsonArray = jsonElement.getAsJsonArray();
-      final var firstProperty = properties.get(RDF.FIRST.stringValue());
-      final var restProperty = properties.get(RDF.REST.stringValue());
-      final var firstElement = jsonArray.remove(0);
+    assert jsonElement.isJsonArray();
+    final var jsonArray = jsonElement.getAsJsonArray();
 
-      if (firstProperty instanceof IntegerSpecification) {
-        result.add(firstElement.getAsInt());
-      }
 
-      if (restProperty instanceof QualifiedValueSpecification restQualifiedValueSpecification) {
-          parseInput(jsonArray, restQualifiedValueSpecification, result);
-      }
-      if (!(restProperty instanceof  QualifiedValueSpecification) && !jsonArray.isEmpty()) {
-        throw new IllegalArgumentException("Invalid JSON input");
+    for (var member : members) {
+      switch (member) {
+        case IntegerSpecification integerSpecification -> result.add(jsonArray.remove(0).getAsInt());
+        case StringSpecification stringSpecification -> result.add(jsonArray.remove(0).getAsString());
+        case ListSpecification specification -> {
+          final var list = new JsonArray();
+          result.add(parseInput(jsonArray.remove(0), specification, list.getList()));
+        }
+        case null, default -> throw new IllegalArgumentException("Invalid JSON input");
       }
     }
     return result;
