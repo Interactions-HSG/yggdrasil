@@ -6,9 +6,9 @@ import ch.unisg.ics.interactions.hmas.core.hostables.HypermediaMASPlatform;
 import ch.unisg.ics.interactions.hmas.core.hostables.Workspace;
 import ch.unisg.ics.interactions.hmas.core.vocabularies.CORE;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphWriter;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ListSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.QualifiedValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
-import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.hmas.interaction.signifiers.*;
 import ch.unisg.ics.interactions.wot.td.security.SecurityScheme;
 import com.google.common.collect.ListMultimap;
@@ -189,10 +189,9 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
           .setDescription("The class of the created artifact")
           .build())
       .addPropertySpecification("https://purl.org/hmas/jacamo/hasInitialisationParameters",
-        new ValueSpecification.Builder()
-          .addRequiredSemanticType("http://www.w3.org/1999/02/22-rdf-syntax-ns#List")
+        new ListSpecification.Builder()
           .setName("Initialization parameters")
-          .setDescription("A list containing the parameters for initializing the artifact")
+          .setDescription("A list containing the parameters for initializing the artifacts")
           .build())
       .build();
 
