@@ -203,23 +203,28 @@ public class StaticEnvironmentConfigurationTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    System.out.println(actual);
+    var areEqual = Models.isomorphic(
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+    );
+    if(!areEqual){
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-      Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
-
-      ),
+      areEqual,
       REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
   private void assertEqualsHMASDescriptions(final String expected, final String actual) {
-    System.out.println(actual);
+    var areEqual = Models.isomorphic(
+      ResourceProfileGraphReader.getModelFromString(expected),
+      ResourceProfileGraphReader.getModelFromString(actual)
+    );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-      Models.isomorphic(
-        ResourceProfileGraphReader.getModelFromString(expected),
-        ResourceProfileGraphReader.getModelFromString(actual)
-      ),
+      areEqual,
       REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
