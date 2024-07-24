@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.builder.Input;
@@ -129,9 +128,6 @@ public class RdfStoreVerticleQueryTest {
           """
             workspace,artifact\r
             http://localhost:8080/workspaces/sub/#workspace,c0\r
-            http://localhost:8080/workspaces/sub/#workspace,c0\r
-            http://localhost:8080/workspaces/sub/#workspace,c0\r
-            http://localhost:8080/workspaces/sub/#workspace,c0\r
             """,
             r.body(),
             CONTENTS_EQUAL_MESSAGE
@@ -145,9 +141,6 @@ public class RdfStoreVerticleQueryTest {
         .onSuccess(r -> Assertions.assertEquals(
           """
             ?workspace\t?artifact
-            <http://localhost:8080/workspaces/sub/#workspace>\tc0
-            <http://localhost:8080/workspaces/sub/#workspace>\tc0
-            <http://localhost:8080/workspaces/sub/#workspace>\tc0
             <http://localhost:8080/workspaces/sub/#workspace>\tc0
             """,
           r.body(),
@@ -170,24 +163,22 @@ public class RdfStoreVerticleQueryTest {
             JsonObject.of(
               "bindings",
               JsonArray.of(
-                IntStream.range(0, 4)
-                         .mapToObj(i -> JsonObject.of(
+                          JsonObject.of(
+                            WORKSPACE_BINDING,
+                            JsonObject.of(
+                              "type",
+                              "uri",
+                              "value",
+                              SUB_WORKSPACE_URI+"#workspace"
+                            ),
                            "artifact",
                            JsonObject.of(
                              "type",
                              "literal",
                              "value",
                              "c0"
-                           ),
-                           WORKSPACE_BINDING,
-                           JsonObject.of(
-                             "type",
-                             "uri",
-                             "value",
-                             SUB_WORKSPACE_URI+"/#workspace"
                            )
-                         ))
-                         .toArray()
+                         )
               )
             )
           ),
@@ -214,7 +205,6 @@ public class RdfStoreVerticleQueryTest {
               .withTest(Input.fromString(r.body()))
               .ignoreWhitespace()
               .ignoreElementContentWhitespace()
-              .checkForSimilar()
               .build();
             Assertions.assertFalse(diff.hasDifferences(), "The contents should be equal");
           }
@@ -235,9 +225,6 @@ public class RdfStoreVerticleQueryTest {
         .onSuccess(r -> Assertions.assertEquals(
             """
               workspace,artifact\r
-              http://localhost:8080/workspaces/sub/#workspace,c0\r
-              http://localhost:8080/workspaces/sub/#workspace,c0\r
-              http://localhost:8080/workspaces/sub/#workspace,c0\r
               http://localhost:8080/workspaces/sub/#workspace,c0\r
               """,
             r.body(),
@@ -278,7 +265,7 @@ public class RdfStoreVerticleQueryTest {
                    PREFIX hmas: <https://purl.org/hmas/>
                    PREFIX ex: <http://example.org/>
 
-                   SELECT ?workspace ?artifact
+                   SELECT DISTINCT ?workspace ?artifact
                    WHERE {
                        ?workspace hmas:contains [
                                       a hmas:Artifact, ex:Counter;
@@ -435,8 +422,8 @@ public class RdfStoreVerticleQueryTest {
         );
     this.testGraphQueryRequest(
             List.of(
-              SUB_WORKSPACE_URI+"/",
-              C0_ARTIFACT_URI+"/"
+              SUB_WORKSPACE_URI,
+              C0_ARTIFACT_URI
             ),
             List.of()
         )
@@ -508,9 +495,6 @@ public class RdfStoreVerticleQueryTest {
           """
             workspace,artifact\r
             http://localhost:8080/workspaces/sub/#workspace,\r
-            http://localhost:8080/workspaces/sub/#workspace,\r
-            http://localhost:8080/workspaces/sub/#workspace,\r
-            http://localhost:8080/workspaces/sub/#workspace,\r
             """,
           r.body(),
           CONTENTS_EQUAL_MESSAGE
@@ -536,17 +520,15 @@ public class RdfStoreVerticleQueryTest {
             JsonObject.of(
               "bindings",
               JsonArray.of(
-                IntStream.range(0, 4)
-                         .mapToObj(i -> JsonObject.of(
+                         JsonObject.of(
                            WORKSPACE_BINDING,
                            JsonObject.of(
                              "type",
                              "uri",
                              "value",
-                             SUB_WORKSPACE_URI+"/#workspace"
+                             SUB_WORKSPACE_URI+"#workspace"
                            )
-                         ))
-                         .toArray()
+                         )
               )
             )
           ),
@@ -566,9 +548,6 @@ public class RdfStoreVerticleQueryTest {
         .onSuccess(r -> Assertions.assertEquals(
           """
             ?workspace\t?artifact
-            <http://localhost:8080/workspaces/sub/#workspace>\t
-            <http://localhost:8080/workspaces/sub/#workspace>\t
-            <http://localhost:8080/workspaces/sub/#workspace>\t
             <http://localhost:8080/workspaces/sub/#workspace>\t
             """,
           r.body(),
@@ -610,7 +589,7 @@ public class RdfStoreVerticleQueryTest {
                      PREFIX hmas: <https://purl.org/hmas/>
                      PREFIX ex: <http://example.org/>
 
-                     SELECT ?workspace ?artifact
+                     SELECT DISTINCT ?workspace ?artifact
                      WHERE {
                          ?workspace hmas:contains [
                                         a hmas:Artifact, ex:Counter

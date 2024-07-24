@@ -6,51 +6,11 @@
   </head>
   <results>
     <result>
-      <binding name='artifact'>
-        <literal>c0</literal>
-      </binding>
       <binding name='workspace'>
         <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
       </binding>
-    </result>
-    <result>
       <binding name='artifact'>
         <literal>c0</literal>
-      </binding>
-      <binding name='workspace'>
-        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-      </binding>
-    </result>
-    <result>
-      <binding name='artifact'>
-        <literal>c0</literal>
-      </binding>
-      <binding name='workspace'>
-        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-      </binding>
-    </result>
-    <result>
-      <binding name='artifact'>
-        <literal>c0</literal>
-      </binding>
-      <binding name='workspace'>
-        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-      </binding>
-    </result>
-    <result>
-      <binding name='artifact'>
-        <literal>c0</literal>
-      </binding>
-      <binding name='workspace'>
-        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-      </binding>
-    </result>
-    <result>
-      <binding name='artifact'>
-        <literal>c0</literal>
-      </binding>
-      <binding name='workspace'>
-        <uri>http://localhost:8080/workspaces/sub/#workspace</uri>
       </binding>
     </result>
   </results>

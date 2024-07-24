@@ -10,20 +10,5 @@
 				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
 			</binding>
 		</result>
-		<result>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-		<result>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
-		<result>
-			<binding name='workspace'>
-				<uri>http://localhost:8080/workspaces/sub/#workspace</uri>
-			</binding>
-		</result>
 	</results>
 </sparql>

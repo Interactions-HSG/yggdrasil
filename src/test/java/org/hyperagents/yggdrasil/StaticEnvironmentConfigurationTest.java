@@ -39,7 +39,7 @@ public class StaticEnvironmentConfigurationTest {
   public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo)
       throws URISyntaxException, IOException {
     String conf;
-    final String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
     if (testName.contains("TD")) {
       conf ="td/static_config.json" ;
     } else if (testName.contains("HMAS")) {

@@ -108,7 +108,7 @@ public class MainVerticleTest {
   public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
 
     JsonObject env;
-    final String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
     if (testName.contains("TD")) {
       env = TDEnv;
     } else if (testName.contains("HMAS")) {

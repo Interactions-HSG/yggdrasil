@@ -63,7 +63,7 @@ public class EnvironmentConfigurationTest {
             this.promiseIndex++;
           }
         );
-    final String testName = testInfo.getTestMethod().get().getName();
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
     String conf;
     if (testName.contains("TD")) {
       conf = "td/cartago_config.json";
