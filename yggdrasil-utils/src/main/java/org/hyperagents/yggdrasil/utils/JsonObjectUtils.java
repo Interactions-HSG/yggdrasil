@@ -102,7 +102,6 @@ public final class JsonObjectUtils {
     return getValue(jsonObject, key, JsonObject::getJsonArray, logger);
   }
 
-  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private static <T> Optional<T> getValue(
       final JsonObject jsonObject,
       final String key,

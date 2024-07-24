@@ -342,8 +342,6 @@ public class CartagoVerticle extends AbstractVerticle {
     return registry.getArtifactDescription(artifactName);
   }
 
-  // for some reason pmd thinks this method is not used
-  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private Future<Optional<String>> doAction(
     final String agentUri,
     final String workspaceName,
