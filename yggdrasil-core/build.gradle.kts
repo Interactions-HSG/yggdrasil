@@ -42,11 +42,6 @@ dependencies {
 
   implementation(libs.wot.td.java)
   implementation(libs.hmas.java)
-  /*
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-core-1.0-SNAPSHOT-all.jar"))
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-interaction-1.0-SNAPSHOT-all.jar"))
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-bindings-all.jar"))
-  */
 
   implementation(libs.httpcomponents.core5)
 
@@ -69,8 +64,8 @@ dependencies {
   testImplementation(platform(libs.junit.platform))
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.vertx.junit5)
-  testImplementation("org.xmlunit:xmlunit-core:2.10.0")
-  testImplementation("org.xmlunit:xmlunit-matchers:2.10.0")
+  testImplementation(libs.xmlunit.core)
+  testImplementation(libs.xmlunit.matchers)
 
   testCompileOnly(libs.spotbugs.annotations)
 }

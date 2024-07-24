@@ -34,21 +34,16 @@ java {
 dependencies {
   implementation(libs.vertx.core)
 
-  // currently using full rdf4j lib
-  implementation(libs.rdf4j.storage)
+  implementation(libs.rdf4j.model)
+  implementation(libs.rdf4j.rio.jsonld)
+  implementation(libs.rdf4j.rio.turtle)
 
   implementation(libs.gson)
   implementation(libs.wot.td.java)
 
-  implementation ("org.apache.logging.log4j:log4j-api:2.23.1")
-  implementation ("org.apache.logging.log4j:log4j-core:2.23.1")
-
+  implementation(libs.log4j.core)
+  implementation(libs.log4j.api)
   implementation(libs.hmas.java)
-  /*
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-core-1.0-SNAPSHOT-all.jar"))
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-interaction-1.0-SNAPSHOT-all.jar"))
-  implementation(files("${rootProject.projectDir}/libs/hmas/hmas-bindings-all.jar"))
-  */
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)
