@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -101,6 +102,7 @@ public final class JsonObjectUtils {
     return getValue(jsonObject, key, JsonObject::getJsonArray, logger);
   }
 
+  @SuppressWarnings("PMD.UnusedPrivateMethod")
   private static <T> Optional<T> getValue(
       final JsonObject jsonObject,
       final String key,
@@ -126,13 +128,13 @@ public final class JsonObjectUtils {
     final var jsonArray = jsonElement.getAsJsonArray();
 
 
-    for (var member : members) {
+    for (final var member : members) {
       switch (member) {
         case IntegerSpecification integerSpecification -> result.add(jsonArray.remove(0).getAsInt());
         case StringSpecification stringSpecification -> result.add(jsonArray.remove(0).getAsString());
         case ListSpecification specification -> {
-          final var list = new JsonArray();
-          result.add(parseInput(jsonArray.remove(0), specification, list.getList()));
+          final var list = new ArrayList<>();
+          result.add(parseInput(jsonArray.remove(0), specification, list));
         }
         case null, default -> throw new IllegalArgumentException("Invalid JSON input");
       }

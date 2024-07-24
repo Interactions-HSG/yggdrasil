@@ -634,7 +634,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
 
-    Model entityGraph;
+    final Model entityGraph;
     try {
       entityGraph = RdfModelUtils.stringToModel(
         entityRepresentation,

@@ -38,7 +38,7 @@ public class StaticEnvironmentConfigurationTest {
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo)
       throws URISyntaxException, IOException {
-    String conf;
+    final String conf;
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
     if (testName.contains("TD")) {
       conf ="td/static_config.json" ;
@@ -203,7 +203,7 @@ public class StaticEnvironmentConfigurationTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    var areEqual = Models.isomorphic(
+    final var areEqual = Models.isomorphic(
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
     );
@@ -216,7 +216,7 @@ public class StaticEnvironmentConfigurationTest {
     );
   }
   private void assertEqualsHMASDescriptions(final String expected, final String actual) {
-    var areEqual = Models.isomorphic(
+    final var areEqual = Models.isomorphic(
       ResourceProfileGraphReader.getModelFromString(expected),
       ResourceProfileGraphReader.getModelFromString(actual)
     );

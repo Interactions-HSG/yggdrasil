@@ -64,7 +64,7 @@ public class EnvironmentConfigurationTest {
           }
         );
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
-    String conf;
+    final String conf;
     if (testName.contains("TD")) {
       conf = "td/cartago_config.json";
     } else if (testName.contains("HMAS")) {

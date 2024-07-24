@@ -23,41 +23,7 @@ import org.eclipse.rdf4j.rio.helpers.StatementCollector;
  * Utility class for working with RDF models.
  */
 public final class RdfModelUtils {
-  private RdfModelUtils() {}
-
-  public static String modelToString(final Model model, final RDFFormat format)
-    throws IllegalArgumentException, IOException {
-    try (var out = new ByteArrayOutputStream()) {
-
-      RDFWriter writer;
-      writer = Rio.createWriter(format, out);
-
-      if (format.equals(RDFFormat.JSONLD)) {
-        writer.getWriterConfig()
-          .set(JSONLDSettings.JSONLD_MODE,
-            JSONLDMode.FLATTEN)
-          .set(JSONLDSettings.USE_NATIVE_TYPES, true)
-          .set(JSONLDSettings.OPTIMIZE, true);
-      }
-
-      writer.getWriterConfig()
-        .set(BasicWriterSettings.PRETTY_PRINT, true)
-        .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
-        .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
-        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
-      try {
-        writer.startRDF();
-        model.getNamespaces().forEach(namespace ->
-          writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
-        model.forEach(writer::handleStatement);
-        writer.endRDF();
-      } catch (final RDFHandlerException e) {
-        throw new IOException("RDF handler exception: " + e.getMessage());
-      }
-      return out.toString(StandardCharsets.UTF_8);
-    } catch (final UnsupportedRDFormatException e) {
-      throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
-    }
+  private RdfModelUtils() {
   }
 
   /**
@@ -65,47 +31,52 @@ public final class RdfModelUtils {
    *
    * @param model  the RDF model to convert
    * @param format the format in which the model should be serialized
+   * @param base the base for the model
    * @return the string representation of the RDF model
    * @throws IllegalArgumentException if the RDF format is not supported
    * @throws IOException              if an I/O error occurs during serialization
    */
-  public static String modelToString(final Model model, final RDFFormat format, final String base)
-    throws IllegalArgumentException, IOException {
-    try (var out = new ByteArrayOutputStream()) {
+  public static String modelToString(final Model model, final RDFFormat format, final String base) throws IllegalArgumentException, IOException {
+    final var test = new ByteArrayOutputStream();
 
-
-      RDFWriter writer;
-      writer = Rio.createWriter(format, out, base);
-
-      if (format.equals(RDFFormat.JSONLD)) {
-        writer.getWriterConfig()
-          .set(JSONLDSettings.JSONLD_MODE,
-            JSONLDMode.FLATTEN)
-          .set(JSONLDSettings.USE_NATIVE_TYPES, true)
-          .set(JSONLDSettings.OPTIMIZE, true);
+    final RDFWriter writer;
+    try {
+      if (base == null) {
+        writer = Rio.createWriter(format, test);
+      } else {
+        writer = Rio.createWriter(format, test, base);
       }
-
-      writer.getWriterConfig()
-        .set(BasicWriterSettings.PRETTY_PRINT, true)
-        .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
-        .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
-        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
-      try {
-        writer.startRDF();
-        model.getNamespaces().forEach(namespace ->
-          writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
-        model.forEach(writer::handleStatement);
-        writer.endRDF();
-      } catch (final RDFHandlerException e) {
-        throw new IOException("RDF handler exception: " + e.getMessage());
-      }
-      return out.toString(StandardCharsets.UTF_8);
     } catch (final UnsupportedRDFormatException e) {
       throw new IllegalArgumentException("Unsupported RDF syntax: " + e.getMessage());
-    } catch (URISyntaxException e) {
-      throw new IllegalArgumentException("Could not set Base for Rio Writer: " + e.getMessage());
+    } catch (final URISyntaxException e) {
+      throw new IllegalArgumentException("Cannot create URI: " + e.getMessage());
     }
+
+    if (format.equals(RDFFormat.JSONLD)) {
+      writer.getWriterConfig()
+        .set(JSONLDSettings.JSONLD_MODE,
+          JSONLDMode.FLATTEN)
+        .set(JSONLDSettings.USE_NATIVE_TYPES, true)
+        .set(JSONLDSettings.OPTIMIZE, true);
+    }
+    writer.getWriterConfig()
+      .set(BasicWriterSettings.PRETTY_PRINT, true)
+      .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
+      .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
+      .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+
+    try {
+      writer.startRDF();
+      model.getNamespaces().forEach(namespace ->
+        writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
+      model.forEach(writer::handleStatement);
+      writer.endRDF();
+    } catch (RDFHandlerException e) {
+      throw new IOException("RDF handler exception: " + e.getMessage());
+    }
+    return test.toString(StandardCharsets.UTF_8);
   }
+
 
   /**
    * Converts a string representation of an RDF graph to an RDF model.

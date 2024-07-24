@@ -51,8 +51,8 @@ public class AgentBodyHttpHandlersTest {
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
-    String ontology;
-    final String testName = testInfo.getTestMethod().get().getName();
+    final String ontology;
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
     if(testName.contains("TD")) {
       ontology = "td";
     } else if (testName.contains("HMAS")) {
@@ -274,7 +274,7 @@ public class AgentBodyHttpHandlersTest {
   /**
    * No longer need this test as we can handle both cases of slash and without slash
    * -> This test returns a 400 because it tries to change an artifact that does not exist
-   * @param ctx
+   * @param ctx vertx test context
    */
   @Test
   @Disabled

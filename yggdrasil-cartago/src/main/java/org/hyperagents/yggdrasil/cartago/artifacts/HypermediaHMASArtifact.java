@@ -290,7 +290,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     final var members = listSpecification.getMemberSpecifications();
     int lengthOfList = 0;
 
-    for (var member : members) {
+    for (final var member : members) {
       if (member instanceof ListSpecification) {
         lengthOfList += getLengthOfQualifiedValueSpecificationList((ListSpecification) member);
       } else {

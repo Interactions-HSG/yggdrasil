@@ -360,7 +360,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
         this.generateEntityIri(requestIri.toString(), content.workspaceName());
     final var resourceIRI = RdfModelUtils.createIri(workspaceIri.endsWith("/") ? workspaceIri : workspaceIri + "/");
 
-    IRI workspaceIRI;
+    final IRI workspaceIRI;
     if (workspaceIri.endsWith("/")) {
       workspaceIRI = RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT);
     } else {

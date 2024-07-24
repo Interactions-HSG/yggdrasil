@@ -5,10 +5,10 @@ import io.vertx.core.json.JsonObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
 
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
@@ -39,7 +39,7 @@ public final class HypermediaArtifactRegistry {
   private int counter;
 
   public HypermediaArtifactRegistry() {
-    this.artifactSemanticTypes = new Hashtable<>();
+    this.artifactSemanticTypes = new ConcurrentHashMap<>();
     this.artifacts = Collections.synchronizedMap(new HashMap<>());
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());

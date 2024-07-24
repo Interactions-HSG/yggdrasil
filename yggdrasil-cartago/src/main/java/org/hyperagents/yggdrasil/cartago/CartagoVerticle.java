@@ -364,7 +364,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final var action = registry.getActionName(actionUri);
     if (action == null) return Future.failedFuture("No action");
 
-    Optional<String> payload;
+    final Optional<String> payload;
     try {
       payload = hypermediaArtifact.handleInput(storeResponse, action, context);
     } catch (Exception e) {
