@@ -94,11 +94,6 @@ paths:
 
         * ".../workspaces/:wkspid/artifacts/:artid", gives notifications about this artifact update and deletion (the artifact must exist prior to subscription)
 
-        * ".../workspaces/:wkspid/agents/", gives notifications about body artifacts creation (the workspace must exist prior to subscription)
-        
-        * ".../workspaces/:wkspid/agents/:agt", gives notifications about this body artifact update and deletion, but also the notifications related to the owner agent starting and completing its actions in the given workspace
-
-
         The callback to which the notifications should be sent also needs to be specified. This endpoint can be used in two modes, one for subscribing and one for unsubscribing. All creation and update notifications are the TURTLE representation of the resource which was created or updated. All deletion notifications are empty by default. Action notifications are in JSON format and follow a schema made of the following four properties
 
         * "eventType" (values can be either "actionRequested", "actionSucceeded", "actionFailed")
