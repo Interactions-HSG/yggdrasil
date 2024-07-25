@@ -16,7 +16,7 @@ vertx-web-client = { module = "io.vertx:vertx-web-client", version.ref = "vertx"
 vertx-junit5 = { module = "io.vertx:vertx-junit5", version.ref = "vertx" }
 log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
-wot-td-java = "com.github.KaiTries:wot-td-java:master-SNAPSHOT"
+wot-td-java = "com.github.Interactions-HSG:wot-td-java:master-SNAPSHOT"
 hmas-java = "com.github.danaivach:hmas-java:main-SNAPSHOT"
 httpcomponents-core5 = "org.apache.httpcomponents.core5:httpcore5:5.2.4"
 rdf4j-storage = { module = "org.eclipse.rdf4j:rdf4j-storage", version.ref ="rdf4j"}
