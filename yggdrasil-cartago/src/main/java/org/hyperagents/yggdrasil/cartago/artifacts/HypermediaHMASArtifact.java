@@ -26,6 +26,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryHMASImpl;
 
@@ -44,8 +45,13 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
     .sharedData()
     .<String, HttpInterfaceConfig>getLocalMap("http-config")
     .get(DEFAULT_CONFIG_VALUE);
+  private final WebSubConfig notificationConfig = Vertx.currentContext()
+    .owner()
+    .sharedData()
+    .<String, WebSubConfig>getLocalMap("notification-config")
+    .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
-    new RepresentationFactoryHMASImpl(this.httpConfig);
+    new RepresentationFactoryHMASImpl(this.httpConfig, this.notificationConfig);
 
   private String apiKey;
 
@@ -130,7 +136,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
           baseUri.toString()
         )
       ));
-      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig);
+      this.representationFactory = new RepresentationFactoryHMASImpl(this.httpConfig,this.notificationConfig);
     }
     this.registerInteractionAffordances();
   }

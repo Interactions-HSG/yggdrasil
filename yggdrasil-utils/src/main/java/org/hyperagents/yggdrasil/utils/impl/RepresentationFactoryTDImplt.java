@@ -15,6 +15,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,15 +25,23 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
 
   private final HttpInterfaceConfig httpConfig;
+  private final WebSubConfig notificationConfig;
+
   public enum WebSubMode {
     subscribe,
     unsubscribe
   }
-  public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig) {
+
+  public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig, final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
+    this.notificationConfig = notificationConfig;
   }
 
-  @SuppressWarnings("PMD.UnusedPrivateMethod")
+  private void addWebSub(final ThingDescription.Builder td, String actionName) {
+    td.addAction(websubActions("subscribeTo" + actionName));
+    td.addAction(websubActions("unsubscribeFrom" + actionName));
+  }
+
   private ActionAffordance websubActions(final String actionName) {
     return new ActionAffordance.Builder(
       actionName,
@@ -42,34 +51,34 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addSubProtocol("websub")// could be used for websub
         .build()
     ).addInputSchema(
-      new ObjectSchema
-        .Builder()
-        .addProperty("callbackIri", new StringSchema.Builder().build())
-        .addProperty("mode", new StringSchema.Builder().build())
-        .addProperty("topic", new StringSchema.Builder().build())
-        .build()
-    ).addSemanticType("https://purl.org/hmas/jacamo/" + actionName)
+        new ObjectSchema
+          .Builder()
+          .addProperty("callbackIri", new StringSchema.Builder().build())
+          .addProperty("mode", (new StringSchema.Builder()).build())
+          .addProperty("topic", new StringSchema.Builder().build())
+          .build()
+      ).addSemanticType("https://purl.org/hmas/websub/" + actionName)
       .build();
   }
 
   @Override
   public String createPlatformRepresentation() {
+    final var td = new ThingDescription.Builder("Yggdrasil Node")
+      .addThingURI(this.httpConfig.getBaseUri())
+      .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
+      .addAction(new ActionAffordance.Builder(
+        "createWorkspace",
+        new Form.Builder(this.httpConfig.getWorkspacesUri())
+          .setMethodName(HttpMethod.POST.name())
+          .build())
+        .addSemanticType("https://purl.org/hmas/jacamo/createWorkspace")
+        .build()
+      );
+
+    addWebSub(td, "Workspaces");
+
     return serializeThingDescription(
-      new ThingDescription
-        .Builder("Yggdrasil Node")
-        .addThingURI(this.httpConfig.getBaseUri())
-        .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
-        .addAction(
-          new ActionAffordance.Builder(
-            "createWorkspace",
-            new Form.Builder(this.httpConfig.getWorkspacesUri())
-              .setMethodName(HttpMethod.POST.name())
-              .build()
-          ).addSemanticType("https://purl.org/hmas/jacamo/CreateWorkspace")
-           .build()
-        )
-        // .addAction(websubActions("subscribe"))
-        // .addAction(websubActions("unsubscribe"))
+      td
     );
   }
 
@@ -78,7 +87,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final String workspaceName,
     final Set<String> artifactTemplates
   ) {
-    return serializeThingDescription(
+    final var td =
       new ThingDescription
         .Builder(workspaceName)
         .addThingURI(this.httpConfig.getWorkspaceUri(workspaceName) + "#workspace")
@@ -97,8 +106,10 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                     .addSemanticType("https://purl.org/hmas/jacamo/ArtifactTemplate")
                     .build()
                 )
-                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().addSemanticType("https://purl.org/hmas/jacamo/ArtifactName").build())
-                .addProperty("initParams", new ArraySchema.Builder().addSemanticType("https://purl.org/hmas/jacamo/InitParams").build())
+                .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().addSemanticType("https://purl" +
+                  ".org/hmas/jacamo/ArtifactName").build())
+                .addProperty("initParams", new ArraySchema.Builder().addSemanticType("https://purl" +
+                  ".org/hmas/jacamo/InitParams").build())
                 .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
                 .build()
             ).addSemanticType("https://purl.org/hmas/jacamo/MakeArtifact")
@@ -147,12 +158,14 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
               .build()
           ).addSemanticType("https://purl.org/hmas/jacamo/CreateSubWorkspace")
             .build()
-        )
-    );
+        );
+    addWebSub(td,"Workspace");
+return serializeThingDescription(td);
   }
 
   @Override
-  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType) {
+  public String createArtifactRepresentation(final String workspaceName, final String artifactName,
+                                             final String semanticType) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
@@ -162,8 +175,11 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
     );
   }
+
   @Override
-  public String createArtifactRepresentation(final String workspaceName,final String artifactName,final String semanticType,final Model metadata,final ListMultimap<String, Object> actionAffordances) {
+  public String createArtifactRepresentation(final String workspaceName, final String artifactName,
+                                             final String semanticType, final Model metadata,
+                                             final ListMultimap<String, Object> actionAffordances) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
@@ -184,7 +200,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final Model metadata,
     final ListMultimap<String, Object> actionAffordances
   ) {
-    final ListMultimap<String, ActionAffordance> actionAffordancesMap = Multimaps.newListMultimap(new HashMap<>(), ArrayList::new);
+    final ListMultimap<String, ActionAffordance> actionAffordancesMap = Multimaps.newListMultimap(new HashMap<>(),
+      ArrayList::new);
     actionAffordances.entries().forEach(entry -> {
       final var actionName = entry.getKey();
       final var action = (ActionAffordance) entry.getValue();
@@ -192,13 +209,14 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     });
     final var td =
       new ThingDescription.Builder(artifactName)
-        .addSecurityScheme(securityScheme.getSchemeName(),securityScheme)
+        .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType(semanticType)
         .addThingURI(this.httpConfig
           .getArtifactUri(workspaceName, artifactName) + "#artifact")
         .addGraph(metadata);
     actionAffordancesMap.values().forEach(td::addAction);
+    addWebSub(td, "Artifact");
     return serializeThingDescription(td);
   }
 
@@ -206,8 +224,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   public String createBodyRepresentation(
     final String workspaceName,
     final String agentName,
-    final Model metadata)
-  {
+    final Model metadata) {
     return createBodyRepresentation(workspaceName, agentName, SecurityScheme.getNoSecurityScheme(), metadata);
   }
 
@@ -221,11 +238,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final var td =
       new ThingDescription
         .Builder(agentName)
-        .addSecurityScheme(securityScheme.getSchemeName(),securityScheme)
+        .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType("https://purl.org/hmas/jacamo/Body")
         .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#artifact")
         .addGraph(metadata);
+    addWebSub(td, "Agent");
     return serializeThingDescription(td);
   }
 
@@ -238,7 +256,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       .setNamespace("dct", "http://purl.org/dc/terms/")
       .setNamespace("js", "https://www.w3.org/2019/wot/json-schema#")
       .setNamespace("hmas", "https://purl.org/hmas/")
-      .setNamespace("ex","http://example.org/")
+      .setNamespace("ex", "http://example.org/")
       .setNamespace("jacamo", "https://purl.org/hmas/jacamo/")
       .write();
   }

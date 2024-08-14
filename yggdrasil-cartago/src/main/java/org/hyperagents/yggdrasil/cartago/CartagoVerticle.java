@@ -67,8 +67,13 @@ public class CartagoVerticle extends AbstractVerticle {
       .<String, EnvironmentConfig>getLocalMap("environment-config")
       .get(DEFAULT_CONFIG_VALUE);
 
+    final WebSubConfig notificationConfig = this.vertx.sharedData()
+      .<String, WebSubConfig>getLocalMap("notification-config")
+      .get(DEFAULT_CONFIG_VALUE);
+
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
       environmentConfig.getOntology(),
+      notificationConfig,
       this.httpConfig
     );
     this.agentCredentials = new HashMap<>();

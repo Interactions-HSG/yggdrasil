@@ -20,6 +20,7 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
+import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryTDImplt;
 
@@ -41,8 +42,13 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     .sharedData()
     .<String, HttpInterfaceConfig>getLocalMap("http-config")
     .get(DEFAULT_CONFIG_VALUE);
+  private WebSubConfig notificationConfig = Vertx.currentContext()
+    .owner()
+    .sharedData()
+    .<String, WebSubConfig>getLocalMap("notification-config")
+    .get(DEFAULT_CONFIG_VALUE);
   private RepresentationFactory representationFactory =
-    new RepresentationFactoryTDImplt(this.httpConfig);
+    new RepresentationFactoryTDImplt(this.httpConfig, this.notificationConfig);
   private SecurityScheme securityScheme = SecurityScheme.getNoSecurityScheme();
 
   private String apiKey;
@@ -127,7 +133,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
           baseUri.toString()
         )
       ));
-      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig);
+      this.representationFactory = new RepresentationFactoryTDImplt(this.httpConfig, this.notificationConfig);
     }
     this.registerInteractionAffordances();
   }
