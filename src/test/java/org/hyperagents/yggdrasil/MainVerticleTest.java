@@ -29,19 +29,19 @@ import java.util.stream.Stream;
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class MainVerticleTest {
-  private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
-  private static final String AGENT_ID_HEADER = "X-Agent-WebID";
-  private static final String HINT_HEADER = "Slug";
+  static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
+  static final String AGENT_ID_HEADER = "X-Agent-WebID";
+  static final String HINT_HEADER = "Slug";
   private static final String CLASS = "class";
   private static final String TEMPLATE = "template";
   private static final String ARTIFACT_NAME = "artifactName";
-  private static final String MAIN_WORKSPACE_NAME = "test";
+  static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
   private static final String BASE_ARTIFACT_CLASS = "http://example.org/Artifact";
-  private static final int TEST_PORT = 8080;
-  private static final String TEST_HOST = "localhost";
+  static final int TEST_PORT = 8080;
+  static final String TEST_HOST = "localhost";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
   private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
@@ -52,7 +52,7 @@ public class MainVerticleTest {
   private static final String HUB_CALLBACK_PARAM = "hub.callback";
   private static final String HUB_MODE_SUBSCRIBE = "subscribe";
   private static final String HUB_PATH = "/hub/";
-  private static final String WORKSPACES_PATH = "/workspaces/";
+  static final String WORKSPACES_PATH = "/workspaces/";
   private static final String ARTIFACTS_PATH = "/artifacts/";
   private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
 
