@@ -38,9 +38,10 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   }
 
   private void addWebSub(final ThingDescription.Builder td, String actionName) {
+  if (notificationConfig.isEnabled()) {
     td.addAction(websubActions("subscribeTo" + actionName));
     td.addAction(websubActions("unsubscribeFrom" + actionName));
-  }
+  }}
 
   private ActionAffordance websubActions(final String actionName) {
     return new ActionAffordance.Builder(
