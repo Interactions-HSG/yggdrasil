@@ -11,6 +11,8 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -129,50 +131,70 @@ public class CartagoVerticle extends AbstractVerticle {
     environment
       .getWorkspaces()
       .forEach(w -> {
-        w.getParentName().ifPresentOrElse(
-          Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
-            new RdfStoreMessage.CreateWorkspace(
-              this.httpConfig.getWorkspacesUri(),
+        if(w.getRepresentation().isEmpty()) {
+          w.getParentName().ifPresentOrElse(
+            Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
+              new RdfStoreMessage.CreateWorkspace(
+                this.httpConfig.getWorkspacesUri(),
+                w.getName(),
+                Optional.of(this.httpConfig.getWorkspaceUri(p)),
+                this.instantiateSubWorkspace(p, w.getName())
+              )
+            )),
+            Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
+              new RdfStoreMessage.CreateWorkspace(
+                this.httpConfig.getWorkspacesUri(),
+                w.getName(),
+                Optional.empty(),
+                this.instantiateWorkspace(w.getName())
+              )
+            ))
+          );
+          w.getAgents().forEach(
+            Failable.asConsumer(a -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
               w.getName(),
-              Optional.of(this.httpConfig.getWorkspaceUri(p)),
-              this.instantiateSubWorkspace(p, w.getName())
-            )
-          )),
-          Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
-            new RdfStoreMessage.CreateWorkspace(
-              this.httpConfig.getWorkspacesUri(),
-              w.getName(),
-              Optional.empty(),
-              this.instantiateWorkspace(w.getName())
-            )
-          ))
-        );
-        w.getAgents().forEach(
-          Failable.asConsumer(a -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
-            w.getName(),
-            a.getName(),
-            this.getAgentNameFromAgentUri(a.getName()),
-            this.joinWorkspace(a.getName(),w.getName())
-          )))
-        );
-        w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
-          this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-            this.httpConfig.getArtifactsUri(w.getName()) + "/",
-            a.getName(),
-            this.instantiateArtifact(
-              this.httpConfig.getAgentUri("yggdrasil"),
-              w.getName(),
-              registry.getArtifactTemplate(c).orElseThrow(),
               a.getName(),
-              Optional.of(a.getInitializationParameters())
-                .filter(p -> !p.isEmpty())
-                .map(List::toArray).orElse(null)
-            )
-          ));
-          a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
-            this.focus(ag.getName(), w.getName(), a.getName())
-          ));
-        })));
+              this.getAgentNameFromAgentUri(a.getName()),
+              this.joinWorkspace(a.getName(), w.getName())
+            )))
+          );
+          w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
+            this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+              this.httpConfig.getArtifactsUri(w.getName()) + "/",
+              a.getName(),
+              this.instantiateArtifact(
+                this.httpConfig.getAgentUri("yggdrasil"),
+                w.getName(),
+                registry.getArtifactTemplate(c).orElseThrow(),
+                a.getName(),
+                Optional.of(a.getInitializationParameters())
+                  .filter(p -> !p.isEmpty())
+                  .map(List::toArray).orElse(null)
+              )
+            ));
+            a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
+              this.focus(ag.getName(), w.getName(), a.getName())
+            ));
+          })));
+        } else {
+          w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
+            this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
+              httpConfig.getWorkspacesUri(),
+              w.getName(),
+              w.getParentName().map(httpConfig::getWorkspaceUri),
+              Files.readString(r, StandardCharsets.UTF_8)
+            ));
+            w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
+              Failable.asConsumer(ar ->
+                this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                  httpConfig.getArtifactsUri(w.getName()),
+                  a.getName(),
+                  Files.readString(ar, StandardCharsets.UTF_8)
+                ))
+              )
+            ));
+          }));
+        }
       });
   }
 
