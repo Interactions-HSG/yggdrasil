@@ -148,7 +148,12 @@ public class CartagoVerticle extends AbstractVerticle {
           ))
         );
         w.getAgents().forEach(
-          Failable.asConsumer(a -> this.joinWorkspace(a.getName(), w.getName()))
+          Failable.asConsumer(a -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
+            w.getName(),
+            a.getName(),
+            this.getAgentNameFromAgentUri(a.getName()),
+            this.joinWorkspace(a.getName(),w.getName())
+          )))
         );
         w.getArtifacts().forEach(a -> a.getClazz().ifPresent(Failable.asConsumer(c -> {
           this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
