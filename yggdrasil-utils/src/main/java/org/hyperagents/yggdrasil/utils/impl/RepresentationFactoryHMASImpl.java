@@ -158,7 +158,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(createWorkspaceFormTxtTurtle)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/MakeWorkspace")
+            .addRequiredSemanticType(JACAMO + "MakeWorkspace")
             .build()
         ).setIRIAsString(baseUri + "#createWorkspaceTurtle").build())
       .exposeSignifier(
@@ -186,7 +186,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     final String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
     final Workspace workspace = new Workspace.Builder()
       .setIRIAsString(baseUri + "#workspace")
-      .addSemanticType("https://purl.org/hmas/Workspace")
+      .addSemanticType(HMAS + "Workspace")
       .build();
 
     // makeArtifact Signifier
@@ -200,19 +200,19 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
       .setIRIAsString("http://example.org/artifact-shape")
       .setRequired(true)
-      .addPropertySpecification("https://purl.org/hmas/jacamo/hasName",
+      .addPropertySpecification(JACAMO + "hasName",
         new StringSpecification.Builder()
           .setRequired(true)
           .setName("Name")
           .setDescription("The name of the created artifact")
           .build())
-      .addPropertySpecification("https://purl.org/hmas/jacamo/hasClass",
+      .addPropertySpecification(JACAMO + "hasClass",
         new StringSpecification.Builder()
           .setRequired(true)
           .setName("Class")
           .setDescription("The class of the created artifact")
           .build())
-      .addPropertySpecification("https://purl.org/hmas/jacamo/hasInitialisationParameters",
+      .addPropertySpecification(JACAMO + "hasInitialisationParameters",
         new StringSpecification.Builder()
           .setName("Initialization parameters")
           .setDescription("A list containing the parameters for initializing the artifacts")
@@ -279,49 +279,49 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     final var makeArtifactSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/MakeArtifact")
+        .addRequiredSemanticType(JACAMO + "MakeArtifact")
         .setInputSpecification(makeArtifactInput).build())
         .setIRIAsString(baseUri + "#makeArtifact")
         .build();
     final var registerArtifactSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(registerArtifactForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/RegisterArtifact")
+        .addRequiredSemanticType(JACAMO + "RegisterArtifact")
         .setInputSpecification(registerArtifactInput).build())
         .setIRIAsString(baseUri + "#registerArtifact")
         .build();
     final var joinWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(joinWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/JoinWorkspace")
+        .addRequiredSemanticType(JACAMO + "JoinWorkspace")
       .build())
         .setIRIAsString(baseUri + "#joinWorkspace")
         .build();
     final var leaveWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(leaveWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/LeaveWorkspace")
+        .addRequiredSemanticType(JACAMO + "LeaveWorkspace")
       .build())
         .setIRIAsString(baseUri + "#leaveWorkspace")
         .build();
     final var createSubWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(createSubWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/MakeWorkspace")
+        .addRequiredSemanticType(JACAMO + "MakeWorkspace")
       .build())
         .setIRIAsString(baseUri + "#createSubWorkspace")
         .build();
     final var getCurrentWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(getCurrentWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/PerceiveWorkspace")
+        .addRequiredSemanticType(JACAMO + "PerceiveWorkspace")
       .build())
         .setIRIAsString(baseUri + "#getCurrentWorkspace")
         .build();
     final var updateCurrentWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(updateCurrentWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/UpdateWorkspace")
+        .addRequiredSemanticType(JACAMO + "UpdateWorkspace")
       .build())
         .setIRIAsString(baseUri + "#updateCurrentWorkspace")
         .build();
     final var deleteCurrentWorkspaceSignifier =
       new Signifier.Builder(new ActionSpecification.Builder(deleteCurrentWorkspaceForm)
-        .addRequiredSemanticType("https://purl.org/hmas/jacamo/DeleteWorkspace")
+        .addRequiredSemanticType(JACAMO + "DeleteWorkspace")
       .build())
         .setIRIAsString(baseUri + "#deleteCurrentWorkspace")
         .build();
@@ -406,28 +406,28 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(getArtifactRepresentationForm)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/PerceiveArtifact")
+            .addRequiredSemanticType(JACAMO + "PerceiveArtifact")
             .build()
         ).setIRIAsString(baseUri + "#getArtifactRepresentation")
           .build())
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(updateArtifactForm)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/UpdateArtifact")
+            .addRequiredSemanticType(JACAMO + "UpdateArtifact")
             .build()
         ).setIRIAsString(baseUri + "#updateArtifact")
           .build())
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(deleteArtifactForm)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/DeleteArtifact")
+            .addRequiredSemanticType(JACAMO + "DeleteArtifact")
             .build()
         ).setIRIAsString(baseUri + "#deleteArtifact")
           .build())
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(focusArtifactForm)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/Focus")
+            .addRequiredSemanticType(JACAMO + "Focus")
             .build()
         ).setIRIAsString(baseUri + "#focusArtifact")
           .build()
@@ -448,7 +448,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     final Artifact agent = new Artifact.Builder()
       .setIRIAsString(baseUri + "#artifact")
-      .addSemanticType("https://purl.org/hmas/jacamo/Body")
+      .addSemanticType(JACAMO + "Body")
       .build();
 
     final ResourceProfile.Builder profile = new ResourceProfile.Builder(agent)
@@ -510,8 +510,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   private String serializeHmasResourceProfile(final ResourceProfile profile) {
     return new ResourceProfileGraphWriter(profile)
-      .setNamespace("hmas", "https://purl.org/hmas/")
-      .setNamespace("jacamo", "https://purl.org/hmas/jacamo/")
+      .setNamespace("hmas", HMAS)
+      .setNamespace("jacamo", JACAMO)
       .setNamespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
       .setNamespace("websub", "http://www.example.org/websub#")
       .write();
