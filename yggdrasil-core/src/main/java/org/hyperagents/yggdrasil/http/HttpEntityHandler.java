@@ -83,7 +83,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     // Should be able to use this boolean value to decide if we use cartago messages or not
     // that way the router does not need to check for routes itself
     this.environment = environmentConfig.isEnabled();
-    this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(environmentConfig.getOntology(), httpConfig);
+    this.representationFactory =
+      RepresentationFactoryFactory.getRepresentationFactory(environmentConfig.getOntology(),notificationConfig,
+        httpConfig);
   }
 
   public void handleRedirectWithoutSlash(final RoutingContext routingContext) {

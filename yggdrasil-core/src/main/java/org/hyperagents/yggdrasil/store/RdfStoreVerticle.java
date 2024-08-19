@@ -55,20 +55,24 @@ public class RdfStoreVerticle extends AbstractVerticle {
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx.sharedData()
                                 .<String, HttpInterfaceConfig>getLocalMap("http-config")
-                                .get("default");
+                                .get(DEFAULT_CONFIG_VALUE);
+
+    final WebSubConfig notificationConfig = this.vertx.sharedData()
+      .<String,WebSubConfig>getLocalMap("notification-config")
+      .get(DEFAULT_CONFIG_VALUE);
 
     final EnvironmentConfig environmentConfig = this.vertx.sharedData()
                                 .<String, EnvironmentConfig>getLocalMap("environment-config")
-                                .get("default");
+                                .get(DEFAULT_CONFIG_VALUE);
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
       environmentConfig.getOntology(),
+      notificationConfig,
       this.httpConfig
     );
+
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
       this.vertx.eventBus(),
-      this.vertx.sharedData()
-                .<String, WebSubConfig>getLocalMap("notification-config")
-                .get(DEFAULT_CONFIG_VALUE)
+      notificationConfig
     );
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
