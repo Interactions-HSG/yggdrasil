@@ -35,6 +35,8 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 public final class RepresentationFactoryHMASImpl implements RepresentationFactory {
 
   private final static String CONTENT_TYPE_TURTLE = "text/turtle";
+  private final static String HMAS = "https://purl.org/hmas/";
+  private final static String JACAMO = "https://purl.org/hmas/jacamo/";
 
   private final HttpInterfaceConfig httpConfig;
 
@@ -100,17 +102,17 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   }
 
 
-  public void addWebSubSignifier(final ResourceProfile.Builder profile, String signifierName, String topic) {
+  public void addWebSubSignifier(final ResourceProfile.Builder profile,final String signifierName,final String actionType, String topic) {
     if (this.notificationConfig.isEnabled()) {
-      profile.exposeSignifier(webSubSignifier(this.baseUri, "subscribeTo" + signifierName, topic,
+      profile.exposeSignifier(webSubSignifier(this.baseUri, "subscribeTo" + signifierName,JACAMO + "Observe" + actionType, topic,
         WebSubMode.subscribe));
-      profile.exposeSignifier(webSubSignifier(this.baseUri, "unsubscribeFrom" + signifierName, topic,
+      profile.exposeSignifier(webSubSignifier(this.baseUri, "unsubscribeFrom" + signifierName,JACAMO + "Unobserve" + actionType, topic,
         WebSubMode.unsubscribe));
     }
   }
 
-  public void addWebSubSignifier(final ResourceProfile.Builder profile, String signifierName) {
-    addWebSubSignifier(profile, signifierName, this.httpConfig.getBaseUri());
+  public void addWebSubSignifier(final ResourceProfile.Builder profile, String signifierName, final String actionType) {
+    addWebSubSignifier(profile, signifierName,actionType, this.httpConfig.getBaseUri());
   }
 
   @Override
@@ -119,7 +121,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     final String workspaces = this.httpConfig.getWorkspacesUri();
     final HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
       .setIRIAsString(baseUri + "#platform")
-      .addSemanticType("https://purl.org/hmas/HypermediaMASPlatform")
+      .addSemanticType(HMAS + "HypermediaMASPlatform")
       .build();
 
     final Form createWorkspaceFormJson = new Form.Builder(workspaces)
@@ -149,7 +151,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(createWorkspaceFormJson)
-            .addRequiredSemanticType("https://purl.org/hmas/jacamo/MakeWorkspace")
+            .addRequiredSemanticType(JACAMO + "MakeWorkspace")
             .build()
         ).setIRIAsString(baseUri + "#createWorkspaceJson")
           .build())
@@ -168,16 +170,11 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         new Signifier.Builder(
           new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
-        ).setIRIAsString(baseUri + "#sparqlPostQuery").build())
-      .exposeSignifier(webSubSignifier(baseUri, "subscribeToWorkspaces",
-        "https://purl.org/hmas/jacamo/ObservePlatform",baseUri + "workspaces/", WebSubMode.subscribe))
-      .exposeSignifier(webSubSignifier(baseUri, "unsubscribeFromWorkspaces",
-        "https://purl.org/hmas/jacamo/UnbservePlatform",baseUri + "workspaces/",
-        WebSubMode.unsubscribe))
-      .build();
+        ).setIRIAsString(baseUri + "#sparqlPostQuery").build());
 
+    addWebSubSignifier(resourceProfile, "Workspaces", "Platform", baseUri + "workspaces/");
 
-    return serializeHmasResourceProfile(resourceProfile);
+    return serializeHmasResourceProfile(resourceProfile.build());
   }
 
   @Override
@@ -339,12 +336,9 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .exposeSignifier(createSubWorkspaceSignifier)
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
-      .exposeSignifier(deleteCurrentWorkspaceSignifier)
-      .exposeSignifier(webSubSignifier(baseUri, "subscribeToWorkspace",
-        "https://purl.org/hmas/jacamo/ObserveWorkspace", baseUri, WebSubMode.subscribe))
-      .exposeSignifier(webSubSignifier(baseUri, "unsubscribeFromWorkspace",
-        "https://purl.org/hmas/jacamo/UnobserveWorkspace", baseUri, WebSubMode.unsubscribe))
-      .build();
+      .exposeSignifier(deleteCurrentWorkspaceSignifier);
+
+    addWebSubSignifier(resourceProfile, "Workspace", "Workspace");
 
     return serializeHmasResourceProfile(resourceProfile.build());
 
@@ -437,11 +431,9 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
             .build()
         ).setIRIAsString(baseUri + "#focusArtifact")
           .build()
-      )
-      .exposeSignifier(webSubSignifier(baseUri, "subscribeToArtifact",
-        "https://purl.org/hmas/jacamo/ObserveArtifact" , baseUri, WebSubMode.subscribe))
-      .exposeSignifier(webSubSignifier(baseUri, "unsubscribeFromArtifact",
-        "https://purl.org/hmas/jacamo/UnbserveArtifact", baseUri, WebSubMode.unsubscribe));
+      );
+
+    addWebSubSignifier(resourceProfileBuilder, "Artifact", "Artifact");
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -485,10 +477,9 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         new Signifier.Builder(
           new ActionSpecification.Builder(updateBodyForm)
             .build()
-        ).build())
-      .exposeSignifier(webSubSignifier(baseUri, "subscribeToAgent", "https://purl.org/hmas/jacamo/ObserveArtifact", baseUri, WebSubMode.subscribe))
-      .exposeSignifier(webSubSignifier(baseUri, "subscribeToAgent", "https://purl.org/hmas/jacamo/UnbserveArtifact", baseUri, WebSubMode.unsubscribe));
+        ).build());
 
+    addWebSubSignifier(profile, "Agent", "Artifact");
 
     return serializeHmasResourceProfile(profile.build());
   }
