@@ -61,7 +61,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
-          new Form.Builder(this.baseUri + "hub/")
+          new Form.Builder(notificationConfig.getWebSubHubUri())
             .setIRIAsString(baseUri + "#webSubForm")
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")

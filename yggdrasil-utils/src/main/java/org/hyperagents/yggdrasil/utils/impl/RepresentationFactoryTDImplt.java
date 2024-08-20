@@ -27,11 +27,6 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
 
-  public enum WebSubMode {
-    subscribe,
-    unsubscribe
-  }
-
   public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig, final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
     this.notificationConfig = notificationConfig;
@@ -46,7 +41,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private ActionAffordance websubActions(final String actionName) {
     return new ActionAffordance.Builder(
       actionName,
-      new Form.Builder(this.httpConfig.getBaseUri() + "hub/")
+      new Form.Builder(this.notificationConfig.getWebSubHubUri())
         .setMethodName(HttpMethod.POST.name())
         .setContentType("application/json")
         .addSubProtocol("websub")// could be used for websub
