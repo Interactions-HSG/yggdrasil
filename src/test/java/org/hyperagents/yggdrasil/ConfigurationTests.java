@@ -2,9 +2,7 @@ package org.hyperagents.yggdrasil;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -19,18 +17,12 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.hyperagents.yggdrasil.MainVerticleTest.*;
 
 @ExtendWith(VertxExtension.class)
 public class ConfigurationTests {
   private WebClient client;
-  private int promiseIndex;
-  private List<Promise<Map.Entry<String, String>>> callbackMessages;
 
   private static final String HTTP_CONFIG = "http-config";
   private static final String NOTIFICATION_CONFIG = "notification-config";
@@ -47,17 +39,6 @@ public class ConfigurationTests {
 
   public Future<String> setUp(final Vertx vertx, final JsonObject config) {
     this.client = WebClient.create(vertx);
-    this.callbackMessages = Stream.generate(Promise::<Map.Entry<String, String>>promise)
-      .limit(12).collect(Collectors.toList());
-    this.promiseIndex = 0;
-    vertx.eventBus().<String>consumer(
-      "test",
-      stringMessage -> {
-        this.callbackMessages.get(this.promiseIndex)
-          .complete(Map.entry(stringMessage.headers().get("entityIri"), stringMessage.body()));
-        this.promiseIndex++;
-      }
-    );
     return vertx.deployVerticle(new CallbackServerVerticle(8081))
       .compose(r -> vertx.deployVerticle(
         new MainVerticle(),
@@ -143,6 +124,32 @@ public class ConfigurationTests {
   }
 
   @Test
+  public void testRunWithConfigWithEnvironmentNoNotification(final Vertx vertx, final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var platformRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    JsonObject config = JsonObject.of(
+      HTTP_CONFIG,
+      httpConfig,
+      "environment-config",
+      TDEnv
+      );
+    setUp(vertx, config)
+      .onComplete(x ->
+        this.client.get(TEST_PORT, TEST_HOST, "").send()
+          .onSuccess(
+            r -> {
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              ctx.completeNow();
+            }
+          )
+          .onFailure(ctx::failNow)
+      );
+  }
+
+  @Test
   public void testRunWithConfigWithEnvironmentWithNotification(final Vertx vertx, final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var platformRepresentation =
       Files.readString(
@@ -155,15 +162,7 @@ public class ConfigurationTests {
       NOTIFICATION_CONFIG,
       notificationConfig,
       "environment-config",
-      JsonObject.of(
-        "enabled",
-        true,
-        "known-artifacts",
-        JsonArray.of(
-        ),
-        "ontology",
-        "td"
-      )
+      TDEnv
     );
     setUp(vertx, config)
       .onComplete(x ->
