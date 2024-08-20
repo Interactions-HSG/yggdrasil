@@ -5,33 +5,66 @@
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix websub: <http://www.example.org/websub#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 
 <> a hmas:ResourceProfile;
-  hmas:exposesSignifier <#sparglGetQuery>, <#subscribeToWorkspaces>, <#unsubscribeFromWorkspaces>,
-    <#createWorkspaceTurtle>, <#sparqlPostQuery>, <#createWorkspaceJson>;
+  hmas:exposesSignifier <#createWorkspaceJson>, <#createWorkspaceTurtle>, <#sparqlPostQuery>,
+    <#subscribeToWorkspaces>, <#sparglGetQuery>, <#unsubscribeFromWorkspaces>;
   hmas:isProfileOf <#platform> .
 
-<#sparglGetQuery> a hmas:Signifier;
+<#createWorkspaceJson> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#createWorkspaceFormJson>
+        ]
+    ] .
+
+<#createWorkspaceFormJson> a hctl:Form;
+  hctl:hasTarget <workspaces/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<#createWorkspaceTurtle> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#createWorkspaceFormTextTurtle>
+        ]
+    ] .
+
+<#createWorkspaceFormTextTurtle> a hctl:Form;
+  hctl:hasTarget <workspaces/>;
+  htv:methodName "POST";
+  hctl:forContentType "text/turtle" .
+
+<#sparqlPostQuery> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <#sparqlGetQueryForm>
+          sh:hasValue <#sparqlPostQueryForm>
         ]
     ] .
 
-<#sparqlGetQueryForm> a hctl:Form;
+<#sparqlPostQueryForm> a hctl:Form;
   hctl:hasTarget <query/>;
-  htv:methodName "GET";
+  htv:methodName "POST";
   hctl:forContentType "application/sparql-query" .
 
 <#subscribeToWorkspaces> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
+      sh:class hmas:ActionExecution, jacamo:ObservePlatform;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
@@ -77,9 +110,25 @@
       sh:path websub:mode
     ] .
 
-<#unsubscribeFromWorkspaces> a hmas:Signifier;
+<#sparglGetQuery> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#sparqlGetQueryForm>
+        ]
+    ] .
+
+<#sparqlGetQueryForm> a hctl:Form;
+  hctl:hasTarget <query/>;
+  htv:methodName "GET";
+  hctl:forContentType "application/sparql-query" .
+
+<#unsubscribeFromWorkspaces> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:UnobservePlatform;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
@@ -119,54 +168,6 @@
       sh:maxCount "1"^^xs:int;
       sh:path websub:mode
     ] .
-
-<#createWorkspaceTurtle> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#createWorkspaceFormTextTurtle>
-        ]
-    ] .
-
-<#createWorkspaceFormTextTurtle> a hctl:Form;
-  hctl:hasTarget <workspaces/>;
-  htv:methodName "POST";
-  hctl:forContentType "text/turtle" .
-
-<#sparqlPostQuery> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#sparqlPostQueryForm>
-        ]
-    ] .
-
-<#sparqlPostQueryForm> a hctl:Form;
-  hctl:hasTarget <query/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/sparql-query" .
-
-<#createWorkspaceJson> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#createWorkspaceFormJson>
-        ]
-    ] .
-
-<#createWorkspaceFormJson> a hctl:Form;
-  hctl:hasTarget <workspaces/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
 
 <#platform> a hmas:HypermediaMASPlatform;
   hmas:hosts <workspaces/test/#workspace> .

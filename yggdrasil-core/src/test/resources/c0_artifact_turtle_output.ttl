@@ -15,4 +15,41 @@
 <workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact;
   td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToArtifact>;
+      td:name "subscribeToArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromArtifact>;
+      td:name "unsubscribeFromArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
     ] .

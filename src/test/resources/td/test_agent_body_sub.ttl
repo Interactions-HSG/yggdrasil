@@ -13,6 +13,43 @@
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
+  td:hasActionAffordance [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToAgent>;
+      td:name "subscribeToAgent";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromAgent>;
+      td:name "unsubscribeFromAgent";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ];
   hmas:isContainedIn <workspaces/sub/#workspace>;
   jacamo:isBodyOf <agents/test_agent> .
 

@@ -103,7 +103,7 @@ public class EnvironmentConfigurationTest {
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_body.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client
@@ -217,7 +217,7 @@ public class EnvironmentConfigurationTest {
       );
     final var subWorkspaceRepresentation =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_body.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     this.client

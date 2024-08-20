@@ -71,6 +71,42 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspace>;
+      td:name "subscribeToWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromWorkspace>;
+      td:name "unsubscribeFromWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
     ];
   hmas:isContainedIn <workspaces/test/#workspace>;
   hmas:contains <workspaces/sub/artifacts/c0/#artifact>, <workspaces/sub/artifacts/test_agent/#artifact> .

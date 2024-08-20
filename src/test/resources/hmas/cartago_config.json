@@ -38,7 +38,7 @@
           }
         ],
         "agents" : [
-          "http://localhost:8080/agents/test"
+          "http://localhost:8080/agents/test_agent"
         ]
       },
       {
