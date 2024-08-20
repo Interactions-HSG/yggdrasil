@@ -13,7 +13,9 @@ import com.google.common.collect.Multimaps;
 import io.vertx.core.http.HttpMethod;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
+import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 import org.hyperagents.yggdrasil.utils.RepresentationFactory;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
@@ -26,6 +28,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
+
+  private final String HMAS = "https://purl.org/hmas/";
 
   public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig, final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
@@ -55,6 +59,24 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           .build()
       ).addSemanticType("https://purl.org/hmas/websub/" + actionName)
       .build();
+  }
+
+  private void wrapInResourceProfile(ThingDescription.Builder td, String thingIRI, String tdIRI) {
+    Model graph = new LinkedHashModel();
+
+    graph.add(
+      RdfModelUtils.createIri(thingIRI),
+      RDF.TYPE,
+      RdfModelUtils.createIri(HMAS + "ResourceProfile")
+    );
+
+    graph.add(
+      RdfModelUtils.createIri(thingIRI),
+      RdfModelUtils.createIri(HMAS + "isProfileOf"),
+      RdfModelUtils.createIri(tdIRI)
+    );
+    td.addGraph(graph);
+
   }
 
   @Override
@@ -231,15 +253,17 @@ return serializeThingDescription(td);
     final SecurityScheme securityScheme,
     final Model metadata
   ) {
+    final var bodyUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
     final var td =
       new ThingDescription
         .Builder(agentName)
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType("https://purl.org/hmas/Artifact")
         .addSemanticType("https://purl.org/hmas/jacamo/Body")
-        .addThingURI(this.httpConfig.getAgentBodyUri(workspaceName, agentName) + "#artifact")
+        .addThingURI(bodyUri + "#artifact")
         .addGraph(metadata);
     addWebSub(td, "Agent");
+    wrapInResourceProfile(td, bodyUri, bodyUri + "#artifact");
     return serializeThingDescription(td);
   }
 
