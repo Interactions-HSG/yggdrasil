@@ -119,6 +119,12 @@ public class Rdf4jStore implements RdfStore {
   }
 
   @Override
+  public void updateEntityModel(final IRI entityIri, final Model metaData) throws IOException {
+    this.connection.add(metaData, entityIri);
+
+  }
+
+  @Override
   public void removeEntityModel(final IRI entityIri) throws IOException {
     // TODO: MAKE THIS HANDLING BETTER
     final String entityIriString = entityIri.toString();

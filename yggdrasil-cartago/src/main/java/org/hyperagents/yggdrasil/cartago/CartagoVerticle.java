@@ -186,6 +186,7 @@ public class CartagoVerticle extends AbstractVerticle {
                 ))));
             }
           });
+          System.out.println(w.getMetaData());
         } else {
           w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
             this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(

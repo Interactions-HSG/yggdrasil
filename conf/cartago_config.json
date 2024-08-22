@@ -16,7 +16,8 @@
     ],
     "workspaces" : [
       {
-        "name" : "w1"
+        "name" : "w1",
+        "metadata" : ""
       },
       {
         "name" : "w0",
@@ -27,7 +28,8 @@
             "class" : "http://example.org/Counter",
             "init-params" : [
               5
-            ],
+              ],
+            "metadata" :  "",
             "focused-by" : [
               {
                 "agent-uri" : "http://localhost:8080/agents/test",

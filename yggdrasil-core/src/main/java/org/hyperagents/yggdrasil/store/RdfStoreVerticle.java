@@ -96,7 +96,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               message
             );
           case RdfStoreMessage.UpdateEntity content ->
-            this.handleUpdateEntity(
+            this.handleReplaceEntity(
               RdfModelUtils.createIri(content.requestUri()),
               content,
               message
@@ -474,7 +474,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   }
 
   // TODO: add message content validation
-  private void handleUpdateEntity(
+  private void handleReplaceEntity(
       final IRI requestIri,
       final RdfStoreMessage.UpdateEntity content,
       final Message<RdfStoreMessage> message
@@ -496,6 +496,34 @@ public class RdfStoreVerticle extends AbstractVerticle {
           this.replyWithPayload(message, content.entityRepresentation());
         }),
         () -> this.replyEntityNotFound(message)
+    );
+  }
+
+  private void handleUpdateEntity(
+    final IRI requestIri,
+    final RdfStoreMessage.UpdateEntity content,
+    final Message<RdfStoreMessage> message
+  ) throws IOException {
+    this.store.getEntityModel(requestIri).ifPresentOrElse(
+      Failable.asConsumer(m -> {
+        final var additionalTriples = RdfModelUtils.stringToModel(
+          content.entityRepresentation(),
+          requestIri,
+          RDFFormat.TURTLE
+        );
+        this.store.updateEntityModel(requestIri, additionalTriples);
+        final var updatedModel = RdfModelUtils.modelToString(this.store.getEntityModel(requestIri).orElseThrow(),
+          RDFFormat.TURTLE,
+          this.httpConfig.getBaseUri());
+        this.dispatcherMessagebox.sendMessage(
+          new HttpNotificationDispatcherMessage.EntityChanged(
+            requestIri.toString(),
+            updatedModel
+          )
+        );
+        this.replyWithPayload(message, updatedModel);
+      }),
+      () -> this.replyEntityNotFound(message)
     );
   }
 

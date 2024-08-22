@@ -13,6 +13,8 @@ import java.util.Set;
 public interface Workspace {
   String getName();
 
+  Optional<String> getMetaData();
+
   Optional<String> getParentName();
 
   Set<Artifact> getArtifacts();

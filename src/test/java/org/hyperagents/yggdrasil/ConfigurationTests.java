@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -29,6 +30,7 @@ public class ConfigurationTests {
 
   private static final String HTTP_CONFIG = "http-config";
   private static final String NOTIFICATION_CONFIG = "notification-config";
+  private static final String ENVIRONMENT_CONFIG = "environment-config";
   private static final JsonObject httpConfig = JsonObject.of(
     "host",
     TEST_HOST,
@@ -39,6 +41,19 @@ public class ConfigurationTests {
     "enabled",
     true);
 
+  private static final JsonObject cartagoEnv = JsonObject.of(
+    "enabled",
+    true,
+    "workspaces",
+    JsonArray.of(
+      JsonObject.of(
+        "name",
+        "w0",
+        "metadata",
+        "path"
+      )
+    )
+  );
 
   public Future<String> setUp(final Vertx vertx, final JsonObject config) {
     this.client = WebClient.create(vertx);
@@ -136,7 +151,7 @@ public class ConfigurationTests {
     final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
-      "environment-config",
+      ENVIRONMENT_CONFIG,
       TDEnv
       );
     setUp(vertx, config)
@@ -164,7 +179,7 @@ public class ConfigurationTests {
       httpConfig,
       NOTIFICATION_CONFIG,
       notificationConfig,
-      "environment-config",
+      ENVIRONMENT_CONFIG,
       TDEnv
     );
     setUp(vertx, config)
@@ -178,5 +193,20 @@ public class ConfigurationTests {
           )
           .onFailure(ctx::failNow)
       );
+  }
+
+  @Test
+  public void testRunWithConfigWithEnvironmentAndAddedMetadata(final Vertx vertx, final VertxTestContext ctx){
+    JsonObject config = JsonObject.of(
+      HTTP_CONFIG,
+      httpConfig,
+      NOTIFICATION_CONFIG,
+      notificationConfig,
+      ENVIRONMENT_CONFIG,
+      cartagoEnv
+    );
+
+    setUp(vertx, config).onComplete(ctx.succeedingThenComplete());
+
   }
 }
