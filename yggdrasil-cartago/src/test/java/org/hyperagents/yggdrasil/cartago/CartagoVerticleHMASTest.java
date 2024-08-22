@@ -523,6 +523,38 @@ public class CartagoVerticleHMASTest {
   }
 
   @Test
+  public void testFocusAgentBody(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var expectedBodyThingDescription =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_focus_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.JoinWorkspace(
+          TEST_AGENT_IRI,
+          "test",
+          MAIN_WORKSPACE_NAME
+        )))
+      .onSuccess(r -> {
+        assertEqualsHMASDescriptions(
+          expectedBodyThingDescription,
+          r.body()
+        );
+        this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "body_test"
+          )).onSuccess(rx -> {
+            Assertions.assertEquals("200", rx.body(), OPERATION_SUCCESS_MESSAGE);
+            ctx.completeNow();
+          })
+          .onFailure(fx -> ctx.failNow("Failed to focus on Agent body"));
+      });
+  }
+
+  @Test
   public void testFocusSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))

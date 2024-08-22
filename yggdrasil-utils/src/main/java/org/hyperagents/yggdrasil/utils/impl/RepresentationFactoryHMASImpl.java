@@ -101,7 +101,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
               ).build()
           ).build()
       )
-        .setIRIAsString(baseUri + "#" + specs.baseUri())
+        .setIRIAsString(baseUri + "#" + specs.signifierName())
         .build();
   }
 
@@ -111,8 +111,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
                                  final String actionType,
                                  final String topic) {
     if (this.notificationConfig.isEnabled()) {
-      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "subscribeTo" + signifierName, JACAMO + "obvserve" + actionType,topic),WebSubMode.subscribe));
-      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "unsubscribeFrom" + signifierName, JACAMO + "unobserve" + actionType,topic),WebSubMode.unsubscribe));
+      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "subscribeTo" + signifierName, JACAMO + "Observe" + actionType,topic),WebSubMode.subscribe));
+      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "unsubscribeFrom" + signifierName, JACAMO + "Unobserve" + actionType,topic),WebSubMode.unsubscribe));
     }
   }
 

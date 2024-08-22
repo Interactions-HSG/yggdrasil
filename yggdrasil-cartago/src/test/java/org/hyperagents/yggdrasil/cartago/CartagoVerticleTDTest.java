@@ -534,13 +534,15 @@ public class CartagoVerticleTDTest {
           TDS_EQUAL_MESSAGE
         );
         this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "body_test_agent"
-        )).onSuccess(rx -> System.out.println(rx.body()))
-          .onFailure(fx -> System.out.println(fx.getMessage()));
-      })
-      .onComplete(ctx.succeedingThenComplete());
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "body_test_agent"
+          )).onSuccess(rx -> {
+            Assertions.assertEquals("200", rx.body(), OPERATION_SUCCESS_MESSAGE);
+            ctx.completeNow();
+          })
+          .onFailure(fx -> ctx.failNow("Failed to focus on Agent body"));
+      });
   }
 
   @Test
