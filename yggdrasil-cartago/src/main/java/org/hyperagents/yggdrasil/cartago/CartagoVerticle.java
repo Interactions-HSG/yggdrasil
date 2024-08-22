@@ -311,7 +311,7 @@ public class CartagoVerticle extends AbstractVerticle {
     this.workspaceRegistry
       .getWorkspace(workspaceName)
       .orElseThrow()
-      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
+      .joinWorkspace(this.getAgentCredential(hint), e -> {
       });
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
