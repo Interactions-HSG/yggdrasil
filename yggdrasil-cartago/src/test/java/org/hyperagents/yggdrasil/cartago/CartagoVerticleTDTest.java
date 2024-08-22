@@ -513,6 +513,37 @@ public class CartagoVerticleTDTest {
   }
 
   @Test
+  public void testFocusAgentBody(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var expectedBodyThingDescription =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("td/test_agent_body_focus_td.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    this.cartagoMessagebox
+      .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+      .compose(r -> this.cartagoMessagebox
+        .sendMessage(new CartagoMessage.JoinWorkspace(
+          TEST_AGENT_IRI,
+          "test_agent",
+          MAIN_WORKSPACE_NAME
+        )))
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          expectedBodyThingDescription,
+          r.body(),
+          TDS_EQUAL_MESSAGE
+        );
+        this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
+          TEST_AGENT_IRI,
+          MAIN_WORKSPACE_NAME,
+          "body_test_agent"
+        )).onSuccess(rx -> System.out.println(rx.body()))
+          .onFailure(fx -> System.out.println(fx.getMessage()));
+      })
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
   public void testFocusSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
@@ -719,11 +750,11 @@ public class CartagoVerticleTDTest {
         )))
       .compose(r ->
         this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.Focus(
-          FOCUSING_AGENT_IRI,
-          SUB_WORKSPACE_NAME,
-          "c1"
-        )))
+          .sendMessage(new CartagoMessage.Focus(
+            FOCUSING_AGENT_IRI,
+            SUB_WORKSPACE_NAME,
+            "c1"
+          )))
       .compose(r -> {
         Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
@@ -822,15 +853,15 @@ public class CartagoVerticleTDTest {
         )))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.DoAction(
-          TEST_AGENT_IRI,
-          MAIN_WORKSPACE_NAME,
-          "a0",
-          "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
-          Optional.empty(),
-          r.body(),
-          "[2,2]"
-        )
-    ))
+            TEST_AGENT_IRI,
+            MAIN_WORKSPACE_NAME,
+            "a0",
+            "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
+            Optional.empty(),
+            r.body(),
+            "[2,2]"
+          )
+        ))
       .onSuccess(r -> Assertions.assertEquals(
         String.valueOf(4),
         r.body(),
@@ -1099,7 +1130,7 @@ public class CartagoVerticleTDTest {
   }
 
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    final var theSame =   Models.isomorphic(
+    final var theSame = Models.isomorphic(
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
       TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
     );
@@ -1107,7 +1138,7 @@ public class CartagoVerticleTDTest {
       System.out.println(actual);
     }
     Assertions.assertTrue(
-        theSame,
+      theSame,
       TDS_EQUAL_MESSAGE
     );
   }
