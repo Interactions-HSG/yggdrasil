@@ -88,7 +88,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   @Override
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
     final var cleanAgentName = validateInput(agentName);
-    return this.getAgentBodiesUri(workspaceName) + cleanAgentName + "/";
+    return this.getAgentBodiesUri(workspaceName) + "body_" + cleanAgentName + "/";
   }
 
   @Override
