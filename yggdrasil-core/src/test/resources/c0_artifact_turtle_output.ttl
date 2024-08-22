@@ -9,10 +9,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/test/artifacts/c0> a td:Thing, ex:Counter, hmas:Artifact;
-  td:title "c0" .
-
-<workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact;
+<workspaces/test/artifacts/c0/#artifact> a td:Thing, ex:Counter, hmas:Artifact;
   td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -53,3 +50,6 @@
             ]
         ]
     ] .
+
+<workspaces/test/artifacts/c0/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/artifacts/c0/#artifact> .

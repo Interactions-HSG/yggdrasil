@@ -61,4 +61,7 @@
     ];
   hmas:isContainedIn <workspaces/test/#workspace> .
 
+<workspaces/test/artifacts/c0/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/artifacts/c0/#artifact> .
+
 <workspaces/test/#workspace> a hmas:Workspace .

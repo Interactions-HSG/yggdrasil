@@ -109,3 +109,6 @@
             ]
         ]
     ] .
+
+<workspaces/sub/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/sub/#workspace> .

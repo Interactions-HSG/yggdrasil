@@ -73,10 +73,10 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/sub/#workspace>, <workspaces/test/artifacts/kai/#artifact> .
+  hmas:contains <workspaces/sub/#workspace>, <workspaces/test/artifacts/body_kai/#artifact> .
 
 <#platform> a hmas:HypermediaMASPlatform .
 
 <workspaces/sub/#workspace> a hmas:Workspace .
 
-<workspaces/test/artifacts/kai/#artifact> a hmas:Artifact, jacamo:Body .
+<workspaces/test/artifacts/body_kai/#artifact> a hmas:Artifact, jacamo:Body .

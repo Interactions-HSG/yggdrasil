@@ -234,7 +234,7 @@ public class RdfStoreVerticleUpdateTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-          "http://localhost:8080/workspaces/test/artifacts/test",
+          "http://localhost:8080/workspaces/test/artifacts/body_test",
           updatedBodyDescription
         )))
         .onSuccess(r -> {
@@ -250,7 +250,7 @@ public class RdfStoreVerticleUpdateTest {
                 updateMessage.content()
             );
             Assertions.assertEquals(
-                "http://localhost:8080/workspaces/test/artifacts/test",
+                "http://localhost:8080/workspaces/test/artifacts/body_test",
                 updateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );

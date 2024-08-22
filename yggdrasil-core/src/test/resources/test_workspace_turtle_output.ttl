@@ -108,3 +108,6 @@
             ]
         ]
     ] .
+
+<workspaces/test/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/#workspace> .

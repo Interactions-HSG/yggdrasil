@@ -47,7 +47,7 @@ public class CartagoVerticleHMASTest {
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
-    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/test/";
+    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String SIGNAL_SEMANTIC_TYPE = "http://example.org/Sign";
@@ -751,7 +751,7 @@ public class CartagoVerticleHMASTest {
         final var actionRequested = (HttpNotificationDispatcherMessage.ActionRequested) this.notificationQueue.take();
         Assertions.assertEquals(
           actionRequested.requestIri(),
-          "http://localhost:8080/workspaces/sub/artifacts/test/",
+          "http://localhost:8080/workspaces/sub/artifacts/body_test/",
           URIS_EQUAL_MESSAGE
         );
         final var artifactObsPropertyUpdated = (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated) this.notificationQueue.take();
@@ -763,7 +763,7 @@ public class CartagoVerticleHMASTest {
         final var actionSucceeded = (HttpNotificationDispatcherMessage.ActionSucceeded) this.notificationQueue.take();
         Assertions.assertEquals(
           actionSucceeded.requestIri(),
-          "http://localhost:8080/workspaces/sub/artifacts/test/",
+          "http://localhost:8080/workspaces/sub/artifacts/body_test/",
           URIS_EQUAL_MESSAGE
         );
       } catch (InterruptedException e) {

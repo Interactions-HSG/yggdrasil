@@ -50,7 +50,7 @@ public class CartagoVerticleTDTest {
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
-    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/test/";
+    "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String MATH_SEMANTIC_TYPE = "http://example.org/Math";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";

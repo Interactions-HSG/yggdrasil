@@ -399,7 +399,7 @@ public class RdfStoreVerticleCreateTest {
           r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/workspaces/test/artifacts/kai/"
+          "http://localhost:8080/workspaces/test/artifacts/body_kai/"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           bodyArtifactRepresentation,

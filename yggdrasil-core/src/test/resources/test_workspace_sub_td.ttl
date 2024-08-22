@@ -73,7 +73,7 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/sub/#workspace> .
+  hmas:contains <workspaces/sub/#workspace>.
 
 <#platform> a hmas:HypermediaMASPlatform .
 

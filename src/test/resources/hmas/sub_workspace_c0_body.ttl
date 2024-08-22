@@ -2,81 +2,19 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix hmas: <https://purl.org/hmas/> .
-@prefix ex: <http://example.org/> .
 @prefix prov: <http://www.w3.org/ns/prov#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix websub: <http://www.example.org/websub#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
-@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
 <workspaces/sub/> a hmas:ResourceProfile;
-  hmas:exposesSignifier <workspaces/sub/#deleteCurrentWorkspace>, <workspaces/sub/#makeArtifact>,
-    <workspaces/sub/#updateCurrentWorkspace>, <workspaces/sub/#registerArtifact>, <workspaces/sub/#joinWorkspace>,
-    <#unsubscribeFromWorkspace>, <workspaces/sub/#createSubWorkspace>, <workspaces/sub/#getCurrentWorkspace>,
-    <#subscribeToWorkspace>, <workspaces/sub/#leaveWorkspace>;
+  hmas:exposesSignifier <workspaces/sub/#updateCurrentWorkspace>, <workspaces/sub/#getCurrentWorkspace>,
+    <workspaces/sub/#deleteCurrentWorkspace>, <#unsubscribeFromWorkspace>, <#subscribeToWorkspace>,
+    <workspaces/sub/#leaveWorkspace>, <workspaces/sub/#makeArtifact>, <workspaces/sub/#createSubWorkspace>,
+    <workspaces/sub/#joinWorkspace>, <workspaces/sub/#registerArtifact>;
   hmas:isProfileOf <workspaces/sub/#workspace> .
-
-<workspaces/sub/#deleteCurrentWorkspace> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:DeleteWorkspace;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#deleteCurrentWorkspaceForm>
-        ]
-    ] .
-
-<workspaces/sub/#deleteCurrentWorkspaceForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/>;
-  htv:methodName "DELETE";
-  hctl:forContentType "application/json" .
-
-<workspaces/sub/#makeArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:MakeArtifact;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#makeArtifactForm>
-        ], [
-          sh:qualifiedValueShape ex:artifact-shape;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
-        ]
-    ] .
-
-<workspaces/sub/#makeArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/artifacts/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-ex:artifact-shape a sh:Shape;
-  sh:class hmas:Artifact;
-  sh:property [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "Name";
-      sh:description "The name of the created artifact";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path jacamo:hasName
-    ], [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "Initialization parameters";
-      sh:description "A list containing the parameters for initializing the artifacts";
-      sh:maxCount "1"^^xs:int;
-      sh:path jacamo:hasInitialisationParameters
-    ], [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "Class";
-      sh:description "The class of the created artifact";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path jacamo:hasClass
-    ] .
 
 <workspaces/sub/#updateCurrentWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -94,52 +32,36 @@ ex:artifact-shape a sh:Shape;
   htv:methodName "PUT";
   hctl:forContentType "text/turtle" .
 
-<workspaces/sub/#registerArtifact> a hmas:Signifier;
+<workspaces/sub/#getCurrentWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:RegisterArtifact;
+      sh:class hmas:ActionExecution, jacamo:PerceiveWorkspace;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#registerArtifactForm>
-        ], [
-          sh:qualifiedValueShape ex:artifact-rdf;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
+          sh:hasValue <workspaces/sub/#getCurrentWorkspaceForm>
         ]
     ] .
 
-<workspaces/sub/#registerArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/artifacts/>;
-  htv:methodName "POST";
+<workspaces/sub/#getCurrentWorkspaceForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/>;
+  htv:methodName "GET";
   hctl:forContentType "text/turtle" .
 
-ex:artifact-rdf a sh:Shape;
-  sh:class hmas:Artifact;
-  sh:property [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "representation";
-      sh:description "The representation of the artifact";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path rdf:langString
-    ] .
-
-<workspaces/sub/#joinWorkspace> a hmas:Signifier;
+<workspaces/sub/#deleteCurrentWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:JoinWorkspace;
+      sh:class hmas:ActionExecution, jacamo:DeleteWorkspace;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#joinWorkspaceForm>
+          sh:hasValue <workspaces/sub/#deleteCurrentWorkspaceForm>
         ]
     ] .
 
-<workspaces/sub/#joinWorkspaceForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/join/>;
-  htv:methodName "POST";
+<workspaces/sub/#deleteCurrentWorkspaceForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/>;
+  htv:methodName "DELETE";
   hctl:forContentType "application/json" .
 
 <#unsubscribeFromWorkspace> a hmas:Signifier;
@@ -189,38 +111,6 @@ ex:artifact-rdf a sh:Shape;
       sh:maxCount "1"^^xs:int;
       sh:path websub:mode
     ] .
-
-<workspaces/sub/#createSubWorkspace> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#createSubWorkspaceForm>
-        ]
-    ] .
-
-<workspaces/sub/#createSubWorkspaceForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-<workspaces/sub/#getCurrentWorkspace> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:PerceiveWorkspace;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/sub/#getCurrentWorkspaceForm>
-        ]
-    ] .
-
-<workspaces/sub/#getCurrentWorkspaceForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
 
 <#subscribeToWorkspace> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -281,13 +171,121 @@ ex:artifact-rdf a sh:Shape;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
+<workspaces/sub/#makeArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:MakeArtifact;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/sub/#makeArtifactForm>
+        ], [
+          sh:qualifiedValueShape <http://example.org/artifact-shape>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ] .
+
+<workspaces/sub/#makeArtifactForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/artifacts/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<http://example.org/artifact-shape> a sh:Shape;
+  sh:class hmas:Artifact;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "Name";
+      sh:description "The name of the created artifact";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path jacamo:hasName
+    ], [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "Initialization parameters";
+      sh:description "A list containing the parameters for initializing the artifacts";
+      sh:maxCount "1"^^xs:int;
+      sh:path jacamo:hasInitialisationParameters
+    ], [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "Class";
+      sh:description "The class of the created artifact";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path jacamo:hasClass
+    ] .
+
+<workspaces/sub/#createSubWorkspace> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/sub/#createSubWorkspaceForm>
+        ]
+    ] .
+
+<workspaces/sub/#createSubWorkspaceForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<workspaces/sub/#joinWorkspace> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:JoinWorkspace;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/sub/#joinWorkspaceForm>
+        ]
+    ] .
+
+<workspaces/sub/#joinWorkspaceForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/join/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<workspaces/sub/#registerArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:RegisterArtifact;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/sub/#registerArtifactForm>
+        ], [
+          sh:qualifiedValueShape <http://example.org/artifact-rdf>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ] .
+
+<workspaces/sub/#registerArtifactForm> a hctl:Form;
+  hctl:hasTarget <workspaces/sub/artifacts/>;
+  htv:methodName "POST";
+  hctl:forContentType "text/turtle" .
+
+<http://example.org/artifact-rdf> a sh:Shape;
+  sh:class hmas:Artifact;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "representation";
+      sh:description "The representation of the artifact";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path rdf:langString
+    ] .
+
 <workspaces/sub/#workspace> a hmas:Workspace;
   hmas:isContainedIn <workspaces/test/#workspace>;
-  hmas:contains <workspaces/sub/artifacts/c0/#artifact>, <workspaces/sub/artifacts/test_agent/#artifact> .
+  hmas:contains <workspaces/sub/artifacts/body_test_agent/#artifact>, <workspaces/sub/artifacts/c0/#artifact> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
 
+<workspaces/sub/artifacts/body_test_agent/#artifact> a hmas:Artifact, jacamo:Body .
+
 <workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .
-
-<workspaces/sub/artifacts/test_agent/#artifact> a hmas:Artifact, jacamo:Body .
-

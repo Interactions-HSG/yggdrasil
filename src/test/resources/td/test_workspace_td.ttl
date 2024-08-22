@@ -111,6 +111,9 @@
   hmas:isHostedOn <#platform>;
   hmas:contains <workspaces/sub/#workspace> .
 
+<workspaces/test/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/#workspace> .
+
 <#platform> a hmas:HypermediaMASPlatform .
 
 <workspaces/sub/#workspace> a hmas:Workspace .

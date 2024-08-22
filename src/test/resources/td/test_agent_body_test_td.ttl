@@ -9,7 +9,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/test/artifacts/test_agent/#artifact> a td:Thing, hmas:Artifact, jacamo:Body;
+<workspaces/test/artifacts/body_test_agent/#artifact> a td:Thing, hmas:Artifact, jacamo:Body;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -52,6 +52,9 @@
     ];
   hmas:isContainedIn <workspaces/test/#workspace>;
   jacamo:isBodyOf <agents/test_agent> .
+
+<workspaces/test/artifacts/body_test_agent/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/artifacts/body_test_agent/#artifact> .
 
 <workspaces/test/#workspace> a hmas:Workspace .
 

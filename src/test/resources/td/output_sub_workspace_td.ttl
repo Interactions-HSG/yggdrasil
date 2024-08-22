@@ -111,4 +111,7 @@
     ];
   hmas:isContainedIn <workspaces/test/#workspace> .
 
+<workspaces/sub/> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/sub/#workspace> .
+
 <workspaces/test/#workspace> a hmas:Workspace .
