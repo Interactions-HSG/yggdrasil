@@ -20,9 +20,12 @@ import java.nio.file.Path;
 
 import static org.hyperagents.yggdrasil.MainVerticleTest.*;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class ConfigurationTests {
   private WebClient client;
+
+  private static final String REPRESENTATIONS_EQUAL_MSG = "Representations should be equal";
 
   private static final String HTTP_CONFIG = "http-config";
   private static final String NOTIFICATION_CONFIG = "notification-config";
@@ -59,13 +62,13 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of();
+    final JsonObject config = JsonObject.of();
     setUp(vertx, config)
       .onComplete(x ->
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString(),REPRESENTATIONS_EQUAL_MSG);
               ctx.completeNow();
             }
           )
@@ -80,7 +83,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig
     );
@@ -89,7 +92,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
               ctx.completeNow();
             }
           )
@@ -104,7 +107,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -115,7 +118,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
               ctx.completeNow();
             }
           )
@@ -130,7 +133,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       "environment-config",
@@ -141,7 +144,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
               ctx.completeNow();
             }
           )
@@ -156,7 +159,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -169,7 +172,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString());
+              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
               ctx.completeNow();
             }
           )

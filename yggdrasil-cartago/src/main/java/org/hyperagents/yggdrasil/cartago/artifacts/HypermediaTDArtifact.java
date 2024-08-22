@@ -42,7 +42,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
     .sharedData()
     .<String, HttpInterfaceConfig>getLocalMap("http-config")
     .get(DEFAULT_CONFIG_VALUE);
-  private WebSubConfig notificationConfig = Vertx.currentContext()
+  private final WebSubConfig notificationConfig = Vertx.currentContext()
     .owner()
     .sharedData()
     .<String, WebSubConfig>getLocalMap("notification-config")

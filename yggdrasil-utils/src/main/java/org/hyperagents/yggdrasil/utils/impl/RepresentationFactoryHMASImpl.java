@@ -34,6 +34,8 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public final class RepresentationFactoryHMASImpl implements RepresentationFactory {
 
+
+
   private final static String CONTENT_TYPE_TURTLE = "text/turtle";
   private final static String HMAS = "https://purl.org/hmas/";
   private final static String JACAMO = "https://purl.org/hmas/jacamo/";
@@ -49,6 +51,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     unsubscribe
   }
 
+  private record WebSubSpecs(String baseUri,String signifierName,String actionType, String topic){}
+
   public RepresentationFactoryHMASImpl(final HttpInterfaceConfig httpConfig, final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
     this.notificationConfig = notificationConfig;
@@ -56,26 +60,26 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   }
 
 
-  public Signifier webSubSignifier(final String baseUri, final String signifierName, final String actionType, final String topic,
+  private Signifier webSubSignifier(final WebSubSpecs specs,
                                    final WebSubMode mode) {
     return
       new Signifier.Builder(
         new ActionSpecification.Builder(
           new Form.Builder(notificationConfig.getWebSubHubUri())
-            .setIRIAsString(baseUri + "#webSubForm")
+            .setIRIAsString(specs.baseUri() + "#webSubForm")
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
             .build())
-          .addRequiredSemanticType(actionType)
+          .addRequiredSemanticType(specs.actionType())
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
-              .setIRIAsString(baseUri + "#webSub" + mode.toString().substring(0, 1).toUpperCase(Locale.ENGLISH) + mode.toString().substring(1) + "Input")
+              .setIRIAsString(specs.baseUri() + "#webSub" + mode.toString().substring(0, 1).toUpperCase(Locale.ENGLISH) + mode.toString().substring(1) + "Input")
               .addRequiredSemanticType("http://www.example.org/websub#websubsubscription")
               .setRequired(true)
               .addPropertySpecification("http://www.example.org/websub#topic",
                 new StringSpecification.Builder()
                   .setRequired(true)
-                  .setValue(topic)
+                  .setValue(specs.topic())
                   .setName("hub.topic")
                   .setDescription("The topic of the WebSub hub")
                   .build()
@@ -97,21 +101,22 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
               ).build()
           ).build()
       )
-        .setIRIAsString(baseUri + "#" + signifierName)
+        .setIRIAsString(baseUri + "#" + specs.baseUri())
         .build();
   }
 
 
-  public void addWebSubSignifier(final ResourceProfile.Builder profile,final String signifierName,final String actionType, String topic) {
+  public void addWebSubSignifier(final ResourceProfile.Builder profile,
+                                 final String signifierName,
+                                 final String actionType,
+                                 final String topic) {
     if (this.notificationConfig.isEnabled()) {
-      profile.exposeSignifier(webSubSignifier(this.baseUri, "subscribeTo" + signifierName,JACAMO + "Observe" + actionType, topic,
-        WebSubMode.subscribe));
-      profile.exposeSignifier(webSubSignifier(this.baseUri, "unsubscribeFrom" + signifierName,JACAMO + "Unobserve" + actionType, topic,
-        WebSubMode.unsubscribe));
+      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "subscribeTo" + signifierName, JACAMO + "obvserve" + actionType,topic),WebSubMode.subscribe));
+      profile.exposeSignifier(webSubSignifier(new WebSubSpecs(this.baseUri, "unsubscribeFrom" + signifierName, JACAMO + "unobserve" + actionType,topic),WebSubMode.unsubscribe));
     }
   }
 
-  public void addWebSubSignifier(final ResourceProfile.Builder profile, String signifierName, final String actionType) {
+  public void addWebSubSignifier(final ResourceProfile.Builder profile,final String signifierName, final String actionType) {
     addWebSubSignifier(profile, signifierName,actionType, this.httpConfig.getBaseUri());
   }
 

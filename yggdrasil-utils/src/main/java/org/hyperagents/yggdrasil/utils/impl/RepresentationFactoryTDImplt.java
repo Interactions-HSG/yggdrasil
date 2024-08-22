@@ -29,15 +29,16 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
 
-  private final String HMAS = "https://purl.org/hmas/";
-  private final String JACAMO = HMAS + "jacamo/";
+  private static final String HMAS = "https://purl.org/hmas/";
+  private static final String JACAMO = HMAS + "jacamo/";
+  private static final String HASH_ARTIFACT = "#artifact";
 
   public RepresentationFactoryTDImplt(final HttpInterfaceConfig httpConfig, final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
     this.notificationConfig = notificationConfig;
   }
 
-  private void addWebSub(final ThingDescription.Builder td, String actionName) {
+  private void addWebSub(final ThingDescription.Builder td,final String actionName) {
   if (notificationConfig.isEnabled()) {
     td.addAction(websubActions("subscribeTo" + actionName));
     td.addAction(websubActions("unsubscribeFrom" + actionName));
@@ -62,8 +63,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       .build();
   }
 
-  private void wrapInResourceProfile(ThingDescription.Builder td, String thingIRI, String tdIRI) {
-    Model graph = new LinkedHashModel();
+  private void wrapInResourceProfile(final ThingDescription.Builder td,final String thingIRI,final String tdIRI) {
+    final Model graph = new LinkedHashModel();
 
     graph.add(
       RdfModelUtils.createIri(thingIRI),
@@ -233,11 +234,11 @@ return serializeThingDescription(td);
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType(HMAS + "Artifact")
         .addSemanticType(semanticType)
-        .addThingURI(thingUri + "#artifact")
+        .addThingURI(thingUri + HASH_ARTIFACT)
         .addGraph(metadata);
     actionAffordancesMap.values().forEach(td::addAction);
     addWebSub(td, "Artifact");
-    wrapInResourceProfile(td, thingUri, thingUri + "#artifact");
+    wrapInResourceProfile(td, thingUri, thingUri + HASH_ARTIFACT);
     return serializeThingDescription(td);
   }
 
@@ -263,10 +264,10 @@ return serializeThingDescription(td);
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType(HMAS + "Artifact")
         .addSemanticType(JACAMO + "Body")
-        .addThingURI(bodyUri + "#artifact")
+        .addThingURI(bodyUri + HASH_ARTIFACT)
         .addGraph(metadata);
     addWebSub(td, "Agent");
-    wrapInResourceProfile(td, bodyUri, bodyUri + "#artifact");
+    wrapInResourceProfile(td, bodyUri, bodyUri + HASH_ARTIFACT);
     return serializeThingDescription(td);
   }
 
