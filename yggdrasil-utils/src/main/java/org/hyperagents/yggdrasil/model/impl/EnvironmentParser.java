@@ -195,8 +195,9 @@ public final class EnvironmentParser {
                           ));
                         })
                         .collect(Collectors.toSet()),
-                      representation.map(Path::of)
-                    ));
+                      representation.map(Path::of),
+                      JsonObjectUtils.getString(ar, "metadata", LOGGER::error).map(Path::of)
+                      ));
                   })
                   .collect(Collectors.toSet()),
               JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of)
@@ -309,7 +310,8 @@ public final class EnvironmentParser {
       Optional<String> clazz,
       List<?> initializationParameters,
       Set<FocusingAgent> focusingAgents,
-      Optional<Path> representation
+      Optional<Path> representation,
+      Optional<Path> metaData
   ) implements Artifact {
     @Override
     public String getName() {
@@ -335,6 +337,9 @@ public final class EnvironmentParser {
     public Optional<Path> getRepresentation() {
       return this.representation();
     }
+
+    @Override
+    public Optional<Path> getMetaData() {return this.metaData();}
   }
 
   private record FocusingAgentImpl(String name, String callback) implements FocusingAgent {

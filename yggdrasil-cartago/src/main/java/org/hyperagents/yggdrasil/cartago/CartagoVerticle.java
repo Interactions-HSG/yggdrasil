@@ -210,6 +210,11 @@ public class CartagoVerticle extends AbstractVerticle {
               a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
                 this.focus(ag.getName(), w.getName(), a.getName())
               ));
+              a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
+                this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+                  this.httpConfig.getArtifactUri(w.getName(),a.getName()),
+                  Files.readString(metadata, StandardCharsets.UTF_8)
+                ))));
             }),
             () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
