@@ -50,7 +50,7 @@ public class ConfigurationTests {
         "class",
         "http://example.org/Counter",
         "template",
-        "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
+        "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
       )
     ),
     "workspaces",
@@ -235,6 +235,11 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/w1_withMetadata.ttl").toURI()),
         StandardCharsets.UTF_8
       );
+    final var artifactRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("ConfigurationTests/c1_withMetadata.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
     setUp(vertx, config).onComplete(x -> this.client.get(TEST_PORT, TEST_HOST, "").send()
       .onSuccess(
         r -> {
@@ -242,7 +247,12 @@ public class ConfigurationTests {
           this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1").send().onSuccess(
             rs -> {
               assertEqualsThingDescriptions(workspaceRepresentation, rs.bodyAsString());
-              ctx.completeNow();
+              this.client.get(TEST_PORT,TEST_HOST,"/workspaces/w1/artifacts/c1").send().onSuccess(
+                rx -> {
+                  assertEqualsThingDescriptions(artifactRepresentation,rx.bodyAsString());
+                  ctx.completeNow();
+                }
+              ).onFailure(ctx::failNow);
             }
           ).onFailure(ctx::failNow);
         }
