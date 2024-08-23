@@ -275,7 +275,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.UpdateEntity(
+      .sendMessage(new RdfStoreMessage.ReplaceEntity(
         routingContext.request().absoluteURI(),
         routingContext.body().asString()
       ))

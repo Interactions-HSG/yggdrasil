@@ -98,7 +98,7 @@ public final class HttpServerVerticleTestHelper {
           m.requestUri(),
           URIS_EQUAL_MESSAGE
       );
-    } else if (message.body() instanceof RdfStoreMessage.UpdateEntity m) {
+    } else if (message.body() instanceof RdfStoreMessage.ReplaceEntity m) {
       Assertions.assertEquals(
           this.getUri(resourceUri),
           m.requestUri(),
@@ -186,7 +186,7 @@ public final class HttpServerVerticleTestHelper {
                                    .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
                                    .sendBuffer(Buffer.buffer(expectedRepresentation));
     final var message = this.storeMessageQueue.take();
-    final var updateResourceMessage = (RdfStoreMessage.UpdateEntity) message.body();
+    final var updateResourceMessage = (RdfStoreMessage.ReplaceEntity) message.body();
     Assertions.assertEquals(
         this.getUri(resourceUri),
         updateResourceMessage.requestUri(),
