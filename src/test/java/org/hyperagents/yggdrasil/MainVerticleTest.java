@@ -3,6 +3,7 @@ package org.hyperagents.yggdrasil;
 import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
+import com.google.common.net.HttpHeaders;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -300,6 +301,7 @@ public class MainVerticleTest {
       .compose(r -> this.client
         .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE,"application/json")
         .putHeader(HINT_HEADER, SUB_WORKSPACE_NAME)
         .send())
       .onSuccess(r -> {
@@ -695,6 +697,7 @@ public class MainVerticleTest {
       .compose(r -> this.client
         .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
         .putHeader(HINT_HEADER, SUB_WORKSPACE_NAME)
         .send())
       .onSuccess(r -> {
