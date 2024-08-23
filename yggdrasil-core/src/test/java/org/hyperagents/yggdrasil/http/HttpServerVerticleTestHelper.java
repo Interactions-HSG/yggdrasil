@@ -146,7 +146,7 @@ public final class HttpServerVerticleTestHelper {
                  Assertions.assertEquals(
                      this.getUri(resourceUri),
                      r.getHeader(HttpHeaders.LOCATION),
-                     "The location should be the same but missing the trailing slash"
+                     "The location should be the same but without the trailing slash"
                  );
                  Assertions.assertNull(
                      r.body(),

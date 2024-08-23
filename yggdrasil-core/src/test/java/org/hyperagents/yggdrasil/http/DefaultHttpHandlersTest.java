@@ -446,12 +446,7 @@ public class DefaultHttpHandlersTest {
     );
   }
 
-  /**
-   * Test no longer needed as we can handle both cases
-   * -> Should return 400 as tries to change nonexistant artifact
-   */
   @Test
-  @Disabled
   public void testPutTurtleWorkspaceRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,
@@ -514,12 +509,7 @@ public class DefaultHttpHandlersTest {
     );
   }
 
-  /**
-   * Test is no longer needed because we can handle both cases
-   * -> Should return 400 because it tries to change nonexistent artifact
-   */
   @Test
-  @Disabled
   public void testPutTurtleArtifactRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,
@@ -558,9 +548,7 @@ public class DefaultHttpHandlersTest {
     );
   }
 
-  // redirect with slash not needed
   @Test
-  @Disabled
   public void testDeleteTurtleWorkspaceRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,
@@ -600,7 +588,6 @@ public class DefaultHttpHandlersTest {
   }
 
   @Test
-  @Disabled
   public void testDeleteTurtleArtifactRedirectsWithSlash(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,

@@ -107,17 +107,12 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testGetResourceSucceeds(ctx, BODY_FILE_HMAS, BODY_PATH);
   }
 
-  /**
-   * No longer need this test as we simply handle both cases the same way
-   * -> Result of this request is now a 400 Bad Request as it tries to get a resource that does not exist
-   */
   @Test
-  @Disabled
   public void testGetBodyRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
         HttpMethod.GET,
-        BODY_PATH + "/"
+      BODY_PATH.substring(0, BODY_PATH.length() - 1)
     );
   }
 
@@ -126,7 +121,7 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,
       HttpMethod.GET,
-      BODY_PATH + "/"
+      BODY_PATH
     );
   }
 
@@ -258,26 +253,16 @@ public class AgentBodyHttpHandlersTest {
     );
   }
 
-  /**
-   * No longer needed
-   */
   @Test
-  @Disabled
   public void testPutTurtleArtifactRedirectsWithSlashTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
         HttpMethod.PUT,
-        BODY_PATH
+      BODY_PATH.substring(0, BODY_PATH.length() - 1)
     );
   }
 
-  /**
-   * No longer need this test as we can handle both cases of slash and without slash
-   * -> This test returns a 400 because it tries to change an artifact that does not exist
-   * @param ctx vertx test context
-   */
   @Test
-  @Disabled
   public void testPutTurtleArtifactRedirectsWithSlashHMAS(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
       ctx,
