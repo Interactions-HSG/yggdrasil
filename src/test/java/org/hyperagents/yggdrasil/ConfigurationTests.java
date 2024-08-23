@@ -44,13 +44,33 @@ public class ConfigurationTests {
   private static final JsonObject cartagoEnv = JsonObject.of(
     "enabled",
     true,
+    "known-artifacts",
+    JsonArray.of(
+      JsonObject.of(
+        "class",
+        "http://example.org/Counter",
+        "template",
+        "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
+      )
+    ),
     "workspaces",
     JsonArray.of(
       JsonObject.of(
         "name",
         "w1",
         "metadata",
-        "src/main/resources/w1_test_metadata.ttl"
+        "src/main/resources/w1_test_metadata.ttl",
+        "artifacts",
+        JsonArray.of(
+          JsonObject.of(
+            "name",
+            "c1",
+            "class",
+            "http://example.org/Counter",
+            "metadata",
+            "src/main/resources/c1_test_metadata.ttl"
+          )
+        )
       )
     )
   );
@@ -153,7 +173,7 @@ public class ConfigurationTests {
       httpConfig,
       ENVIRONMENT_CONFIG,
       TDEnv
-      );
+    );
     setUp(vertx, config)
       .onComplete(x ->
         this.client.get(TEST_PORT, TEST_HOST, "").send()
@@ -219,7 +239,7 @@ public class ConfigurationTests {
       .onSuccess(
         r -> {
           assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
-          this.client.get(TEST_PORT,TEST_HOST, "/workspaces/w1").send().onSuccess(
+          this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1").send().onSuccess(
             rs -> {
               assertEqualsThingDescriptions(workspaceRepresentation, rs.bodyAsString());
               ctx.completeNow();

@@ -1,8 +1,10 @@
 @base <http://localhost:8080/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix test: <http://www.test.org/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
+@prefix ex: <http://example.org/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
@@ -22,7 +24,8 @@
         ];
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema, jacamo:ArtifactTemplate;
-              js:propertyName "artifactClass"
+              js:propertyName "artifactClass";
+              js:enum ex:Counter
             ], [ a js:ArraySchema, jacamo:InitParams;
               js:propertyName "initParams"
             ], [ a js:StringSchema, jacamo:ArtifactName;
@@ -107,7 +110,8 @@
             ]
         ]
     ];
-  hmas:isHostedOn <#platform> .
+  hmas:isHostedOn <#platform>;
+  hmas:contains <workspaces/w1/artifacts/c1/#artifact> .
 
 <workspaces/w1> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/w1/#workspace> .
@@ -115,3 +119,5 @@
 <#platform> a hmas:HypermediaMASPlatform .
 
 test:testSubject test:testPredicate test:testObject .
+
+<workspaces/w1/artifacts/c1/#artifact> a hmas:Artifact .
