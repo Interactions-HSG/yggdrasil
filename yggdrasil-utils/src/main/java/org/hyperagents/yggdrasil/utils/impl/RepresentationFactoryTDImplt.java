@@ -67,13 +67,13 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final Model graph = new LinkedHashModel();
 
     graph.add(
-      RdfModelUtils.createIri(thingIRI),
+      RdfModelUtils.createIri(thingIRI.substring(0, thingIRI.length() - 1)),
       RDF.TYPE,
       RdfModelUtils.createIri(HMAS + "ResourceProfile")
     );
 
     graph.add(
-      RdfModelUtils.createIri(thingIRI),
+      RdfModelUtils.createIri(thingIRI.substring(0, thingIRI.length() - 1)),
       RdfModelUtils.createIri(HMAS + "isProfileOf"),
       RdfModelUtils.createIri(tdIRI)
     );
@@ -83,8 +83,9 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   @Override
   public String createPlatformRepresentation() {
+    final var thingIri = this.httpConfig.getBaseUri();
     final var td = new ThingDescription.Builder("Yggdrasil Node")
-      .addThingURI(this.httpConfig.getBaseUri())
+      .addThingURI(thingIri + "#platform")
       .addSemanticType(HMAS + "HypermediaMASPlatform")
       .addAction(new ActionAffordance.Builder(
         "createWorkspace",
@@ -96,6 +97,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       );
 
     addWebSub(td, "Workspaces");
+
+    wrapInResourceProfile(td, thingIri + "/", thingIri + "#platform");
 
     return serializeThingDescription(
       td

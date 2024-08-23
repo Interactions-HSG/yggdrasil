@@ -331,9 +331,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .setIRIAsString(baseUri + "#deleteCurrentWorkspace")
         .build();
 
-
     final var resourceProfile = new ResourceProfile.Builder(workspace)
-      .setIRIAsString(this.httpConfig.getWorkspaceUri(workspaceName))
+      .setIRIAsString(baseUri.substring(0, baseUri.length() - 1))
       .exposeSignifier(makeArtifactSignifier)
       .exposeSignifier(registerArtifactSignifier)
       .exposeSignifier(joinWorkspaceSignifier)
@@ -377,7 +376,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .build();
 
     final ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
-      .setIRIAsString(baseUri);
+      .setIRIAsString(baseUri.substring(0, baseUri.length() - 1));
     signifiers.values().forEach(obj -> resourceProfileBuilder.exposeSignifier((Signifier) obj));
 
     // add Signifiers that are always given
@@ -457,7 +456,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .build();
 
     final ResourceProfile.Builder profile = new ResourceProfile.Builder(agent)
-      .setIRIAsString(this.httpConfig.getAgentBodyUri(workspaceName, agentName));
+      .setIRIAsString(baseUri.substring(0, baseUri.length() - 1));
 
     // Possible Signifiers of body
     final Form getBodyRepresentationForm = new Form.Builder(baseUri)
