@@ -1,0 +1,64 @@
+@base <http://localhost:8080/> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+
+<#platform> a td:Thing, hmas:HypermediaMASPlatform;
+  td:title "Yggdrasil Node";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createWorkspace;
+      td:name "createWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspaces>;
+      td:name "subscribeToWorkspaces";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromWorkspaces>;
+      td:name "unsubscribeFromWorkspaces";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <hub/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "mode"
+            ], [ a js:StringSchema;
+              js:propertyName "topic"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ]
+        ]
+    ];
+  hmas:hosts <workspaces/w1/#workspace> .
+
+<> a hmas:ResourceProfile;
+  hmas:isProfileOf <#platform> .
+
+<workspaces/w1/#workspace> a hmas:Workspace .

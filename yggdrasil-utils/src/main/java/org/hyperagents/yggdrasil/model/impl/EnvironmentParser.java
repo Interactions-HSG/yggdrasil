@@ -116,7 +116,7 @@ public final class EnvironmentParser {
                                .collect(Collectors.toCollection(HashSet::new));
             return Stream.of(new WorkspaceImpl(
               name.get(),
-              JsonObjectUtils.getString(w,"metadata", LOGGER::error),
+              JsonObjectUtils.getString(w,"metadata", LOGGER::error).map(Path::of),
               JsonObjectUtils
                 .getString(w, "parent-name", LOGGER::error)
                 .filter(p -> {
@@ -260,7 +260,7 @@ public final class EnvironmentParser {
 
   private record WorkspaceImpl(
       String name,
-      Optional<String> metaData,
+      Optional<Path> metaData,
       Optional<String> parentName,
       Set<JoinedAgent> joinedAgents,
       Set<Artifact> artifacts,
@@ -272,7 +272,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Optional<String> getMetaData() {
+    public Optional<Path> getMetaData() {
       return this.metaData();
     }
 

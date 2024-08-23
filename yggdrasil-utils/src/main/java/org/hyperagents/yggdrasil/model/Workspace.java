@@ -13,7 +13,7 @@ import java.util.Set;
 public interface Workspace {
   String getName();
 
-  Optional<String> getMetaData();
+  Optional<Path> getMetaData();
 
   Optional<String> getParentName();
 

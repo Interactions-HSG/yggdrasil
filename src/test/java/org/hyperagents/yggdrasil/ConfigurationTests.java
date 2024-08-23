@@ -48,9 +48,9 @@ public class ConfigurationTests {
     JsonArray.of(
       JsonObject.of(
         "name",
-        "w0",
+        "w1",
         "metadata",
-        "path"
+        "src/main/resources/w1_test_metadata.ttl"
       )
     )
   );
@@ -196,7 +196,7 @@ public class ConfigurationTests {
   }
 
   @Test
-  public void testRunWithConfigWithEnvironmentAndAddedMetadata(final Vertx vertx, final VertxTestContext ctx){
+  public void testRunWithConfigWithEnvironmentAndAddedMetadata(final Vertx vertx, final VertxTestContext ctx) throws URISyntaxException, IOException {
     JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
@@ -205,8 +205,30 @@ public class ConfigurationTests {
       ENVIRONMENT_CONFIG,
       cartagoEnv
     );
-
-    setUp(vertx, config).onComplete(ctx.succeedingThenComplete());
+    final var platformRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTDWithWorkspace.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var workspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("ConfigurationTests/w1_withMetadata.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    setUp(vertx, config).onComplete(x -> this.client.get(TEST_PORT, TEST_HOST, "").send()
+      .onSuccess(
+        r -> {
+          assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
+          this.client.get(TEST_PORT,TEST_HOST, "/workspaces/w1").send().onSuccess(
+            rs -> {
+              assertEqualsThingDescriptions(workspaceRepresentation, rs.bodyAsString());
+              ctx.completeNow();
+            }
+          ).onFailure(ctx::failNow);
+        }
+      )
+      .onFailure(ctx::failNow)
+    );
 
   }
 }

@@ -130,8 +130,29 @@ public class CartagoVerticle extends AbstractVerticle {
       .forEach(a -> registry.addArtifactTemplate(a.getClazz(), a.getTemplate()));
     environment
       .getWorkspaces()
-      .forEach(w -> {
-        if (w.getRepresentation().isEmpty()) {
+      .forEach(w -> w.getRepresentation().ifPresentOrElse(
+        // Not creating a cartago workspace since we're using representation from file
+        Failable.asConsumer(r -> {
+          this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
+            httpConfig.getWorkspacesUri(),
+            w.getName(),
+            w.getParentName().map(httpConfig::getWorkspaceUri),
+            Files.readString(r, StandardCharsets.UTF_8)
+          ));
+          // Since the workspace cannot hold cartago artifacts we only create ones using file representation
+          w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
+            Failable.asConsumer(ar ->
+              this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                httpConfig.getArtifactsUri(w.getName()),
+                a.getName(),
+                Files.readString(ar, StandardCharsets.UTF_8)
+              ))
+            )
+          ));
+        }),
+        // if no representation is present we might create cartago objects
+        () -> {
+          // subworkspace
           w.getParentName().ifPresentOrElse(
             Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
               new RdfStoreMessage.CreateWorkspace(
@@ -141,6 +162,7 @@ public class CartagoVerticle extends AbstractVerticle {
                 this.instantiateSubWorkspace(p, w.getName())
               )
             )),
+            // workspace
             Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
               new RdfStoreMessage.CreateWorkspace(
                 this.httpConfig.getWorkspacesUri(),
@@ -150,6 +172,17 @@ public class CartagoVerticle extends AbstractVerticle {
               )
             ))
           );
+
+          // add metaData onto Workspace
+          w.getMetaData().ifPresent(Failable.asConsumer(metaData ->
+            this.storeMessagebox.sendMessage(
+              new RdfStoreMessage.UpdateEntity(
+                this.httpConfig.getWorkspaceUri(w.getName()),
+                Files.readString(metaData, StandardCharsets.UTF_8)
+              ))
+            ));
+
+          // creating bodies and joining workspaces
           w.getAgents().forEach(
             Failable.asConsumer(a -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
               w.getName(),
@@ -158,10 +191,11 @@ public class CartagoVerticle extends AbstractVerticle {
               this.joinWorkspace(a.getName(), w.getName())
             )))
           );
-          w.getArtifacts().forEach(a -> {
-            a.getClazz().ifPresent(Failable.asConsumer(c -> {
+
+          // creating artifacts
+          w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
               this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                this.httpConfig.getArtifactsUri(w.getName()) + "/",
+                this.httpConfig.getArtifactsUri(w.getName()),
                 a.getName(),
                 this.instantiateArtifact(
                   this.httpConfig.getAgentUri("yggdrasil"),
@@ -176,37 +210,16 @@ public class CartagoVerticle extends AbstractVerticle {
               a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
                 this.focus(ag.getName(), w.getName(), a.getName())
               ));
-            }));
-            if (a.getRepresentation().isPresent()) {
-              a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
+            }),
+            () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                  httpConfig.getArtifactsUri(w.getName()),
-                  a.getName(),
-                  Files.readString(ar, StandardCharsets.UTF_8)
-                ))));
-            }
-          });
-          System.out.println(w.getMetaData());
-        } else {
-          w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
-            this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
-              httpConfig.getWorkspacesUri(),
-              w.getName(),
-              w.getParentName().map(httpConfig::getWorkspaceUri),
-              Files.readString(r, StandardCharsets.UTF_8)
-            ));
-            w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
-              Failable.asConsumer(ar ->
-                this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                  httpConfig.getArtifactsUri(w.getName()),
-                  a.getName(),
-                  Files.readString(ar, StandardCharsets.UTF_8)
-                ))
-              )
-            ));
-          }));
+                    httpConfig.getArtifactsUri(w.getName()),
+                    a.getName(),
+                    Files.readString(ar, StandardCharsets.UTF_8)
+                  )))
+            )));
         }
-      });
+      ));
   }
 
   @SuppressWarnings({
@@ -262,11 +275,10 @@ public class CartagoVerticle extends AbstractVerticle {
           Optional<String> apiKey,
           String storeResponse,
           String requestContext
-        ) ->
-          this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null), storeResponse,
-              requestContext)
-            .onSuccess(o -> message.reply(o.orElse(null)))
-            .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
+        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null), storeResponse,
+            requestContext)
+          .onSuccess(o -> message.reply(o.orElse(null)))
+          .onFailure(e -> message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage()));
         case CartagoMessage.DeleteEntity(
           String workspaceName,
           String entityUri

@@ -26,6 +26,12 @@
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathHMAS"
       }
     ],
+    "workspaces" : [
+      {
+        "name" : "w1",
+        "metadata" : "src/main/resources/w1_test_metadata.ttl"
+      }
+    ],
     "enabled" : true,
     "ontology": "hmas"
   }
