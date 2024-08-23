@@ -53,7 +53,7 @@
   hmas:isContainedIn <workspaces/test/#workspace>;
   jacamo:isBodyOf <agents/test_agent> .
 
-<workspaces/test/artifacts/body_test_agent/> a hmas:ResourceProfile;
+<workspaces/test/artifacts/body_test_agent> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/test/artifacts/body_test_agent/#artifact> .
 
 <workspaces/test/#workspace> a hmas:Workspace .

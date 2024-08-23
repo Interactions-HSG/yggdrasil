@@ -9,7 +9,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/test/> a hmas:ResourceProfile;
+<http://localhost:8080/workspaces/test> a hmas:ResourceProfile;
   hmas:exposesSignifier <http://localhost:8080/#subscribeToWorkspace>, <http://localhost:8080/#unsubscribeFromWorkspace>,
     <http://localhost:8080/workspaces/test/#joinWorkspace>, <http://localhost:8080/workspaces/test/#leaveWorkspace>,
     <http://localhost:8080/workspaces/test/#registerArtifact>, <http://localhost:8080/workspaces/test/#makeArtifact>,

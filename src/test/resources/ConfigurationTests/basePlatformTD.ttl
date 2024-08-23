@@ -6,7 +6,7 @@
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<> a td:Thing, hmas:HypermediaMASPlatform;
+<#platform> a td:Thing, hmas:HypermediaMASPlatform;
   td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -19,3 +19,5 @@
           hctl:hasOperationType td:invokeAction
         ]
     ] .
+    <> a hmas:ResourceProfile;
+      hmas:isProfileOf <#platform> .

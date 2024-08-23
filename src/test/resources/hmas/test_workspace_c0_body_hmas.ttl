@@ -9,7 +9,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/test/> a hmas:ResourceProfile;
+<workspaces/test> a hmas:ResourceProfile;
   hmas:exposesSignifier <workspaces/test/#makeArtifact>, <workspaces/test/#updateCurrentWorkspace>,
     <#subscribeToWorkspace>, <workspaces/test/#createSubWorkspace>, <workspaces/test/#getCurrentWorkspace>,
     <workspaces/test/#joinWorkspace>, <workspaces/test/#deleteCurrentWorkspace>, <workspaces/test/#leaveWorkspace>,

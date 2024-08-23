@@ -11,7 +11,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<workspaces/test/artifacts/c0/> a hmas:ResourceProfile;
+<workspaces/test/artifacts/c0> a hmas:ResourceProfile;
   hmas:exposesSignifier <#unsubscribeFromArtifact>, <#subscribeToArtifact>, <workspaces/test/artifacts/c0/#updateArtifact>,
     <workspaces/test/artifacts/c0/#deleteArtifact>, <workspaces/test/artifacts/c0/#inc-Signifier>,
     <workspaces/test/artifacts/c0/#getArtifactRepresentation>, <workspaces/test/artifacts/c0/#focusArtifact>;

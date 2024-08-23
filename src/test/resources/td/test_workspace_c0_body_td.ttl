@@ -111,7 +111,7 @@
   hmas:isHostedOn <#platform>;
   hmas:contains <workspaces/test/artifacts/c0/#artifact>, <workspaces/test/artifacts/body_test_agent/#artifact> .
 
-<workspaces/test/> a hmas:ResourceProfile;
+<workspaces/test> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/test/#workspace> .
 
 <#platform> a hmas:HypermediaMASPlatform .

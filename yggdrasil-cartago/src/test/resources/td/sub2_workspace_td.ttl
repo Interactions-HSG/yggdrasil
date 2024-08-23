@@ -109,5 +109,5 @@
         ]
     ] .
 
-<http://localhost:8080/workspaces/sub2/> a hmas:ResourceProfile;
+<http://localhost:8080/workspaces/sub2> a hmas:ResourceProfile;
   hmas:isProfileOf <http://localhost:8080/workspaces/sub2/#workspace> .

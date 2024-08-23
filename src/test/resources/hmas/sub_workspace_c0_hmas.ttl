@@ -10,7 +10,7 @@
 @prefix sh: <http://www.w3.org/ns/shacl#> .
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 
-<workspaces/sub/> a hmas:ResourceProfile;
+<workspaces/sub> a hmas:ResourceProfile;
   hmas:exposesSignifier <workspaces/sub/#registerArtifact>, <workspaces/sub/#joinWorkspace>,
     <workspaces/sub/#makeArtifact>, <#subscribeToWorkspace>, <workspaces/sub/#getCurrentWorkspace>,
     <workspaces/sub/#leaveWorkspace>, <workspaces/sub/#deleteCurrentWorkspace>, <workspaces/sub/#createSubWorkspace>,

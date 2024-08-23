@@ -46,7 +46,7 @@ public class MainVerticleTest {
   private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
   private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
-  private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
+  static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
   private static final String HUB_MODE_PARAM = "hub.mode";
   private static final String HUB_TOPIC_PARAM = "hub.topic";
   private static final String HUB_CALLBACK_PARAM = "hub.callback";

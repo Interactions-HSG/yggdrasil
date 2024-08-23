@@ -7,7 +7,7 @@
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
-<> a td:Thing, hmas:HypermediaMASPlatform;
+<#platform> a td:Thing, hmas:HypermediaMASPlatform;
   td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -58,5 +58,6 @@
     ] .
 
 <#platform> hmas:hosts <workspaces/test/#workspace> .
-
+<> a hmas:ResourceProfile;
+  hmas:isProfileOf <#platform> .
 <workspaces/test/#workspace> a hmas:Workspace .
