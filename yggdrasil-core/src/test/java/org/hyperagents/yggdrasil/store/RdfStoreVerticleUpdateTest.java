@@ -260,6 +260,46 @@ public class RdfStoreVerticleUpdateTest {
       .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testUpdateAndGetAgentBodyWithoutTrailingSlash(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var updatedWorkspaceDescription =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/output/test_update_and_get_agentbody.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var additionalMetadata = """
+                                   @prefix test: <http://www.test.org/>.
+                                   <http://www.test.org/testSubject> <http://www.test.org/testPredicate> <http://www.test.org/testObject>.
+                                   """;
+
+    this.assertWorkspaceTreeCreated(ctx)
+      .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+        "http://localhost:8080/workspaces/test/artifacts/body_test",
+        additionalMetadata
+      )))
+      .onSuccess(r -> {
+        RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+          updatedWorkspaceDescription,
+          r.body()
+        );
+        try {
+          final var updateMessage =
+            (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+          RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+            updatedWorkspaceDescription,
+            updateMessage.content()
+          );
+          Assertions.assertEquals(
+            "http://localhost:8080/workspaces/test/artifacts/body_test",
+            updateMessage.requestIri(),
+            URIS_EQUAL_MESSAGE
+          );
+        } catch (final Exception e) {
+          ctx.failNow(e);
+        }
+      })
+      .onComplete(ctx.succeedingThenComplete());
+  }
 
   private Future<Message<String>> assertWorkspaceTreeCreated(final VertxTestContext ctx)
     throws URISyntaxException, IOException {
