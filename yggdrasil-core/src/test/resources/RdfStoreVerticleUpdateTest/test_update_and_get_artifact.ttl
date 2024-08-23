@@ -1,0 +1,28 @@
+@base <http://localhost:8080/> .
+@prefix ex: <http://example.org/> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix test: <http://www.test.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+
+<workspaces/sub/artifacts/c0/#artifact> a td:Thing, ex:Counter, hmas:Artifact;
+  td:title "c0";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ];
+  td:hasActionAffordance [ a td:ActionAffordance, ex:Increment;
+      td:name "inc";
+      td:title "inc";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/artifacts/c0/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ];
+  hmas:isContainedIn <workspaces/sub/#workspace> .
+
+<workspaces/sub/#workspace> a hmas:Workspace .
+
+test:testSubject test:testPredicate test:testObject .

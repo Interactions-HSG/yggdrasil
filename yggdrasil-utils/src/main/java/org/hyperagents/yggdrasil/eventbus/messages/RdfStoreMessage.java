@@ -31,8 +31,10 @@ public sealed interface RdfStoreMessage {
    * @param requestUri           The URI of the request to update the entity.
    * @param entityRepresentation The string representation of the entity to be updated.
    */
-  record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {
+  record ReplaceEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {
   }
+
+  record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {}
 
   /**
    * A record representing a request to delete an entity from the RDF store.

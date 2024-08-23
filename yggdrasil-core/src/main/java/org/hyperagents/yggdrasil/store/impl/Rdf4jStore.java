@@ -44,12 +44,15 @@ public class Rdf4jStore implements RdfStore {
     this.connection = this.repository.getConnection();
   }
 
-  @Override
-  public boolean containsEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
+  private IRI fixEntityIri(final IRI entityIri){
     final String entityIriString = entityIri.toString();
     final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    return RdfModelUtils.createIri(fixedIri);
+  }
+
+  @Override
+  public boolean containsEntityModel(final IRI entityIri) throws IOException {
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       return this.connection.hasStatement(
@@ -66,10 +69,7 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, fixedEntityIri));
@@ -94,10 +94,7 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void addEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       this.connection.add(entityModel, fixedEntityIri);
@@ -109,27 +106,23 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void replaceEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     this.removeEntityModel(fixedEntityIri);
     this.addEntityModel(fixedEntityIri, entityModel);
   }
 
   @Override
-  public void updateEntityModel(final IRI entityIri, final Model metaData) throws IOException {
-    this.connection.add(metaData, entityIri);
+  public void updateEntityModel(final IRI entityIri, final Model metaData) {
+    final var fixedEntityIri = fixEntityIri(entityIri);
+
+    this.connection.add(metaData, fixedEntityIri);
 
   }
 
   @Override
   public void removeEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       this.connection.clear(fixedEntityIri);

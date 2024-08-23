@@ -79,10 +79,16 @@ public class RdfStoreVerticle extends AbstractVerticle {
     ownMessagebox.receiveMessages(message -> {
       try {
         switch (message.body()) {
-          case RdfStoreMessage.GetEntityIri(String requestUri, String slug) ->
-            message.reply(this.handleGetEntityIri(requestUri, slug));
-          case RdfStoreMessage.GetEntity(String requestUri) ->
-            this.handleGetEntity(RdfModelUtils.createIri(requestUri), message);
+          case RdfStoreMessage.GetEntityIri content ->
+            message.reply(this.handleGetEntityIri(
+              content.requestUri(),
+              content.slug())
+            );
+          case RdfStoreMessage.GetEntity content ->
+            this.handleGetEntity(
+              RdfModelUtils.createIri(content.requestUri()),
+              message
+            );
           case RdfStoreMessage.CreateArtifact content ->
             this.handleCreateArtifact(
             RdfModelUtils.createIri(content.requestUri()),
@@ -95,8 +101,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
               content,
               message
             );
-          case RdfStoreMessage.UpdateEntity content ->
+          case RdfStoreMessage.ReplaceEntity content ->
             this.handleReplaceEntity(
+              RdfModelUtils.createIri(content.requestUri()),
+              content,
+              message
+            );
+          case RdfStoreMessage.UpdateEntity content ->
+            this.handleUpdateEntity(
               RdfModelUtils.createIri(content.requestUri()),
               content,
               message
@@ -476,7 +488,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
   // TODO: add message content validation
   private void handleReplaceEntity(
       final IRI requestIri,
-      final RdfStoreMessage.UpdateEntity content,
+      final RdfStoreMessage.ReplaceEntity content,
       final Message<RdfStoreMessage> message
   ) throws IOException {
     this.store.getEntityModel(requestIri).ifPresentOrElse(

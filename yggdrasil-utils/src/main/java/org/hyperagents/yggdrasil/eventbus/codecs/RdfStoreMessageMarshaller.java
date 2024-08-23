@@ -78,7 +78,7 @@ public class RdfStoreMessageMarshaller
         );
       }
 
-      case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
+      case RdfStoreMessage.ReplaceEntity(String requestUri, String entityRepresentation) -> {
         json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
@@ -86,6 +86,16 @@ public class RdfStoreMessageMarshaller
         );
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
       }
+
+      case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
+        json.addProperty(
+          MessageFields.REQUEST_URI.getName(),
+          MessageRequestMethods.PATCH_ENTITY.getName()
+        );
+        json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
+      }
+
       case RdfStoreMessage.QueryKnowledgeGraph(
           String query,
           List<String> defaultGraphUris,
@@ -160,7 +170,11 @@ public class RdfStoreMessageMarshaller
         jsonObject.get(MessageFields.AGENT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
-      case UPDATE_ENTITY -> new RdfStoreMessage.UpdateEntity(
+      case UPDATE_ENTITY -> new RdfStoreMessage.ReplaceEntity(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
+      );
+      case PATCH_ENTITY -> new RdfStoreMessage.UpdateEntity(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
