@@ -515,7 +515,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final IRI requestIri,
     final RdfStoreMessage.UpdateEntity content,
     final Message<RdfStoreMessage> message
-  ) throws IOException {
+  ) throws IOException, IllegalArgumentException {
     this.store.getEntityModel(requestIri).ifPresentOrElse(
       Failable.asConsumer(m -> {
         final var additionalTriples = RdfModelUtils.stringToModel(

@@ -118,7 +118,7 @@ public class RdfStoreVerticleUpdateTest {
     throws URISyntaxException, IOException {
     final var updatedWorkspaceDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/test_update_and_get_workspace.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/output/test_update_and_get_workspace.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var additionalMetadata = """
@@ -160,7 +160,7 @@ public class RdfStoreVerticleUpdateTest {
   public void testUpdateAndGetArtifact(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var updatedWorkspaceDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/test_update_and_get_artifact.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/output/test_update_and_get_artifact.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var additionalMetadata = """
@@ -197,11 +197,33 @@ public class RdfStoreVerticleUpdateTest {
       .onComplete(ctx.succeedingThenComplete());
   }
 
+
+  @Test
+  public void testUpdateWithInvalidRdf(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var additionalMetadata = """
+                                   @prefix test: <http://www.test.org/>.
+                                   <http://www.test.org/testSubject <http://www.test.org/testPredicate> <http://www.test.org/testObject>.
+                                   """;
+
+    this.assertWorkspaceTreeCreated(ctx)
+      .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+        "http://localhost:8080/workspaces/test/artifacts/body_test/",
+        additionalMetadata
+      ))).onFailure(
+        f -> Assertions.assertEquals(
+          "Arguments badly formatted.",
+          f.getMessage(),
+          "Expected Arguments badly formatted error"
+        )
+      )
+      .onComplete(ctx.failingThenComplete());
+  }
+
   @Test
   public void testUpdateAndGetAgentBody(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var updatedWorkspaceDescription =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/test_update_and_get_agentbody.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/output/test_update_and_get_agentbody.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var additionalMetadata = """
@@ -243,22 +265,22 @@ public class RdfStoreVerticleUpdateTest {
     throws URISyntaxException, IOException {
     final var inputWorkspaceRepresentation =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/input/input_test_workspace.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var inputSubWorkspaceRepresentation =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/input/input_test_subworkspace.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var inputArtifactRepresentation =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/input/input_test_artifact.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     final var inputBodyRepresentation =
       Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_agent_body_test.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource("RdfStoreVerticleUpdateTest/input/input_test_agentbody.ttl").toURI()),
         StandardCharsets.UTF_8
       );
     return this.storeMessagebox
