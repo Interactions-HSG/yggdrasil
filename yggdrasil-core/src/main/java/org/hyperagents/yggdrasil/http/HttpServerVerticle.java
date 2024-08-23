@@ -22,6 +22,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   private static final String WORKSPACE_PATH = "/workspaces/:wkspid";
   private static final String ARTIFACT_PATH = "/workspaces/:wkspid/artifacts/:artid";
   private static final String TURTLE_CONTENT_TYPE = "text/turtle";
+  private static final String APPLICATION_CONTENT_TYPE = "application/json";
 
   private HttpServer server;
   private EnvironmentConfig environmentConfig;
@@ -107,6 +108,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       .consumes(TURTLE_CONTENT_TYPE)
       .handler(handler::handleCreateWorkspaceTurtle);
     final var createSubWorkspaceRoute = router.post(WORKSPACE_PATH)
+      .consumes(APPLICATION_CONTENT_TYPE)
       .handler(handler::handleCreateSubWorkspace);
 
     router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);

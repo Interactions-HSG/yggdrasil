@@ -211,6 +211,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+                                   .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
                                    .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
@@ -310,6 +311,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+      .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
                                    .send();
     final var message = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
@@ -340,6 +342,7 @@ public class CartagoHttpHandlersTest {
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
                    .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+                   .putHeader(HttpHeaders.CONTENT_TYPE.toString(),"application/json")
                    .send()
     );
   }
