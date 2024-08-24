@@ -182,16 +182,6 @@ public class CartagoVerticle extends AbstractVerticle {
               ))
             ));
 
-          // creating bodies and joining workspaces
-          w.getAgents().forEach(
-            Failable.asConsumer(a -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
-              w.getName(),
-              a.getName(),
-              this.getAgentNameFromAgentUri(a.getName()),
-              this.joinWorkspace(a.getName(), w.getName())
-            )))
-          );
-
           // creating artifacts
           w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
               this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
@@ -207,9 +197,6 @@ public class CartagoVerticle extends AbstractVerticle {
                     .map(List::toArray).orElse(null)
                 )
               ));
-              a.getFocusingAgents().forEach(Failable.asConsumer(ag ->
-                this.focus(ag.getName(), w.getName(), a.getName())
-              ));
               a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
                   this.httpConfig.getArtifactUri(w.getName(),a.getName()),
@@ -223,6 +210,21 @@ public class CartagoVerticle extends AbstractVerticle {
                     Files.readString(ar, StandardCharsets.UTF_8)
                   )))
             )));
+
+          // creating bodies and joining workspaces
+          w.getAgents().forEach(
+            Failable.asConsumer(a -> {
+              this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
+                w.getName(),
+                a.getAgentUri(),
+                a.getName(),
+                this.joinWorkspace(a.getAgentUri(),a.getName(), w.getName())
+              ));
+              a.getFocusedArtifactNames().forEach(Failable.asConsumer(
+                artifactName -> this.focus(a.getAgentUri(), w.getName(), artifactName)
+              ));
+            })
+          );
         }
       ));
   }
@@ -321,19 +323,16 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private String joinWorkspace(final String agentUri, final String hint, final String workspaceName)
+  private String joinWorkspace(final String agentUri, final String agentBodyName, final String workspaceName)
     throws CartagoException {
-    if (hint == null || hint.isEmpty()) {
-      return this.joinWorkspace(agentUri, workspaceName);
-    }
     this.workspaceRegistry
       .getWorkspace(workspaceName)
       .orElseThrow()
-      .joinWorkspace(this.getAgentCredential(hint), e -> {
+      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
       });
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
-      hint,
+      agentBodyName,
       new LinkedHashModel()
     );
   }

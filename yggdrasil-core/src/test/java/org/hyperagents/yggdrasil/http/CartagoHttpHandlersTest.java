@@ -41,7 +41,9 @@ public class CartagoHttpHandlersTest {
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String AGENT_WEBID = "X-Agent-WebID";
+  private static final String AGENT_LOCALNAME = "x-Agent-LocalName";
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
+  private static final String AGENT_NAME = "test_agent";
   private static final String SLUG_HEADER = "Slug";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
@@ -64,7 +66,6 @@ public class CartagoHttpHandlersTest {
   private static final String BAD_REQUEST_ERROR_STATUS_MESSAGE =
       "The status code should be BAD REQUEST";
   private static final String NONEXISTENT_NAME = "nonexistent";
-  private static final String INTERNAL_SERVER_ERROR_BODY = "Internal Server Error";
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
   private static final String ARTIFACT_CLASS_PARAM = "artifactClass";
   private static final String INIT_PARAMS_PARAM = "initParams";
@@ -560,6 +561,7 @@ public class CartagoHttpHandlersTest {
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(AGENT_LOCALNAME, AGENT_NAME)
                                    .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) cartagoMessage.body();
@@ -613,6 +615,7 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(AGENT_LOCALNAME, AGENT_NAME)
                                    .send();
     final var message = this.cartagoMessageQueue.take();
     final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) message.body();

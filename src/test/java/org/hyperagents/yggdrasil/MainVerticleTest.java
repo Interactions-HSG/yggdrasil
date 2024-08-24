@@ -32,6 +32,8 @@ import java.util.stream.Stream;
 public class MainVerticleTest {
   static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
   static final String AGENT_ID_HEADER = "X-Agent-WebID";
+  private static final String TEST_AGENT_NAME = "test_agent";
+  private static final String AGENT_LOCALNAME_HEADER = "x-Agent-LocalName";
   static final String HINT_HEADER = "Slug";
   private static final String CLASS = "class";
   private static final String TEMPLATE = "template";
@@ -436,6 +438,7 @@ public class MainVerticleTest {
           WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join"
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME_HEADER,TEST_AGENT_NAME)
         .send())
       .onSuccess(r -> {
         Assertions.assertEquals(
@@ -833,6 +836,7 @@ public class MainVerticleTest {
           WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join"
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME_HEADER,TEST_AGENT_NAME)
         .send())
       .onSuccess(r -> {
         Assertions.assertEquals(

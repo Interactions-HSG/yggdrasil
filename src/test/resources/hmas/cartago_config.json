@@ -38,7 +38,14 @@
           }
         ],
         "agents" : [
-          "http://localhost:8080/agents/test_agent"
+          {
+            "name" : "test_agent",
+            "agent-uri" : "http://localhost:8080/agents/test",
+            "callback-uri" : "http://localhost:8081",
+            "focused-artifacts" : [
+              "c0"
+            ]
+          }
         ]
       },
       {

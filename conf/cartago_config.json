@@ -29,17 +29,18 @@
             "init-params" : [
               5
               ],
-            "metadata" :  "",
-            "focused-by" : [
-              {
-                "agent-uri" : "http://localhost:8080/agents/test",
-                "callback-uri" : "http://localhost:8081/"
-              }
-            ]
+            "metadata" :  ""
           }
         ],
         "agents" : [
-          "http://localhost:8080/agents/test"
+          {
+            "name" : "test",
+            "agent-uri" : "http://localhost:8080/agents/test",
+            "callback-uri" : "http://localhost:8081",
+            "focused-artifacts" : [
+              "c0"
+            ]
+          }
         ]
       }
     ],

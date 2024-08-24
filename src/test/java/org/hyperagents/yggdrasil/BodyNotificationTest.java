@@ -34,6 +34,7 @@ public class BodyNotificationTest {
   private static final String TEST_AGENT_NAME = "test_agent";
   private static final String TEST_AGENT_BODY_NAME = "body_test_agent";
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/" + TEST_AGENT_NAME;
+  private static final String AGENT_LOCALNAME_HEADER = "x-Agent-LocalName";
   private static final String AGENT_ID_HEADER = "X-Agent-WebID";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String ARTIFACT_NAME = "artifactName";
@@ -228,6 +229,7 @@ public class BodyNotificationTest {
                             WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/join"
                           )
                           .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+          .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
                           .send())
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -478,6 +480,7 @@ public class BodyNotificationTest {
           WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/join"
         )
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
         .send())
       .onSuccess(r -> {
         Assertions.assertEquals(

@@ -19,7 +19,7 @@ public interface Workspace {
 
   Set<Artifact> getArtifacts();
 
-  Set<JoinedAgent> getAgents();
+  Set<Agent> getAgents();
 
   Optional<Path> getRepresentation();
 }

@@ -192,7 +192,7 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          null,
+          "test",
           MAIN_WORKSPACE_NAME
         )))
       .onSuccess(r -> Assertions.assertEquals(
@@ -210,13 +210,13 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          null,
+          "test",
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          null,
+          "test",
           MAIN_WORKSPACE_NAME
         )))
       .onComplete(ctx.succeedingThenComplete());
@@ -318,7 +318,7 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          null,
+          "test",
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox
