@@ -36,6 +36,17 @@
             "class" : "http://example.org/Counter",
             "metadata" : "src/main/resources/c1_test_metadata.ttl"
           }
+        ],
+        "agents" : [
+          {
+            "name" : "kai",
+            "agent-uri" : "https://kaischultz.com",
+            "callback-uri" : "http://localhost:8081/callback",
+            "focused-artifacts" : [
+              "c1"
+            ],
+            "metadata" : "src/main/resources/a1_test_metadata.ttl"
+          }
         ]
       }
     ],

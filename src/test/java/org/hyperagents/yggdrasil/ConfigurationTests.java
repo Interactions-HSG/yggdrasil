@@ -70,6 +70,19 @@ public class ConfigurationTests {
             "metadata",
             "src/main/resources/c1_test_metadata.ttl"
           )
+        ),
+        "agents",
+        JsonArray.of(
+          JsonObject.of(
+            "name",
+            "kai",
+            "agent-uri",
+            "https://kaischultz.com",
+            "callback-uri",
+            "http://localhost:8081/callback",
+            "metadata",
+            "src/main/resources/a1_test_metadata.ttl"
+          )
         )
       )
     )

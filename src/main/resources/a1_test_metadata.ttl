@@ -1,0 +1,4 @@
+@prefix customAgent: <http://www.metadataAgent.com/>.
+
+<http://localhost:8080/workspaces/w1/artifacts/body_kai> a customAgent:CustomAgent.
+<http://localhost:8080/workspaces/w1/artifacts/body_kai> customAgent:does customAgent:SomethingVeryCool.

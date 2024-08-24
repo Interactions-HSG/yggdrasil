@@ -39,7 +39,8 @@
             "callback-uri" : "http://localhost:8081",
             "focused-artifacts" : [
               "c0"
-            ]
+            ],
+            "metadata" : ""
           }
         ]
       }

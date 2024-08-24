@@ -143,12 +143,12 @@ public final class EnvironmentParser {
                           ))
                         .collect(Collectors.toList());
 
-
                       return Stream.of(new AgentImpl(
                         agentName.orElseThrow(),
                         agentUri.orElseThrow(),
                         agentCallbackUri.orElseThrow(),
-                        focusedArtifacts
+                        focusedArtifacts,
+                        JsonObjectUtils.getString(ag, "metadata", LOGGER::error).map(Path::of)
                       ));
                     }).collect(Collectors.toSet()),
               JsonObjectUtils
@@ -322,7 +322,8 @@ public final class EnvironmentParser {
     String name,
     String agentUri,
     String agentCallbackUri,
-    List<String> focusedArtifactNames
+    List<String> focusedArtifactNames,
+    Optional<Path> metaData
   ) implements Agent {
 
     @Override
@@ -343,6 +344,11 @@ public final class EnvironmentParser {
     @Override
     public List<String> getFocusedArtifactNames() {
       return this.focusedArtifactNames();
+    }
+
+    @Override
+    public Optional<Path> getMetaData() {
+      return this.metaData();
     }
   }
 
