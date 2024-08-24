@@ -104,7 +104,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
       .onComplete(
-        this.handleStoreReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIri))
+        this.handleStoreSucceededReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIri))
       );
   }
 
@@ -130,7 +130,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 Optional.empty(),
                 response.body()
               )
-            ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
+            ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
         )
         .onFailure(context::fail)
     );
@@ -187,7 +187,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 nameResponse.body(),
                 response.body()
               )
-            ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
+            ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri + nameResponse.body() + "/")))
         )
         .onFailure(r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()))
     ;
@@ -240,7 +240,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             actualEntityName.body(),
             artifactRepresentation//artifactRepresentation
           )
-          ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri+ actualEntityName.body() + "/")));
+          ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri+ actualEntityName.body() + "/")));
       }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
@@ -265,7 +265,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         workspaceName,
         artifactName
       )))
-      .onComplete(this.handleStoreReply(context, HttpStatus.SC_OK, this.getHeaders(context.request().absoluteURI())));
+      .onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_OK, this.getHeaders(context.request().absoluteURI())));
   }
 
   // TODO: add payload validation
@@ -279,7 +279,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         routingContext.request().absoluteURI(),
         routingContext.body().asString()
       ))
-      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
+      .onComplete(this.handleStoreSucceededReply(routingContext));
   }
 
   public void handleDeleteEntity(final RoutingContext routingContext) {
@@ -304,7 +304,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     }
     this.rdfStoreMessagebox
       .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
-      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
+      .onComplete(this.handleStoreSucceededReply(routingContext));
   }
 
   public void handleEntitySubscription(final RoutingContext routingContext) {
@@ -360,10 +360,14 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   public void handleJoinWorkspace(final RoutingContext routingContext) {
     final var agentId = routingContext.request().getHeader(AGENT_WEBID_HEADER);
-    final var hint = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
+    final var agentBodyName = routingContext.request().getHeader(AGENT_LOCALNAME_HEADER);
 
     if (agentId == null) {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
+      return;
+    }
+    if (agentBodyName == null) {
+      routingContext.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
       return;
     }
 
@@ -372,29 +376,18 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.cartagoMessagebox
       .sendMessage(new CartagoMessage.JoinWorkspace(
         agentId,
-        hint,
+        agentBodyName,
         workspaceName
       ))
-      .compose(response -> {
-          if (hint == null) {
-            return this.rdfStoreMessagebox
-              .sendMessage(new RdfStoreMessage.CreateBody(
-                workspaceName,
-                agentId,
-                getAgentNameFromId(agentId),
-                response.body()
-              ));
-          }
-          return this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateBody(
-              workspaceName,
-              agentId,
-              hint,
-              response.body()
-            ));
-        }
+      .compose(response -> this.rdfStoreMessagebox
+          .sendMessage(new RdfStoreMessage.CreateBody(
+            workspaceName,
+            agentId,
+            agentBodyName,
+            response.body()
+          ))
       )
-      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
+      .onComplete(this.handleStoreSucceededReply(routingContext));
   }
 
   public void handleLeaveWorkspace(final RoutingContext routingContext) {
@@ -430,7 +423,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             )
           ));
       })
-      .onComplete(this.handleStoreReply(routingContext, HttpStatus.SC_OK));
+      .onComplete(this.handleStoreSucceededReply(routingContext));
   }
 
   public void handleCreateSubWorkspace(final RoutingContext context) {
@@ -455,7 +448,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
             response.body()
           ))
-          .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED, this.getHeaders(this.httpConfig.getWorkspaceUri(subWorkspaceName))))
+          .onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED, this.getHeaders(this.httpConfig.getWorkspaceUri(subWorkspaceName))))
       )
       .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
@@ -686,14 +679,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED).putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle").end());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(
-    final RoutingContext routingContext,
-    final int succeededStatusCode
+  private Handler<AsyncResult<Message<String>>> handleStoreSucceededReply(
+    final RoutingContext routingContext
   ) {
-    return this.handleStoreReply(routingContext, succeededStatusCode, new HashMap<>());
+    return this.handleStoreSucceededReply(routingContext, HttpStatus.SC_OK, new HashMap<>());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreReply(
+  private Handler<AsyncResult<Message<String>>> handleStoreSucceededReply(
     final RoutingContext routingContext,
     final int succeededStatusCode,
     final Map<String, List<String>> headers
