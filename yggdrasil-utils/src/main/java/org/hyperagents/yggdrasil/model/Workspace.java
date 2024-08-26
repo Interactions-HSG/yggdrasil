@@ -19,7 +19,7 @@ public interface Workspace {
 
   Set<Artifact> getArtifacts();
 
-  Set<Agent> getAgents();
+  Set<YggdrasilAgent> getAgents();
 
   Optional<Path> getRepresentation();
 }

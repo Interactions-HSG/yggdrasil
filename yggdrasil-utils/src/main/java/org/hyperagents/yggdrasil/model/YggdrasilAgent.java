@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-public interface Agent {
+public interface YggdrasilAgent {
 
   String getName();
   String getAgentUri();

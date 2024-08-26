@@ -111,7 +111,7 @@ public final class EnvironmentParser {
                 .getJsonArray(w,"agents", LOGGER::error)
                 .stream()
                   .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
-                    .<Agent>flatMap(ag -> {
+                    .<YggdrasilAgent>flatMap(ag -> {
                       final var agentName = JsonObjectUtils.getString(ag, "name", LOGGER::error);
                       if (agentName.isEmpty()){
                         LOGGER.warn("Agent in workspace missing name, skipping");
@@ -252,7 +252,7 @@ public final class EnvironmentParser {
       String name,
       Optional<Path> metaData,
       Optional<String> parentName,
-      Set<Agent> joinedAgents,
+      Set<YggdrasilAgent> joinedAgents,
       Set<Artifact> artifacts,
       Optional<Path> representation
   ) implements Workspace {
@@ -277,7 +277,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Set<Agent> getAgents() {
+    public Set<YggdrasilAgent> getAgents() {
       return this.joinedAgents();
     }
 
@@ -324,7 +324,7 @@ public final class EnvironmentParser {
     String agentCallbackUri,
     List<String> focusedArtifactNames,
     Optional<Path> metaData
-  ) implements Agent {
+  ) implements YggdrasilAgent {
 
     @Override
     public String getName() {
