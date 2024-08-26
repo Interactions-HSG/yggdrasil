@@ -214,11 +214,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           )
         )).onComplete(
           response -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-            actualEntityName.address(),
+            requestUri + actualEntityName.body(),
             entityRepresentation
-          ))
+          )
         ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-          this.getHeaders(requestUri + actualEntityName.body()))))
+          this.getHeaders(requestUri + actualEntityName.body())))))
       .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
