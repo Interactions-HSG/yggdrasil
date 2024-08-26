@@ -31,6 +31,8 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 public final class EnvironmentParser {
   private static final Logger LOGGER = LogManager.getLogger(EnvironmentParser.class);
 
+  private static final String NAME = "name";
+
   private EnvironmentParser() {}
 
   /**
@@ -82,14 +84,14 @@ public final class EnvironmentParser {
                  .toList();
     final var workspaceNames =
         jsonWorkspaces.stream()
-                      .flatMap(w -> JsonObjectUtils.getString(w, "name", LOGGER::error).stream())
+                      .flatMap(w -> JsonObjectUtils.getString(w, NAME, LOGGER::error).stream())
                       .collect(Collectors.toSet());
     return new EnvironmentImpl(
       reorderWorkspaces(
         jsonWorkspaces
           .stream()
           .<Workspace>flatMap(w -> {
-            final var name = JsonObjectUtils.getString(w, "name", LOGGER::error);
+            final var name = JsonObjectUtils.getString(w, NAME, LOGGER::error);
             if (name.isEmpty()) {
               LOGGER.warn("Workspace missing name, skipping");
               return Stream.empty();
@@ -112,7 +114,7 @@ public final class EnvironmentParser {
                 .stream()
                   .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
                     .<YggdrasilAgent>flatMap(ag -> {
-                      final var agentName = JsonObjectUtils.getString(ag, "name", LOGGER::error);
+                      final var agentName = JsonObjectUtils.getString(ag, NAME, LOGGER::error);
                       if (agentName.isEmpty()){
                         LOGGER.warn("Agent in workspace missing name, skipping");
                         return Stream.empty();
@@ -156,7 +158,7 @@ public final class EnvironmentParser {
                   .stream()
                   .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
                   .<Artifact>flatMap(ar -> {
-                    final var artifactName = JsonObjectUtils.getString(ar, "name", LOGGER::error);
+                    final var artifactName = JsonObjectUtils.getString(ar, NAME, LOGGER::error);
                     final var artifactClass = JsonObjectUtils.getString(ar, "class", LOGGER::error);
                     if (artifactName.isEmpty()) {
                       LOGGER.warn("Artifact in workspace missing name, skipping");
