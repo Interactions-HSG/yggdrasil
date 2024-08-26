@@ -14,7 +14,6 @@ import io.vertx.core.json.JsonObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,7 +49,9 @@ public class CartagoVerticle extends AbstractVerticle {
   private HttpInterfaceConfig httpConfig;
   private WorkspaceRegistry workspaceRegistry;
   private RepresentationFactory representationFactory;
-  private Map<String, AgentCredential> agentCredentials;
+
+  // AgentUri -> Workspace -> AgentBodyName
+  private Map<String, Map<String, AgentCredential>> agentCredentials;
   private RdfStoreMessagebox storeMessagebox;
   private HttpNotificationDispatcherMessagebox dispatcherMessagebox;
   private HypermediaArtifactRegistry registry;
@@ -336,7 +337,7 @@ public class CartagoVerticle extends AbstractVerticle {
     this.workspaceRegistry
       .getWorkspace(workspaceName)
       .orElseThrow()
-      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
+      .joinWorkspace(this.getAgentCredential(agentUri, agentBodyName, workspaceName), e -> {
       });
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
@@ -350,11 +351,11 @@ public class CartagoVerticle extends AbstractVerticle {
     this.workspaceRegistry
       .getWorkspace(workspaceName)
       .orElseThrow()
-      .joinWorkspace(this.getAgentCredential(agentUri), e -> {
+      .joinWorkspace(this.getAgentCredential(agentUri,workspaceName), e -> {
       });
     return this.representationFactory.createBodyRepresentation(
       workspaceName,
-      this.getAgentNameFromAgentUri(agentUri),
+      this.getAgentNameFromAgentUri(agentUri,workspaceName),
       new LinkedHashModel()
     );
   }
@@ -368,7 +369,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace
       .focus(
-        this.getAgentId(new AgentIdCredential(agentUri), workspace.getId()),
+        this.getAgentId(this.getAgentCredential(agentUri,workspaceName), workspace.getId()),
         p -> true,
         new NotificationCallback(this.httpConfig, this.dispatcherMessagebox, workspaceName, artifactName),
         Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
@@ -384,7 +385,7 @@ public class CartagoVerticle extends AbstractVerticle {
   private void leaveWorkspace(final String agentUri, final String workspaceName)
     throws CartagoException {
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-    workspace.quitAgent(this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()));
+    workspace.quitAgent(this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()));
   }
 
   private String instantiateArtifact(
@@ -398,7 +399,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
 
     final var artifactId = workspace.makeArtifact(
-      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+      this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()),
       artifactName,
       artifactClass,
       new ArtifactConfig(params != null ? params : new Object[0])
@@ -467,7 +468,7 @@ public class CartagoVerticle extends AbstractVerticle {
         });
     final var promise = Promise.<Void>promise();
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-    final var agentName = this.getAgentNameFromAgentUri(agentUri);
+    final var agentName = this.getAgentNameFromAgentUri(agentUri, workspaceName);
     this.dispatcherMessagebox.sendMessage(
       new HttpNotificationDispatcherMessage.ActionRequested(
         this.httpConfig.getAgentBodyUri(workspaceName, agentName),
@@ -475,7 +476,7 @@ public class CartagoVerticle extends AbstractVerticle {
       )
     );
     workspace.execOp(0L,
-      this.getAgentId(this.getAgentCredential(agentUri), workspace.getId()),
+      this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()),
       e -> {
         if (e instanceof ActionSucceededEvent) {
           this.dispatcherMessagebox.sendMessage(
@@ -516,7 +517,7 @@ public class CartagoVerticle extends AbstractVerticle {
   }
 
   private void deleteEntity(final String workspaceName, final String requestUri) throws CartagoException {
-    final var credentials = getAgentCredential(this.httpConfig.getAgentUri("yggdrasil"));
+    final var credentials = getAgentCredential(this.httpConfig.getAgentUri("yggdrasil"),"root");
 
 
     if (workspaceName.equals(requestUri)) {
@@ -546,15 +547,9 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private String getAgentNameFromAgentUri(final String agentUri) {
-    final var returnVal = Pattern.compile("^https?://.*?:[0-9]+/agents/(.*?)$")
-      .matcher(agentUri)
-      .results()
-      .findFirst();
-    if (returnVal.isPresent()) {
-      return returnVal.get().group(1);
-    }
-    return "anonymous-agent";
+  private String getAgentNameFromAgentUri(final String agentUri, final String workspaceName) {
+    final var agentCred =(AgentIdCredential) this.agentCredentials.get(agentUri).get(workspaceName);
+    return agentCred.getId();
   }
 
   private AgentId getAgentId(final AgentCredential credential, final WorkspaceId workspaceId) {
@@ -567,8 +562,21 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private AgentCredential getAgentCredential(final String agentUri) {
-    this.agentCredentials.putIfAbsent(agentUri, new AgentIdCredential(agentUri));
-    return this.agentCredentials.get(agentUri);
+  private AgentCredential getAgentCredential(final String agentUri, final String workspaceName) {
+    this.agentCredentials.putIfAbsent(agentUri, new HashMap<>());
+    this.agentCredentials.get(agentUri).putIfAbsent(workspaceName, new AgentIdCredential(UUID.randomUUID().toString()));
+    return this.agentCredentials.get(agentUri).get(workspaceName);
+  }
+
+  private AgentCredential getAgentCredential(final String agentUri, final String agentBodyName,
+                                             final String workspaceName) throws CartagoException {
+    this.agentCredentials.putIfAbsent(agentUri, new HashMap<>());
+
+    if (this.agentCredentials.get(agentUri).get(workspaceName) != null) {
+      this.leaveWorkspace(agentUri,workspaceName);
+    }
+
+    this.agentCredentials.get(agentUri).put(workspaceName, new AgentIdCredential(agentBodyName));
+    return this.agentCredentials.get(agentUri).get(workspaceName);
   }
 }
