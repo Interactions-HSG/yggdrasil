@@ -113,14 +113,6 @@ public class Rdf4jStore implements RdfStore {
   }
 
   @Override
-  public void updateEntityModel(final IRI entityIri, final Model metaData) {
-    final var fixedEntityIri = fixEntityIri(entityIri);
-
-    this.connection.add(metaData, fixedEntityIri);
-
-  }
-
-  @Override
   public void removeEntityModel(final IRI entityIri) throws IOException {
     final var fixedEntityIri = fixEntityIri(entityIri);
 

@@ -523,7 +523,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           requestIri,
           RDFFormat.TURTLE
         );
-        this.store.updateEntityModel(requestIri, additionalTriples);
+        this.store.addEntityModel(requestIri, additionalTriples);
         final var updatedModel = RdfModelUtils.modelToString(this.store.getEntityModel(requestIri).orElseThrow(),
           RDFFormat.TURTLE,
           this.httpConfig.getBaseUri());
