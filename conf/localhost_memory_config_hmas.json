@@ -39,8 +39,8 @@
         ],
         "agents" : [
           {
-            "name" : "kai",
-            "agent-uri" : "https://kaischultz.com",
+            "name" : "test_agent",
+            "agent-uri" : "http://localhost:8081",
             "callback-uri" : "http://localhost:8081/callback",
             "focused-artifacts" : [
               "c1"
