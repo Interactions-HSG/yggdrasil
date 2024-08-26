@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hyperagents.yggdrasil.Constants.*;
+import static org.hyperagents.yggdrasil.TestConstants.*;
 
 @ExtendWith(VertxExtension.class)
 public class ConfigurationTests {

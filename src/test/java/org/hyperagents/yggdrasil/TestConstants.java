@@ -8,7 +8,7 @@ import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.util.Models;
 import org.junit.jupiter.api.Assertions;
 
-public class Constants {
+public class TestConstants {
   public static final String TEST_HOST = "localhost";
   public static final int TEST_PORT = 8080;
 
@@ -125,7 +125,7 @@ public class Constants {
     )
   ).mergeIn(ENABLED_TRUE);
 
-  public static JsonObject TDEnv = JsonObject.of(
+  public static final JsonObject TDEnv = JsonObject.of(
     ENABLED,
     true,
     KNOWN_ARTIFACTS,

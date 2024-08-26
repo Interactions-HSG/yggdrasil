@@ -17,7 +17,7 @@ import org.hyperagents.yggdrasil.MainVerticle;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.hyperagents.yggdrasil.Constants.*;
+import static org.hyperagents.yggdrasil.TestConstants.*;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
