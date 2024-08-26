@@ -195,28 +195,31 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   @Override
   public String createArtifactRepresentation(final String workspaceName, final String artifactName,
-                                             final String semanticType) {
+                                             final String semanticType, final boolean isCartagoArtifact) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
       SecurityScheme.getNoSecurityScheme(),
       semanticType,
       new LinkedHashModel(),
-      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new),
+      isCartagoArtifact
     );
   }
 
   @Override
   public String createArtifactRepresentation(final String workspaceName, final String artifactName,
                                              final String semanticType, final Model metadata,
-                                             final ListMultimap<String, Object> actionAffordances) {
+                                             final ListMultimap<String, Object> actionAffordances,
+                                             final boolean isCartagoArtifact) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
       SecurityScheme.getNoSecurityScheme(),
       semanticType,
       metadata,
-      actionAffordances
+      actionAffordances,
+      isCartagoArtifact
     );
   }
 
@@ -228,7 +231,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final SecurityScheme securityScheme,
     final String semanticType,
     final Model metadata,
-    final ListMultimap<String, Object> actionAffordances
+    final ListMultimap<String, Object> actionAffordances,
+    final boolean isCartagoArtifact
   ) {
     final ListMultimap<String, ActionAffordance> actionAffordancesMap = Multimaps.newListMultimap(new HashMap<>(),
       ArrayList::new);
@@ -237,7 +241,10 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       final var action = (ActionAffordance) entry.getValue();
       actionAffordancesMap.put(actionName, action);
     });
+
+
     final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+
     final var td =
       new ThingDescription.Builder(artifactName)
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
@@ -245,9 +252,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addSemanticType(semanticType)
         .addThingURI(thingUri + HASH_ARTIFACT)
         .addGraph(metadata);
+
     actionAffordancesMap.values().forEach(td::addAction);
+
     addWebSub(td, "Artifact");
     wrapInResourceProfile(td, thingUri, thingUri + HASH_ARTIFACT);
+
     return serializeThingDescription(td);
   }
 

@@ -29,7 +29,7 @@ public interface RepresentationFactory {
   String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates, boolean isCartagoWorkspace);
 
 
-  String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType);
+  String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType, boolean isCartagoArtifact);
 
   /**
    * Creates an artifact representation.
@@ -46,7 +46,8 @@ public interface RepresentationFactory {
       String artifactName,
       String semanticType,
       Model metadata,
-      ListMultimap<String, Object> actionAffordances
+      ListMultimap<String, Object> actionAffordances,
+      boolean isCartagoArtifact
   );
 
   /**
@@ -69,7 +70,8 @@ public interface RepresentationFactory {
     SecurityScheme securityScheme,
     String semanticType,
     Model metadata,
-    ListMultimap<String, Object> actionAffordances
+    ListMultimap<String, Object> actionAffordances,
+    boolean isCartagoArtifact
   );
 
   String createBodyRepresentation(

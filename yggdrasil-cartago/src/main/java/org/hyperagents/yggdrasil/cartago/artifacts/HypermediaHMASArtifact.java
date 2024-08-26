@@ -68,7 +68,8 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
       this.getId().getName(),
       semanticType,
       this.metadata,
-      this.signifiers
+      this.signifiers,
+      true
     );
   }
 

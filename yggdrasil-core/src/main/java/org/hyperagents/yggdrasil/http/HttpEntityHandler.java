@@ -223,7 +223,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         var artifactRepresentation = this.representationFactory.createArtifactRepresentation(
           context.pathParam(WORKSPACE_ID_PARAM),
           actualEntityName.body(),
-          "https://purl.org/hmas/Artifact"
+          "https://purl.org/hmas/Artifact",
+          false
         );
         try {
           final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);

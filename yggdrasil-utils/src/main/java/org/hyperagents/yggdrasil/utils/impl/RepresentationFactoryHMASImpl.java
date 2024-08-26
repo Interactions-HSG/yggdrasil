@@ -355,13 +355,14 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   @Override
   public String createArtifactRepresentation(final String workspaceName, final String artifactName,
-                                             final String semanticType) {
+                                             final String semanticType, final boolean isCartagoArtifact) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
       semanticType,
       new LinkedHashModel(),
-      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new)
+      Multimaps.newListMultimap(new HashMap<>(), ArrayList::new),
+      isCartagoArtifact
     );
   }
 
@@ -371,7 +372,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     final String artifactName,
     final String semanticType,
     final Model metadata,
-    final ListMultimap<String, Object> signifiers
+    final ListMultimap<String, Object> signifiers,
+    final boolean isCartagoArtifact
   ) {
     final String baseUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
@@ -432,7 +434,11 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
             .addRequiredSemanticType(JACAMO + "DeleteArtifact")
             .build()
         ).setIRIAsString(baseUri + "#deleteArtifact")
-          .build())
+          .build());
+
+
+    if (isCartagoArtifact) {
+      resourceProfileBuilder
       .exposeSignifier(
         new Signifier.Builder(
           new ActionSpecification.Builder(focusArtifactForm)
@@ -441,6 +447,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         ).setIRIAsString(baseUri + "#focusArtifact")
           .build()
       );
+    }
 
     addWebSubSignifier(resourceProfileBuilder, "Artifact", "Artifact");
 
@@ -497,13 +504,15 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   public String createArtifactRepresentation(final String workspaceName, final String artifactName,
                                              final SecurityScheme securityScheme, final String semanticType,
                                              final Model metadata,
-                                             final ListMultimap<String, Object> actionAffordances) {
+                                             final ListMultimap<String, Object> actionAffordances,
+                                             final boolean isCartagoArtifact) {
     return createArtifactRepresentation(
       workspaceName,
       artifactName,
       semanticType,
       metadata,
-      actionAffordances
+      actionAffordances,
+      isCartagoArtifact
     );
   }
 

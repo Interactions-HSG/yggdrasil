@@ -66,7 +66,8 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
       this.securityScheme,
       semanticType,
       this.metadata,
-      this.actionAffordances
+      this.actionAffordances,
+      true
     );
   }
 
