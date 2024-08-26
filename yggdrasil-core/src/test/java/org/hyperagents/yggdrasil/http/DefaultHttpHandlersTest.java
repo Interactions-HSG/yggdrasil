@@ -326,6 +326,11 @@ public class DefaultHttpHandlersTest {
         Path.of(ClassLoader.getSystemResource("c0_artifact_turtle_input.ttl").toURI()),
         StandardCharsets.UTF_8
       );
+    final var intermediateOutput =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("c0_artifact_turtle_intermediate_output.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
     final var output =
       Files.readString(
         Path.of(ClassLoader.getSystemResource("c0_artifact_turtle_output.ttl").toURI()),
@@ -351,7 +356,7 @@ public class DefaultHttpHandlersTest {
       NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-      output,
+      intermediateOutput,
       createResourceMessage.artifactRepresentation(),
       TDS_EQUAL_MESSAGE
     );

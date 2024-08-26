@@ -198,51 +198,28 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   public void handleCreateArtifactTurtle(final RoutingContext context, final String entityRepresentation) {
-    // TODO: FORGETTING TO ADD ENTITY REPRESENTATION TO MODEL?
     final var requestUri = context.request().absoluteURI();
-    final var hint = context.request().getHeader(SLUG_HEADER);
-    final var name = hint.endsWith("/") ? hint.substring(0, hint.length() - 1) : hint;
-    final var entityIri = RdfModelUtils.createIri(requestUri + name);
-    Model entityGraph = null;
-    try {
-      entityGraph = RdfModelUtils.stringToModel(
-        entityRepresentation,
-        entityIri,
-        RDFFormat.TURTLE
-      );
-    } catch (final Exception e) {
-      LOGGER.error(e);
-      context.fail(HttpStatus.SC_BAD_REQUEST);
-    }
 
-
-    final Model finalEntityGraph = entityGraph;
-    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
-      actualEntityName -> {
-
-        var artifactRepresentation = this.representationFactory.createArtifactRepresentation(
-          context.pathParam(WORKSPACE_ID_PARAM),
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri,
+        context.request().getHeader(SLUG_HEADER)))
+      .compose(
+        actualEntityName -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+          requestUri,
           actualEntityName.body(),
-          "https://purl.org/hmas/Artifact",
-          false
-        );
-        try {
-          final var baseModel = RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE);
-          finalEntityGraph.addAll(RdfModelUtils.stringToModel(artifactRepresentation, entityIri, RDFFormat.TURTLE));
-          baseModel.getNamespaces().forEach(finalEntityGraph::setNamespace);
-          artifactRepresentation = RdfModelUtils.modelToString(finalEntityGraph, RDFFormat.TURTLE, this.httpConfig.getBaseUri());
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
-        return this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateArtifact(
-            requestUri,
+          this.representationFactory.createArtifactRepresentation(
+            context.pathParam(WORKSPACE_ID_PARAM),
             actualEntityName.body(),
-            artifactRepresentation//artifactRepresentation
+            "https://purl.org/hmas/Artifact",
+            false
           )
-          ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED, this.getHeaders(requestUri+ actualEntityName.body() + "/")));
-      }).onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
+        )).onComplete(
+          response -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+            actualEntityName.address(),
+            entityRepresentation
+          ))
+        ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
+          this.getHeaders(requestUri + actualEntityName.body()))))
+      .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
   public void handleFocus(final RoutingContext context) {
