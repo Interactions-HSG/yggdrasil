@@ -9,7 +9,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test/> a hmas:ResourceProfile;
+<http://localhost:8080/workspaces/test/artifacts/body_test> a hmas:ResourceProfile;
   hmas:exposesSignifier <http://localhost:8080/#subscribeToAgent>, [ a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;

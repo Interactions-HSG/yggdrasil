@@ -318,7 +318,7 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          "test_agent",
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox

@@ -330,7 +330,7 @@ public class CartagoVerticleHMASTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          null,
+          "test_agent",
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox
