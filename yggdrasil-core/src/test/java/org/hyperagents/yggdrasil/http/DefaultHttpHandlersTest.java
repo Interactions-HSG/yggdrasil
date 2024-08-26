@@ -360,7 +360,20 @@ public class DefaultHttpHandlersTest {
       createResourceMessage.artifactRepresentation(),
       TDS_EQUAL_MESSAGE
     );
-    message.reply(output);
+    message.reply(intermediateOutput);
+    final var secondMessage = this.storeMessageQueue.take();
+    final var updateResourceMessage = (RdfStoreMessage.UpdateEntity) secondMessage.body();
+    Assertions.assertEquals(
+      input,
+      updateResourceMessage.entityRepresentation(),
+      TDS_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+      this.helper.getUri(ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME),
+      updateResourceMessage.requestUri(),
+      URIS_EQUAL_MESSAGE
+    );
+    secondMessage.reply(output);
     request
       .onSuccess(r -> {
         Assertions.assertEquals(
