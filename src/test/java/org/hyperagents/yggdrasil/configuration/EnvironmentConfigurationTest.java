@@ -1,8 +1,5 @@
-package org.hyperagents.yggdrasil;
+package org.hyperagents.yggdrasil.configuration;
 
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -21,24 +18,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.hc.core5.http.HttpStatus;
-import org.eclipse.rdf4j.model.util.Models;
+import org.hyperagents.yggdrasil.CallbackServerVerticle;
+import org.hyperagents.yggdrasil.MainVerticle;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.hyperagents.yggdrasil.Constants.*;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class EnvironmentConfigurationTest {
-  private static final String SUB_WORKSPACE_NAME = "sub";
-  private static final String COUNTER_ARTIFACT_NAME = "c0";
-  private static final String COUNTER_ARTIFACT_URI = "http://localhost:8080/workspaces/sub/artifacts/c0/";
-  private static final int TEST_PORT = 8080;
-  private static final String TEST_HOST = "localhost";
-  private static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
-  private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
-  private static final String WORKSPACES_PATH = "/workspaces/";
-  private static final String ARTIFACTS_PATH = "/artifacts/";
-
   private List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
   private int promiseIndex;
@@ -115,7 +104,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          this.assertEqualsThingDescriptions(
+          assertEqualsThingDescriptions(
               workspaceRepresentation,
               r.bodyAsString()
           );
@@ -129,7 +118,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          this.assertEqualsThingDescriptions(
+          assertEqualsThingDescriptions(
               subWorkspaceRepresentation,
               r.bodyAsString()
           );
@@ -150,7 +139,7 @@ public class EnvironmentConfigurationTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          this.assertEqualsThingDescriptions(
+          assertEqualsThingDescriptions(
               artifactRepresentation,
               r.bodyAsString()
           );
@@ -230,7 +219,7 @@ public class EnvironmentConfigurationTest {
           OK_STATUS_MESSAGE
         );
 
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           workspaceRepresentation,
           r.bodyAsString()
         );
@@ -245,7 +234,7 @@ public class EnvironmentConfigurationTest {
           OK_STATUS_MESSAGE
         );
 
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           subWorkspaceRepresentation,
           r.bodyAsString()
         );
@@ -266,7 +255,7 @@ public class EnvironmentConfigurationTest {
           r.statusCode(),
           OK_STATUS_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           artifactRepresentation,
           r.bodyAsString()
         );
@@ -318,32 +307,5 @@ public class EnvironmentConfigurationTest {
         );
       })
       .onComplete(ctx.succeedingThenComplete());
-  }
-  private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    final var areEqual =
-      Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
-      );
-    if (!areEqual) {
-      System.out.println(actual);
-    }
-    Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
-    );
-  }
-  private void assertEqualsHMASDescriptions(final String expected, final String actual) {
-    final var areEqual = Models.isomorphic(
-      ResourceProfileGraphReader.getModelFromString(expected),
-      ResourceProfileGraphReader.getModelFromString(actual)
-    );
-    if (!areEqual) {
-      System.out.println(actual);
-    }
-    Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
-    );
   }
 }

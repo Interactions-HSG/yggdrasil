@@ -111,7 +111,7 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/w1/artifacts/c1/#artifact> .
+  hmas:contains <workspaces/w1/artifacts/c1/#artifact>, <workspaces/w1/artifacts/body_test_agent/#artifact> .
 
 <workspaces/w1> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/w1/#workspace> .
@@ -121,3 +121,5 @@
 test:testSubject test:testPredicate test:testObject .
 
 <workspaces/w1/artifacts/c1/#artifact> a hmas:Artifact .
+
+<workspaces/w1/artifacts/body_test_agent/#artifact> a hmas:Artifact, jacamo:Body .

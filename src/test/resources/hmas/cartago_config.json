@@ -12,10 +12,6 @@
       {
         "class" : "http://example.org/Counter",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
-      },
-      {
-        "class": "http://example.org/Artifact",
-        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
       }
     ],
     "workspaces" : [

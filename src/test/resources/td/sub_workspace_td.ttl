@@ -23,7 +23,7 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema, jacamo:ArtifactTemplate;
               js:propertyName "artifactClass";
-              js:enum ex:Counter, ex:Artifact
+              js:enum ex:Counter
             ], [ a js:ArraySchema, jacamo:InitParams;
               js:propertyName "initParams"
             ], [ a js:StringSchema, jacamo:ArtifactName;

@@ -1,15 +1,15 @@
-package org.hyperagents.yggdrasil;
+package org.hyperagents.yggdrasil.configuration;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import org.hyperagents.yggdrasil.CallbackServerVerticle;
+import org.hyperagents.yggdrasil.MainVerticle;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,74 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hyperagents.yggdrasil.MainVerticleTest.*;
+import static org.hyperagents.yggdrasil.Constants.*;
 
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class ConfigurationTests {
+public class BaseTests {
   private WebClient client;
 
-  private static final String REPRESENTATIONS_EQUAL_MSG = "Representations should be equal";
-
-  private static final String HTTP_CONFIG = "http-config";
-  private static final String NOTIFICATION_CONFIG = "notification-config";
-  private static final String ENVIRONMENT_CONFIG = "environment-config";
-  private static final JsonObject httpConfig = JsonObject.of(
-    "host",
-    TEST_HOST,
-    "port",
-    TEST_PORT
-  );
-  private static final JsonObject notificationConfig = JsonObject.of(
-    "enabled",
-    true);
-
-  private static final JsonObject cartagoEnv = JsonObject.of(
-    "enabled",
-    true,
-    "known-artifacts",
-    JsonArray.of(
-      JsonObject.of(
-        "class",
-        "http://example.org/Counter",
-        "template",
-        "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
-      )
-    ),
-    "workspaces",
-    JsonArray.of(
-      JsonObject.of(
-        "name",
-        "w1",
-        "metadata",
-        "src/main/resources/w1_test_metadata.ttl",
-        "artifacts",
-        JsonArray.of(
-          JsonObject.of(
-            "name",
-            "c1",
-            "class",
-            "http://example.org/Counter",
-            "metadata",
-            "src/main/resources/c1_test_metadata.ttl"
-          )
-        ),
-        "agents",
-        JsonArray.of(
-          JsonObject.of(
-            "name",
-            "kai",
-            "agent-uri",
-            "https://kaischultz.com",
-            "callback-uri",
-            "http://localhost:8081/callback",
-            "metadata",
-            "src/main/resources/a1_test_metadata.ttl"
-          )
-        )
-      )
-    )
-  );
 
   public Future<String> setUp(final Vertx vertx, final JsonObject config) {
     this.client = WebClient.create(vertx);
@@ -110,13 +48,13 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    final JsonObject config = JsonObject.of();
+    JsonObject config = JsonObject.of();
     setUp(vertx, config)
       .onComplete(x ->
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString(),REPRESENTATIONS_EQUAL_MSG);
+              assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
               ctx.completeNow();
             }
           )
@@ -131,7 +69,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    final JsonObject config = JsonObject.of(
+    JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig
     );
@@ -140,7 +78,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
+              assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
               ctx.completeNow();
             }
           )
@@ -155,7 +93,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    final JsonObject config = JsonObject.of(
+    JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -166,7 +104,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
+              assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
               ctx.completeNow();
             }
           )
@@ -181,7 +119,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    final JsonObject config = JsonObject.of(
+    JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       ENVIRONMENT_CONFIG,
@@ -192,7 +130,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
+              assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
               ctx.completeNow();
             }
           )
@@ -207,7 +145,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    final JsonObject config = JsonObject.of(
+    JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -220,7 +158,7 @@ public class ConfigurationTests {
         this.client.get(TEST_PORT, TEST_HOST, "").send()
           .onSuccess(
             r -> {
-              Assertions.assertEquals(platformRepresentation, r.bodyAsString(), REPRESENTATIONS_EQUAL_MSG);
+              assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
               ctx.completeNow();
             }
           )

@@ -1,8 +1,5 @@
 package org.hyperagents.yggdrasil;
 
-import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import com.google.common.net.HttpHeaders;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
@@ -13,7 +10,6 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.apache.hc.core5.http.HttpStatus;
-import org.eclipse.rdf4j.model.util.Models;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -27,97 +23,29 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.hyperagents.yggdrasil.Constants.*;
+
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class MainVerticleTest {
-  static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
-  static final String AGENT_ID_HEADER = "X-Agent-WebID";
-  private static final String TEST_AGENT_NAME = "test_agent";
-  private static final String AGENT_LOCALNAME_HEADER = "x-Agent-LocalName";
-  static final String HINT_HEADER = "Slug";
-  private static final String CLASS = "class";
-  private static final String TEMPLATE = "template";
-  private static final String ARTIFACT_NAME = "artifactName";
-  static final String MAIN_WORKSPACE_NAME = "test";
-  private static final String SUB_WORKSPACE_NAME = "sub";
-  private static final String COUNTER_ARTIFACT_NAME = "c0";
-  private static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
-  private static final String BASE_ARTIFACT_CLASS = "http://example.org/Artifact";
-  static final int TEST_PORT = 8080;
-  static final String TEST_HOST = "localhost";
-  private static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  private static final String CREATED_STATUS_MESSAGE = "Status code should be CREATED";
-  private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
-  private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
-  static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
-  private static final String HUB_MODE_PARAM = "hub.mode";
-  private static final String HUB_TOPIC_PARAM = "hub.topic";
-  private static final String HUB_CALLBACK_PARAM = "hub.callback";
-  private static final String HUB_MODE_SUBSCRIBE = "subscribe";
-  private static final String HUB_PATH = "/hub/";
-  static final String WORKSPACES_PATH = "/workspaces/";
-  private static final String ARTIFACTS_PATH = "/artifacts/";
-  private static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
+
 
   private List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
   private int promiseIndex;
 
-  static JsonObject TDEnv = JsonObject.of(
-    "enabled",
-    true,
-    "known-artifacts",
-    JsonArray.of(
-      JsonObject.of(
-        CLASS,
-        COUNTER_ARTIFACT_CLASS,
-        TEMPLATE,
-        "org.hyperagents.yggdrasil.artifacts.CounterTD"
-      ),
-      JsonObject.of(
-        CLASS,
-        BASE_ARTIFACT_CLASS,
-        TEMPLATE,
-        "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
-      )
-    ),
-    "ontology",
-    "td"
-  );
-
-  static JsonObject HMASEnv = JsonObject.of(
-    "enabled",
-    true,
-    "known-artifacts",
-    JsonArray.of(
-      JsonObject.of(
-        CLASS,
-        COUNTER_ARTIFACT_CLASS,
-        TEMPLATE,
-        "org.hyperagents.yggdrasil.artifacts.CounterHMAS"
-      ),
-      JsonObject.of(
-        CLASS,
-        BASE_ARTIFACT_CLASS,
-        TEMPLATE,
-        "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
-      )
-    ),
-    "ontology",
-    "hmas"
-  );
 
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
 
     final JsonObject env;
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
-    if (testName.contains("TD")) {
+    if (testName.contains(TD.toUpperCase())) {
       env = TDEnv;
-    } else if (testName.contains("HMAS")) {
+    } else if (testName.contains(HMAS.toUpperCase())) {
       env = HMASEnv;
     } else {
-      throw new RuntimeException("No Ontology Specified in Test");
+      throw new RuntimeException(ONTOLOGY_SPECIFIED_MESSAGE);
     }
 
     this.client = WebClient.create(vertx);
@@ -141,19 +69,19 @@ public class MainVerticleTest {
       .compose(r -> vertx.deployVerticle(
         new MainVerticle(),
         new DeploymentOptions().setConfig(JsonObject.of(
-          "http-config",
+          HTTP_CONFIG,
           JsonObject.of(
             "host",
             TEST_HOST,
             "port",
             TEST_PORT
           ),
-          "notification-config",
+          NOTIFICATION_CONFIG,
           JsonObject.of(
-            "enabled",
+            ENABLED,
             true
           ),
-          "environment-config",
+          ENVIRONMENT_CONFIG,
           env
         ))
       ))
@@ -253,7 +181,7 @@ public class MainVerticleTest {
           r.statusCode(),
           CREATED_STATUS_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           workspaceRepresentation,
           r.bodyAsString()
         );
@@ -265,7 +193,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           platformRepresentation,
           m.getValue()
         );
@@ -277,7 +205,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           workspaceRepresentation,
           m.getValue()
         );
@@ -312,7 +240,7 @@ public class MainVerticleTest {
           r.statusCode(),
           CREATED_STATUS_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           subWorkspaceRepresentation,
           r.bodyAsString()
         );
@@ -324,7 +252,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           workspaceWithSubWorkspaceRepresentation,
           m.getValue()
         );
@@ -336,7 +264,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           subWorkspaceRepresentation,
           m.getValue()
         );
@@ -391,9 +319,9 @@ public class MainVerticleTest {
         .sendJsonObject(JsonObject.of(
           ARTIFACT_NAME,
           COUNTER_ARTIFACT_NAME,
-          "artifactClass",
+          ARTIFACT_CLASS,
           COUNTER_ARTIFACT_CLASS,
-          "initParams",
+          INIT_PARAMS,
           JsonArray.of(5)
         )))
       .onSuccess(r -> {
@@ -402,7 +330,7 @@ public class MainVerticleTest {
           r.statusCode(),
           CREATED_STATUS_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           artifactRepresentation,
           r.bodyAsString()
         );
@@ -414,7 +342,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           subWorkspaceWithArtifactRepresentation,
           m.getValue()
         );
@@ -426,7 +354,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           artifactRepresentation,
           m.getValue()
         );
@@ -446,7 +374,7 @@ public class MainVerticleTest {
           r.statusCode(),
           OK_STATUS_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           testAgentBodyRepresentation,
           r.bodyAsString()
         );
@@ -458,7 +386,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           subWorkspaceWithArtifactAndBodyRepresentation,
           m.getValue()
         );
@@ -470,7 +398,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsThingDescriptions(
+        assertEqualsThingDescriptions(
           testAgentBodyRepresentation,
           m.getValue()
         );
@@ -497,7 +425,7 @@ public class MainVerticleTest {
         Assertions.assertEquals(
           String.valueOf(HttpStatus.SC_OK),
           r.bodyAsString(),
-          "The response body should contain the OK status code"
+          OK_STATUS_MESSAGE
         );
       })
       .compose(r -> this.callbackMessages.get(8).future())
@@ -650,7 +578,7 @@ public class MainVerticleTest {
           r.statusCode(),
           CREATED_STATUS_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           workspaceRepresentation,
           r.bodyAsString()
         );
@@ -662,7 +590,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           platformRepresentation,
           m.getValue()
         );
@@ -674,7 +602,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           workspaceRepresentation,
           m.getValue()
         );
@@ -710,7 +638,7 @@ public class MainVerticleTest {
           CREATED_STATUS_MESSAGE
         );
 
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           subWorkspaceRepresentation,
           r.bodyAsString()
         );
@@ -722,7 +650,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           workspaceWithSubWorkspaceRepresentation,
           m.getValue()
         );
@@ -734,7 +662,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           subWorkspaceRepresentation,
           m.getValue()
         );
@@ -800,7 +728,7 @@ public class MainVerticleTest {
           r.statusCode(),
           CREATED_STATUS_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           artifactRepresentation,
           r.bodyAsString()
         );
@@ -812,7 +740,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           subWorkspaceWithArtifactRepresentation,
           m.getValue()
         );
@@ -824,7 +752,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           artifactRepresentation,
           m.getValue()
         );
@@ -844,7 +772,7 @@ public class MainVerticleTest {
           r.statusCode(),
           OK_STATUS_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           testAgentBodyRepresentation,
           r.bodyAsString()
         );
@@ -856,7 +784,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           subWorkspaceWithArtifactAndBodyRepresentation,
           m.getValue()
         );
@@ -868,7 +796,7 @@ public class MainVerticleTest {
           m.getKey(),
           URIS_EQUAL_MESSAGE
         );
-        this.assertEqualsHMASDescriptions(
+        assertEqualsHMASDescriptions(
           testAgentBodyRepresentation,
           m.getValue()
         );
@@ -961,32 +889,5 @@ public class MainVerticleTest {
 
   private String getUrl(final String path) {
     return "http://" + TEST_HOST + ":" + TEST_PORT + path;
-  }
-
-  private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    final var areEqual = Models.isomorphic(
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
-    );
-    if (!areEqual) {
-      System.out.println(actual);
-    }
-    Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
-    );
-  }
-  private void assertEqualsHMASDescriptions(final String expected, final String actual) {
-    final var areEqual = Models.isomorphic(
-      ResourceProfileGraphReader.getModelFromString(expected),
-      ResourceProfileGraphReader.getModelFromString(actual)
-    );
-    if (!areEqual) {
-      System.out.println(actual);
-    }
-    Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
-    );
   }
 }
