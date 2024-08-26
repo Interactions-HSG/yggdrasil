@@ -23,9 +23,10 @@ public interface RepresentationFactory {
    *
    * @param workspaceName the name of the workspace
    * @param artifactTemplates the set of artifact templates
+   * @param isCartagoWorkspace has underlying cartago workspace instance
    * @return the workspace representation as a string
    */
-  String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates);
+  String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates, boolean isCartagoWorkspace);
 
 
   String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType);

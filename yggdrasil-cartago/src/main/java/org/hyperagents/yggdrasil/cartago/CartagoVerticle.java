@@ -314,7 +314,8 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(workspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       workspaceName,
-      registry.getArtifactTemplates()
+      registry.getArtifactTemplates(),
+      true
     );
   }
 
@@ -328,7 +329,8 @@ public class CartagoVerticle extends AbstractVerticle {
         this.httpConfig.getWorkspaceUri(subWorkspaceName));
     return this.representationFactory.createWorkspaceRepresentation(
       subWorkspaceName,
-      registry.getArtifactTemplates()
+      registry.getArtifactTemplates(),
+      true
     );
   }
 

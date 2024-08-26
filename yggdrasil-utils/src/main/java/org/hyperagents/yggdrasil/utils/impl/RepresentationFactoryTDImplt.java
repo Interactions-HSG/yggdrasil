@@ -38,11 +38,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     this.notificationConfig = notificationConfig;
   }
 
-  private void addWebSub(final ThingDescription.Builder td,final String actionName) {
-  if (notificationConfig.isEnabled()) {
-    td.addAction(websubActions("subscribeTo" + actionName));
-    td.addAction(websubActions("unsubscribeFrom" + actionName));
-  }}
+  private void addWebSub(final ThingDescription.Builder td, final String actionName) {
+    if (notificationConfig.isEnabled()) {
+      td.addAction(websubActions("subscribeTo" + actionName));
+      td.addAction(websubActions("unsubscribeFrom" + actionName));
+    }
+  }
 
   private ActionAffordance websubActions(final String actionName) {
     return new ActionAffordance.Builder(
@@ -63,7 +64,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       .build();
   }
 
-  private void wrapInResourceProfile(final ThingDescription.Builder td,final String thingIRI,final String tdIRI) {
+  private void wrapInResourceProfile(final ThingDescription.Builder td, final String thingIRI, final String tdIRI) {
     final Model graph = new LinkedHashModel();
 
     graph.add(
@@ -108,7 +109,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   @Override
   public String createWorkspaceRepresentation(
     final String workspaceName,
-    final Set<String> artifactTemplates
+    final Set<String> artifactTemplates,
+    final boolean isCartagoWorkspace
   ) {
     final var thingUri = this.httpConfig.getWorkspaceUri(workspaceName);
     final var td =
@@ -117,6 +119,17 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addThingURI(thingUri + "#workspace")
         .addSemanticType(HMAS + "Workspace")
         .addAction(
+          new ActionAffordance.Builder(
+            "createSubWorkspace",
+            new Form.Builder(thingUri)
+              .setMethodName(HttpMethod.POST.name())
+              .build()
+          ).addSemanticType(JACAMO + "CreateSubWorkspace")
+            .build()
+        );
+
+    if (isCartagoWorkspace) {
+      td.addAction(
           new ActionAffordance.Builder(
             "makeArtifact",
             new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName)).build()
@@ -172,19 +185,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                 .build()
             ).addSemanticType(JACAMO + "Focus")
             .build()
-        )
-        .addAction(
-          new ActionAffordance.Builder(
-            "createSubWorkspace",
-            new Form.Builder(thingUri)
-              .setMethodName(HttpMethod.POST.name())
-              .build()
-          ).addSemanticType(JACAMO + "CreateSubWorkspace")
-            .build()
         );
-    addWebSub(td,"Workspace");
+    }
+
+    addWebSub(td, "Workspace");
     wrapInResourceProfile(td, thingUri, thingUri + "#workspace");
-return serializeThingDescription(td);
+    return serializeThingDescription(td);
   }
 
   @Override
@@ -231,7 +237,7 @@ return serializeThingDescription(td);
       final var action = (ActionAffordance) entry.getValue();
       actionAffordancesMap.put(actionName, action);
     });
-    final var thingUri = this.httpConfig.getArtifactUri(workspaceName,artifactName);
+    final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
     final var td =
       new ThingDescription.Builder(artifactName)
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)

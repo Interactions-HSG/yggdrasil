@@ -185,7 +185,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   @Override
   public String createWorkspaceRepresentation(
     final String workspaceName,
-    final Set<String> artifactTemplates
+    final Set<String> artifactTemplates,
+    final boolean isCartagoWorkspace
   ) {
     // TODO: Add artifactTemplates to makeArtifact signifier
     final String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
@@ -333,14 +334,18 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     final var resourceProfile = new ResourceProfile.Builder(workspace)
       .setIRIAsString(baseUri.substring(0, baseUri.length() - 1))
-      .exposeSignifier(makeArtifactSignifier)
       .exposeSignifier(registerArtifactSignifier)
-      .exposeSignifier(joinWorkspaceSignifier)
-      .exposeSignifier(leaveWorkspaceSignifier)
       .exposeSignifier(createSubWorkspaceSignifier)
       .exposeSignifier(getCurrentWorkspaceSignifier)
       .exposeSignifier(updateCurrentWorkspaceSignifier)
       .exposeSignifier(deleteCurrentWorkspaceSignifier);
+
+
+    if (isCartagoWorkspace) {
+      resourceProfile.exposeSignifier(makeArtifactSignifier);
+      resourceProfile.exposeSignifier(joinWorkspaceSignifier);
+      resourceProfile.exposeSignifier(leaveWorkspaceSignifier);
+    }
 
     addWebSubSignifier(resourceProfile, "Workspace", "Workspace");
 

@@ -648,7 +648,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/Workspace"));
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
         actualEntityName -> {
-          var workspaceRepresentation = this.representationFactory.createWorkspaceRepresentation(actualEntityName.body(), new HashSet<>());
+          var workspaceRepresentation =
+            this.representationFactory.createWorkspaceRepresentation(actualEntityName.body(), new HashSet<>(),false);
           try {
             final var baseModel = RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
             entityGraph.addAll(RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
