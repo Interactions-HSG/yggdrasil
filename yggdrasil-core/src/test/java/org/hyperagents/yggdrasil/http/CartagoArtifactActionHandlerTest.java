@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.http.HttpStatus;
-import org.hyperagents.yggdrasil.cartago.CartagoDataBundle;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
@@ -28,11 +27,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -56,8 +51,6 @@ public class CartagoArtifactActionHandlerTest {
   private static final String CONTENTS_EQUAL_MESSAGE = "The contents should be equal";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
-  private static final String RESPONSE_BODY_STATUS_CODE_MESSAGE =
-      "The response body should contain the status code description";
   private static final String INTERNAL_SERVER_ERROR_STATUS_MESSAGE =
       "The status code should be INTERNAL SERVER ERROR";
 
@@ -72,7 +65,17 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
+    final String ontology;
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
+    if (testName.contains("TD")) {
+      ontology = "td";
+    } else if (testName.contains("HMAS")) {
+      ontology = "hmas";
+    } else {
+      throw new RuntimeException("Test did not speficy ontology");
+    }
+
     this.client = WebClient.create(vertx);
     this.helper = new HttpServerVerticleTestHelper(this.client, this.storeMessageQueue);
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
@@ -81,7 +84,8 @@ public class CartagoArtifactActionHandlerTest {
          .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
         "environment-config",
-        JsonObject.of("enabled", true)
+        JsonObject.of("enabled", true, "ontology",ontology
+        )
     ));
     vertx.sharedData()
          .<String, EnvironmentConfig>getLocalMap("environment-config")
@@ -112,9 +116,80 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @Test
-  @Disabled
-  public void testPostArtifactActionSucceeds(final VertxTestContext ctx)
+  public void testPostArtifactActionSucceedsHMAS(final VertxTestContext ctx)
+    throws URISyntaxException, IOException, InterruptedException {
+
+    final var artifactRepresentation = Files.readString(
+      Path.of(ClassLoader.getSystemResource("a0_adder_artifact_hmas.ttl").toURI()),
+      StandardCharsets.UTF_8
+    );
+    final var request = this.client.post(
+        TEST_PORT,
+        TEST_HOST,
+        ADDER_ARTIFACT_PATH + "/" + ADD_ACTION_NAME
+      )
+      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .sendJson(ADD_PARAMS);
+
+
+
+
+    final var storeMessage = this.storeMessageQueue.take();
+    final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
+    Assertions.assertEquals(
+      this.helper.getUri(ADDER_ARTIFACT_PATH),
+      getEntityMessage.requestUri(),
+      URIS_EQUAL_MESSAGE
+    );
+    storeMessage.reply(artifactRepresentation);
+    final var cartagoMessage = this.cartagoMessageQueue.take();
+    final var doActionMessage = (CartagoMessage.DoAction) cartagoMessage.body();
+    Assertions.assertEquals(
+      ADDER_ARTIFACT_NAME,
+      doActionMessage.artifactName(),
+      NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+      MAIN_WORKSPACE_NAME,
+      doActionMessage.workspaceName(),
+      NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+      "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
+      doActionMessage.actionName(),
+      NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+      TEST_AGENT_ID,
+      doActionMessage.agentId(),
+      NAMES_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+      Optional.of("[2,3]"),
+      Optional.of(doActionMessage.context()),
+      CONTENTS_EQUAL_MESSAGE
+    );
+    cartagoMessage.reply(String.valueOf(5));
+    request
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        Assertions.assertEquals(
+          "[5]",
+          r.bodyAsString(),
+          "The response bodies should be equal"
+        );
+      })
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testPostArtifactActionSucceedsTD(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
+
     final var artifactRepresentation = Files.readString(
         Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
         StandardCharsets.UTF_8
@@ -126,6 +201,10 @@ public class CartagoArtifactActionHandlerTest {
                                    )
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .sendJson(ADD_PARAMS);
+
+
+
+
     final var storeMessage = this.storeMessageQueue.take();
     final var getEntityMessage = (RdfStoreMessage.GetEntity) storeMessage.body();
     Assertions.assertEquals(
@@ -147,7 +226,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        ADD_ACTION_NAME,
+        "POSThttp://localhost:8080/workspaces/test/artifacts/a0/add",
         doActionMessage.actionName(),
         NAMES_EQUAL_MESSAGE
     );
@@ -157,8 +236,8 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(CartagoDataBundle.toJson(ADD_PARAMS)),
-        doActionMessage.content(),
+        Optional.of("[2,3]"),
+        Optional.of(doActionMessage.context()),
         CONTENTS_EQUAL_MESSAGE
     );
     cartagoMessage.reply(String.valueOf(5));
@@ -170,7 +249,7 @@ public class CartagoArtifactActionHandlerTest {
               OK_STATUS_MESSAGE
           );
           Assertions.assertEquals(
-              String.valueOf(5),
+              "[5]",
               r.bodyAsString(),
               "The response bodies should be equal"
           );
@@ -179,8 +258,7 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @Test
-  @Disabled
-  public void testPostArtifactActionWithoutFeedbackSucceeds(final VertxTestContext ctx)
+  public void testPostArtifactActionWithoutFeedbackSucceedsTD(final VertxTestContext ctx)
       throws InterruptedException, URISyntaxException, IOException {
     final var artifactRepresentation = Files.readString(
         Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
@@ -214,7 +292,7 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        INCREMENT_ACTION_NAME,
+        "POSThttp://localhost:8080/workspaces/test/artifacts/c0/inc",
         doActionMessage.actionName(),
         NAMES_EQUAL_MESSAGE
     );
@@ -223,12 +301,8 @@ public class CartagoArtifactActionHandlerTest {
         doActionMessage.agentId(),
         NAMES_EQUAL_MESSAGE
     );
-    Assertions.assertEquals(
-        Optional.empty(),
-        doActionMessage.content(),
-        CONTENTS_EQUAL_MESSAGE
-    );
-    cartagoMessage.reply(String.valueOf(5));
+    Assertions.assertNull(doActionMessage.context(), CONTENTS_EQUAL_MESSAGE);
+    cartagoMessage.reply(null);
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -245,7 +319,7 @@ public class CartagoArtifactActionHandlerTest {
   }
 
   @Test
-  public void testPostArtifactActionFailsWithWrongArtifactUri(final VertxTestContext ctx)
+  public void testPostArtifactActionFailsWithWrongArtifactUriTD(final VertxTestContext ctx)
       throws InterruptedException {
     final var wrongUri = MAIN_ARTIFACTS_PATH + "nonexistent";
     final var request = this.client.post(TEST_PORT, TEST_HOST, wrongUri + "/" + ADD_ACTION_NAME)
@@ -260,23 +334,17 @@ public class CartagoArtifactActionHandlerTest {
     );
     storeMessage.fail(HttpStatus.SC_NOT_FOUND, "The requested entity was not found");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
+  // TODO: Should be tested in the cartagoVerticle makes more sense
   @Test
-  public void testPostArtifactActionFailsWithWrongActionName(final VertxTestContext ctx)
+  public void testPostArtifactActionFailsWithWrongActionNameTD(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
     final var artifactRepresentation = Files.readString(
         Path.of(ClassLoader.getSystemResource("a0_adder_artifact.ttl").toURI()),
@@ -309,9 +377,10 @@ public class CartagoArtifactActionHandlerTest {
         doActionMessage.workspaceName(),
         NAMES_EQUAL_MESSAGE
     );
-    Assertions.assertNull(
-        doActionMessage.actionName(),
-        "The action name should be null"
+    Assertions.assertEquals(
+      "POSThttp://localhost:8080/workspaces/test/artifacts/a0/inc",
+      doActionMessage.actionName(),
+      NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
         TEST_AGENT_ID,
@@ -319,29 +388,22 @@ public class CartagoArtifactActionHandlerTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.empty(),
-        doActionMessage.content(),
+        "[2,3]",
+        doActionMessage.context(),
         CONTENTS_EQUAL_MESSAGE
     );
     cartagoMessage.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error has occurred.");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              "Internal Server Error",
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
-  public void testPostArtifactActionFailsWithoutWebId(final VertxTestContext ctx) {
+  public void testPostArtifactActionFailsWithoutWebIdTD(final VertxTestContext ctx) {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, COUNTER_ARTIFACT_PATH + "/" + INCREMENT_ACTION_NAME)

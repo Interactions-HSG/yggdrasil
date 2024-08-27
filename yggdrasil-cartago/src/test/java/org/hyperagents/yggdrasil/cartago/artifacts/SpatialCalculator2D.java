@@ -1,11 +1,10 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
 import ch.unisg.ics.interactions.wot.td.ThingDescription.TDFormat;
 import ch.unisg.ics.interactions.wot.td.clients.TDHttpRequest;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.IntegerSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
@@ -14,7 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
-public class SpatialCalculator2D extends HypermediaArtifact {
+public class SpatialCalculator2D extends HypermediaHMASArtifact {
   private static final String PREFIX = "http://example.org/";
   private static final String SET_BASE_ACTION = PREFIX + "SetBase";
 
@@ -78,19 +77,23 @@ public class SpatialCalculator2D extends HypermediaArtifact {
     return deg >= 0.0 ? deg : 360.0 + deg;
   }
 
-  @Override
-  protected void registerInteractionAffordances() {
-    // Register one action affordance with an input schema
-    this.registerActionAffordance(
-        "http://example.org#MoveTo",
-        "moveTo",
-        "/moveTo",
-        new ArraySchema.Builder()
+  /*
+  TODO: Set correct input
+          new ArraySchema.Builder()
                        .addSemanticType(PREFIX + "2DCoordinates")
                        .addItem(new IntegerSchema.Builder().build())
                        .addMinItems(2)
                        .addMaxItems(2)
                        .build()
+   */
+  @Override
+  protected void registerInteractionAffordances() {
+    // Register one action affordance with an input schema
+    this.registerSignifier(
+        "http://example.org#MoveTo",
+        "moveTo",
+        "/moveTo",
+      new ValueSpecification.Builder().build()
     );
   }
 }

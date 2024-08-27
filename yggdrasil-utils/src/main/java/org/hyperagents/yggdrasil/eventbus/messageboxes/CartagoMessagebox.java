@@ -5,14 +5,18 @@ import io.vertx.core.Promise;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.Message;
 import java.util.function.Consumer;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.codecs.CartagoMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 
+/**
+ * Represents a message box for Cartago messages.
+ */
 public class CartagoMessagebox implements Messagebox<CartagoMessage> {
-  private static final Logger LOGGER = Logger.getLogger(CartagoMessagebox.class);
+  private static final Logger LOGGER = LogManager.getLogger(CartagoMessagebox.class);
 
   private final EventBus eventBus;
   private final EnvironmentConfig config;
@@ -73,6 +77,13 @@ public class CartagoMessagebox implements Messagebox<CartagoMessage> {
             CartagoMessage.DoAction.class,
             new CartagoMessageMarshaller()
           )
+      );
+      this.eventBus.registerDefaultCodec(
+        CartagoMessage.DeleteEntity.class,
+        new GenericMessageCodec<>(
+          CartagoMessage.DeleteEntity.class,
+          new CartagoMessageMarshaller()
+        )
       );
     } else {
       LOGGER.warn("Dynamic environments are not enabled, message exchange will not be initialized");

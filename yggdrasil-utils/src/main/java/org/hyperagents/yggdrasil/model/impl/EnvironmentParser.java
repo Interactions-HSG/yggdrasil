@@ -13,7 +13,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.model.Artifact;
 import org.hyperagents.yggdrasil.model.Environment;
 import org.hyperagents.yggdrasil.model.FocusingAgent;
@@ -22,11 +24,24 @@ import org.hyperagents.yggdrasil.model.KnownArtifact;
 import org.hyperagents.yggdrasil.model.Workspace;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
+/**
+ * This class is responsible for parsing the environment configuration
+ * and creating an Environment object.
+ * The parse() method takes a JsonObject as input and returns the parsed Environment.
+ * The environment configuration should contain information about known artifacts,
+ * workspaces, and their properties.
+ * It uses JsonObjectUtils utility methods to extract the required information from the JsonObject.
+ * The parsed Environment object contains a set of known artifacts
+ * and a list of workspaces, each with its own properties.
+ */
 public final class EnvironmentParser {
-  private static final Logger LOGGER = Logger.getLogger(EnvironmentParser.class);
+  private static final Logger LOGGER = LogManager.getLogger(EnvironmentParser.class);
 
   private EnvironmentParser() {}
 
+  /**
+   * parses the environment given a config.
+   */
   public static Environment parse(final JsonObject config) {
     final var envConfig =
         JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);

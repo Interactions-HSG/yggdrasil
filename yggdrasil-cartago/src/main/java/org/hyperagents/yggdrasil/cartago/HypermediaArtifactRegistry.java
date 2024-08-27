@@ -1,17 +1,16 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.SetMultimap;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.vertx.core.json.JsonObject;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.UnaryOperator;
+
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 
 /**
@@ -20,7 +19,8 @@ import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
  */
 @SuppressWarnings("PMD.ReplaceHashtableWithMap")
 public final class HypermediaArtifactRegistry {
-  private static HypermediaArtifactRegistry REGISTRY;
+  // Maps the canonical name of a CArtAgO artifact class to the corresponding HypermediaArtifact
+  private final Map<String, HypermediaArtifact> artifacts;
 
   // Maps an artifact type IRI to the canonical names of the corresponding CArtAgO artifact class
   // E.g.: "https://ci.mines-stetienne.fr/kg/ontology#PhantomX_3D" ->
@@ -35,51 +35,43 @@ public final class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactApiKeys;
   private final Map<String, String> artifactNames;
-  private final SetMultimap<String, String> feedbackActions;
   private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
 
-  private HypermediaArtifactRegistry() {
-    this.artifactSemanticTypes = new Hashtable<>();
+  public HypermediaArtifactRegistry() {
+    this.artifactSemanticTypes = new ConcurrentHashMap<>();
+    this.artifacts = Collections.synchronizedMap(new HashMap<>());
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
     this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
     this.artifactNames = Collections.synchronizedMap(new HashMap<>());
-    this.feedbackActions =
-      Multimaps.synchronizedSetMultimap(Multimaps.newSetMultimap(new HashMap<>(), HashSet::new));
     this.feedbackResponseConverters = Collections.synchronizedMap(new HashMap<>());
     this.counter = 0;
   }
 
-  @SuppressFBWarnings({"MS_EXPOSE_REP"})
-  public static synchronized HypermediaArtifactRegistry getInstance() {
-    if (REGISTRY == null) {
-      REGISTRY = new HypermediaArtifactRegistry();
-    }
-    return REGISTRY;
-  }
-
   public void register(final HypermediaArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
-    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription());
-    artifact.getActionAffordances()
-            .entrySet()
-            .stream()
-            .flatMap(actionEntry -> actionEntry.getValue()
-                                               .stream()
-                                               .map(action -> Map.entry(
-                                                 actionEntry.getKey(),
-                                                 action
-                                               )))
-            .forEach(action -> action.getValue().getFirstForm().ifPresent(value -> {
-              if (value.getMethodName().isPresent()) {
-                this.artifactActionRouter.put(
-                    value.getMethodName().get() + value.getTarget(),
-                    action.getKey()
-                );
-              }
-            }));
-    this.feedbackActions.putAll(artifactTemplate, artifact.getFeedbackActions());
+    this.artifacts.put(artifactTemplate, artifact);
+    this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription(
+      this
+        .getArtifactSemanticType(artifact.getClass().getCanonicalName())
+        .orElseThrow(
+          () -> new RuntimeException("Artifact was not registered!")
+        )));
+    artifact.getArtifactActions()
+      .entrySet()
+      .stream()
+      .flatMap(signifierEntry -> signifierEntry.getValue()
+        .stream()
+        .map(signifier -> Map.entry(
+          signifierEntry.getKey(),
+          signifier
+        )))
+      .forEach(signifier -> artifact.getMethodNameAndTarget(signifier.getValue())
+        .ifPresent(s -> this.artifactActionRouter.put(
+          s,
+          signifier.getKey()
+        )));
     this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
   }
 
@@ -89,9 +81,9 @@ public final class HypermediaArtifactRegistry {
 
   public void addArtifactTemplates(final JsonObject artifactTemplates) {
     Optional.ofNullable(artifactTemplates)
-            .ifPresent(t -> t.forEach(
-              e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
-            ));
+      .ifPresent(t -> t.forEach(
+        e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
+      ));
   }
 
   public Set<String> getArtifactTemplates() {
@@ -100,11 +92,11 @@ public final class HypermediaArtifactRegistry {
 
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
-               .entrySet()
-               .stream()
-               .filter(e -> e.getValue().equals(artifactTemplate))
-               .map(Map.Entry::getKey)
-               .findFirst();
+      .entrySet()
+      .stream()
+      .filter(e -> e.getValue().equals(artifactTemplate))
+      .map(Map.Entry::getKey)
+      .findFirst();
   }
 
   public Optional<String> getArtifactTemplate(final String artifactSemanticType) {
@@ -115,8 +107,8 @@ public final class HypermediaArtifactRegistry {
     return this.artifactTemplateDescriptions.get(artifactName);
   }
 
-  public String getActionName(final String method, final String requestUri) {
-    return this.artifactActionRouter.get(method + requestUri);
+  public String getActionName(final String method) {
+    return this.artifactActionRouter.get(method);
   }
 
   public void setApiKeyForArtifact(final String artifactId, final String apiKey) {
@@ -140,18 +132,18 @@ public final class HypermediaArtifactRegistry {
     return "hypermedia_body_" + this.counter;
   }
 
-  public boolean hasFeedbackParam(final String artifactName, final String action) {
-    return this.feedbackActions.get(artifactName).contains(action);
-  }
-
   public boolean hasFeedbackResponseConverter(final String artifactName, final String action) {
     return this.feedbackResponseConverters.get(artifactName).containsKey(action);
   }
 
   public UnaryOperator<Object> getFeedbackResponseConverter(
-      final String artifactName,
-      final String action
+    final String artifactName,
+    final String action
   ) {
     return this.feedbackResponseConverters.get(artifactName).get(action);
+  }
+
+  public HypermediaArtifact getArtifact(final String artifactName) {
+    return this.artifacts.get(artifactName);
   }
 }

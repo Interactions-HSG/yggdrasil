@@ -41,6 +41,7 @@ dependencies {
   implementation(libs.vertx.web.client)
 
   implementation(libs.wot.td.java)
+  implementation(libs.hmas.java)
 
   implementation(libs.httpcomponents.core5)
 
@@ -63,6 +64,8 @@ dependencies {
   testImplementation(platform(libs.junit.platform))
   testImplementation(libs.junit.jupiter)
   testImplementation(libs.vertx.junit5)
+  testImplementation(libs.xmlunit.core)
+  testImplementation(libs.xmlunit.matchers)
 
   testCompileOnly(libs.spotbugs.annotations)
 }

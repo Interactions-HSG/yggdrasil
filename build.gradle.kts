@@ -66,9 +66,11 @@ dependencies {
   testImplementation(libs.vertx.web)
   testImplementation(libs.vertx.web.client)
   testImplementation(libs.httpcomponents.core5)
-  testImplementation(libs.wot.td.java)
   testImplementation(libs.rdf4j.model)
-  testImplementation(files("libs/cartago-3.1.jar"))
+  testImplementation(libs.wot.td.java)
+  testImplementation(libs.hmas.java)
+  testImplementation(libs.gson)
+  testImplementation(files("${rootProject.projectDir}/libs/cartago-3.2-SNAPSHOT-all.jar"))
 
   testCompileOnly(libs.spotbugs.annotations)
 }

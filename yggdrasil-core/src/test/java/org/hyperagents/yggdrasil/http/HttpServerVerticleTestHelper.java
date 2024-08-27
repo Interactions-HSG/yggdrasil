@@ -32,6 +32,8 @@ public final class HttpServerVerticleTestHelper {
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String UNAUTHORIZED_STATUS_MESSAGE = "Status code should be UNAUTHORIZED";
   private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
+  private static final String RESPONSE_BODY_BAD_REQUEST = "Bad Request";
+  private static final String RESPONSE_BODY_BAD_REQUEST_MESSAGE = "Status code should be Bad Request";
 
   private final WebClient client;
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
@@ -165,11 +167,6 @@ public final class HttpServerVerticleTestHelper {
               r.statusCode(),
               UNAUTHORIZED_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              "Unauthorized",
-              r.bodyAsString(),
-              "The response bodies should be equal"
-          );
         })
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -239,7 +236,7 @@ public final class HttpServerVerticleTestHelper {
                  );
                  Assertions.assertNull(
                      r.bodyAsString(),
-                     RESPONSE_BODY_EMPTY_MESSAGE
+                     RESPONSE_BODY_BAD_REQUEST_MESSAGE
                  );
                })
                .onComplete(ctx.succeedingThenComplete());

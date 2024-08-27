@@ -1,0 +1,27 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "environment-config" : {
+    "workspaces" : [
+      {
+        "name" : "sub",
+        "parent-name" : "test",
+        "artifacts" : [
+          {
+            "name" : "c0",
+            "representation" : "src/test/resources/hmas/c0_counter_artifact.ttl"
+          }
+        ],
+        "representation" : "src/test/resources/hmas/sub_workspace_td.ttl"
+      },
+      {
+        "name" : "test",
+        "representation" : "src/test/resources/hmas/test_workspace_td.ttl"
+      }
+    ],
+    "ontology" : "hmas"
+  }
+}

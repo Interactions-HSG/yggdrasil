@@ -30,15 +30,20 @@ java {
   targetCompatibility = JavaVersion.VERSION_21
 }
 
+
 dependencies {
   implementation(libs.vertx.core)
 
   implementation(libs.rdf4j.model)
-  implementation(libs.rdf4j.rio.turtle)
   implementation(libs.rdf4j.rio.jsonld)
+  implementation(libs.rdf4j.rio.turtle)
 
   implementation(libs.gson)
   implementation(libs.wot.td.java)
+
+  implementation(libs.log4j.core)
+  implementation(libs.log4j.api)
+  implementation(libs.hmas.java)
 
   compileOnly(libs.spotbugs.annotations)
   pmd(libs.pmd.java)

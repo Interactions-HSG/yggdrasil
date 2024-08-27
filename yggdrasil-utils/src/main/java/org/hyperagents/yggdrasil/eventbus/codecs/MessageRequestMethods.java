@@ -5,6 +5,7 @@ import java.util.Optional;
 
 enum MessageRequestMethods {
   GET_ENTITY("getEntity"),
+  GET_ENTITY_IRI("getEntityIri"),
   UPDATE_ENTITY("updateEntity"),
   PATCH_ENTITY("patchEntity"),
   DELETE_ENTITY("deleteEntity"),

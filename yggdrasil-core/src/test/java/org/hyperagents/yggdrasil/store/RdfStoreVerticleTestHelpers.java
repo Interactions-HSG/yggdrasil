@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.store;
 
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.eventbus.ReplyException;
@@ -15,14 +16,29 @@ public final class RdfStoreVerticleTestHelpers {
   private RdfStoreVerticleTestHelpers() {}
 
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
+    final var theSame =
+      Models.isomorphic(
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+      );
+    if(!theSame) {
+      System.out.println("===============================");
+      System.out.println(actual);
+      System.out.println("===============================");
+      System.out.println(expected);
+      System.out.println("===============================");
+    }
+    Assertions.assertTrue(
+        theSame,
+        REPRESENTATIONS_EQUAL_MESSAGE
+    );
+  }
+
+  public static void assertEqualsResourceProfiles(final String expected, final String actual) {
     Assertions.assertTrue(
         Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected)
-                       .getGraph()
-                       .orElseThrow(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual)
-                       .getGraph()
-                       .orElseThrow()
+          ResourceProfileGraphReader.readFromString(expected).getGraph().orElseThrow(),
+          ResourceProfileGraphReader.readFromString(actual).getGraph().orElseThrow()
         ),
         REPRESENTATIONS_EQUAL_MESSAGE
     );

@@ -10,8 +10,16 @@ import com.google.gson.JsonSerializer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
 import java.util.Optional;
+
+
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
+/**
+ * This class is responsible for marshalling and unmarshalling
+ * CartagoMessage objects to and from JSON.
+ * It implements the JsonSerializer and JsonDeserializer interfaces
+ * to customize the serialization and deserialization process.
+ */
 public class CartagoMessageMarshaller
     implements JsonSerializer<CartagoMessage>, JsonDeserializer<CartagoMessage> {
   @Override
@@ -38,6 +46,7 @@ public class CartagoMessageMarshaller
       );
       case JOIN_WORKSPACE -> new CartagoMessage.JoinWorkspace(
         jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
+        jsonObject.get("hint").getAsString(),
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString()
       );
       case LEAVE_WORKSPACE -> new CartagoMessage.LeaveWorkspace(
@@ -60,9 +69,15 @@ public class CartagoMessageMarshaller
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ACTION_NAME.getName()).getAsString(),
-        jsonObject.get(MessageFields.ACTION_CONTENT.getName()).isJsonNull()
-        ? Optional.empty()
-        : Optional.of(jsonObject.get(MessageFields.ACTION_CONTENT.getName()).getAsString())
+        jsonObject.get(MessageFields.API_KEY.getName()).isJsonNull()
+          ? Optional.empty()
+          : Optional.of(jsonObject.get(MessageFields.API_KEY.getName()).getAsString()),
+        jsonObject.get(MessageFields.STORE_RESPONSE.getName()).getAsString(),
+        jsonObject.get(MessageFields.CONTEXT.getName()).getAsString()
+      );
+      case DELETE_ENTITY -> new CartagoMessage.DeleteEntity(
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
       );
       default -> throw new JsonParseException("The request method is not valid");
     };
@@ -130,7 +145,19 @@ public class CartagoMessageMarshaller
         json.addProperty(MessageFields.AGENT_ID.getName(), m.agentId());
         json.addProperty(MessageFields.ARTIFACT_NAME.getName(), m.artifactName());
         json.addProperty(MessageFields.ACTION_NAME.getName(), m.actionName());
-        json.addProperty(MessageFields.ACTION_CONTENT.getName(), m.content().orElse(null));
+        json.addProperty(
+          MessageFields.API_KEY.getName(),
+          m.apiKey().orElse(null)
+        );
+        json.addProperty(MessageFields.STORE_RESPONSE.getName(), m.storeResponse());
+        json.addProperty(MessageFields.CONTEXT.getName(), m.context());
+      }
+      case CartagoMessage.DeleteEntity m -> {
+        json.addProperty(
+          MessageFields.REQUEST_METHOD.getName(),
+          MessageRequestMethods.DELETE_ENTITY.getName()
+        );
+        json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
       }
     }
     return json;

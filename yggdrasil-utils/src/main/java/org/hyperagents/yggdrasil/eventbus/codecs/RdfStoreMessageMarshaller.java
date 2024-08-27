@@ -14,6 +14,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
+/**
+ * This class is responsible for serializing and deserializing
+ * RdfStoreMessage objects to and from JSON.
+ */
 public class RdfStoreMessageMarshaller
     implements JsonSerializer<RdfStoreMessage>, JsonDeserializer<RdfStoreMessage> {
 
@@ -65,6 +69,15 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.GET_ENTITY.getName()
         );
       }
+      case RdfStoreMessage.GetEntityIri(String requestUri, String slug) -> {
+        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
+        json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), slug);
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.GET_ENTITY_IRI.getName()
+        );
+      }
+
       case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
         json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
@@ -98,6 +111,7 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.CREATE_BODY.getName()
         );
         json.addProperty(MessageFields.WORKSPACE_NAME.getName(), m.workspaceName());
+        json.addProperty(MessageFields.AGENT_ID.getName(), m.agentID());
         json.addProperty(MessageFields.AGENT_NAME.getName(), m.agentName());
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.bodyRepresentation());
       }
@@ -123,6 +137,10 @@ public class RdfStoreMessageMarshaller
       case GET_ENTITY -> new RdfStoreMessage.GetEntity(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
       );
+      case GET_ENTITY_IRI -> new RdfStoreMessage.GetEntityIri(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.ENTITY_URI_HINT.getName()).getAsString()
+      );
       case CREATE_ARTIFACT -> new RdfStoreMessage.CreateArtifact(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_URI_HINT.getName()).getAsString(),
@@ -138,6 +156,7 @@ public class RdfStoreMessageMarshaller
       );
       case CREATE_BODY -> new RdfStoreMessage.CreateBody(
         jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+        jsonObject.get(MessageFields.AGENT_ID.getName()).getAsString(),
         jsonObject.get(MessageFields.AGENT_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );

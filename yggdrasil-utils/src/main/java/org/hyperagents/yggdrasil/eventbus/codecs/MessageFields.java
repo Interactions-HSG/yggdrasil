@@ -6,6 +6,7 @@ enum MessageFields {
   ENTITY_URI_HINT("slug"),
   AGENT_ID("agentID"),
   AGENT_NAME("agentName"),
+  API_KEY("apiKey"),
   WORKSPACE_NAME("workspaceName"),
   SUB_WORKSPACE_NAME("subWorkspaceName"),
   ARTIFACT_NAME("artifactName"),
@@ -18,7 +19,10 @@ enum MessageFields {
   NAMED_GRAPH_URIS("namedGraphUris"),
   DEFAULT_GRAPH_URIS("defaultGraphUris"),
   CONTENT_TYPE("contentType"),
-  CALLBACK_IRI("callbackIri");
+  CALLBACK_IRI("callbackIri"),
+  STORE_RESPONSE("storeResponse"),
+  CONTEXT("context"),;
+
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.fields.";
 

@@ -8,6 +8,11 @@ import org.hyperagents.yggdrasil.eventbus.codecs.GenericMessageCodec;
 import org.hyperagents.yggdrasil.eventbus.codecs.RdfStoreMessageMarshaller;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 
+/**
+ * This class represents a message box for RdfStoreMessage objects.
+ * It implements the Messagebox interface and provides methods for initializing the message box,
+ * sending messages, and receiving messages.
+ */
 public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
   private final EventBus eventBus;
 
@@ -20,6 +25,13 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
     this.eventBus.registerDefaultCodec(
         RdfStoreMessage.GetEntity.class,
         new GenericMessageCodec<>(RdfStoreMessage.GetEntity.class, new RdfStoreMessageMarshaller())
+    );
+    this.eventBus.registerDefaultCodec(
+      RdfStoreMessage.GetEntityIri.class,
+      new GenericMessageCodec<>(
+        RdfStoreMessage.GetEntityIri.class,
+        new RdfStoreMessageMarshaller()
+      )
     );
     this.eventBus.registerDefaultCodec(
         RdfStoreMessage.CreateBody.class,

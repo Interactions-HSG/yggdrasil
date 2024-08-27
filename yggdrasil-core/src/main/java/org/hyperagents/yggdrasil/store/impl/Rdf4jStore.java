@@ -3,10 +3,13 @@ package org.hyperagents.yggdrasil.store.impl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.MalformedQueryException;
@@ -43,13 +46,18 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public boolean containsEntityModel(final IRI entityIri) throws IOException {
+    // TODO: MAKE THIS HANDLING BETTER
+    final String entityIriString = entityIri.toString();
+    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
+    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
     try {
       return this.connection.hasStatement(
         null,
         null,
         null,
         false,
-        entityIri
+        fixedEntityIri
       );
     } catch (final RepositoryException e) {
       throw new IOException(e);
@@ -58,11 +66,27 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
+    // TODO: MAKE THIS HANDLING BETTER
+    final String entityIriString = entityIri.toString();
+    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
+    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
     try {
-      return Optional.of(QueryResults.asModel(
-                         this.connection.getStatements(null, null, null, entityIri)
-                     ))
-                     .filter(r -> !r.isEmpty());
+      final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, fixedEntityIri));
+      final var connectionNamespaces = new HashMap<String, Namespace>();
+
+      for (final Namespace namespace : this.connection.getNamespaces()) {
+        connectionNamespaces.put(namespace.getName(),namespace);
+      }
+
+      final var modelIris = RdfModelUtils.collectAllIriNamespaces(model);
+
+      for (final String iri : modelIris) {
+        if (connectionNamespaces.containsKey(iri)) {
+          model.setNamespace(connectionNamespaces.get(iri));
+        }
+      }
+      return Optional.of(model).filter(r -> !r.isEmpty());
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
@@ -70,8 +94,14 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void addEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
+    // TODO: MAKE THIS HANDLING BETTER
+    final String entityIriString = entityIri.toString();
+    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
+    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
     try {
-      this.connection.add(entityModel, entityIri);
+      this.connection.add(entityModel, fixedEntityIri);
+      entityModel.getNamespaces().forEach(namespace -> this.connection.setNamespace(namespace.getPrefix(), namespace.getName()));
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
@@ -79,14 +109,24 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void replaceEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
-    this.removeEntityModel(entityIri);
-    this.addEntityModel(entityIri, entityModel);
+    // TODO: MAKE THIS HANDLING BETTER
+    final String entityIriString = entityIri.toString();
+    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
+    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
+    this.removeEntityModel(fixedEntityIri);
+    this.addEntityModel(fixedEntityIri, entityModel);
   }
 
   @Override
   public void removeEntityModel(final IRI entityIri) throws IOException {
+    // TODO: MAKE THIS HANDLING BETTER
+    final String entityIriString = entityIri.toString();
+    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
+    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+
     try {
-      this.connection.clear(entityIri);
+      this.connection.clear(fixedEntityIri);
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
@@ -129,35 +169,35 @@ public class Rdf4jStore implements RdfStore {
         originalQueryDataset.getNamedGraphs().forEach(queryDataset::addNamedGraph);
       }
       preparedQuery.setDataset(queryDataset);
-      if (preparedQuery instanceof TupleQuery preparedTupleQuery) {
-        preparedTupleQuery.evaluate(
-            responseContentType.equals("application/sparql-results+xml")
-            ? new SPARQLResultsXMLWriter(out)
-            : (responseContentType.equals("application/sparql-results+json")
-               ? new SPARQLResultsJSONWriter(out)
-               : (responseContentType.equals("text/tab-separated-values")
-                  ? new SPARQLResultsTSVWriter(out)
-                  : new SPARQLResultsCSVWriter(out)
-                 )
-              )
-        );
-      } else if (preparedQuery instanceof BooleanQuery preparedBooleanQuery) {
-        (
-          responseContentType.equals("application/sparql-results+xml")
-          ? new SPARQLBooleanXMLWriter(out)
-          : (responseContentType.equals("application/sparql-results+json")
-             ? new SPARQLBooleanJSONWriter(out)
-             : new BooleanTextWriter(out)
+        switch (preparedQuery) {
+            case TupleQuery preparedTupleQuery -> preparedTupleQuery.evaluate(
+                    responseContentType.equals("application/sparql-results+xml")
+                            ? new SPARQLResultsXMLWriter(out)
+                            : (responseContentType.equals("application/sparql-results+json")
+                            ? new SPARQLResultsJSONWriter(out)
+                            : (responseContentType.equals("text/tab-separated-values")
+                            ? new SPARQLResultsTSVWriter(out)
+                            : new SPARQLResultsCSVWriter(out)
+                    )
+                    )
+            );
+            case BooleanQuery preparedBooleanQuery -> (
+                    responseContentType.equals("application/sparql-results+xml")
+                            ? new SPARQLBooleanXMLWriter(out)
+                            : (responseContentType.equals("application/sparql-results+json")
+                            ? new SPARQLBooleanJSONWriter(out)
+                            : new BooleanTextWriter(out)
+                    )
             )
-        )
-        .handleBoolean(preparedBooleanQuery.evaluate());
-      } else if (preparedQuery instanceof GraphQuery preparedGraphQuery) {
-        out.writeBytes(
-            RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
-                                        RDFFormat.TURTLE)
+                    .handleBoolean(preparedBooleanQuery.evaluate());
+            case GraphQuery preparedGraphQuery -> out.writeBytes(
+                 RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
+                                 RDFFormat.TURTLE,null)
                          .getBytes(StandardCharsets.UTF_8)
-        );
-      }
+         );
+            default -> {
+            }
+        }
       return out.toString(StandardCharsets.UTF_8);
     } catch (final MalformedQueryException e) {
       throw new IllegalArgumentException(e);

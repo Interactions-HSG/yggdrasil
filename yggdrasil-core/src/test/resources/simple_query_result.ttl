@@ -1,80 +1,78 @@
-@prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
 
-<http://localhost:8080/workspaces/sub> a hmas:Workspace, td:Thing;
-  td:title "sub";
-  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+<http://localhost:8080/workspaces/sub/#workspace> a <https://purl.org/hmas/Workspace>,
+    <https://www.w3.org/2019/wot/td#Thing>;
+  <https://www.w3.org/2019/wot/td#title> "sub";
+  <https://www.w3.org/2019/wot/td#hasSecurityConfiguration> [ a <https://www.w3.org/2019/wot/security#NoSecurityScheme>
     ];
-  td:hasActionAffordance [ a td:ActionAffordance;
-      td:name "makeArtifact";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+  <https://www.w3.org/2019/wot/td#hasActionAffordance> [ a <https://www.w3.org/2019/wot/td#ActionAffordance>,
+        <https://purl.org/hmas/jacamo/MakeArtifact>;
+      <https://www.w3.org/2019/wot/td#name> "makeArtifact";
+      <https://www.w3.org/2019/wot/td#hasForm> [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          <https://www.w3.org/2019/wot/hypermedia#hasTarget> <http://localhost:8080/workspaces/sub/artifacts/>;
+          <https://www.w3.org/2019/wot/hypermedia#forContentType> "application/json";
+          <https://www.w3.org/2019/wot/hypermedia#hasOperationType> <https://www.w3.org/2019/wot/td#invokeAction>
         ];
-      td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
-              js:propertyName "artifactClass";
-              js:enum <http://example.org/Adder>, <http://example.org/Counter>
-            ], [ a js:ArraySchema;
-              js:propertyName "initParams"
-            ], [ a js:StringSchema;
-              js:propertyName "artifactName"
+      <https://www.w3.org/2019/wot/td#hasInputSchema> [ a <https://www.w3.org/2019/wot/json-schema#ObjectSchema>;
+          <https://www.w3.org/2019/wot/json-schema#properties> [ a <https://www.w3.org/2019/wot/json-schema#StringSchema>,
+                <https://purl.org/hmas/jacamo/ArtifactTemplate>;
+              <https://www.w3.org/2019/wot/json-schema#propertyName> "artifactClass";
+              <https://www.w3.org/2019/wot/json-schema#enum> <http://example.org/Adder>, <http://example.org/Counter>,
+                <http://example.org/Math>
+            ], [ a <https://www.w3.org/2019/wot/json-schema#ArraySchema>, <https://purl.org/hmas/jacamo/InitParams>;
+              <https://www.w3.org/2019/wot/json-schema#propertyName> "initParams"
+            ], [ a <https://www.w3.org/2019/wot/json-schema#StringSchema>, <https://purl.org/hmas/jacamo/ArtifactName>;
+              <https://www.w3.org/2019/wot/json-schema#propertyName> "artifactName"
             ];
-          js:required "artifactClass", "artifactName"
+          <https://www.w3.org/2019/wot/json-schema#required> "artifactClass", "artifactName"
         ]
-    ], [ a td:ActionAffordance;
-      td:name "joinWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a <https://www.w3.org/2019/wot/td#ActionAffordance>, <https://purl.org/hmas/jacamo/JoinWorkspace>;
+      <https://www.w3.org/2019/wot/td#name> "joinWorkspace";
+      <https://www.w3.org/2019/wot/td#hasForm> [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          <https://www.w3.org/2019/wot/hypermedia#hasTarget> <http://localhost:8080/workspaces/sub/join>;
+          <https://www.w3.org/2019/wot/hypermedia#forContentType> "application/json";
+          <https://www.w3.org/2019/wot/hypermedia#hasOperationType> <https://www.w3.org/2019/wot/td#invokeAction>
         ]
-    ], [ a td:ActionAffordance;
-      td:name "quitWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a <https://www.w3.org/2019/wot/td#ActionAffordance>, <https://purl.org/hmas/jacamo/QuitWorkspace>;
+      <https://www.w3.org/2019/wot/td#name> "quitWorkspace";
+      <https://www.w3.org/2019/wot/td#hasForm> [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          <https://www.w3.org/2019/wot/hypermedia#hasTarget> <http://localhost:8080/workspaces/sub/leave>;
+          <https://www.w3.org/2019/wot/hypermedia#forContentType> "application/json";
+          <https://www.w3.org/2019/wot/hypermedia#hasOperationType> <https://www.w3.org/2019/wot/td#invokeAction>
         ]
-    ], [ a td:ActionAffordance;
-      td:name "focus";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/focus>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a <https://www.w3.org/2019/wot/td#ActionAffordance>, <https://purl.org/hmas/jacamo/Focus>;
+      <https://www.w3.org/2019/wot/td#name> "focus";
+      <https://www.w3.org/2019/wot/td#hasForm> [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          <https://www.w3.org/2019/wot/hypermedia#hasTarget> <http://localhost:8080/workspaces/sub/focus>;
+          <https://www.w3.org/2019/wot/hypermedia#forContentType> "application/json";
+          <https://www.w3.org/2019/wot/hypermedia#hasOperationType> <https://www.w3.org/2019/wot/td#invokeAction>
         ];
-      td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
-              js:propertyName "artifactName"
-            ], [ a js:StringSchema;
-              js:propertyName "callbackIri"
+      <https://www.w3.org/2019/wot/td#hasInputSchema> [ a <https://www.w3.org/2019/wot/json-schema#ObjectSchema>;
+          <https://www.w3.org/2019/wot/json-schema#properties> [ a <https://www.w3.org/2019/wot/json-schema#StringSchema>;
+              <https://www.w3.org/2019/wot/json-schema#propertyName> "artifactName"
+            ], [ a <https://www.w3.org/2019/wot/json-schema#StringSchema>;
+              <https://www.w3.org/2019/wot/json-schema#propertyName> "callbackIri"
             ];
-          js:required "artifactName", "callbackIri"
+          <https://www.w3.org/2019/wot/json-schema#required> "artifactName", "callbackIri"
         ]
-    ], [ a td:ActionAffordance;
-      td:name "createSubWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
+    ], [ a <https://www.w3.org/2019/wot/td#ActionAffordance>, <https://purl.org/hmas/jacamo/CreateSubWorkspace>;
+      <https://www.w3.org/2019/wot/td#name> "createSubWorkspace";
+      <https://www.w3.org/2019/wot/td#hasForm> [
+          <http://www.w3.org/2011/http#methodName> "POST";
+          <https://www.w3.org/2019/wot/hypermedia#hasTarget> <http://localhost:8080/workspaces/sub/>;
+          <https://www.w3.org/2019/wot/hypermedia#forContentType> "application/json";
+          <https://www.w3.org/2019/wot/hypermedia#hasOperationType> <https://www.w3.org/2019/wot/td#invokeAction>
         ]
     ];
-  hmas:isContainedIn <http://localhost:8080/workspaces/test>;
-  hmas:contains <http://localhost:8080/workspaces/sub/artifacts/c0> .
+  <https://purl.org/hmas/isContainedIn> <http://localhost:8080/workspaces/test/#workspace>;
+  <https://purl.org/hmas/contains> <http://localhost:8080/workspaces/sub/artifacts/c0/#artifact> .
 
-<http://localhost:8080/workspaces/test> hmas:contains <http://localhost:8080/workspaces/sub> .
+<http://localhost:8080/workspaces/test/#workspace> <https://purl.org/hmas/contains>
+    <http://localhost:8080/workspaces/sub/#workspace> .
 
-<http://localhost:8080/workspaces/sub/artifacts/c0> hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
-  td:title "c0" .
+<http://localhost:8080/workspaces/sub/artifacts/c0/#artifact> <https://purl.org/hmas/isContainedIn>
+    <http://localhost:8080/workspaces/sub/#workspace>;
+  <https://www.w3.org/2019/wot/td#title> "c0" .

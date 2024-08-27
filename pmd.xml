@@ -102,7 +102,11 @@
 	<rule ref="category/java/codestyle.xml/LocalInterfaceSessionNamingConvention" />
 	<rule ref="category/java/codestyle.xml/LocalVariableCouldBeFinal" />
 	<rule ref="category/java/design.xml/LogicInversion" />
-	<rule ref="category/java/bestpractices.xml/LooseCoupling" />
+  <rule ref="category/java/bestpractices.xml/LooseCoupling">
+    <properties>
+      <property name="allowedTypes" value="java.util.Map" />
+    </properties>
+  </rule>
 	<rule ref="category/java/codestyle.xml/MethodArgumentCouldBeFinal" />
 	<rule ref="category/java/codestyle.xml/MethodNamingConventions" />
 	<rule ref="category/java/bestpractices.xml/MethodReturnsInternalArray" />

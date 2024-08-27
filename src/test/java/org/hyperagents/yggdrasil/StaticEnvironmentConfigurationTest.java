@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil;
 
+import ch.unisg.ics.interactions.hmas.interaction.io.ResourceProfileGraphReader;
 import ch.unisg.ics.interactions.wot.td.ThingDescription;
 import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
@@ -16,10 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.hc.core5.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -38,14 +36,23 @@ public class StaticEnvironmentConfigurationTest {
   private WebClient client;
 
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx)
+  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo)
       throws URISyntaxException, IOException {
+    final String conf;
+    final String testName = testInfo.getTestMethod().orElseThrow().getName();
+    if (testName.contains("TD")) {
+      conf ="td/static_config.json" ;
+    } else if (testName.contains("HMAS")) {
+      conf = "hmas/static_config.json";
+    } else {
+      throw new RuntimeException("Test did not speficy ontology");
+    }
     this.client = WebClient.create(vertx);
     vertx
         .deployVerticle(
           new MainVerticle(),
           new DeploymentOptions().setConfig((JsonObject) Json.decodeValue(Files.readString(
-            Path.of(ClassLoader.getSystemResource("static_config.json").toURI()),
+            Path.of(ClassLoader.getSystemResource(conf).toURI()),
             StandardCharsets.UTF_8
           )))
         )
@@ -58,20 +65,20 @@ public class StaticEnvironmentConfigurationTest {
   }
 
   @Test
-  public void testRun(final VertxTestContext ctx) throws URISyntaxException, IOException {
+  public void testRunTD(final VertxTestContext ctx) throws URISyntaxException, IOException {
     final var workspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_sub_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var subWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_c0_td.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     this.client
@@ -126,17 +133,99 @@ public class StaticEnvironmentConfigurationTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
+  @Test
+  public void testRunHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var workspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/test_workspace_sub_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var artifactRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    final var subWorkspaceRepresentation =
+      Files.readString(
+        Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
+        StandardCharsets.UTF_8
+      );
+    this.client
+      .get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
+      .send()
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          workspaceRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.client
+        .get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME)
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          subWorkspaceRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .compose(r -> this.client
+        .get(
+          TEST_PORT,
+          TEST_HOST,
+          WORKSPACES_PATH
+            + SUB_WORKSPACE_NAME
+            + ARTIFACTS_PATH
+            + COUNTER_ARTIFACT_NAME
+        )
+        .send())
+      .onSuccess(r -> {
+        Assertions.assertEquals(
+          HttpStatus.SC_OK,
+          r.statusCode(),
+          OK_STATUS_MESSAGE
+        );
+        this.assertEqualsHMASDescriptions(
+          artifactRepresentation,
+          r.bodyAsString()
+        );
+      })
+      .onComplete(ctx.succeedingThenComplete());
+  }
+
   private void assertEqualsThingDescriptions(final String expected, final String actual) {
+    final var areEqual = Models.isomorphic(
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
+      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
+    );
+    if(!areEqual){
+      System.out.println(actual);
+    }
     Assertions.assertTrue(
-        Models.isomorphic(
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected)
-                       .getGraph()
-                       .orElseThrow(),
-          TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual)
-                       .getGraph()
-                       .orElseThrow()
-        ),
-        REPRESENTATIONS_EQUAL_MESSAGE
+      areEqual,
+      REPRESENTATIONS_EQUAL_MESSAGE
+    );
+  }
+  private void assertEqualsHMASDescriptions(final String expected, final String actual) {
+    final var areEqual = Models.isomorphic(
+      ResourceProfileGraphReader.getModelFromString(expected),
+      ResourceProfileGraphReader.getModelFromString(actual)
+    );
+    if (!areEqual) {
+      System.out.println(actual);
+    }
+    Assertions.assertTrue(
+      areEqual,
+      REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 }

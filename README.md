@@ -20,7 +20,7 @@ systems: an artifact-based perspective. Autonomous Agents and Multi-Agent System
 ## Prerequisites
 
 * JDK 21+
-* Gradle 8.4+
+* Gradle 8.9+
 
 ## Building the project
 
@@ -37,42 +37,43 @@ The default Gradle task `shadowJar` generates a "fat" JAR file in the `build/lib
 To start a Yggdrasil node:
 
 ```shell
-java -jar build/libs/yggdrasil-0.0.0-SNAPSHOT-all.jar -conf conf/localhost_memory_config.json
+java -jar build/libs/yggdrasil-0.0.0-SNAPSHOT-all.jar -conf conf/localhost_memory_config_td.json
 ```
 
 The configuration file is optional.
+Yggdrasil currently supports the HMAS and TD ontologies. If none is specified in the configuration file it defaults to TD.
+
 Open your browser to [http://localhost:8080](http://localhost:8080).
 You should see a description of the platform like the following:
 
 ```
+@base <http://localhost:8080/> .
 @prefix hmas: <https://purl.org/hmas/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-@prefix saref: <https://w3id.org/saref#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<http://localhost:8080/> a hmas:HypermediaMASPlatform, td:Thing;
+<> a td:Thing, hmas:HypermediaMASPlatform;
+  td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance;
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:CreateWorkspace;
       td:name "createWorkspace";
       td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/>;
           hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction;
-          hctl:hasTarget <http://localhost:8080/workspaces/>;
-          htv:methodName "POST"
+          hctl:hasOperationType td:invokeAction
         ]
-    ];
-  td:title "yggdrasil".
+    ] .
 ```
 
 ## Running Yggdrasil as a Docker container
 
 Run and build the Yggdrasil image in the project directory context
-(by default, the service is exposed on port `8899` of the host machine):
+(by default, the service is exposed on port `8899` of the host machine). The docker config can be found in the /conf folder:
 
 ```shell
 docker compose up
@@ -84,7 +85,7 @@ The HTTP API implements CRUD operations for three types of resources:
 
 * workspaces and sub-workspaces (URI template: `/workspaces/<wksp_id>`)
 * artifacts (URI template: `/workspaces/<wksp_id>/artifacts/<art_id>`)
-* body artifacts (URI template: `/workspaces/<wksp_id>/agents/<agt_id>`)
+* body artifacts (URI template: `/workspaces/<wksp_id>/artifacts/<agt_id>`)
 
 ### Caveats
 

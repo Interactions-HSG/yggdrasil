@@ -1,15 +1,15 @@
 package org.hyperagents.yggdrasil.cartago.artifacts;
 
 import cartago.OPERATION;
-import ch.unisg.ics.interactions.wot.td.schemas.ArraySchema;
-import ch.unisg.ics.interactions.wot.td.schemas.StringSchema;
+import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
+
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.ByteBuffer;
 import java.util.concurrent.Flow;
 
-public class DltInterface extends HypermediaArtifact {
+public class DltInterface extends HypermediaHMASArtifact {
   private String dltClientUrl;
   private HttpClient client;
 
@@ -40,16 +40,14 @@ public class DltInterface extends HypermediaArtifact {
       this.failed(e.getMessage());
     }
   }
-
+// TODO: set correct Specification
   @Override
   protected void registerInteractionAffordances() {
-    this.registerActionAffordance(
+    this.registerSignifier(
         "http://example.org/sendTransaction",
         "sendTransaction",
         "/sendTransaction",
-        new ArraySchema.Builder()
-                       .addItem(new StringSchema.Builder().build())
-                       .build()
+        new StringSpecification.Builder().build()
     );
   }
 }

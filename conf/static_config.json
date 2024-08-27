@@ -8,7 +8,7 @@
     "workspaces" : [
       {
         "name" : "test",
-        "representation" : "test_workspace_td.ttl"
+        "representation" : "src/test/resources/td/test_workspace_td.ttl"
       },
       {
         "name" : "sub",
@@ -16,10 +16,10 @@
         "artifacts" : [
           {
             "name" : "c0",
-            "representation" : "c0_counter_artifact.ttl"
+            "representation" : "src/test/resources/td/c0_counter_artifact.ttl"
           }
         ],
-        "representation" : "sub_workspace_td.ttl"
+        "representation" : "src/test/resources/td/sub_workspace_td.ttl"
       }
     ]
   }

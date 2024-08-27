@@ -3,8 +3,6 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.OPERATION;
 import ch.unisg.ics.interactions.wot.td.schemas.NumberSchema;
 import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
-import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme;
-import ch.unisg.ics.interactions.wot.td.security.APIKeySecurityScheme.TokenLocation;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.IOException;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -13,9 +11,8 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 
-public class PhantomX3D extends HypermediaArtifact {
+public class PhantomX3D extends HypermediaTDArtifact {
   private static final String PREFIX = "https://ci.mines-stetienne.fr/kg/ontology#";
 
   private static final String SET_BASE_URI = "/base";
@@ -37,6 +34,7 @@ public class PhantomX3D extends HypermediaArtifact {
 
   private String robotBaseUri;
   private State state;
+
 
   public void init(final String robotBaseUri) {
     this.state = State.NEUTRAL;
@@ -81,32 +79,32 @@ public class PhantomX3D extends HypermediaArtifact {
     this.registerActionAffordance(
         PREFIX + "MoveTo",
         "moveTo",
-        "/moveTo",
-        new ObjectSchema.Builder()
-                        .addSemanticType(PREFIX + "FactoryFloorPosition")
-                        .addProperty(
-                          "x",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "XCoordinate")
-                                          .build()
-                        )
-                        .addProperty(
-                          "y",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "YCoordinate")
-                                          .build()
-                        )
-                        .addProperty(
-                          "z",
-                          new NumberSchema.Builder()
-                                          .addSemanticType(PREFIX + "ZCoordinate")
-                                          .build()
-                        )
-                        .build()
+        "moveTo",
+      new ObjectSchema.Builder()
+        .addSemanticType(PREFIX + "FactoryFloorPosition")
+        .addProperty(
+          "x",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "XCoordinate")
+            .build()
+        )
+        .addProperty(
+          "y",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "YCoordinate")
+            .build()
+        )
+        .addProperty(
+          "z",
+          new NumberSchema.Builder()
+            .addSemanticType(PREFIX + "ZCoordinate")
+            .build()
+        )
+        .build()
     );
-    this.registerActionAffordance(PREFIX + "Grasp", "grasp", "/grasp");
-    this.registerActionAffordance(PREFIX + "Release", "release", "/release");
-    this.registerActionAffordance(PREFIX + "Reset", "reset", "/reset");
+    this.registerActionAffordance(PREFIX + "Grasp", "grasp", "grasp");
+    this.registerActionAffordance(PREFIX + "Release", "release", "release");
+    this.registerActionAffordance(PREFIX + "Reset", "reset", "reset");
 
     // Add initial coordinates, these are currently hard-coded
     final var builder = new ModelBuilder();
@@ -120,8 +118,8 @@ public class PhantomX3D extends HypermediaArtifact {
 
     this.addMetadata(builder.build());
 
-    this.setSecurityScheme(new APIKeySecurityScheme(TokenLocation.HEADER, "X-API-Key"));
   }
+
 
   private void moveToNeural() {
     this.state = State.IN_TRANSIT;
@@ -165,8 +163,7 @@ public class PhantomX3D extends HypermediaArtifact {
       final var request =
           new BasicClassicHttpRequest("PUT", robotBaseUri + relativeUri);
 
-      final var apiKey =
-          HypermediaArtifactRegistry.getInstance().getApiKeyForArtifact(getArtifactUri());
+      final var apiKey = getApiKey();
       request.setHeader("X-API-Key", apiKey);
 
       request.setEntity(

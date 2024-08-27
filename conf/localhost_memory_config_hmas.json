@@ -1,0 +1,32 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "environment-config" : {
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS"
+      },
+      {
+        "class": "https://purl.org/hmas/Artifact",
+        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicHMASArtifact"
+      },
+      {
+        "class" : "http://example.org/Adder",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderHMAS"
+      },
+      {
+        "class" : "http://example.org/Math",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathHMAS"
+      }
+    ],
+    "enabled" : true,
+    "ontology": "hmas"
+  }
+}

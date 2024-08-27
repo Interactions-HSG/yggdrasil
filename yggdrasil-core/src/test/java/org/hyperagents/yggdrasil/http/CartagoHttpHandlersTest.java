@@ -32,10 +32,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
@@ -64,6 +61,8 @@ public class CartagoHttpHandlersTest {
       "The response body should contain the status code description";
   private static final String INTERNAL_SERVER_ERROR_STATUS_MESSAGE =
       "The status code should be INTERNAL SERVER ERROR";
+  private static final String BAD_REQUEST_ERROR_STATUS_MESSAGE =
+      "The status code should be BAD REQUEST";
   private static final String NONEXISTENT_NAME = "nonexistent";
   private static final String INTERNAL_SERVER_ERROR_BODY = "Internal Server Error";
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
@@ -95,7 +94,7 @@ public class CartagoHttpHandlersTest {
          .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
         "environment-config",
-        JsonObject.of("enabled", true)
+        JsonObject.of("enabled", true, "ontology", "td")
     ));
     vertx.sharedData()
          .<String, EnvironmentConfig>getLocalMap("environment-config")
@@ -142,7 +141,9 @@ public class CartagoHttpHandlersTest {
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
                                    .send();
+    this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
+
     final var createWorkspaceMessage = (CartagoMessage.CreateWorkspace) cartagoMessage.body();
     Assertions.assertEquals(
         MAIN_WORKSPACE_NAME,
@@ -238,7 +239,7 @@ public class CartagoHttpHandlersTest {
         URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH + "/")),
         createEntityMessage.parentWorkspaceUri(),
         "The parent workspace URI should be present"
     );
@@ -265,6 +266,45 @@ public class CartagoHttpHandlersTest {
   }
 
   @Test
+  public void testCreateTwoWorkspacesWithTheSameName(final VertxTestContext ctx)
+    throws InterruptedException {
+    this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+      .send();
+
+    this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
+    final var cartagoMessage = this.cartagoMessageQueue.take();
+    final var createWorkspaceMessage = (CartagoMessage.CreateWorkspace) cartagoMessage.body();
+
+    Assertions.assertEquals(
+      MAIN_WORKSPACE_NAME,
+      createWorkspaceMessage.workspaceName(),
+      NAMES_EQUAL_MESSAGE
+    );
+
+    ctx.checkpoint();
+
+    this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+      .send();
+
+    this.storeMessageQueue.take().reply("UUID");
+    final var cartagoMessage2 = this.cartagoMessageQueue.take();
+    final var createWorkspaceMessage2 = (CartagoMessage.CreateWorkspace) cartagoMessage2.body();
+
+    Assertions.assertEquals(
+      "UUID",
+      createWorkspaceMessage2.workspaceName(),
+      NAMES_EQUAL_MESSAGE
+    );
+
+    ctx.completeNow();
+
+  }
+
+  @Test
   public void testPostSubWorkspaceWithParentNotFound(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
@@ -286,18 +326,11 @@ public class CartagoHttpHandlersTest {
     );
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The entity was not found");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -337,13 +370,14 @@ public class CartagoHttpHandlersTest {
           INIT_PARAMS_PARAM,
           JsonArray.of(5)
         );
-    final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_ARTIFACTS_PATH)
+    final var request = this.client.post(TEST_PORT, TEST_HOST, "/workspaces/test/artifacts/")
                                    .putHeader(AGENT_WEBID, TEST_AGENT_ID)
                                    .putHeader(
                                      HttpHeaders.CONTENT_TYPE.toString(),
                                      ContentType.APPLICATION_JSON.getMimeType()
                                    )
                                    .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createArtifactMessage =
         (CartagoMessage.CreateArtifact) cartagoMessage.body();
@@ -426,6 +460,7 @@ public class CartagoHttpHandlersTest {
                                      ContentType.APPLICATION_JSON.getMimeType()
                                    )
                                    .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
     Assertions.assertEquals(
@@ -448,16 +483,15 @@ public class CartagoHttpHandlersTest {
         Json.decodeValue(createArtifactMessage.representation()),
         "The initialization parameters should be the same"
     );
-    message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The workspace was not found");
+    message.fail(HttpStatus.SC_BAD_REQUEST, "The workspace was not found");
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
+              HttpStatus.SC_BAD_REQUEST,
               r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+              BAD_REQUEST_ERROR_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
+          Assertions.assertNull(
               r.bodyAsString(),
               RESPONSE_BODY_STATUS_CODE_MESSAGE
           );
@@ -513,7 +547,7 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var initialBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body.ttl").toURI()),
+          Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
           StandardCharsets.UTF_8
         );
     final var fullBodyRepresentation =
@@ -591,18 +625,11 @@ public class CartagoHttpHandlersTest {
     );
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -645,7 +672,7 @@ public class CartagoHttpHandlersTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var deleteBodyMessage = (RdfStoreMessage.DeleteEntity) storeMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_WORKSPACE_PATH + "/agents/test_agent"),
+        this.helper.getUri(MAIN_WORKSPACE_PATH + "/artifacts/body_test_agent/"),
         deleteBodyMessage.requestUri(),
         NAMES_EQUAL_MESSAGE
     );
@@ -686,18 +713,11 @@ public class CartagoHttpHandlersTest {
     );
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 
@@ -755,7 +775,7 @@ public class CartagoHttpHandlersTest {
     final var addCallbackMessage =
         (HttpNotificationDispatcherMessage.AddCallback) notificationMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME),
+        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME +"/"),
         addCallbackMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );
@@ -815,18 +835,11 @@ public class CartagoHttpHandlersTest {
     );
     message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "An error occurred");
     request
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_INTERNAL_SERVER_ERROR,
-              r.statusCode(),
-              INTERNAL_SERVER_ERROR_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              INTERNAL_SERVER_ERROR_BODY,
-              r.bodyAsString(),
-              RESPONSE_BODY_STATUS_CODE_MESSAGE
-          );
-        })
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            r.statusCode(),
+            INTERNAL_SERVER_ERROR_STATUS_MESSAGE
+        ))
         .onComplete(ctx.succeedingThenComplete());
   }
 

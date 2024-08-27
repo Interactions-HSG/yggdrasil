@@ -10,6 +10,10 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 
+/**
+ * This class is responsible for marshalling and unmarshalling HttpNotificationDispatcherMessage
+ * objects to and from JSON.
+ */
 public class HttpNotificationDispatcherMessageMarshaller
     implements JsonSerializer<HttpNotificationDispatcherMessage>,
                JsonDeserializer<HttpNotificationDispatcherMessage> {

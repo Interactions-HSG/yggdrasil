@@ -64,7 +64,9 @@ public class RdfStoreVerticleCreateTest {
                 "environment-config",
                 JsonObject.of(
                   "enabled",
-                  true
+                  true,
+                  "ontology",
+                  "td"
                 )
               )));
     vertx.sharedData()
@@ -195,7 +197,7 @@ public class RdfStoreVerticleCreateTest {
             final var entityUpdatedMessage =
                 (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH + TEST_WORKSPACE_NAME,
+                WORKSPACES_PATH + "test/",
                 entityUpdatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -352,7 +354,8 @@ public class RdfStoreVerticleCreateTest {
         .compose(r -> this.storeMessagebox
                           .sendMessage(new RdfStoreMessage.CreateBody(
                             TEST_WORKSPACE_NAME,
-                            "test",
+                            "http://localhost:8080/agent/kai",
+                            "kai",
                             bodyRepresentation
                           ))
         )
@@ -376,7 +379,7 @@ public class RdfStoreVerticleCreateTest {
             final var entityCreatedMessage =
                 (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
             Assertions.assertEquals(
-                "http://localhost:8080/workspaces/test/agents/",
+                "http://localhost:8080/workspaces/test/artifacts/",
                 entityCreatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -396,7 +399,7 @@ public class RdfStoreVerticleCreateTest {
           r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/workspaces/test/agents/test"
+          "http://localhost:8080/workspaces/test/artifacts/body_kai/"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
           bodyArtifactRepresentation,
