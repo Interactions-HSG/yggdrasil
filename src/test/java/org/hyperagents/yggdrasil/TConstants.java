@@ -8,6 +8,9 @@ import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.util.Models;
 import org.junit.jupiter.api.Assertions;
 
+/**
+ * Vocabulary class.
+ */
 public final class TConstants {
 
 
@@ -27,8 +30,10 @@ public final class TConstants {
   public static final String CLASS = "class";
   public static final String COUNTER_ARTIFACT_CLASS = "http://example.org/Counter";
   public static final String TEMPLATE = "template";
-  public static final String COUNTER_ARTIFACT_TEMPLATE_TD = "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD";
-  public static final String COUNTER_ARTIFACT_TEMPLATE_HMAS = "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS";
+  public static final String COUNTER_ARTIFACT_TEMPLATE_TD =
+      "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD";
+  public static final String COUNTER_ARTIFACT_TEMPLATE_HMAS =
+      "org.hyperagents.yggdrasil.cartago.artifacts.CounterHMAS";
 
 
   public static final String HTTP_CONFIG = "http-config";
@@ -65,127 +70,143 @@ public final class TConstants {
 
 
   public static final String SUB_WORKSPACE_NAME = "sub";
-  public static final String COUNTER_ARTIFACT_URI = "http://localhost:8080/workspaces/sub/artifacts/c0/";
+  public static final String COUNTER_ARTIFACT_URI =
+      "http://localhost:8080/workspaces/sub/artifacts/c0/";
 
   public static final String HINT_HEADER = "Slug";
 
   public static final JsonObject ENABLED_TRUE = JsonObject.of(
-    ENABLED,
-    true
+      ENABLED,
+      true
   );
 
   public static final JsonObject httpConfig = JsonObject.of(
-    "host",
-    TEST_HOST,
-    "port",
-    TEST_PORT
+      "host",
+      TEST_HOST,
+      "port",
+      TEST_PORT
   );
   public static final JsonObject notificationConfig = ENABLED_TRUE;
 
   public static final JsonObject cartagoEnv = JsonObject.of(
-    KNOWN_ARTIFACTS,
-    JsonArray.of(
-      JsonObject.of(
-        CLASS,
-        COUNTER_ARTIFACT_CLASS,
-        TEMPLATE,
-        COUNTER_ARTIFACT_TEMPLATE_TD
-      )
-    ),
-    WORKSPACES,
-    JsonArray.of(
-      JsonObject.of(
-        NAME,
-        "w1",
-        METADATA,
-        "src/main/resources/w1_test_metadata.ttl",
-        "artifacts",
-        JsonArray.of(
+      KNOWN_ARTIFACTS,
+      JsonArray.of(
           JsonObject.of(
-            NAME,
-            "c1",
-            CLASS,
-            COUNTER_ARTIFACT_CLASS,
-            METADATA,
-            "src/main/resources/c1_test_metadata.ttl"
+              CLASS,
+              COUNTER_ARTIFACT_CLASS,
+              TEMPLATE,
+              COUNTER_ARTIFACT_TEMPLATE_TD
           )
-        ),
-        "agents",
-        JsonArray.of(
+      ),
+      WORKSPACES,
+      JsonArray.of(
           JsonObject.of(
-            NAME,
-            TEST_AGENT_NAME,
-            "agent-uri",
-            TEST_AGENT_ID,
-            "callback-uri",
-            CALLBACK_URL,
-            METADATA,
-            "src/main/resources/a1_test_metadata.ttl"
+              NAME,
+              "w1",
+              METADATA,
+              "src/main/resources/w1_test_metadata.ttl",
+              "artifacts",
+              JsonArray.of(
+                  JsonObject.of(
+                      NAME,
+                      "c1",
+                      CLASS,
+                      COUNTER_ARTIFACT_CLASS,
+                      METADATA,
+                      "src/main/resources/c1_test_metadata.ttl"
+                  )
+              ),
+              "agents",
+              JsonArray.of(
+                  JsonObject.of(
+                      NAME,
+                      TEST_AGENT_NAME,
+                      "agent-uri",
+                      TEST_AGENT_ID,
+                      "callback-uri",
+                      CALLBACK_URL,
+                      METADATA,
+                      "src/main/resources/a1_test_metadata.ttl"
+                  )
+              )
           )
-        )
       )
-    )
   ).mergeIn(ENABLED_TRUE);
 
   public static final JsonObject TDEnv = JsonObject.of(
-    ENABLED,
-    true,
-    KNOWN_ARTIFACTS,
-    JsonArray.of(
-      JsonObject.of(
-        CLASS,
-        COUNTER_ARTIFACT_CLASS,
-        TEMPLATE,
-        COUNTER_ARTIFACT_TEMPLATE_TD
-      )
-    ),
-    ONTOLOGY,
-    TD
+      ENABLED,
+      true,
+      KNOWN_ARTIFACTS,
+      JsonArray.of(
+          JsonObject.of(
+              CLASS,
+              COUNTER_ARTIFACT_CLASS,
+              TEMPLATE,
+              COUNTER_ARTIFACT_TEMPLATE_TD
+          )
+      ),
+      ONTOLOGY,
+      TD
   );
 
   public static final JsonObject HMASEnv = JsonObject.of(
-    ENABLED,
-    true,
-    KNOWN_ARTIFACTS,
-    JsonArray.of(
-      JsonObject.of(
-        CLASS,
-        COUNTER_ARTIFACT_CLASS,
-        TEMPLATE,
-        COUNTER_ARTIFACT_TEMPLATE_HMAS
-      )
-    ),
-    ONTOLOGY,
-    HMAS
+      ENABLED,
+      true,
+      KNOWN_ARTIFACTS,
+      JsonArray.of(
+          JsonObject.of(
+              CLASS,
+              COUNTER_ARTIFACT_CLASS,
+              TEMPLATE,
+              COUNTER_ARTIFACT_TEMPLATE_HMAS
+          )
+      ),
+      ONTOLOGY,
+      HMAS
   );
 
-  private TConstants(){}
+  private TConstants() {
+  }
 
+  /**
+   * checks whether two thing descriptions are equal.
+   *
+   * @param expected td
+   * @param actual td
+   */
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
     final var areEqual = Models.isomorphic(
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph()
+            .orElseThrow(),
+        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph()
+            .orElseThrow()
     );
     if (!areEqual) {
       System.out.println(actual);
     }
     Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
+        areEqual,
+        REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 
+  /**
+   * checks whether two HMAS representations are equal.
+   *
+   * @param expected hmas
+   * @param actual hmas
+   */
   public static void assertEqualsHMASDescriptions(final String expected, final String actual) {
     final var areEqual = Models.isomorphic(
-      ResourceProfileGraphReader.getModelFromString(expected),
-      ResourceProfileGraphReader.getModelFromString(actual)
+        ResourceProfileGraphReader.getModelFromString(expected),
+        ResourceProfileGraphReader.getModelFromString(actual)
     );
     if (!areEqual) {
       System.out.println(actual);
     }
     Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
+        areEqual,
+        REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 }

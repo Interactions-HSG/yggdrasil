@@ -19,6 +19,9 @@ import org.apache.http.HttpStatus;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
 import org.junit.jupiter.api.Assertions;
 
+/**
+ * test helper class.
+ */
 @SuppressFBWarnings("EI_EXPOSE_REP2")
 @SuppressWarnings("PMD.JUnit4TestShouldUseTestAnnotation")
 public final class HttpServerVerticleTestHelper {
@@ -32,8 +35,8 @@ public final class HttpServerVerticleTestHelper {
   private static final String OK_STATUS_MESSAGE = "Status code should be OK";
   private static final String UNAUTHORIZED_STATUS_MESSAGE = "Status code should be UNAUTHORIZED";
   private static final String RESPONSE_BODY_EMPTY_MESSAGE = "The response body should be empty";
-  private static final String RESPONSE_BODY_BAD_REQUEST = "Bad Request";
-  private static final String RESPONSE_BODY_BAD_REQUEST_MESSAGE = "Status code should be Bad Request";
+  private static final String RESPONSE_BODY_BAD_REQUEST_MESSAGE =
+      "Status code should be Bad Request";
 
   private final WebClient client;
   private final BlockingQueue<Message<RdfStoreMessage>> storeMessageQueue;
@@ -46,15 +49,15 @@ public final class HttpServerVerticleTestHelper {
     this.storeMessageQueue = storeMessageQueue;
   }
 
-  public void testGetResourceSucceeds(
+  void testGetResourceSucceeds(
       final VertxTestContext ctx,
       final String resourceRepresentationFilePath,
       final String resourceUri
   ) throws URISyntaxException, IOException, InterruptedException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.get(TEST_PORT, TEST_HOST, resourceUri).send();
     final var message = this.storeMessageQueue.take();
@@ -86,7 +89,7 @@ public final class HttpServerVerticleTestHelper {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  public void testResourceRequestFailsWithNotFound(
+  void testResourceRequestFailsWithNotFound(
       final VertxTestContext ctx,
       final String resourceUri,
       final Future<HttpResponse<Buffer>> request
@@ -129,62 +132,60 @@ public final class HttpServerVerticleTestHelper {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  public void testResourceRequestRedirectsWithAddedSlash(
+  void testResourceRequestRedirectsWithAddedSlash(
       final VertxTestContext ctx,
       final HttpMethod method,
       final String resourceUri
   ) {
     this.client.request(method, TEST_PORT, TEST_HOST, resourceUri + "/")
-               .followRedirects(false)
-               .send()
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_MOVED_PERMANENTLY,
-                     r.statusCode(),
-                     "The status code should be MOVED PERMANENTLY"
-                 );
-                 Assertions.assertEquals(
-                     this.getUri(resourceUri),
-                     r.getHeader(HttpHeaders.LOCATION),
-                     "The location should be the same but without the trailing slash"
-                 );
-                 Assertions.assertNull(
-                     r.body(),
-                     RESPONSE_BODY_EMPTY_MESSAGE
-                 );
-               })
-               .onComplete(ctx.succeedingThenComplete());
-  }
-
-  public void testResourceRequestFailsWithoutWebId(
-      final VertxTestContext ctx,
-      final Future<HttpResponse<Buffer>> request
-  ) {
-    request
+        .followRedirects(false)
+        .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
-              HttpStatus.SC_UNAUTHORIZED,
+              HttpStatus.SC_MOVED_PERMANENTLY,
               r.statusCode(),
-              UNAUTHORIZED_STATUS_MESSAGE
+              "The status code should be MOVED PERMANENTLY"
+          );
+          Assertions.assertEquals(
+              this.getUri(resourceUri),
+              r.getHeader(HttpHeaders.LOCATION),
+              "The location should be the same but without the trailing slash"
+          );
+          Assertions.assertNull(
+              r.body(),
+              RESPONSE_BODY_EMPTY_MESSAGE
           );
         })
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  public void testPutTurtleResourceSucceeds(
+  void testResourceRequestFailsWithoutWebId(
+      final VertxTestContext ctx,
+      final Future<HttpResponse<Buffer>> request
+  ) {
+    request
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_UNAUTHORIZED,
+            r.statusCode(),
+            UNAUTHORIZED_STATUS_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  void testPutTurtleResourceSucceeds(
       final VertxTestContext ctx,
       final String resourceUri,
       final String resourceRepresentationFilePath
   ) throws InterruptedException, URISyntaxException, IOException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(resourceRepresentationFilePath).toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.put(TEST_PORT, TEST_HOST, resourceUri)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                                   .sendBuffer(Buffer.buffer(expectedRepresentation));
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+        .sendBuffer(Buffer.buffer(expectedRepresentation));
     final var message = this.storeMessageQueue.take();
     final var updateResourceMessage = (RdfStoreMessage.ReplaceEntity) message.body();
     Assertions.assertEquals(
@@ -219,43 +220,43 @@ public final class HttpServerVerticleTestHelper {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  public void testResourceRequestFailsWithoutContentType(
+  void testResourceRequestFailsWithoutContentType(
       final VertxTestContext ctx,
       final HttpMethod method,
       final String resourceUri,
       final Buffer content
   ) {
     this.client.request(method, TEST_PORT, TEST_HOST, resourceUri)
-               .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-               .sendBuffer(content)
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     UNAUTHORIZED_STATUS_MESSAGE
-                 );
-                 Assertions.assertNull(
-                     r.bodyAsString(),
-                     RESPONSE_BODY_BAD_REQUEST_MESSAGE
-                 );
-               })
-               .onComplete(ctx.succeedingThenComplete());
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .sendBuffer(content)
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_BAD_REQUEST,
+              r.statusCode(),
+              UNAUTHORIZED_STATUS_MESSAGE
+          );
+          Assertions.assertNull(
+              r.bodyAsString(),
+              RESPONSE_BODY_BAD_REQUEST_MESSAGE
+          );
+        })
+        .onComplete(ctx.succeedingThenComplete());
   }
 
-  public void testDeleteTurtleResourceSucceeds(
+  void testDeleteTurtleResourceSucceeds(
       final VertxTestContext ctx,
       final String resourceUri,
       final String entityRepresentationFileName
   ) throws InterruptedException, URISyntaxException, IOException {
     final var expectedRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(entityRepresentationFileName).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(entityRepresentationFileName).toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.delete(TEST_PORT, TEST_HOST, resourceUri)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+        .send();
     final var message = this.storeMessageQueue.take();
     final var updateResourceMessage = (RdfStoreMessage.DeleteEntity) message.body();
     Assertions.assertEquals(

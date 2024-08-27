@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 
+/**
+ * calculater 2d.
+ */
 public class SpatialCalculator2D extends HypermediaHMASArtifact {
   private static final String PREFIX = "http://example.org/";
   private static final String SET_BASE_ACTION = PREFIX + "SetBase";
@@ -23,7 +26,7 @@ public class SpatialCalculator2D extends HypermediaHMASArtifact {
   private int xr;
   private int yr;
 
-  public void init(final String robotUri, final String apiKey, final int xr, final int yr) {
+  private void init(final String robotUri, final String apiKey, final int xr, final int yr) {
     this.xr = xr;
     this.yr = yr;
 
@@ -32,7 +35,7 @@ public class SpatialCalculator2D extends HypermediaHMASArtifact {
   }
 
   @OPERATION
-  public void moveTo(final int x, final int y) {
+  private void moveTo(final int x, final int y) {
     final var degrees = this.angularDisplacement(x, y);
     final var digital = this.angularToDigital(degrees);
 
@@ -45,13 +48,14 @@ public class SpatialCalculator2D extends HypermediaHMASArtifact {
 
       final var response =
           new TDHttpRequest(action.getFirstForm().orElseThrow(), TD.invokeAction)
-            .setAPIKey(
-              (APIKeySecurityScheme) td.getFirstSecuritySchemeByType(WoTSec.APIKeySecurityScheme)
-                                       .orElseThrow(),
-              this.apiKey
-            )
-            .setObjectPayload((ObjectSchema) action.getInputSchema().orElseThrow(), payload)
-            .execute();
+              .setAPIKey(
+                  (APIKeySecurityScheme) td.getFirstSecuritySchemeByType(
+                          WoTSec.APIKeySecurityScheme)
+                      .orElseThrow(),
+                  this.apiKey
+              )
+              .setObjectPayload((ObjectSchema) action.getInputSchema().orElseThrow(), payload)
+              .execute();
 
       // Match any 2XX status code
       if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
@@ -93,7 +97,7 @@ public class SpatialCalculator2D extends HypermediaHMASArtifact {
         "http://example.org#MoveTo",
         "moveTo",
         "/moveTo",
-      new ValueSpecification.Builder().build()
+        new ValueSpecification.Builder().build()
     );
   }
 }

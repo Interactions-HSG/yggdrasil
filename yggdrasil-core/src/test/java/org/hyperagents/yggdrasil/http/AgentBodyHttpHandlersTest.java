@@ -25,9 +25,15 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/**
+ * class to test agent http handlers.
+ */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class AgentBodyHttpHandlersTest {
@@ -49,11 +55,18 @@ public class AgentBodyHttpHandlersTest {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
   }
 
+  /**
+   * setup method.
+   *
+   * @param vertx vertx
+   * @param ctx ctx
+   * @param testInfo testInfo
+   */
   @BeforeEach
-  public void setUp(final Vertx vertx, final VertxTestContext ctx,final TestInfo testInfo) {
+  public void setUp(final Vertx vertx, final VertxTestContext ctx, final TestInfo testInfo) {
     final String ontology;
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
-    if(testName.contains("TD")) {
+    if (testName.contains("TD")) {
       ontology = "td";
     } else if (testName.contains("HMAS")) {
       ontology = "hmas";
@@ -64,25 +77,25 @@ public class AgentBodyHttpHandlersTest {
     this.helper = new HttpServerVerticleTestHelper(this.client, this.storeMessageQueue);
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
     vertx.sharedData()
-         .<String, HttpInterfaceConfig>getLocalMap("http-config")
-         .put("default", httpConfig);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .put("default", httpConfig);
     vertx.sharedData()
-         .<String, EnvironmentConfig>getLocalMap("environment-config")
-         .put("default",
-              new EnvironmentConfigImpl(JsonObject.of(
+        .<String, EnvironmentConfig>getLocalMap("environment-config")
+        .put("default",
+            new EnvironmentConfigImpl(JsonObject.of(
                 "environment-config",
                 JsonObject.of("enabled", true, "ontology", ontology)
-              )));
+            )));
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(
-          "notification-config",
-          JsonObject.of("enabled", true)
+            "notification-config",
+            JsonObject.of("enabled", true)
         ),
         httpConfig
     );
     vertx.sharedData()
-         .<String, WebSubConfig>getLocalMap("notification-config")
-         .put("default", notificationConfig);
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .put("default", notificationConfig);
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
@@ -103,7 +116,7 @@ public class AgentBodyHttpHandlersTest {
 
   @Test
   public void testGetBodySucceedsHMAS(final VertxTestContext ctx)
-      throws URISyntaxException, IOException, InterruptedException{
+      throws URISyntaxException, IOException, InterruptedException {
     this.helper.testGetResourceSucceeds(ctx, BODY_FILE_HMAS, BODY_PATH);
   }
 
@@ -112,16 +125,16 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
         HttpMethod.GET,
-      BODY_PATH.substring(0, BODY_PATH.length() - 1)
+        BODY_PATH.substring(0, BODY_PATH.length() - 1)
     );
   }
 
   @Test
   public void testGetBodyRedirectsWithSlashHMAS(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
-      ctx,
-      HttpMethod.GET,
-      BODY_PATH
+        ctx,
+        HttpMethod.GET,
+        BODY_PATH
     );
   }
 
@@ -139,9 +152,9 @@ public class AgentBodyHttpHandlersTest {
   public void testGetBodyFailsWithNotFoundHMAS(final VertxTestContext ctx)
       throws InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
-      ctx,
-      BODIES_PATH + NONEXISTENT_NAME,
-      this.client.get(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME).send()
+        ctx,
+        BODIES_PATH + NONEXISTENT_NAME,
+        this.client.get(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME).send()
     );
   }
 
@@ -151,17 +164,17 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testPutTurtleResourceSucceeds(
         ctx,
         BODY_PATH,
-      BODY_FILE_TD
+        BODY_FILE_TD
     );
   }
 
   @Test
   public void testPutTurtleArtifactSucceedsHMAS(final VertxTestContext ctx)
-    throws URISyntaxException, IOException, InterruptedException {
+      throws URISyntaxException, IOException, InterruptedException {
     this.helper.testPutTurtleResourceSucceeds(
-      ctx,
-      BODY_PATH,
-      BODY_FILE_HMAS
+        ctx,
+        BODY_PATH,
+        BODY_FILE_HMAS
     );
   }
 
@@ -172,28 +185,28 @@ public class AgentBodyHttpHandlersTest {
         ctx,
         BODIES_PATH + NONEXISTENT_NAME,
         this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
-                   .putHeader("X-Agent-WebID", TEST_AGENT_ID)
-                   .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(
-                     Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
-                     StandardCharsets.UTF_8
-                   )))
+            .putHeader("X-Agent-WebID", TEST_AGENT_ID)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+            .sendBuffer(Buffer.buffer(Files.readString(
+                Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
+                StandardCharsets.UTF_8
+            )))
     );
   }
 
   @Test
   public void testPutTurtleArtifactFailsWithNotFoundHMAS(final VertxTestContext ctx)
-    throws URISyntaxException, IOException, InterruptedException {
+      throws URISyntaxException, IOException, InterruptedException {
     this.helper.testResourceRequestFailsWithNotFound(
-      ctx,
-      BODIES_PATH + NONEXISTENT_NAME,
-      this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
-        .putHeader("X-Agent-WebID", TEST_AGENT_ID)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-        .sendBuffer(Buffer.buffer(Files.readString(
-          Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
-          StandardCharsets.UTF_8
-        )))
+        ctx,
+        BODIES_PATH + NONEXISTENT_NAME,
+        this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
+            .putHeader("X-Agent-WebID", TEST_AGENT_ID)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+            .sendBuffer(Buffer.buffer(Files.readString(
+                Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+                StandardCharsets.UTF_8
+            )))
     );
   }
 
@@ -203,25 +216,25 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.put(TEST_PORT, TEST_HOST, BODY_PATH)
-                   .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-                   .sendBuffer(Buffer.buffer(Files.readString(
-                     Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
-                     StandardCharsets.UTF_8
-                   )))
+            .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+            .sendBuffer(Buffer.buffer(Files.readString(
+                Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
+                StandardCharsets.UTF_8
+            )))
     );
   }
 
   @Test
   public void testPutTurtleArtifactFailsWithoutWebIdHMAS(final VertxTestContext ctx)
-    throws URISyntaxException, IOException {
+      throws URISyntaxException, IOException {
     this.helper.testResourceRequestFailsWithoutWebId(
-      ctx,
-      this.client.put(TEST_PORT, TEST_HOST, BODY_PATH)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
-        .sendBuffer(Buffer.buffer(Files.readString(
-          Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
-          StandardCharsets.UTF_8
-        )))
+        ctx,
+        this.client.put(TEST_PORT, TEST_HOST, BODY_PATH)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+            .sendBuffer(Buffer.buffer(Files.readString(
+                Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+                StandardCharsets.UTF_8
+            )))
     );
   }
 
@@ -233,23 +246,23 @@ public class AgentBodyHttpHandlersTest {
         HttpMethod.PUT,
         BODY_PATH,
         Buffer.buffer(Files.readString(
-          Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(BODY_FILE_TD).toURI()),
+            StandardCharsets.UTF_8
         ))
     );
   }
 
   @Test
   public void testPutTurtleArtifactFailsWithoutContentTypeHMAS(final VertxTestContext ctx)
-    throws URISyntaxException, IOException {
+      throws URISyntaxException, IOException {
     this.helper.testResourceRequestFailsWithoutContentType(
-      ctx,
-      HttpMethod.PUT,
-      BODY_PATH,
-      Buffer.buffer(Files.readString(
-        Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
-        StandardCharsets.UTF_8
-      ))
+        ctx,
+        HttpMethod.PUT,
+        BODY_PATH,
+        Buffer.buffer(Files.readString(
+            Path.of(ClassLoader.getSystemResource(BODY_FILE_HMAS).toURI()),
+            StandardCharsets.UTF_8
+        ))
     );
   }
 
@@ -258,16 +271,16 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
         ctx,
         HttpMethod.PUT,
-      BODY_PATH.substring(0, BODY_PATH.length() - 1)
+        BODY_PATH.substring(0, BODY_PATH.length() - 1)
     );
   }
 
   @Test
   public void testPutTurtleArtifactRedirectsWithSlashHMAS(final VertxTestContext ctx) {
     this.helper.testResourceRequestRedirectsWithAddedSlash(
-      ctx,
-      HttpMethod.PUT,
-      BODY_PATH
+        ctx,
+        HttpMethod.PUT,
+        BODY_PATH
     );
   }
 

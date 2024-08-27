@@ -9,6 +9,9 @@ import io.vertx.ext.web.handler.BodyHandler;
 import java.util.Optional;
 import org.apache.hc.core5.http.HttpStatus;
 
+/**
+ * Helper Class that implements a server capable of storing messages received through callbacks.
+ */
 public class CallbackServerVerticle extends AbstractVerticle {
   private HttpServer server;
   private final int port;

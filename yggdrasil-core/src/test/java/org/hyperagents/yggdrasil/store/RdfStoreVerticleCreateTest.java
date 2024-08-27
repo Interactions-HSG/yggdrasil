@@ -28,6 +28,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/**
+ * testclass.
+ */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleCreateTest {
@@ -44,6 +47,12 @@ public class RdfStoreVerticleCreateTest {
     this.notificationQueue = new LinkedBlockingQueue<>();
   }
 
+  /**
+   * setup method.
+   *
+   * @param vertx vertx
+   * @param ctx ctx
+   */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());

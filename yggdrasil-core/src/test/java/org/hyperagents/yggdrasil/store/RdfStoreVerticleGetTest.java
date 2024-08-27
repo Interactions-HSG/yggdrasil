@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
@@ -29,47 +28,57 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/**
+ * testclass.
+ */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleGetTest {
   private RdfStoreMessagebox storeMessagebox;
-  private static final BlockingQueue<Message<HttpNotificationDispatcherMessage>> notificationMessageQueue = new LinkedBlockingQueue<>();
+  private static final BlockingQueue<Message<HttpNotificationDispatcherMessage>>
+      notificationMessageQueue = new LinkedBlockingQueue<>();
 
   private static final String WORKSPACES_URI = "http://yggdrasil:8080/workspaces/";
   private static final String WORKSPACE_NAME = "test";
 
+  /**
+   * setup method.
+   *
+   * @param vertx vertx
+   * @param ctx ctx
+   */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     notificationMessageQueue.clear();
     vertx.sharedData()
-         .getLocalMap("environment-config")
-         .put("default",
-              new EnvironmentConfigImpl(JsonObject.of(
+        .getLocalMap("environment-config")
+        .put("default",
+            new EnvironmentConfigImpl(JsonObject.of(
                 "environment-config",
                 JsonObject.of(
-                  "enabled",
-                  true,
-                  "ontology",
-                  "td"
+                    "enabled",
+                    true,
+                    "ontology",
+                    "td"
                 )
-              )));
+            )));
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
     vertx.sharedData()
-      .<String, HttpInterfaceConfig>getLocalMap("http-config")
-      .put("default", httpConfig);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .put("default", httpConfig);
     final var notificationConfig = new WebSubConfigImpl(
-      JsonObject.of(
-        "notification-config",
-        JsonObject.of("enabled", true)
-      ),
-      httpConfig
+        JsonObject.of(
+            "notification-config",
+            JsonObject.of("enabled", true)
+        ),
+        httpConfig
     );
     vertx.sharedData()
-      .<String, WebSubConfig>getLocalMap("notification-config")
-      .put("default", notificationConfig);
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .put("default", notificationConfig);
     final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
-      vertx.eventBus(),
-      notificationConfig
+        vertx.eventBus(),
+        notificationConfig
     );
     notificationMessagebox.init();
     notificationMessagebox.receiveMessages(notificationMessageQueue::add);
@@ -92,8 +101,8 @@ public class RdfStoreVerticleGetTest {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity("http://localhost:8080/"))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          expectedPlatformRepresentation,
-          r.body()
+            expectedPlatformRepresentation,
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -117,103 +126,105 @@ public class RdfStoreVerticleGetTest {
   @Test
   public void testGetEntityIriNonExistent(final VertxTestContext ctx) {
     this.storeMessagebox
-      .sendMessage(new RdfStoreMessage.GetEntityIri(WORKSPACES_URI,"nonexistent"))
-      .onSuccess(r -> Assertions.assertEquals(
-        "nonexistent",
-        r.body(),
-        "URIs should be the same"
-      )).onComplete(ctx.succeedingThenComplete());
+        .sendMessage(new RdfStoreMessage.GetEntityIri(WORKSPACES_URI, "nonexistent"))
+        .onSuccess(r -> Assertions.assertEquals(
+            "nonexistent",
+            r.body(),
+            "URIs should be the same"
+        )).onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
-  public void testGetEntityIriExistsAlredy(final VertxTestContext ctx) throws URISyntaxException, IOException {
+  public void testGetEntityIriExistsAlredy(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
     final var workspaceInput = Files.readString(
-      Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
-      StandardCharsets.UTF_8
+        Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+        StandardCharsets.UTF_8
     );
     final var workspaceRepresentation = Files.readString(
-      Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
-      StandardCharsets.UTF_8
+        Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
+        StandardCharsets.UTF_8
     );
 
     this.storeMessagebox
-      .sendMessage(new RdfStoreMessage.CreateWorkspace(
-        WORKSPACES_URI,
-        WORKSPACE_NAME,
-        Optional.empty(),
-        workspaceInput
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
         )).onSuccess(r -> Assertions.assertEquals(
-          workspaceRepresentation,
-          r.body(),
-          "Representations should be equal"
+            workspaceRepresentation,
+            r.body(),
+            "Representations should be equal"
         ));
 
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(
-          "http://yggdrasil:8080/workspaces/test"
+            "http://yggdrasil:8080/workspaces/test"
         )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          workspaceRepresentation,
-          r.body()
+            workspaceRepresentation,
+            r.body()
         ));
 
     // trying to get another thing with the same slug
     // should return a UUID that is not the slug
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntityIri(
-          WORKSPACES_URI,
-          WORKSPACE_NAME
+            WORKSPACES_URI,
+            WORKSPACE_NAME
         )).onSuccess(r -> Assertions.assertNotEquals(
-          WORKSPACE_NAME,
-          r.body()
+            WORKSPACE_NAME,
+            r.body()
         ));
     ctx.completeNow();
   }
 
   /**
-   * Both URIs /test and /test/ should return the representation of the same resource
+   * Both URIs /test and /test/ should return the representation of the same resource.
    *
    * @param ctx Test context
    * @throws URISyntaxException due to URI conversion
-   * @throws IOException due to reading in a file
+   * @throws IOException        due to reading in a file
    */
   @Test
-  public void testDifferentUriEndingsForSameResult(final VertxTestContext ctx) throws URISyntaxException, IOException {
+  public void testDifferentUriEndingsForSameResult(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
     final var workspaceInput = Files.readString(
-      Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
-      StandardCharsets.UTF_8
+        Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+        StandardCharsets.UTF_8
     );
     final var workspaceRepresentation = Files.readString(
-      Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
-      StandardCharsets.UTF_8
+        Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
+        StandardCharsets.UTF_8
     );
 
     this.storeMessagebox
-      .sendMessage(new RdfStoreMessage.CreateWorkspace(
-        WORKSPACES_URI,
-        WORKSPACE_NAME,
-        Optional.empty(),
-        workspaceInput
-      )).onSuccess(r -> Assertions.assertEquals(
-        workspaceRepresentation,
-        r.body(),
-        "Representations should be equal"
-      ));
-
-    this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.GetEntity(
-          "http://yggdrasil:8080/workspaces/test"
-        )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          workspaceRepresentation,
-          r.body()
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            "Representations should be equal"
         ));
 
     this.storeMessagebox
-      .sendMessage(new RdfStoreMessage.GetEntity(
-        "http://yggdrasil:8080/workspaces/test/"
-      )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-        workspaceRepresentation,
-        r.body()
-      ));
+        .sendMessage(new RdfStoreMessage.GetEntity(
+            "http://yggdrasil:8080/workspaces/test"
+        )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+            workspaceRepresentation,
+            r.body()
+        ));
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.GetEntity(
+            "http://yggdrasil:8080/workspaces/test/"
+        )).onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+            workspaceRepresentation,
+            r.body()
+        ));
 
     ctx.completeNow();
   }
