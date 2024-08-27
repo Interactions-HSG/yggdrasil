@@ -55,6 +55,9 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 
 
+/**
+ * The Vertx Verticle that is responsible for enabling Cartago functionality.
+ */
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
@@ -154,7 +157,8 @@ public class CartagoVerticle extends AbstractVerticle {
                   w.getParentName().map(httpConfig::getWorkspaceUri),
                   Files.readString(r, StandardCharsets.UTF_8)
               ));
-              // Since the workspace cannot hold cartago artifacts we only create ones using file representation
+              // Since the workspace cannot hold cartago artifacts we only create ones using file
+              // representation
               w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
                   Failable.asConsumer(ar ->
                       this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(

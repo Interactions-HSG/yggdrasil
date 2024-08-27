@@ -1,6 +1,5 @@
 package org.hyperagents.yggdrasil.cartago;
 
-import io.vertx.core.json.JsonObject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,21 +28,24 @@ public final class HypermediaArtifactRegistry {
   // Maps an HTTP request to an action name. The HTTP request is currently identified by
   // [HTTP_Method] + [HTTP_Target_URI].
   private final Map<String, String> artifactActionRouter;
-  // Maps the IRI of an artifact to an API key to be used for that artifact
-  private final Map<String, String> artifactApiKeys;
-  private final Map<String, String> artifactNames;
   private int counter;
 
+  /**
+   * Constructor.
+   */
   public HypermediaArtifactRegistry() {
     this.artifactSemanticTypes = new ConcurrentHashMap<>();
     this.artifacts = Collections.synchronizedMap(new HashMap<>());
     this.artifactTemplateDescriptions = Collections.synchronizedMap(new HashMap<>());
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
-    this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
-    this.artifactNames = Collections.synchronizedMap(new HashMap<>());
     this.counter = 0;
   }
 
+  /**
+   * When a new artifact is created it is then registered in the Registry using this method.
+   *
+   * @param artifact a HypermediaArtifact.
+   */
   public void register(final HypermediaArtifact artifact) {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifacts.put(artifactTemplate, artifact);
@@ -73,17 +75,16 @@ public final class HypermediaArtifactRegistry {
     this.artifactSemanticTypes.put(key, value);
   }
 
-  public void addArtifactTemplates(final JsonObject artifactTemplates) {
-    Optional.ofNullable(artifactTemplates)
-        .ifPresent(t -> t.forEach(
-            e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
-        ));
-  }
-
   public Set<String> getArtifactTemplates() {
     return new HashSet<>(this.artifactSemanticTypes.keySet());
   }
 
+  /**
+   * Given an artifactTemplate returns its semantic type.
+   *
+   * @param artifactTemplate String.
+   * @return Optional of the semantic type.
+   */
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
         .entrySet()
@@ -103,22 +104,6 @@ public final class HypermediaArtifactRegistry {
 
   public String getActionName(final String method) {
     return this.artifactActionRouter.get(method);
-  }
-
-  public void setApiKeyForArtifact(final String artifactId, final String apiKey) {
-    this.artifactApiKeys.put(artifactId, apiKey);
-  }
-
-  public String getApiKeyForArtifact(final String artifactId) {
-    return this.artifactApiKeys.get(artifactId);
-  }
-
-  public boolean hasOtherName(final String hypermediaArtifactName) {
-    return this.artifactNames.containsKey(hypermediaArtifactName);
-  }
-
-  public String getActualName(final String hypermediaArtifactName) {
-    return this.artifactNames.get(hypermediaArtifactName);
   }
 
   public String getName() {

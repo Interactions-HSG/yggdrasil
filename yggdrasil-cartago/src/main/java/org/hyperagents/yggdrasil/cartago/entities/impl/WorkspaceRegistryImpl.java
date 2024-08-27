@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 
+/**
+ * Wrapper class to query all workspaces.
+ */
 public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
   private final Map<String, WorkspaceDescriptor> workspaceDescriptors;
 
@@ -28,7 +31,7 @@ public final class WorkspaceRegistryImpl implements WorkspaceRegistry {
   @Override
   public Optional<Workspace> getWorkspace(final String name) {
     return Optional.ofNullable(this.workspaceDescriptors.get(name))
-                   .map(WorkspaceDescriptor::getWorkspace);
+        .map(WorkspaceDescriptor::getWorkspace);
   }
 
   @Override
