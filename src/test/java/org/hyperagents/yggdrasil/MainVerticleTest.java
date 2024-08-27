@@ -19,11 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hyperagents.yggdrasil.TestConstants.*;
+import static org.hyperagents.yggdrasil.TConstants.*;
 
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
@@ -40,9 +41,9 @@ public class MainVerticleTest {
 
     final JsonObject env;
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
-    if (testName.contains(TD.toUpperCase())) {
+    if (testName.contains(TD.toUpperCase(Locale.ENGLISH))) {
       env = TDEnv;
-    } else if (testName.contains(HMAS.toUpperCase())) {
+    } else if (testName.contains(HMAS.toUpperCase(Locale.ENGLISH))) {
       env = HMASEnv;
     } else {
       throw new RuntimeException(ONTOLOGY_SPECIFIED_MESSAGE);

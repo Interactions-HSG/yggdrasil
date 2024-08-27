@@ -1,7 +1,5 @@
 package org.hyperagents.yggdrasil.configuration;
 
-import ch.unisg.ics.interactions.wot.td.ThingDescription;
-import ch.unisg.ics.interactions.wot.td.io.TDGraphReader;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
@@ -9,11 +7,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.eclipse.rdf4j.model.util.Models;
 import org.hyperagents.yggdrasil.CallbackServerVerticle;
 import org.hyperagents.yggdrasil.MainVerticle;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -23,8 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hyperagents.yggdrasil.TestConstants.*;
+import static org.hyperagents.yggdrasil.TConstants.*;
 
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class ConfigurationTests {
   private WebClient client;
@@ -51,7 +48,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of();
+    final JsonObject config = JsonObject.of();
     setUp(vertx, config)
       .onComplete(x ->
         this.client.get(TEST_PORT, TEST_HOST, "").send()
@@ -72,7 +69,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig
     );
@@ -96,7 +93,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -122,7 +119,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       ENVIRONMENT_CONFIG,
@@ -148,7 +145,7 @@ public class ConfigurationTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -171,7 +168,7 @@ public class ConfigurationTests {
 
   @Test
   public void testRunWithConfigWithEnvironmentAndAddedMetadata(final Vertx vertx, final VertxTestContext ctx) throws URISyntaxException, IOException {
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -212,21 +209,6 @@ public class ConfigurationTests {
         }
       )
       .onFailure(ctx::failNow)
-    );
-
-  }
-
-  private void assertEqualsThingDescriptions(final String expected, final String actual) {
-    final var areEqual = Models.isomorphic(
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph().orElseThrow(),
-      TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph().orElseThrow()
-    );
-    if (!areEqual) {
-      System.out.println(actual);
-    }
-    Assertions.assertTrue(
-      areEqual,
-      REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 }

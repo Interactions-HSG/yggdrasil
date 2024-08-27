@@ -19,8 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.hyperagents.yggdrasil.TestConstants.*;
+import static org.hyperagents.yggdrasil.TConstants.*;
 
+
+@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class BaseTests {
   private WebClient client;
@@ -48,7 +50,7 @@ public class BaseTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of();
+    final JsonObject config = JsonObject.of();
     setUp(vertx, config)
       .onComplete(x ->
         this.client.get(TEST_PORT, TEST_HOST, "").send()
@@ -69,7 +71,7 @@ public class BaseTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig
     );
@@ -93,7 +95,7 @@ public class BaseTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -119,7 +121,7 @@ public class BaseTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/basePlatformTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       ENVIRONMENT_CONFIG,
@@ -145,7 +147,7 @@ public class BaseTests {
         Path.of(ClassLoader.getSystemResource("ConfigurationTests/platformWebSubTD.ttl").toURI()),
         StandardCharsets.UTF_8
       );
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,
@@ -168,7 +170,7 @@ public class BaseTests {
 
   @Test
   public void testRunWithConfigWithEnvironmentAndAddedMetadata(final Vertx vertx, final VertxTestContext ctx) throws URISyntaxException, IOException {
-    JsonObject config = JsonObject.of(
+    final JsonObject config = JsonObject.of(
       HTTP_CONFIG,
       httpConfig,
       NOTIFICATION_CONFIG,

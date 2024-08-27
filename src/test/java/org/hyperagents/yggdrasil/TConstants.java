@@ -8,7 +8,9 @@ import io.vertx.core.json.JsonObject;
 import org.eclipse.rdf4j.model.util.Models;
 import org.junit.jupiter.api.Assertions;
 
-public class TestConstants {
+public final class TConstants {
+
+
   public static final String TEST_HOST = "localhost";
   public static final int TEST_PORT = 8080;
 
@@ -156,6 +158,8 @@ public class TestConstants {
     ONTOLOGY,
     HMAS
   );
+
+  private TConstants(){}
 
   public static void assertEqualsThingDescriptions(final String expected, final String actual) {
     final var areEqual = Models.isomorphic(

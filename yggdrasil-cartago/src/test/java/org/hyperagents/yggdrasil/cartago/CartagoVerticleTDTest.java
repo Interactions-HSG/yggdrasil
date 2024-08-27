@@ -45,7 +45,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 @ExtendWith(VertxExtension.class)
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 public class CartagoVerticleTDTest {
-  private static final String MAIN_WORKSPACE_NAME = "test";
+  private static final String TEST = "test";
+  private static final String MAIN_WORKSPACE_NAME = TEST;
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
@@ -192,7 +193,7 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .onSuccess(r -> Assertions.assertEquals(
@@ -210,13 +211,13 @@ public class CartagoVerticleTDTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .onComplete(ctx.succeedingThenComplete());

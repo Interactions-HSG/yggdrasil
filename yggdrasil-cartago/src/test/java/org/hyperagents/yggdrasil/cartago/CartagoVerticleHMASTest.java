@@ -40,7 +40,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(VertxExtension.class)
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 public class CartagoVerticleHMASTest {
-  private static final String MAIN_WORKSPACE_NAME = "test";
+  private static final String TEST = "test";
+  private static final String MAIN_WORKSPACE_NAME = TEST;
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String CLASS = "class";
   private static final String TEMPLATE = "template";
@@ -199,7 +200,7 @@ public class CartagoVerticleHMASTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .onSuccess(r -> assertEqualsHMASDescriptions(
@@ -216,13 +217,13 @@ public class CartagoVerticleHMASTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .onComplete(ctx.succeedingThenComplete());
@@ -534,7 +535,7 @@ public class CartagoVerticleHMASTest {
       .compose(r -> this.cartagoMessagebox
         .sendMessage(new CartagoMessage.JoinWorkspace(
           TEST_AGENT_IRI,
-          "test",
+          TEST,
           MAIN_WORKSPACE_NAME
         )))
       .onSuccess(r -> {
