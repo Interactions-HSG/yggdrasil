@@ -79,10 +79,10 @@ public class CartagoMessagebox implements Messagebox<CartagoMessage> {
           )
       );
       this.eventBus.registerDefaultCodec(
-        CartagoMessage.DeleteEntity.class,
+          CartagoMessage.DeleteEntity.class,
         new GenericMessageCodec<>(
           CartagoMessage.DeleteEntity.class,
-          new CartagoMessageMarshaller()
+            new CartagoMessageMarshaller()
         )
       );
     } else {

@@ -12,10 +12,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperagents.yggdrasil.model.*;
+import org.hyperagents.yggdrasil.model.Artifact;
+import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.KnownArtifact;
+import org.hyperagents.yggdrasil.model.Workspace;
+import org.hyperagents.yggdrasil.model.YggdrasilAgent;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
@@ -98,7 +101,7 @@ public final class EnvironmentParser {
             }
             return Stream.of(new WorkspaceImpl(
               name.get(),
-              JsonObjectUtils.getString(w,"metadata", LOGGER::error).map(Path::of),
+              JsonObjectUtils.getString(w, "metadata", LOGGER::error).map(Path::of),
               JsonObjectUtils
                 .getString(w, "parent-name", LOGGER::error)
                 .filter(p -> {
@@ -110,30 +113,33 @@ public final class EnvironmentParser {
                   return workspaceNames.contains(p);
                 }),
               JsonObjectUtils
-                .getJsonArray(w,"agents", LOGGER::error)
+                .getJsonArray(w, "agents", LOGGER::error)
                 .stream()
                   .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
                     .<YggdrasilAgent>flatMap(ag -> {
                       final var agentName = JsonObjectUtils.getString(ag, NAME, LOGGER::error);
-                      if (agentName.isEmpty()){
+                      if (agentName.isEmpty()) {
                         LOGGER.warn("Agent in workspace missing name, skipping");
                         return Stream.empty();
                       }
 
-                      final var agentUri = JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
+                      final var agentUri =
+                          JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
                       if (agentUri.isEmpty()) {
                         LOGGER.warn("Agent in workspace missing uri, skipping");
                         return Stream.empty();
                       }
 
-                      final var agentCallbackUri = JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
-                      if (agentCallbackUri.isEmpty()){
+                      final var agentCallbackUri =
+                          JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
+                      if (agentCallbackUri.isEmpty()) {
                         LOGGER.warn("Agent in workspace missing uri, skipping");
                       }
 
-                      final var focusedArtifacts = JsonObjectUtils.getJsonArray(ag, "focused-artifacts", LOGGER::error)
-                        .stream()
-                        .flatMap(a -> IntStream.range(0, a.size())
+                      final var focusedArtifacts =
+                          JsonObjectUtils.getJsonArray(ag, "focused-artifacts", LOGGER::error)
+                          .stream()
+                          .flatMap(a -> IntStream.range(0, a.size())
                           .mapToObj(a::getValue)
                           .flatMap(o ->
                             (
@@ -143,7 +149,7 @@ public final class EnvironmentParser {
                             )
                               .stream()
                           ))
-                        .collect(Collectors.toList());
+                          .collect(Collectors.toList());
 
                       return Stream.of(new AgentImpl(
                         agentName.orElseThrow(),
@@ -317,15 +323,17 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Optional<Path> getMetaData() {return this.metaData();}
+    public Optional<Path> getMetaData() {
+      return this.metaData();
+    }
   }
 
   private record AgentImpl(
-    String name,
-    String agentUri,
-    String agentCallbackUri,
-    List<String> focusedArtifactNames,
-    Optional<Path> metaData
+      String name,
+      String agentUri,
+      String agentCallbackUri,
+      List<String> focusedArtifactNames,
+      Optional<Path> metaData
   ) implements YggdrasilAgent {
 
     @Override

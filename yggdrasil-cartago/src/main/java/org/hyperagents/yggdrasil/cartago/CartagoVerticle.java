@@ -203,7 +203,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
               // creating artifacts
               w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
-                    this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                         this.httpConfig.getArtifactsUri(w.getName()),
                         a.getName(),
                         this.instantiateArtifact(
@@ -216,12 +216,12 @@ public class CartagoVerticle extends AbstractVerticle {
                                 .map(List::toArray).orElse(null)
                         )
                     ));
-                    a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
+                a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
                         this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
                             this.httpConfig.getArtifactUri(w.getName(), a.getName()),
                             Files.readString(metadata, StandardCharsets.UTF_8)
                         ))));
-                  }),
+              }),
                   () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                       this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                           httpConfig.getArtifactsUri(w.getName()),
@@ -279,7 +279,7 @@ public class CartagoVerticle extends AbstractVerticle {
             String workspaceName,
             String artifactName,
             String representation
-        ) -> {
+          ) -> {
           final var artifactInit = new JsonObject(representation);
 
           message.reply(this.instantiateArtifact(
@@ -297,7 +297,7 @@ public class CartagoVerticle extends AbstractVerticle {
             String agentId,
             String workspaceName,
             String artifactName
-        ) -> {
+          ) -> {
           this.focus(agentId, workspaceName, artifactName);
           message.reply(String.valueOf(HttpStatus.SC_OK));
         }
@@ -309,7 +309,7 @@ public class CartagoVerticle extends AbstractVerticle {
             Optional<String> apiKey,
             String storeResponse,
             String requestContext
-        ) -> this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null),
+          ) -> this.doAction(agentId, workspaceName, artifactName, actionName, apiKey.orElse(null),
                 storeResponse,
                 requestContext)
             .onSuccess(o -> message.reply(o.orElse(null)))
@@ -317,7 +317,7 @@ public class CartagoVerticle extends AbstractVerticle {
         case CartagoMessage.DeleteEntity(
             String workspaceName,
             String entityUri
-        ) -> this.deleteEntity(workspaceName, entityUri);
+          ) -> this.deleteEntity(workspaceName, entityUri);
       }
     } catch (final DecodeException | NoSuchElementException | CartagoException e) {
       message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());

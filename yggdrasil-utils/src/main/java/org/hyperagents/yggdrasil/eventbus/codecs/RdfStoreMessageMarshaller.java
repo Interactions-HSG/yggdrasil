@@ -90,8 +90,8 @@ public class RdfStoreMessageMarshaller
       case RdfStoreMessage.UpdateEntity(String requestUri, String entityRepresentation) -> {
         json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
         json.addProperty(
-          MessageFields.REQUEST_URI.getName(),
-          MessageRequestMethods.PATCH_ENTITY.getName()
+            MessageFields.REQUEST_URI.getName(),
+            MessageRequestMethods.PATCH_ENTITY.getName()
         );
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
       }

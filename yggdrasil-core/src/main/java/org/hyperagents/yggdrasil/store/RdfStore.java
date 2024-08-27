@@ -6,6 +6,9 @@ import java.util.Optional;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 
+/**
+ * Interface that defines the API of a RDFStore.
+ */
 public interface RdfStore {
   boolean containsEntityModel(IRI entityIri) throws IOException;
 

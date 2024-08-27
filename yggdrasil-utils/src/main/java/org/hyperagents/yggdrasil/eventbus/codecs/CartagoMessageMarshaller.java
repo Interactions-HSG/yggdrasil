@@ -10,8 +10,6 @@ import com.google.gson.JsonSerializer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.lang.reflect.Type;
 import java.util.Optional;
-
-
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 
 /**
@@ -146,16 +144,16 @@ public class CartagoMessageMarshaller
         json.addProperty(MessageFields.ARTIFACT_NAME.getName(), m.artifactName());
         json.addProperty(MessageFields.ACTION_NAME.getName(), m.actionName());
         json.addProperty(
-          MessageFields.API_KEY.getName(),
-          m.apiKey().orElse(null)
+            MessageFields.API_KEY.getName(),
+            m.apiKey().orElse(null)
         );
         json.addProperty(MessageFields.STORE_RESPONSE.getName(), m.storeResponse());
         json.addProperty(MessageFields.CONTEXT.getName(), m.context());
       }
       case CartagoMessage.DeleteEntity m -> {
         json.addProperty(
-          MessageFields.REQUEST_METHOD.getName(),
-          MessageRequestMethods.DELETE_ENTITY.getName()
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.DELETE_ENTITY.getName()
         );
         json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
       }

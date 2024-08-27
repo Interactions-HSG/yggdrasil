@@ -18,7 +18,8 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public class HttpNotificationDispatcherMessagebox
     implements Messagebox<HttpNotificationDispatcherMessage> {
-  private static final Logger LOGGER = LogManager.getLogger(HttpNotificationDispatcherMessagebox.class);
+  private static final Logger LOGGER =
+      LogManager.getLogger(HttpNotificationDispatcherMessagebox.class);
 
   private final EventBus eventBus;
   private final WebSubConfig config;

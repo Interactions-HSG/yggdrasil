@@ -13,7 +13,12 @@ import java.util.Optional;
  */
 public sealed interface RdfStoreMessage {
 
-
+  /**
+   * A record representing a request to get an entity Iri from the RDF store.
+   *
+   * @param requestUri the Uri to be requested
+   * @param slug the wanted name
+   */
   record GetEntityIri(String requestUri, String slug) implements RdfStoreMessage {
   }
 
@@ -34,6 +39,12 @@ public sealed interface RdfStoreMessage {
   record ReplaceEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {
   }
 
+  /**
+   * A record representing a request to update an entity in the RDF store.
+   *
+   * @param requestUri           The URI of the request to update the entity.
+   * @param entityRepresentation The string representation of the entity to be updated.
+   */
   record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {}
 
   /**
