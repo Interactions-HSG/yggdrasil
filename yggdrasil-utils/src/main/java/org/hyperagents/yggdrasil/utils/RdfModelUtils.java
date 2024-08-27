@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
-
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
@@ -41,7 +40,8 @@ public final class RdfModelUtils {
    * @throws IllegalArgumentException if the RDF format is not supported
    * @throws IOException              if an I/O error occurs during serialization
    */
-  public static String modelToString(final Model model, final RDFFormat format, final String base) throws IllegalArgumentException, IOException {
+  public static String modelToString(final Model model, final RDFFormat format, final String base)
+      throws IllegalArgumentException, IOException {
     final var test = new ByteArrayOutputStream();
 
     final RDFWriter writer;
@@ -62,18 +62,18 @@ public final class RdfModelUtils {
         .set(JSONLDSettings.JSONLD_MODE,
           JSONLDMode.FLATTEN)
         .set(JSONLDSettings.USE_NATIVE_TYPES, true)
-        .set(JSONLDSettings.OPTIMIZE, true);
+          .set(JSONLDSettings.OPTIMIZE, true);
     }
     writer.getWriterConfig()
       .set(BasicWriterSettings.PRETTY_PRINT, true)
       .set(BasicWriterSettings.RDF_LANGSTRING_TO_LANG_LITERAL, true)
       .set(BasicWriterSettings.XSD_STRING_TO_PLAIN_LITERAL, true)
-      .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
+        .set(BasicWriterSettings.INLINE_BLANK_NODES, true);
 
     try {
       writer.startRDF();
       model.getNamespaces().forEach(namespace ->
-        writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
+          writer.handleNamespace(namespace.getPrefix(), namespace.getName()));
       model.forEach(writer::handleStatement);
       writer.endRDF();
     } catch (RDFHandlerException e) {
@@ -94,9 +94,9 @@ public final class RdfModelUtils {
    * @throws IOException              if an I/O error occurs during parsing
    */
   public static Model stringToModel(
-    final String graphString,
-    final IRI baseIri,
-    final RDFFormat format
+      final String graphString,
+      final IRI baseIri,
+      final RDFFormat format
   ) throws IllegalArgumentException, IOException {
     try (var stringReader = new StringReader(graphString)) {
       final var rdfParser = Rio.createParser(format);
@@ -122,6 +122,12 @@ public final class RdfModelUtils {
     return SimpleValueFactory.getInstance().createIRI(iriString);
   }
 
+  /**
+   * Given a model return all namespaces.
+   *
+   * @param model rdf model
+   * @return Set of Strings
+   */
   public static Set<String> collectAllIriNamespaces(final Model model) {
     final Set<String> iris = new HashSet<>();
 

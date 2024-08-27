@@ -21,7 +21,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
- * Utility Verticle to implement Websub functionality
+ * Utility Verticle to implement Websub functionality.
  */
 @SuppressWarnings("unused")
 public class HttpNotificationVerticle extends AbstractVerticle {

@@ -26,10 +26,12 @@ public interface RepresentationFactory {
    * @param isCartagoWorkspace has underlying cartago workspace instance
    * @return the workspace representation as a string
    */
-  String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates, boolean isCartagoWorkspace);
+  String createWorkspaceRepresentation(String workspaceName, Set<String> artifactTemplates,
+                                       boolean isCartagoWorkspace);
 
 
-  String createArtifactRepresentation(String workspaceName, String artifactName, String semanticType, boolean isCartagoArtifact);
+  String createArtifactRepresentation(String workspaceName, String artifactName,
+                                      String semanticType, boolean isCartagoArtifact);
 
   /**
    * Creates an artifact representation.
@@ -50,6 +52,17 @@ public interface RepresentationFactory {
       boolean isCartagoArtifact
   );
 
+  String createArtifactRepresentation(
+      String workspaceName,
+      String artifactName,
+      SecurityScheme securityScheme,
+       String semanticType,
+      Model metadata,
+      ListMultimap<String, Object> actionAffordances,
+      boolean isCartagoArtifact
+  );
+
+
   /**
    * Creates a body representation.
    *
@@ -64,20 +77,10 @@ public interface RepresentationFactory {
       Model metadata
   );
 
-  String createArtifactRepresentation(
-    String workspaceName,
-    String artifactName,
-    SecurityScheme securityScheme,
-    String semanticType,
-    Model metadata,
-    ListMultimap<String, Object> actionAffordances,
-    boolean isCartagoArtifact
-  );
-
   String createBodyRepresentation(
-    String workspaceName,
-    String agentName,
-    SecurityScheme securityScheme,
-    Model metadata
+      String workspaceName,
+      String agentName,
+      SecurityScheme securityScheme,
+      Model metadata
   );
 }
