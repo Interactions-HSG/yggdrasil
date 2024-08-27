@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
 
+
 public interface HypermediaArtifact {
   String getHypermediaDescription(String semanticType);
 
