@@ -51,9 +51,11 @@ public class MainVerticle extends AbstractVerticle {
       // start the verticles
       return this.vertx.deployVerticle(new HttpServerVerticle()).compose(
         v -> this.vertx.deployVerticle(new RdfStoreVerticle(),
-          new DeploymentOptions().setConfig(c))).compose(v -> notificationConfig.isEnabled() ?
+          new DeploymentOptions().setConfig(c))).compose(v -> notificationConfig.isEnabled()
+        ?
         this.vertx.deployVerticle("org.hyperagents.yggdrasil.websub.HttpNotificationVerticle") :
-        Future.succeededFuture()).compose(v -> new EnvironmentConfigImpl(c).isEnabled() ?
+        Future.succeededFuture()).compose(v -> new EnvironmentConfigImpl(c).isEnabled()
+        ?
         this.vertx.deployVerticle("org.hyperagents.yggdrasil.cartago.CartagoVerticle") :
         Future.succeededFuture());
     }).<Void>mapEmpty().onComplete(startPromise);
