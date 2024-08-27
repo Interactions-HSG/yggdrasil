@@ -1,7 +1,6 @@
 package org.hyperagents.yggdrasil.cartago;
 
 import io.vertx.core.json.JsonObject;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.UnaryOperator;
-
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 
 /**
@@ -35,7 +32,6 @@ public final class HypermediaArtifactRegistry {
   // Maps the IRI of an artifact to an API key to be used for that artifact
   private final Map<String, String> artifactApiKeys;
   private final Map<String, String> artifactNames;
-  private final Map<String, Map<String, UnaryOperator<Object>>> feedbackResponseConverters;
   private int counter;
 
   public HypermediaArtifactRegistry() {
@@ -45,7 +41,6 @@ public final class HypermediaArtifactRegistry {
     this.artifactActionRouter = Collections.synchronizedMap(new HashMap<>());
     this.artifactApiKeys = Collections.synchronizedMap(new HashMap<>());
     this.artifactNames = Collections.synchronizedMap(new HashMap<>());
-    this.feedbackResponseConverters = Collections.synchronizedMap(new HashMap<>());
     this.counter = 0;
   }
 
@@ -53,26 +48,25 @@ public final class HypermediaArtifactRegistry {
     final var artifactTemplate = artifact.getArtifactId().getName();
     this.artifacts.put(artifactTemplate, artifact);
     this.artifactTemplateDescriptions.put(artifactTemplate, artifact.getHypermediaDescription(
-      this
-        .getArtifactSemanticType(artifact.getClass().getCanonicalName())
-        .orElseThrow(
-          () -> new RuntimeException("Artifact was not registered!")
-        )));
+        this
+            .getArtifactSemanticType(artifact.getClass().getCanonicalName())
+            .orElseThrow(
+                () -> new RuntimeException("Artifact was not registered!")
+            )));
     artifact.getArtifactActions()
-      .entrySet()
-      .stream()
-      .flatMap(signifierEntry -> signifierEntry.getValue()
+        .entrySet()
         .stream()
-        .map(signifier -> Map.entry(
-          signifierEntry.getKey(),
-          signifier
-        )))
-      .forEach(signifier -> artifact.getMethodNameAndTarget(signifier.getValue())
-        .ifPresent(s -> this.artifactActionRouter.put(
-          s,
-          signifier.getKey()
-        )));
-    this.feedbackResponseConverters.put(artifactTemplate, artifact.getResponseConverterMap());
+        .flatMap(signifierEntry -> signifierEntry.getValue()
+            .stream()
+            .map(signifier -> Map.entry(
+                signifierEntry.getKey(),
+                signifier
+            )))
+        .forEach(signifier -> artifact.getMethodNameAndTarget(signifier.getValue())
+            .ifPresent(s -> this.artifactActionRouter.put(
+                s,
+                signifier.getKey()
+            )));
   }
 
   public void addArtifactTemplate(final String key, final String value) {
@@ -81,9 +75,9 @@ public final class HypermediaArtifactRegistry {
 
   public void addArtifactTemplates(final JsonObject artifactTemplates) {
     Optional.ofNullable(artifactTemplates)
-      .ifPresent(t -> t.forEach(
-        e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
-      ));
+        .ifPresent(t -> t.forEach(
+            e -> this.artifactSemanticTypes.put(e.getKey(), (String) e.getValue())
+        ));
   }
 
   public Set<String> getArtifactTemplates() {
@@ -92,11 +86,11 @@ public final class HypermediaArtifactRegistry {
 
   public Optional<String> getArtifactSemanticType(final String artifactTemplate) {
     return this.artifactSemanticTypes
-      .entrySet()
-      .stream()
-      .filter(e -> e.getValue().equals(artifactTemplate))
-      .map(Map.Entry::getKey)
-      .findFirst();
+        .entrySet()
+        .stream()
+        .filter(e -> e.getValue().equals(artifactTemplate))
+        .map(Map.Entry::getKey)
+        .findFirst();
   }
 
   public Optional<String> getArtifactTemplate(final String artifactSemanticType) {
@@ -130,17 +124,6 @@ public final class HypermediaArtifactRegistry {
   public String getName() {
     this.counter++;
     return "hypermedia_body_" + this.counter;
-  }
-
-  public boolean hasFeedbackResponseConverter(final String artifactName, final String action) {
-    return this.feedbackResponseConverters.get(artifactName).containsKey(action);
-  }
-
-  public UnaryOperator<Object> getFeedbackResponseConverter(
-    final String artifactName,
-    final String action
-  ) {
-    return this.feedbackResponseConverters.get(artifactName).get(action);
   }
 
   public HypermediaArtifact getArtifact(final String artifactName) {

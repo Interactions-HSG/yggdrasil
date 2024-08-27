@@ -13,8 +13,8 @@ public class AdderTD extends HypermediaTDArtifact {
   /**
    * This operation performs the addition of two integers.
    *
-   * @param x The first integer to add.
-   * @param y The second integer to add.
+   * @param x        The first integer to add.
+   * @param y        The second integer to add.
    * @param sumParam The parameter to store the result of the addition.
    */
   @OPERATION
@@ -30,16 +30,16 @@ public class AdderTD extends HypermediaTDArtifact {
   @Override
   protected void registerInteractionAffordances() {
     this.registerActionAffordance(
-      "http://example.org/add",
-      "add",
-      "add",
-      new ArraySchema.Builder()
-        .addItem(new IntegerSchema.Builder().build())
-        .addItem(new IntegerSchema.Builder().build())
-        .build(),
-      new ArraySchema.Builder()
-        .addItem(new IntegerSchema.Builder().build())
-        .build()
+        "http://example.org/add",
+        "add",
+        "add",
+        new ArraySchema.Builder()
+            .addItem(new IntegerSchema.Builder().build())
+            .addItem(new IntegerSchema.Builder().build())
+            .build(),
+        new ArraySchema.Builder()
+            .addItem(new IntegerSchema.Builder().build())
+            .build()
     );
   }
 }
