@@ -44,16 +44,17 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   private final WebSubConfig notificationConfig;
 
-  private final String baseUri;
-
-
   private enum WebSubMode {
     subscribe,
     unsubscribe
   }
 
-  private record WebSubSpecs(String baseUri, String signifierName, String actionType,
-                             String topic){}
+  private record WebSubSpecs(
+      String resourceUri,
+      String topic,
+      String jacamoActionType,
+      String topicAdress,
+      WebSubMode mode){}
 
   /**
    * Constructor.
@@ -65,32 +66,30 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
                                        final WebSubConfig notificationConfig) {
     this.httpConfig = httpConfig;
     this.notificationConfig = notificationConfig;
-    this.baseUri = httpConfig.getBaseUri();
   }
 
 
-  private Signifier webSubSignifier(final WebSubSpecs specs,
-                                   final WebSubMode mode) {
+  private Signifier webSubSignifier(final WebSubSpecs specs) {
     return
         new Signifier.Builder(
             new ActionSpecification.Builder(
                 new Form.Builder(notificationConfig.getWebSubHubUri())
-            .setIRIAsString(specs.baseUri() + "#webSubForm")
+            .setIRIAsString(specs.resourceUri() + "#webSubForm")
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
             .build())
-          .addRequiredSemanticType(specs.actionType())
+          .addRequiredSemanticType(specs.jacamoActionType())
           .setInputSpecification(
             new QualifiedValueSpecification.Builder()
-                .setIRIAsString(specs.baseUri() + "#webSub"
-                    + mode.toString().substring(0, 1).toUpperCase(Locale.ENGLISH)
-                    + mode.toString().substring(1) + "Input")
+                .setIRIAsString(specs.resourceUri() + "#webSub"
+                    + specs.mode().toString().substring(0, 1).toUpperCase(Locale.ENGLISH)
+                    + specs.mode().toString().substring(1) + "Input")
               .addRequiredSemanticType("http://www.example.org/websub#websubsubscription")
               .setRequired(true)
               .addPropertySpecification("http://www.example.org/websub#topic",
                 new StringSpecification.Builder()
                   .setRequired(true)
-                  .setValue(specs.topic())
+                  .setValue(specs.topicAdress())
                   .setName("hub.topic")
                   .setDescription("The topic of the WebSub hub")
                   .build()
@@ -105,34 +104,29 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
               .addPropertySpecification("http://www.example.org/websub#mode",
                 new StringSpecification.Builder()
                   .setRequired(true)
-                  .setValue(mode.name())
+                  .setValue(specs.mode().name())
                   .setName("hub.mode")
                   .setDescription("The mode of the WebSub hub")
                   .build()
               ).build()
           ).build()
       )
-        .setIRIAsString(baseUri + "#" + specs.signifierName())
+        .setIRIAsString(specs.resourceUri() + "#" + specs.topic())
         .build();
   }
 
   private void addWebSubSignifier(final ResourceProfile.Builder profile,
-                                 final String signifierName,
-                                 final String actionType,
-                                 final String topic) {
+                                 final String resourceUri,
+                                 final String topic,
+                                  final String topicAdress) {
     if (this.notificationConfig.isEnabled()) {
       profile.exposeSignifier(webSubSignifier(
-          new WebSubSpecs(this.baseUri, "subscribeTo" + signifierName,
-              JACAMO + "Observe" + actionType, topic), WebSubMode.subscribe));
+          new WebSubSpecs(resourceUri, "subscribeTo" + topic,
+              JACAMO + "Observe" + topic, topicAdress, WebSubMode.subscribe)));
       profile.exposeSignifier(webSubSignifier(
-          new WebSubSpecs(this.baseUri, "unsubscribeFrom" + signifierName,
-              JACAMO + "Unobserve" + actionType, topic), WebSubMode.unsubscribe));
+          new WebSubSpecs(resourceUri, "unsubscribeFrom" + topic,
+              JACAMO + "Unobserve" + topic, topicAdress, WebSubMode.unsubscribe)));
     }
-  }
-
-  private void addWebSubSignifier(final ResourceProfile.Builder profile, final String signifierName,
-                                 final String actionType) {
-    addWebSubSignifier(profile, signifierName, actionType, this.httpConfig.getBaseUri());
   }
 
   @Override
@@ -192,7 +186,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
             .build()
         ).setIRIAsString(baseUri + "#sparqlPostQuery").build());
 
-    addWebSubSignifier(resourceProfile, "Workspaces", "Platform", baseUri + "workspaces/");
+    addWebSubSignifier(resourceProfile,
+        baseUri, "Workspaces", baseUri + "workspaces/");
 
     return serializeHmasResourceProfile(resourceProfile.build());
   }
@@ -260,40 +255,43 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     // join Workspace Signifier
-    final Form joinWorkspaceForm = new Form.Builder(baseUri + "join/")
+    final Form joinWorkspaceForm = new Form.Builder(baseUri + "join")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#joinWorkspaceForm")
         .build();
 
 
     // leave Workspace Signifier
-    final Form leaveWorkspaceForm = new Form.Builder(baseUri + "leave/")
+    final Form leaveWorkspaceForm = new Form.Builder(baseUri + "leave")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#leaveWorkspaceForm")
         .build();
 
     // create SubWorkspace Signifier
-    final Form createSubWorkspaceForm = new Form.Builder(baseUri)
+    final Form createSubWorkspaceForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#createSubWorkspaceForm")
         .build();
 
     // get current Workspace representation
-    final Form getCurrentWorkspaceForm = new Form.Builder(baseUri)
+    final Form getCurrentWorkspaceForm =
+        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getCurrentWorkspaceForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // update current workspace representation
-    final Form updateCurrentWorkspaceForm = new Form.Builder(baseUri)
+    final Form updateCurrentWorkspaceForm =
+        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateCurrentWorkspaceForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // delete current workspace
-    final Form deleteCurrentWorkspaceForm = new Form.Builder(baseUri)
+    final Form deleteCurrentWorkspaceForm =
+        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.DELETE.name())
         .setIRIAsString(baseUri + "#deleteCurrentWorkspaceForm")
         .build();
@@ -363,7 +361,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       resourceProfile.exposeSignifier(leaveWorkspaceSignifier);
     }
 
-    addWebSubSignifier(resourceProfile, "Workspace", "Workspace");
+    addWebSubSignifier(resourceProfile,
+        baseUri, "Workspace", baseUri.substring(0, baseUri.length() - 1));
 
     return serializeHmasResourceProfile(resourceProfile.build());
 
@@ -405,21 +404,22 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     // add Signifiers that are always given
     // get the representation for this artifact
-    final Form getArtifactRepresentationForm = new Form.Builder(baseUri)
+    final Form getArtifactRepresentationForm = new Form.Builder(baseUri.substring(0,
+        baseUri.length() - 1))
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getArtifactRepresentationForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // update this artifact
-    final Form updateArtifactForm = new Form.Builder(baseUri)
+    final Form updateArtifactForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateArtifactForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // delete this artifact
-    final Form deleteArtifactForm = new Form.Builder(baseUri)
+    final Form deleteArtifactForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.DELETE.name())
         .setIRIAsString(baseUri + "#deleteArtifactForm")
         .build();
@@ -466,7 +466,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       );
     }
 
-    addWebSubSignifier(resourceProfileBuilder, "Artifact", "Artifact");
+    addWebSubSignifier(resourceProfileBuilder, baseUri, "Artifact", baseUri.substring(0,
+        baseUri.length() - 1));
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -505,13 +506,14 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .setIRIAsString(baseUri.substring(0, baseUri.length() - 1));
 
     // Possible Signifiers of body
-    final Form getBodyRepresentationForm = new Form.Builder(baseUri)
+    final Form getBodyRepresentationForm = new Form.Builder(baseUri.substring(0,
+        baseUri.length() - 1))
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getBodyRepresentationForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
-    final Form updateBodyForm = new Form.Builder(baseUri)
+    final Form updateBodyForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateBodyForm")
         .setContentType(CONTENT_TYPE_TURTLE)
@@ -529,7 +531,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
             .build()
         ).build());
 
-    addWebSubSignifier(profile, "Agent", "Artifact");
+    addWebSubSignifier(profile, baseUri, "Agent", baseUri.substring(0, baseUri.length() - 1));
 
     return serializeHmasResourceProfile(profile.build());
   }
