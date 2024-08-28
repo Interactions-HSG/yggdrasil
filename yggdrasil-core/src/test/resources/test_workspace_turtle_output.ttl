@@ -17,7 +17,7 @@
       td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <workspaces/test/>;
+          hctl:hasTarget <workspaces/test>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]

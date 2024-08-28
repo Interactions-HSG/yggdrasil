@@ -75,13 +75,13 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final Model graph = new LinkedHashModel();
 
     graph.add(
-        RdfModelUtils.createIri(thingIRI.substring(0, thingIRI.length() - 1)),
+        RdfModelUtils.createIri(thingIRI),
         RDF.TYPE,
         RdfModelUtils.createIri(HMAS + "ResourceProfile")
     );
 
     graph.add(
-        RdfModelUtils.createIri(thingIRI.substring(0, thingIRI.length() - 1)),
+        RdfModelUtils.createIri(thingIRI),
         RdfModelUtils.createIri(HMAS + "isProfileOf"),
         RdfModelUtils.createIri(tdIRI)
     );
@@ -91,9 +91,9 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   @Override
   public String createPlatformRepresentation() {
-    final var thingIri = this.httpConfig.getBaseUri();
+    final var thingIri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1);
     final var td = new ThingDescription.Builder("Yggdrasil Node")
-        .addThingURI(thingIri + "#platform")
+        .addThingURI(thingIri + "/#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform")
         .addAction(new ActionAffordance.Builder(
         "createWorkspace",
@@ -106,7 +106,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
     addWebSub(td, "Workspaces");
 
-    wrapInResourceProfile(td, thingIri + "/", thingIri + "#platform");
+    wrapInResourceProfile(td, thingIri + "/", thingIri + "/#platform");
 
     return serializeThingDescription(
       td
@@ -119,11 +119,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       final Set<String> artifactTemplates,
       final boolean isCartagoWorkspace
   ) {
-    final var thingUri = this.httpConfig.getWorkspaceUri(workspaceName);
+    final var thingUri = this.httpConfig.getWorkspaceUri(workspaceName).substring(0,
+        this.httpConfig.getWorkspaceUri(workspaceName).length() - 1);
     final var td =
         new ThingDescription
         .Builder(workspaceName)
-        .addThingURI(thingUri + "#workspace")
+        .addThingURI(thingUri + "/#workspace")
         .addSemanticType(HMAS + "Workspace")
         .addAction(
           new ActionAffordance.Builder(
@@ -162,7 +163,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
             "joinWorkspace",
-                new Form.Builder(thingUri + "join")
+                new Form.Builder(thingUri + "/join")
               .setMethodName(HttpMethod.POST.name())
               .build()
           ).addSemanticType(JACAMO + "JoinWorkspace")
@@ -171,7 +172,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
             "quitWorkspace",
-                new Form.Builder(thingUri + "leave")
+                new Form.Builder(thingUri + "/leave")
               .setMethodName(HttpMethod.POST.name())
               .build()
           ).addSemanticType(JACAMO + "QuitWorkspace")
@@ -180,7 +181,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           .addAction(
             new ActionAffordance.Builder(
             "focus",
-                new Form.Builder(thingUri + "focus")
+                new Form.Builder(thingUri + "/focus")
               .setMethodName(HttpMethod.POST.name())
               .build()
           )
@@ -197,7 +198,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     }
 
     addWebSub(td, "Workspace");
-    wrapInResourceProfile(td, thingUri, thingUri + "#workspace");
+    wrapInResourceProfile(td, thingUri, thingUri + "/#workspace");
     return serializeThingDescription(td);
   }
 
@@ -253,20 +254,21 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     });
 
 
-    final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName).substring(0,
+        this.httpConfig.getArtifactUri(workspaceName, artifactName).length() - 1);
 
     final var td =
          new ThingDescription.Builder(artifactName)
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType(HMAS + "Artifact")
         .addSemanticType(semanticType)
-        .addThingURI(thingUri + HASH_ARTIFACT)
+        .addThingURI(thingUri + "/" + HASH_ARTIFACT)
         .addGraph(metadata);
 
     actionAffordancesMap.values().forEach(td::addAction);
 
     addWebSub(td, "Artifact");
-    wrapInResourceProfile(td, thingUri, thingUri + HASH_ARTIFACT);
+    wrapInResourceProfile(td, thingUri, thingUri + "/" + HASH_ARTIFACT);
 
     return serializeThingDescription(td);
   }
@@ -287,17 +289,18 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       final SecurityScheme securityScheme,
       final Model metadata
   ) {
-    final var bodyUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
+    final var bodyUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName).substring(0,
+        this.httpConfig.getAgentBodyUri(workspaceName, agentName).length() - 1);
     final var td =
         new ThingDescription
         .Builder(agentName)
         .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
         .addSemanticType(HMAS + "Artifact")
         .addSemanticType(JACAMO + "Body")
-        .addThingURI(bodyUri + HASH_ARTIFACT)
+        .addThingURI(bodyUri + "/" + HASH_ARTIFACT)
         .addGraph(metadata);
     addWebSub(td, "Agent");
-    wrapInResourceProfile(td, bodyUri, bodyUri + HASH_ARTIFACT);
+    wrapInResourceProfile(td, bodyUri, bodyUri + "/" + HASH_ARTIFACT);
     return serializeThingDescription(td);
   }
 
