@@ -751,6 +751,12 @@ public class CartagoVerticleTDTest {
                 SUB_WORKSPACE_NAME
             )))
         .compose(r -> this.cartagoMessagebox
+            .sendMessage(new CartagoMessage.JoinWorkspace(
+                TEST_AGENT_IRI,
+                "test",
+                SUB_WORKSPACE_NAME
+            )))
+        .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
                 SUB_WORKSPACE_NAME,

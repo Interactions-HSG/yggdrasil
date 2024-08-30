@@ -747,7 +747,6 @@ public class CartagoVerticleHMASTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
-  // TODO
   @Test
   public void testDoActionSendsSignalSucceedsHMAS(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
@@ -763,6 +762,11 @@ public class CartagoVerticleHMASTest {
                 MAIN_WORKSPACE_NAME,
                 SUB_WORKSPACE_NAME
             )))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI,
+            "test",
+            SUB_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -842,6 +846,12 @@ public class CartagoVerticleHMASTest {
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateSubWorkspace(
                 MAIN_WORKSPACE_NAME,
+                SUB_WORKSPACE_NAME
+            )))
+        .compose(r -> this.cartagoMessagebox
+            .sendMessage(new CartagoMessage.JoinWorkspace(
+                TEST_AGENT_IRI,
+                "test",
                 SUB_WORKSPACE_NAME
             )))
         .compose(r -> this.cartagoMessagebox
