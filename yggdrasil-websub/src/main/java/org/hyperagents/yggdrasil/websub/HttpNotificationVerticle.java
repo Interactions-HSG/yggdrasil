@@ -92,12 +92,13 @@ public class HttpNotificationVerticle extends AbstractVerticle {
                   content.charAt(r.start() - 1) == '"' && content.charAt(r.end()) == '"'
                   ? r.group()
                   : "\"" + r.group() + "\""
-              )
+              ),
+          "application/json"
           );
         case HttpNotificationDispatcherMessage.EntityCreated(String requestIri, String content) ->
-          this.handleNotificationSending(client, webSubHubUri, requestIri, content);
+          this.handleNotificationSending(client, webSubHubUri, requestIri, content, "text/turtle");
         case HttpNotificationDispatcherMessage.EntityChanged(String requestIri, String content) ->
-          this.handleNotificationSending(client, webSubHubUri, requestIri, content);
+          this.handleNotificationSending(client, webSubHubUri, requestIri, content, "text/turtle");
         case HttpNotificationDispatcherMessage.ActionFailed(String requestIri, String content) ->
           this.handleActionNotificationSending(
             client,
@@ -136,6 +137,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
     this.registry.getCallbackIris(requestIri).forEach(c ->
         this.createNotificationRequest(client, webSubHubUri, c, requestIri)
             .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
             .sendJsonObject(
               ((JsonObject) Json.decodeValue(content)).put("eventType", eventType),
               this.reponseHandler(c)
@@ -147,11 +149,13 @@ public class HttpNotificationVerticle extends AbstractVerticle {
       final WebClient client,
       final String webSubHubUri,
       final String requestIri,
-      final String content
+      final String content,
+      final String contentType
   ) {
     this.registry.getCallbackIris(requestIri).forEach(c ->
         this.createNotificationRequest(client, webSubHubUri, c, requestIri)
             .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, contentType)
             .sendBuffer(Buffer.buffer(content), this.reponseHandler(c))
     );
   }
