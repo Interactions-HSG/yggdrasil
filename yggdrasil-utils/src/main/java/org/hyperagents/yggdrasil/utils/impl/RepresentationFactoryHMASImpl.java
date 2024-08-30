@@ -244,7 +244,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     final QualifiedValueSpecification registerArtifactInput =
         new QualifiedValueSpecification.Builder()
         .addRequiredSemanticType(CORE.TERM.ARTIFACT.toString())
-        .setIRIAsString("http://example.org/artifact-rdf")
+        .setIRIAsString(baseUri + "artifact-rdf")
         .setRequired(true)
         .addPropertySpecification("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString",
           new StringSpecification.Builder()
