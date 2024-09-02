@@ -91,7 +91,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   @Override
   public String createPlatformRepresentation() {
-    final var thingIri = this.httpConfig.getBaseUri().substring(0, this.httpConfig.getBaseUri().length() - 1);
+    final var thingIri = this.httpConfig.getBaseUri()
+        .substring(0, this.httpConfig.getBaseUri().length() - 1);
     final var td = new ThingDescription.Builder("Yggdrasil Node")
         .addThingURI(thingIri + "/#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform")
