@@ -13,11 +13,13 @@ import java.util.Set;
 public interface Workspace {
   String getName();
 
+  Optional<Path> getMetaData();
+
   Optional<String> getParentName();
 
   Set<Artifact> getArtifacts();
 
-  Set<JoinedAgent> getAgents();
+  Set<YggdrasilAgent> getAgents();
 
   Optional<Path> getRepresentation();
 }

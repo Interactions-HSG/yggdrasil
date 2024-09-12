@@ -69,5 +69,5 @@
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/> a hmas:ResourceProfile;
+<http://localhost:8080/workspaces/test/artifacts/a0> a hmas:ResourceProfile;
   hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/a0/#artifact> .

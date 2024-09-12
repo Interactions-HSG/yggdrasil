@@ -21,7 +21,7 @@ import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
 /**
- * Utility Verticle to implement Websub functionality
+ * Utility Verticle to implement Websub functionality.
  */
 @SuppressWarnings("unused")
 public class HttpNotificationVerticle extends AbstractVerticle {
@@ -48,11 +48,11 @@ public class HttpNotificationVerticle extends AbstractVerticle {
         .<String, Environment>getLocalMap("environment")
         .get("default")
         .getWorkspaces()
-        .forEach(w -> w.getArtifacts()
-                       .forEach(a -> a.getFocusingAgents()
-                                      .forEach(ag -> this.registry.addCallbackIri(
-                                        httpConfig.getArtifactUri(w.getName(), a.getName()),
-                                        ag.getCallback()
+        .forEach(w -> w.getAgents()
+                       .forEach(a -> a.getFocusedArtifactNames()
+                                      .forEach(artifactName -> this.registry.addCallbackIri(
+                                        httpConfig.getArtifactUri(w.getName(), artifactName),
+                                        a.getAgentCallbackUri()
                                       ))
                        )
         );

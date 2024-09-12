@@ -6,8 +6,6 @@ import ch.unisg.ics.interactions.hmas.interaction.shapes.StringSpecification;
 import com.google.gson.JsonElement;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -120,7 +118,18 @@ public final class JsonObjectUtils {
 
 
   // TODO: Put into HMAS Lib
-  public static List<Object> parseInput(final JsonElement jsonElement, final ListSpecification listSpecification, final List<Object> result) {
+
+  /**
+   * Parsing a JsonElement with some listSpecification to return a List of correct Objects.
+   *
+   * @param jsonElement jsonElement
+   * @param listSpecification listSpec
+   * @param result result
+   * @return a List of Objects
+   */
+  public static List<Object> parseInput(final JsonElement jsonElement,
+                                        final ListSpecification listSpecification,
+                                        final List<Object> result) {
     final var members = listSpecification.getMemberSpecifications();
 
     assert jsonElement.isJsonArray();
@@ -129,8 +138,10 @@ public final class JsonObjectUtils {
 
     for (final var member : members) {
       switch (member) {
-        case IntegerSpecification integerSpecification -> result.add(jsonArray.remove(0).getAsInt());
-        case StringSpecification stringSpecification -> result.add(jsonArray.remove(0).getAsString());
+        case IntegerSpecification integerSpecification ->
+            result.add(jsonArray.remove(0).getAsInt());
+        case StringSpecification stringSpecification ->
+            result.add(jsonArray.remove(0).getAsString());
         case ListSpecification specification -> {
           final var list = new ArrayList<>();
           result.add(parseInput(jsonArray.remove(0), specification, list));

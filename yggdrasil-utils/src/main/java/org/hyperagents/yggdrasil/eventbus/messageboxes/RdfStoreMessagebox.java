@@ -27,10 +27,10 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
         new GenericMessageCodec<>(RdfStoreMessage.GetEntity.class, new RdfStoreMessageMarshaller())
     );
     this.eventBus.registerDefaultCodec(
-      RdfStoreMessage.GetEntityIri.class,
+        RdfStoreMessage.GetEntityIri.class,
       new GenericMessageCodec<>(
         RdfStoreMessage.GetEntityIri.class,
-        new RdfStoreMessageMarshaller()
+          new RdfStoreMessageMarshaller()
       )
     );
     this.eventBus.registerDefaultCodec(
@@ -62,11 +62,18 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
         )
     );
     this.eventBus.registerDefaultCodec(
-        RdfStoreMessage.UpdateEntity.class,
+        RdfStoreMessage.ReplaceEntity.class,
         new GenericMessageCodec<>(
-          RdfStoreMessage.UpdateEntity.class,
+          RdfStoreMessage.ReplaceEntity.class,
           new RdfStoreMessageMarshaller()
         )
+    );
+    this.eventBus.registerDefaultCodec(
+        RdfStoreMessage.UpdateEntity.class,
+      new GenericMessageCodec<>(
+        RdfStoreMessage.UpdateEntity.class,
+          new RdfStoreMessageMarshaller()
+      )
     );
     this.eventBus.registerDefaultCodec(
         RdfStoreMessage.QueryKnowledgeGraph.class,

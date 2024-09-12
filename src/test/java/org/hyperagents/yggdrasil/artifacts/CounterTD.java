@@ -2,11 +2,15 @@ package org.hyperagents.yggdrasil.artifacts;
 
 import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaTDArtifact;
 
+/**
+ * Counter Artifact, has an internal count that can be incremented. Serves as exemplary Hypermedia
+ * Artifact, uses TD as its ontology
+ */
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class CounterTD extends HypermediaTDArtifact {
+
 
   public void init() {
     this.defineObsProperty("count", 0);
@@ -16,6 +20,9 @@ public class CounterTD extends HypermediaTDArtifact {
     this.defineObsProperty("count", count);
   }
 
+  /**
+   * Increments the internal count by one.
+   */
   @OPERATION
   public void inc() {
     final var prop = this.getObsProperty("count");

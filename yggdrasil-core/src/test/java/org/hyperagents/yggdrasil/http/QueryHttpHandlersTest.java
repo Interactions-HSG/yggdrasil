@@ -31,6 +31,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/**
+ * testclass.
+ */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class QueryHttpHandlersTest {
@@ -39,18 +42,18 @@ public class QueryHttpHandlersTest {
   private static final String PLATFORM_URI = "http://" + TEST_HOST + ":" + TEST_PORT + "/";
   private static final String QUERY =
       """
-        PREFIX td: <https://www.w3.org/2019/wot/td#>
-        PREFIX hmas: <https://purl.org/hmas/>
-        PREFIX ex: <http://example.org/>
+      PREFIX td: <https://www.w3.org/2019/wot/td#>
+      PREFIX hmas: <https://purl.org/hmas/>
+      PREFIX ex: <http://example.org/>
 
-        ASK WHERE {
-            ?workspace hmas:contains [
-                           a hmas:Artifact, ex:Counter;
-                           td:title ?artifact;
-                       ];
-                       a hmas:Workspace.
-        }
-        """;
+      ASK WHERE {
+          ?workspace hmas:contains [
+                         a hmas:Artifact, ex:Counter;
+                         td:title ?artifact;
+                     ];
+                     a hmas:Workspace.
+      }
+      """;
   private static final String QUERY_ENDPOINT = "/query";
   private static final String CSV_MIME_TYPE = "text/csv";
   private static final String XML_MIME_TYPE = "application/sparql-results+xml";
@@ -59,9 +62,6 @@ public class QueryHttpHandlersTest {
   private static final String NAMED_GRAPH_URI_PARAM = "named-graph-uri";
   private static final String CONTENT_TYPES_EQUAL_MESSAGE = "The content types should be equal";
   private static final String BAD_REQUEST_STATUS_CODE_MESSAGE = "Status code should be BAD REQUEST";
-  private static final String BAD_REQUEST_CONTENT = "Bad Request";
-  private static final String RESULT_STATUS_CODE_MESSAGE =
-      "The query result should contain the status code";
 
   private final BlockingQueue<Message<RdfStoreMessage>> messageQueue;
   private WebClient client;
@@ -70,27 +70,33 @@ public class QueryHttpHandlersTest {
     this.messageQueue = new LinkedBlockingQueue<>();
   }
 
+  /**
+   * setup method.
+   *
+   * @param vertx vertx
+   * @param ctx ctx
+   */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.client = WebClient.create(vertx);
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
     vertx.sharedData()
-         .<String, HttpInterfaceConfig>getLocalMap("http-config")
-         .put("default", httpConfig);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
         "environment-config",
         JsonObject.of("enabled", true)
     ));
     vertx.sharedData()
-         .<String, EnvironmentConfig>getLocalMap("environment-config")
-         .put("default", environmentConfig);
+        .<String, EnvironmentConfig>getLocalMap("environment-config")
+        .put("default", environmentConfig);
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of("notification-config", JsonObject.of("enabled", true)),
         httpConfig
     );
     vertx.sharedData()
-         .<String, WebSubConfig>getLocalMap("notification-config")
-         .put("default", notificationConfig);
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .put("default", notificationConfig);
     vertx.deployVerticle(new HttpServerVerticle(), ctx.succeedingThenComplete());
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
@@ -108,17 +114,17 @@ public class QueryHttpHandlersTest {
   public void testGetQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
         this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-                   .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
-                   .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                   .addQueryParam(
-                     DEFAULT_GRAPH_URI_PARAM,
-                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                   )
-                   .addQueryParam(
-                     NAMED_GRAPH_URI_PARAM,
-                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                   )
-                   .send();
+            .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+            .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+            .addQueryParam(
+                DEFAULT_GRAPH_URI_PARAM,
+                URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+            )
+            .addQueryParam(
+                NAMED_GRAPH_URI_PARAM,
+                URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+            )
+            .send();
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(
@@ -143,13 +149,13 @@ public class QueryHttpHandlersTest {
     );
     final var result =
         """
-          <?xml version='1.0' encoding='UTF-8'?>
-          <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
-            <head>
-            </head>
-            <boolean>true</boolean>
-          </sparql>
-          """;
+        <?xml version='1.0' encoding='UTF-8'?>
+        <sparql xmlns='http://www.w3.org/2005/sparql-results#'>
+          <head>
+          </head>
+          <boolean>true</boolean>
+        </sparql>
+        """;
     message.reply(result);
     request
         .onSuccess(r -> {
@@ -175,92 +181,86 @@ public class QueryHttpHandlersTest {
   @Test
   public void testGetQueryRequestWithBody(final VertxTestContext ctx) {
     this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
-               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-               .addQueryParam(
-                 DEFAULT_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .addQueryParam(
-                 NAMED_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .sendBuffer(Buffer.buffer(QUERY))
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-               })
-               .onComplete(ctx.succeedingThenComplete());
+        .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+        .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+        .addQueryParam(
+            DEFAULT_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .addQueryParam(
+            NAMED_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .sendBuffer(Buffer.buffer(QUERY))
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_BAD_REQUEST,
+            r.statusCode(),
+            BAD_REQUEST_STATUS_CODE_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testGetQueryRequestWithMultipleQueries(final VertxTestContext ctx) {
     this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
-               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-               .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-               .addQueryParam(
-                 DEFAULT_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .addQueryParam(
-                 NAMED_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .send()
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-               })
-               .onComplete(ctx.succeedingThenComplete());
+        .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+        .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+        .addQueryParam(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+        .addQueryParam(
+            DEFAULT_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .addQueryParam(
+            NAMED_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .send()
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_BAD_REQUEST,
+            r.statusCode(),
+            BAD_REQUEST_STATUS_CODE_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testGetQueryRequestWithoutQuery(final VertxTestContext ctx) {
     this.client.get(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-               .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
-               .addQueryParam(
-                 DEFAULT_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .addQueryParam(
-                 NAMED_GRAPH_URI_PARAM,
-                 URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-               )
-               .send()
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-               })
-               .onComplete(ctx.succeedingThenComplete());
+        .putHeader(HttpHeaders.ACCEPT, XML_MIME_TYPE)
+        .addQueryParam(
+            DEFAULT_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .addQueryParam(
+            NAMED_GRAPH_URI_PARAM,
+            URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+        )
+        .send()
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_BAD_REQUEST,
+            r.statusCode(),
+            BAD_REQUEST_STATUS_CODE_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testPostFormQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
         this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-                   .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
-                   .sendForm(
-                     MultiMap.caseInsensitiveMultiMap()
-                             .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                             .add(
-                               DEFAULT_GRAPH_URI_PARAM,
-                               URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                             )
-                             .add(
-                               NAMED_GRAPH_URI_PARAM,
-                               URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                             )
-                   );
+            .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
+            .sendForm(
+                MultiMap.caseInsensitiveMultiMap()
+                    .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                    .add(
+                        DEFAULT_GRAPH_URI_PARAM,
+                        URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                    )
+                    .add(
+                        NAMED_GRAPH_URI_PARAM,
+                        URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                    )
+            );
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(
@@ -309,70 +309,66 @@ public class QueryHttpHandlersTest {
   @Test
   public void testPostFormQueryRequestWithMultipleQueries(final VertxTestContext ctx) {
     this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-               .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
-               .sendForm(
-                 MultiMap.caseInsensitiveMultiMap()
-                         .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                         .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
-                         .add(
-                           DEFAULT_GRAPH_URI_PARAM,
-                           URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                         )
-                         .add(
-                           NAMED_GRAPH_URI_PARAM,
-                           URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                         )
-               )
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-               })
-              .onComplete(ctx.succeedingThenComplete());
+        .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
+        .sendForm(
+            MultiMap.caseInsensitiveMultiMap()
+                .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                .add(QUERY_PARAM, URLEncoder.encode(QUERY, StandardCharsets.UTF_8))
+                .add(
+                    DEFAULT_GRAPH_URI_PARAM,
+                    URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                )
+                .add(
+                    NAMED_GRAPH_URI_PARAM,
+                    URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                )
+        )
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_BAD_REQUEST,
+            r.statusCode(),
+            BAD_REQUEST_STATUS_CODE_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testPostFormQueryRequestWithoutQuery(final VertxTestContext ctx) {
     this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-               .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
-               .sendForm(
-                 MultiMap.caseInsensitiveMultiMap()
-                         .add(
-                           DEFAULT_GRAPH_URI_PARAM,
-                           URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                         )
-                         .add(
-                           NAMED_GRAPH_URI_PARAM,
-                           URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                         )
-               )
-               .onSuccess(r -> {
-                 Assertions.assertEquals(
-                     HttpStatus.SC_BAD_REQUEST,
-                     r.statusCode(),
-                     BAD_REQUEST_STATUS_CODE_MESSAGE
-                 );
-               })
-              .onComplete(ctx.succeedingThenComplete());
+        .putHeader(HttpHeaders.ACCEPT, CSV_MIME_TYPE)
+        .sendForm(
+            MultiMap.caseInsensitiveMultiMap()
+                .add(
+                    DEFAULT_GRAPH_URI_PARAM,
+                    URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                )
+                .add(
+                    NAMED_GRAPH_URI_PARAM,
+                    URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+                )
+        )
+        .onSuccess(r -> Assertions.assertEquals(
+            HttpStatus.SC_BAD_REQUEST,
+            r.statusCode(),
+            BAD_REQUEST_STATUS_CODE_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
   }
 
   @Test
   public void testSimplePostQueryRequest(final VertxTestContext ctx) throws InterruptedException {
     final var request =
         this.client.post(TEST_PORT, TEST_HOST, QUERY_ENDPOINT)
-                   .putHeader(HttpHeaders.ACCEPT, "text/tab-separated-values")
-                   .putHeader(HttpHeaders.CONTENT_TYPE, "application/sparql-query")
-                   .addQueryParam(
-                     DEFAULT_GRAPH_URI_PARAM,
-                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                   )
-                   .addQueryParam(
-                     NAMED_GRAPH_URI_PARAM,
-                     URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
-                   )
-                   .sendBuffer(Buffer.buffer(QUERY));
+            .putHeader(HttpHeaders.ACCEPT, "text/tab-separated-values")
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/sparql-query")
+            .addQueryParam(
+                DEFAULT_GRAPH_URI_PARAM,
+                URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+            )
+            .addQueryParam(
+                NAMED_GRAPH_URI_PARAM,
+                URLEncoder.encode(PLATFORM_URI, StandardCharsets.UTF_8)
+            )
+            .sendBuffer(Buffer.buffer(QUERY));
     final var message = this.messageQueue.take();
     final var queryMessage = (RdfStoreMessage.QueryKnowledgeGraph) message.body();
     Assertions.assertEquals(

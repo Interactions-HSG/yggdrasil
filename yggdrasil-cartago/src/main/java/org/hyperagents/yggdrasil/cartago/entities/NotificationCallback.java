@@ -11,12 +11,24 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatche
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 
+/**
+ * Implementation for the CartagoCallback. Is used to define the actions taken when a CartagoEvent
+ * is triggered.
+ */
 public class NotificationCallback implements ICartagoCallback {
   private final HttpInterfaceConfig httpConfig;
   private final HttpNotificationDispatcherMessagebox messagebox;
   private final String workspaceName;
   private final String artifactName;
 
+  /**
+   * Constructor for the Notification Callback.
+   *
+   * @param httpConfig    the httpConfig of the Yggdrasil instance.
+   * @param messagebox    the HttpNotification messagebox.
+   * @param workspaceName the workspaceName.
+   * @param artifactName  the artifactName.
+   */
   public NotificationCallback(
       final HttpInterfaceConfig httpConfig,
       final HttpNotificationDispatcherMessagebox messagebox,
@@ -36,19 +48,19 @@ public class NotificationCallback implements ICartagoCallback {
 
       if (percept.hasSignal()) {
         Stream
-          .of(
-            Optional.ofNullable(percept.getSignal())
-          )
-          .flatMap(Optional::stream)
-          .forEach(p -> this.messagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-              this.httpConfig.getArtifactUri(
-                workspaceName,
-                artifactName
-              ),
-              p.toString()
+            .of(
+                Optional.ofNullable(percept.getSignal())
             )
-          ));
+            .flatMap(Optional::stream)
+            .forEach(p -> this.messagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+                    this.httpConfig.getArtifactUri(
+                        workspaceName,
+                        artifactName
+                    ),
+                    p.toString()
+                )
+            ));
         return;
       }
 
@@ -57,20 +69,20 @@ public class NotificationCallback implements ICartagoCallback {
 
       Stream
           .of(
-            Optional.ofNullable(percept.getPropChanged()),
-            Optional.ofNullable(percept.getAddedProperties()),
-            Optional.ofNullable(percept.getRemovedProperties())
+              Optional.ofNullable(percept.getPropChanged()),
+              Optional.ofNullable(percept.getAddedProperties()),
+              Optional.ofNullable(percept.getRemovedProperties())
           )
           .flatMap(Optional::stream)
           .flatMap(Arrays::stream)
           .forEach(p -> this.messagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-              this.httpConfig.getArtifactUri(
-                workspaceName,
-                artifactName
-              ),
-              p.toString()
-            )
+              new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
+                  this.httpConfig.getArtifactUri(
+                      workspaceName,
+                      artifactName
+                  ),
+                  p.toString()
+              )
           ));
     }
   }

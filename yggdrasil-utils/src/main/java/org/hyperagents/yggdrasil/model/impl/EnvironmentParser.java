@@ -5,7 +5,6 @@ import io.vertx.core.json.JsonObject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -13,15 +12,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.model.Artifact;
 import org.hyperagents.yggdrasil.model.Environment;
-import org.hyperagents.yggdrasil.model.FocusingAgent;
-import org.hyperagents.yggdrasil.model.JoinedAgent;
 import org.hyperagents.yggdrasil.model.KnownArtifact;
 import org.hyperagents.yggdrasil.model.Workspace;
+import org.hyperagents.yggdrasil.model.YggdrasilAgent;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
@@ -36,6 +33,8 @@ import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
  */
 public final class EnvironmentParser {
   private static final Logger LOGGER = LogManager.getLogger(EnvironmentParser.class);
+
+  private static final String NAME = "name";
 
   private EnvironmentParser() {}
 
@@ -88,34 +87,21 @@ public final class EnvironmentParser {
                  .toList();
     final var workspaceNames =
         jsonWorkspaces.stream()
-                      .flatMap(w -> JsonObjectUtils.getString(w, "name", LOGGER::error).stream())
+                      .flatMap(w -> JsonObjectUtils.getString(w, NAME, LOGGER::error).stream())
                       .collect(Collectors.toSet());
     return new EnvironmentImpl(
       reorderWorkspaces(
         jsonWorkspaces
           .stream()
           .<Workspace>flatMap(w -> {
-            final var name = JsonObjectUtils.getString(w, "name", LOGGER::error);
+            final var name = JsonObjectUtils.getString(w, NAME, LOGGER::error);
             if (name.isEmpty()) {
               LOGGER.warn("Workspace missing name, skipping");
               return Stream.empty();
             }
-            final var agentNames =
-                JsonObjectUtils.getJsonArray(w, "agents", LOGGER::error)
-                               .stream()
-                               .flatMap(a -> IntStream.range(0, a.size())
-                                                      .mapToObj(a::getValue)
-                                                      .flatMap(o ->
-                                                        (
-                                                          o instanceof String s
-                                                          ? Optional.of(s)
-                                                          : Optional.<String>empty()
-                                                        )
-                                                        .stream()
-                                                      ))
-                               .collect(Collectors.toCollection(HashSet::new));
             return Stream.of(new WorkspaceImpl(
               name.get(),
+              JsonObjectUtils.getString(w, "metadata", LOGGER::error).map(Path::of),
               JsonObjectUtils
                 .getString(w, "parent-name", LOGGER::error)
                 .filter(p -> {
@@ -126,13 +112,59 @@ public final class EnvironmentParser {
                   }
                   return workspaceNames.contains(p);
                 }),
-              agentNames.stream().map(JoinedAgentImpl::new).collect(Collectors.toSet()),
+              JsonObjectUtils
+                .getJsonArray(w, "agents", LOGGER::error)
+                .stream()
+                  .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
+                    .<YggdrasilAgent>flatMap(ag -> {
+                      final var agentName = JsonObjectUtils.getString(ag, NAME, LOGGER::error);
+                      if (agentName.isEmpty()) {
+                        LOGGER.warn("Agent in workspace missing name, skipping");
+                        return Stream.empty();
+                      }
+
+                      final var agentUri =
+                          JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
+                      if (agentUri.isEmpty()) {
+                        LOGGER.warn("Agent in workspace missing uri, skipping");
+                        return Stream.empty();
+                      }
+
+                      final var agentCallbackUri =
+                          JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
+                      if (agentCallbackUri.isEmpty()) {
+                        LOGGER.warn("Agent in workspace missing uri, skipping");
+                      }
+
+                      final var focusedArtifacts =
+                          JsonObjectUtils.getJsonArray(ag, "focused-artifacts", LOGGER::error)
+                          .stream()
+                          .flatMap(a -> IntStream.range(0, a.size())
+                          .mapToObj(a::getValue)
+                          .flatMap(o ->
+                            (
+                              o instanceof String s
+                                ? Optional.of(s)
+                                : Optional.<String>empty()
+                            )
+                              .stream()
+                          ))
+                          .collect(Collectors.toList());
+
+                      return Stream.of(new AgentImpl(
+                        agentName.orElseThrow(),
+                        agentUri.orElseThrow(),
+                        agentCallbackUri.orElseThrow(),
+                        focusedArtifacts,
+                        JsonObjectUtils.getString(ag, "metadata", LOGGER::error).map(Path::of)
+                      ));
+                    }).collect(Collectors.toSet()),
               JsonObjectUtils
                   .getJsonArray(w, "artifacts", LOGGER::error)
                   .stream()
                   .flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getJsonObject))
                   .<Artifact>flatMap(ar -> {
-                    final var artifactName = JsonObjectUtils.getString(ar, "name", LOGGER::error);
+                    final var artifactName = JsonObjectUtils.getString(ar, NAME, LOGGER::error);
                     final var artifactClass = JsonObjectUtils.getString(ar, "class", LOGGER::error);
                     if (artifactName.isEmpty()) {
                       LOGGER.warn("Artifact in workspace missing name, skipping");
@@ -160,42 +192,9 @@ public final class EnvironmentParser {
                         .getJsonArray(ar, "init-params", LOGGER::error)
                         .map(JsonArray::getList)
                         .orElse(Collections.emptyList()),
-                      JsonObjectUtils
-                        .getJsonArray(ar, "focused-by", LOGGER::error)
-                        .stream()
-                        .flatMap(a -> IntStream.range(0, a.size())
-                                               .mapToObj(a::getValue)
-                                               .flatMap(o ->
-                                                 (
-                                                   o instanceof JsonObject j
-                                                   ? Optional.of(j)
-                                                   : Optional.<JsonObject>empty()
-                                                 )
-                                                 .stream()
-                                               ))
-                        .<FocusingAgent>flatMap(ag -> {
-                          final var agentUri =
-                              JsonObjectUtils.getString(ag, "agent-uri", LOGGER::error);
-                          final var callbackUri =
-                              JsonObjectUtils.getString(ag, "callback-uri", LOGGER::error);
-                          if (agentUri.isEmpty() || callbackUri.isEmpty()) {
-                            LOGGER.warn("Focusing agent missing uri or callback, skipping");
-                            return Stream.empty();
-                          }
-                          if (!agentNames.contains(agentUri.get())) {
-                            LOGGER.warn(
-                                "Focusing agent not defined to join workspace, adding it"
-                            );
-                            agentNames.add(agentUri.get());
-                          }
-                          return Stream.of(new FocusingAgentImpl(
-                            agentUri.get(),
-                            callbackUri.get()
-                          ));
-                        })
-                        .collect(Collectors.toSet()),
-                      representation.map(Path::of)
-                    ));
+                      representation.map(Path::of),
+                      JsonObjectUtils.getString(ar, "metadata", LOGGER::error).map(Path::of)
+                      ));
                   })
                   .collect(Collectors.toSet()),
               JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of)
@@ -259,14 +258,20 @@ public final class EnvironmentParser {
 
   private record WorkspaceImpl(
       String name,
+      Optional<Path> metaData,
       Optional<String> parentName,
-      Set<JoinedAgent> joinedAgents,
+      Set<YggdrasilAgent> joinedAgents,
       Set<Artifact> artifacts,
       Optional<Path> representation
   ) implements Workspace {
     @Override
     public String getName() {
       return this.name();
+    }
+
+    @Override
+    public Optional<Path> getMetaData() {
+      return this.metaData();
     }
 
     @Override
@@ -280,7 +285,7 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Set<JoinedAgent> getAgents() {
+    public Set<YggdrasilAgent> getAgents() {
       return this.joinedAgents();
     }
 
@@ -290,19 +295,12 @@ public final class EnvironmentParser {
     }
   }
 
-  private record JoinedAgentImpl(String name) implements JoinedAgent {
-    @Override
-    public String getName() {
-      return this.name();
-    }
-  }
-
   private record ArtifactImpl(
       String name,
       Optional<String> clazz,
       List<?> initializationParameters,
-      Set<FocusingAgent> focusingAgents,
-      Optional<Path> representation
+      Optional<Path> representation,
+      Optional<Path> metaData
   ) implements Artifact {
     @Override
     public String getName() {
@@ -320,25 +318,48 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public Set<FocusingAgent> getFocusingAgents() {
-      return this.focusingAgents();
-    }
-
-    @Override
     public Optional<Path> getRepresentation() {
       return this.representation();
     }
+
+    @Override
+    public Optional<Path> getMetaData() {
+      return this.metaData();
+    }
   }
 
-  private record FocusingAgentImpl(String name, String callback) implements FocusingAgent {
+  private record AgentImpl(
+      String name,
+      String agentUri,
+      String agentCallbackUri,
+      List<String> focusedArtifactNames,
+      Optional<Path> metaData
+  ) implements YggdrasilAgent {
+
     @Override
     public String getName() {
       return this.name();
     }
 
     @Override
-    public String getCallback() {
-      return this.callback();
+    public String getAgentUri() {
+      return this.agentUri();
+    }
+
+    @Override
+    public String getAgentCallbackUri() {
+      return this.agentCallbackUri();
+    }
+
+    @Override
+    public List<String> getFocusedArtifactNames() {
+      return this.focusedArtifactNames();
+    }
+
+    @Override
+    public Optional<Path> getMetaData() {
+      return this.metaData();
     }
   }
+
 }

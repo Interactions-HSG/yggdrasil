@@ -12,6 +12,9 @@ import org.apache.hc.core5.http.message.BasicClassicHttpRequest;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 
+/**
+ * PhantomX3D artifact.
+ */
 public class PhantomX3D extends HypermediaTDArtifact {
   private static final String PREFIX = "https://ci.mines-stetienne.fr/kg/ontology#";
 
@@ -53,6 +56,9 @@ public class PhantomX3D extends HypermediaTDArtifact {
     this.invokeAction(SET_GRIPPER_URI, 512);
   }
 
+  /**
+   * resets.
+   */
   @OPERATION
   public void reset() {
     this.await_time(SHORT_WAIT_TIME);
@@ -60,6 +66,9 @@ public class PhantomX3D extends HypermediaTDArtifact {
     this.state = State.NEUTRAL;
   }
 
+  /**
+   * moves.
+   */
   @OPERATION
   public void moveTo() {
     if (this.state == State.IN_TRANSIT) {
@@ -80,27 +89,27 @@ public class PhantomX3D extends HypermediaTDArtifact {
         PREFIX + "MoveTo",
         "moveTo",
         "moveTo",
-      new ObjectSchema.Builder()
-        .addSemanticType(PREFIX + "FactoryFloorPosition")
-        .addProperty(
-          "x",
-          new NumberSchema.Builder()
-            .addSemanticType(PREFIX + "XCoordinate")
+        new ObjectSchema.Builder()
+            .addSemanticType(PREFIX + "FactoryFloorPosition")
+            .addProperty(
+                "x",
+                new NumberSchema.Builder()
+                    .addSemanticType(PREFIX + "XCoordinate")
+                    .build()
+            )
+            .addProperty(
+                "y",
+                new NumberSchema.Builder()
+                    .addSemanticType(PREFIX + "YCoordinate")
+                    .build()
+            )
+            .addProperty(
+                "z",
+                new NumberSchema.Builder()
+                    .addSemanticType(PREFIX + "ZCoordinate")
+                    .build()
+            )
             .build()
-        )
-        .addProperty(
-          "y",
-          new NumberSchema.Builder()
-            .addSemanticType(PREFIX + "YCoordinate")
-            .build()
-        )
-        .addProperty(
-          "z",
-          new NumberSchema.Builder()
-            .addSemanticType(PREFIX + "ZCoordinate")
-            .build()
-        )
-        .build()
     );
     this.registerActionAffordance(PREFIX + "Grasp", "grasp", "grasp");
     this.registerActionAffordance(PREFIX + "Release", "release", "release");
@@ -168,7 +177,7 @@ public class PhantomX3D extends HypermediaTDArtifact {
 
       request.setEntity(
           new StringEntity("{\"value\" : " + value + "}",
-          ContentType.create("application/json"))
+              ContentType.create("application/json"))
       );
 
       client.execute(request, response -> null);

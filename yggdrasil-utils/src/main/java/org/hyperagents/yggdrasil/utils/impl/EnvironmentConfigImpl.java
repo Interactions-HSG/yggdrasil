@@ -6,8 +6,6 @@ import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
-import java.util.Optional;
-
 /**
  * Represents an implementation of the EnvironmentConfig interface.
  * This class provides functionality to retrieve and manage environment configuration settings.
@@ -17,7 +15,7 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
 
   private final boolean enabled;
 
-  private final Optional<JsonObject> environmentConfig;
+  private final JsonObject environmentConfig;
 
   /**
    * Constructs a new EnvironmentConfigImpl object with the specified configuration.
@@ -26,10 +24,13 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
    */
   public EnvironmentConfigImpl(final JsonObject config) {
     environmentConfig =
-        JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
-    this.enabled =
-      environmentConfig.flatMap(c -> JsonObjectUtils.getBoolean(c, "enabled", LOGGER::error))
-                       .orElse(false);
+        JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error)
+            .orElse(null);
+    this.enabled = environmentConfig != null
+        &&
+        JsonObjectUtils.getBoolean(environmentConfig, "enabled", LOGGER::error)
+            .orElse(false);
+
   }
 
   /**
@@ -42,9 +43,17 @@ public class EnvironmentConfigImpl implements EnvironmentConfig {
     return this.enabled;
   }
 
+  /**
+   * Returns the Ontology chosen for the current environment.
+   *
+   * @return String of the ontology
+   */
   public String getOntology() {
-    return environmentConfig.flatMap(c -> JsonObjectUtils.getString(c, "ontology", LOGGER::error))
-                            .orElse(null);
+    return environmentConfig != null
+        ?
+        JsonObjectUtils.getString(environmentConfig, "ontology", LOGGER::error)
+            .orElse(null) : null;
+
   }
 
 }

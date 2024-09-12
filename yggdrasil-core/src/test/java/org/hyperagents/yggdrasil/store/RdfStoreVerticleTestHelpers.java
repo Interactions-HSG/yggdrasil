@@ -8,20 +8,26 @@ import org.apache.http.HttpStatus;
 import org.eclipse.rdf4j.model.util.Models;
 import org.junit.jupiter.api.Assertions;
 
+/**
+ * test helperclass.
+ */
 public final class RdfStoreVerticleTestHelpers {
   private static final String REPRESENTATIONS_EQUAL_MESSAGE = "The representations must be equal";
   private static final String BAD_EXCEPTION_MESSAGE = "The exception was not of the right type";
   private static final String MESSAGES_EQUAL_MESSAGE = "The messages should be the same";
 
-  private RdfStoreVerticleTestHelpers() {}
+  private RdfStoreVerticleTestHelpers() {
+  }
 
-  public static void assertEqualsThingDescriptions(final String expected, final String actual) {
+  static void assertEqualsThingDescriptions(final String expected, final String actual) {
     final var theSame =
-      Models.isomorphic(
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,expected).getGraph().orElseThrow(),
-        TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE,actual).getGraph().orElseThrow()
-      );
-    if(!theSame) {
+        Models.isomorphic(
+            TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, expected).getGraph()
+                .orElseThrow(),
+            TDGraphReader.readFromString(ThingDescription.TDFormat.RDF_TURTLE, actual).getGraph()
+                .orElseThrow()
+        );
+    if (!theSame) {
       System.out.println("===============================");
       System.out.println(actual);
       System.out.println("===============================");
@@ -34,17 +40,17 @@ public final class RdfStoreVerticleTestHelpers {
     );
   }
 
-  public static void assertEqualsResourceProfiles(final String expected, final String actual) {
+  static void assertEqualsResourceProfiles(final String expected, final String actual) {
     Assertions.assertTrue(
         Models.isomorphic(
-          ResourceProfileGraphReader.readFromString(expected).getGraph().orElseThrow(),
-          ResourceProfileGraphReader.readFromString(actual).getGraph().orElseThrow()
+            ResourceProfileGraphReader.readFromString(expected).getGraph().orElseThrow(),
+            ResourceProfileGraphReader.readFromString(actual).getGraph().orElseThrow()
         ),
         REPRESENTATIONS_EQUAL_MESSAGE
     );
   }
 
-  public static void assertNotFound(final Throwable t) {
+  static void assertNotFound(final Throwable t) {
     if (t instanceof ReplyException r) {
       Assertions.assertEquals(
           HttpStatus.SC_NOT_FOUND,
@@ -61,7 +67,7 @@ public final class RdfStoreVerticleTestHelpers {
     );
   }
 
-  public static void assertBadRequest(final Throwable t) {
+  static void assertBadRequest(final Throwable t) {
     if (t instanceof ReplyException r) {
       Assertions.assertEquals(
           HttpStatus.SC_BAD_REQUEST,

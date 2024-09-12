@@ -3,11 +3,21 @@ package org.hyperagents.yggdrasil.cartago.artifacts;
 import cartago.OPERATION;
 import cartago.OpFeedbackParam;
 import ch.unisg.ics.interactions.hmas.interaction.shapes.ValueSpecification;
-
 import java.util.List;
 
+/**
+ * IntellIotArtifact.
+ */
 public class IntellIotHMASArtifact extends HypermediaHMASArtifact {
 
+  /**
+   * normalizes some values.
+   *
+   * @param alpha alpha
+   * @param x x
+   * @param y y
+   * @param newValues new values
+   */
   @OPERATION
   public void normalizeValues(
       final double alpha,
@@ -44,7 +54,7 @@ public class IntellIotHMASArtifact extends HypermediaHMASArtifact {
         "normalizeValues",
         "normalizeValues",
         "/normalizeValues",
-      new ValueSpecification.Builder().build()
+        new ValueSpecification.Builder().build()
     );
     this.registerFeedbackParameter("normalizeValues");
     /*
@@ -56,7 +66,7 @@ public class IntellIotHMASArtifact extends HypermediaHMASArtifact {
         "generateRandomId",
         "generateRandomId",
         "/generateRandomId",
-      new ValueSpecification.Builder().build()
+        new ValueSpecification.Builder().build()
 
     );
     this.registerFeedbackParameter("generateRandomId");

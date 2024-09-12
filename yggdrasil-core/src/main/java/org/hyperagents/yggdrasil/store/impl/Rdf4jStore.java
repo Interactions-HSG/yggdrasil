@@ -6,7 +6,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
-
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Namespace;
@@ -34,6 +33,9 @@ import org.eclipse.rdf4j.sail.Sail;
 import org.hyperagents.yggdrasil.store.RdfStore;
 import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 
+/**
+ * Provides access to the rdfstore.
+ */
 public class Rdf4jStore implements RdfStore {
   private final Repository repository;
   private final RepositoryConnection connection;
@@ -44,12 +46,15 @@ public class Rdf4jStore implements RdfStore {
     this.connection = this.repository.getConnection();
   }
 
-  @Override
-  public boolean containsEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
+  private IRI fixEntityIri(final IRI entityIri) {
     final String entityIriString = entityIri.toString();
     final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    return RdfModelUtils.createIri(fixedIri);
+  }
+
+  @Override
+  public boolean containsEntityModel(final IRI entityIri) throws IOException {
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       return this.connection.hasStatement(
@@ -66,17 +71,16 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public Optional<Model> getEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
-      final Model model = QueryResults.asModel(this.connection.getStatements(null, null, null, fixedEntityIri));
+      final Model model =
+          QueryResults.asModel(
+              this.connection.getStatements(null, null, null, fixedEntityIri));
       final var connectionNamespaces = new HashMap<String, Namespace>();
 
       for (final Namespace namespace : this.connection.getNamespaces()) {
-        connectionNamespaces.put(namespace.getName(),namespace);
+        connectionNamespaces.put(namespace.getName(), namespace);
       }
 
       final var modelIris = RdfModelUtils.collectAllIriNamespaces(model);
@@ -94,14 +98,12 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void addEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       this.connection.add(entityModel, fixedEntityIri);
-      entityModel.getNamespaces().forEach(namespace -> this.connection.setNamespace(namespace.getPrefix(), namespace.getName()));
+      entityModel.getNamespaces().forEach(
+          namespace -> this.connection.setNamespace(namespace.getPrefix(), namespace.getName()));
     } catch (final RepositoryException e) {
       throw new IOException(e);
     }
@@ -109,10 +111,7 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void replaceEntityModel(final IRI entityIri, final Model entityModel) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     this.removeEntityModel(fixedEntityIri);
     this.addEntityModel(fixedEntityIri, entityModel);
@@ -120,10 +119,7 @@ public class Rdf4jStore implements RdfStore {
 
   @Override
   public void removeEntityModel(final IRI entityIri) throws IOException {
-    // TODO: MAKE THIS HANDLING BETTER
-    final String entityIriString = entityIri.toString();
-    final String fixedIri = entityIriString.endsWith("/") ? entityIriString : entityIriString + "/";
-    final var fixedEntityIri = RdfModelUtils.createIri(fixedIri);
+    final var fixedEntityIri = fixEntityIri(entityIri);
 
     try {
       this.connection.clear(fixedEntityIri);
@@ -169,8 +165,8 @@ public class Rdf4jStore implements RdfStore {
         originalQueryDataset.getNamedGraphs().forEach(queryDataset::addNamedGraph);
       }
       preparedQuery.setDataset(queryDataset);
-        switch (preparedQuery) {
-            case TupleQuery preparedTupleQuery -> preparedTupleQuery.evaluate(
+      switch (preparedQuery) {
+        case TupleQuery preparedTupleQuery -> preparedTupleQuery.evaluate(
                     responseContentType.equals("application/sparql-results+xml")
                             ? new SPARQLResultsXMLWriter(out)
                             : (responseContentType.equals("application/sparql-results+json")
@@ -181,7 +177,7 @@ public class Rdf4jStore implements RdfStore {
                     )
                     )
             );
-            case BooleanQuery preparedBooleanQuery -> (
+        case BooleanQuery preparedBooleanQuery -> (
                     responseContentType.equals("application/sparql-results+xml")
                             ? new SPARQLBooleanXMLWriter(out)
                             : (responseContentType.equals("application/sparql-results+json")
@@ -190,14 +186,14 @@ public class Rdf4jStore implements RdfStore {
                     )
             )
                     .handleBoolean(preparedBooleanQuery.evaluate());
-            case GraphQuery preparedGraphQuery -> out.writeBytes(
+        case GraphQuery preparedGraphQuery -> out.writeBytes(
                  RdfModelUtils.modelToString(QueryResults.asModel(preparedGraphQuery.evaluate()),
-                                 RDFFormat.TURTLE,null)
+                                 RDFFormat.TURTLE, null)
                          .getBytes(StandardCharsets.UTF_8)
          );
-            default -> {
-            }
+        default -> {
         }
+      }
       return out.toString(StandardCharsets.UTF_8);
     } catch (final MalformedQueryException e) {
       throw new IllegalArgumentException(e);

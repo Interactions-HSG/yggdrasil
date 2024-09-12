@@ -2,9 +2,12 @@ package org.hyperagents.yggdrasil.artifacts;
 
 import cartago.OPERATION;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.hyperagents.yggdrasil.cartago.HypermediaArtifactRegistry;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaHMASArtifact;
 
+/**
+ * Counter Artifact, has an internal count that can be incremented. Serves as exemplary Hypermedia
+ * Artifact, uses HMAS as its ontology
+ */
 @SuppressFBWarnings("PI_DO_NOT_REUSE_PUBLIC_IDENTIFIERS_CLASS_NAMES")
 public class CounterHMAS extends HypermediaHMASArtifact {
 
@@ -12,10 +15,13 @@ public class CounterHMAS extends HypermediaHMASArtifact {
     this.defineObsProperty("count", 0);
   }
 
-  public void init( final int count) {
+  public void init(final int count) {
     this.defineObsProperty("count", count);
   }
 
+  /**
+   * Increments the internal count by one.
+   */
   @OPERATION
   public void inc() {
     final var prop = this.getObsProperty("count");

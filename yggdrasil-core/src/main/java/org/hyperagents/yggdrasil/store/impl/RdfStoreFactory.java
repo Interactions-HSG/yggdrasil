@@ -5,6 +5,9 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
 import org.hyperagents.yggdrasil.store.RdfStore;
 
+/**
+ * Factory class to get an RDFStore.
+ */
 public final class RdfStoreFactory {
 
   private RdfStoreFactory() {}

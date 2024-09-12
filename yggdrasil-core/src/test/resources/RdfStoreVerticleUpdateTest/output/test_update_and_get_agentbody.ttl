@@ -1,0 +1,23 @@
+@base <http://localhost:8080/> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix test: <http://www.test.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+
+<workspaces/test/artifacts/body_kai/#artifact> a td:Thing, jacamo:Body, hmas:Artifact;
+  td:title "kai";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ] .
+
+<workspaces/test/artifacts/body_test/#artifact> hmas:isContainedIn <workspaces/test/#workspace>;
+  jacamo:isBodyOf <agents/test> .
+
+<workspaces/test/#workspace> a hmas:Workspace .
+
+<workspaces/test/artifacts/body_kai> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/test/artifacts/body_kai/#artifact> .
+
+<agents/test> a hmas:Agent .
+
+test:testSubject test:testPredicate test:testObject .

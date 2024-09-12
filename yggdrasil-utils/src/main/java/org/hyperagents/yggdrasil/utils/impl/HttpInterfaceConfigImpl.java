@@ -33,8 +33,10 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
       .orElse(8080);
 
     String baseUri1;
-    baseUri1 = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "base-uri", LOGGER::error)).orElseGet(()
-          -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":" + this.port + "/");
+    baseUri1 = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "base-uri", LOGGER::error))
+        .orElseGet(()
+            -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":"
+            + this.port + "/");
     baseUri1 = baseUri1.endsWith("/") ? baseUri1 : baseUri1 + "/";
     this.baseUri = baseUri1;
   }
@@ -104,14 +106,14 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
    * Validate the input string by removing any slashes.
    * The name cannot have any slashes since we use them as separators in the URI.
    *
-   * @param StringInput The input string to validate.
+   * @param stringInput The input string to validate.
    * @return The validated string.
    */
-  private String validateInput(final String StringInput) {
-    if (StringInput == null) {
+  private String validateInput(final String stringInput) {
+    if (stringInput == null) {
       return "";
     }
-    return StringInput.replaceAll("/","");
+    return stringInput.replaceAll("/", "");
   }
 }
 

@@ -30,8 +30,8 @@ public class HttpServerVerticle extends AbstractVerticle {
   @Override
   public void start(final Promise<Void> startPromise) {
     final var httpConfig = this.vertx.sharedData()
-      .<String, HttpInterfaceConfig>getLocalMap("http-config")
-      .get("default");
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .get("default");
     this.environmentConfig = this.vertx
       .sharedData()
       .<String, EnvironmentConfig>getLocalMap("environment-config")
@@ -46,7 +46,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       )
       .listen(httpConfig.getPort(), httpConfig.getHost())
       .<Void>mapEmpty()
-      .onComplete(startPromise);
+        .onComplete(startPromise);
   }
 
   @Override
@@ -58,9 +58,9 @@ public class HttpServerVerticle extends AbstractVerticle {
    * The HTTP API is defined here when creating the router.
    */
   private Router createRouter(
-    final HttpInterfaceConfig httpConfig,
-    final EnvironmentConfig environmentConfig,
-    final WebSubConfig notificationConfig
+      final HttpInterfaceConfig httpConfig,
+      final EnvironmentConfig environmentConfig,
+      final WebSubConfig notificationConfig
   ) {
     final var router = Router.router(this.vertx);
     router.route()
@@ -80,13 +80,13 @@ public class HttpServerVerticle extends AbstractVerticle {
         .allowedHeader("Content-Type")
         .allowedHeader("Expires")
         .allowedHeader("Origin"))
-      .handler(BodyHandler.create());
+        .handler(BodyHandler.create());
 
     final HttpEntityHandlerInterface handler = new HttpEntityHandler(
-      this.vertx,
-      httpConfig,
-      environmentConfig,
-      notificationConfig
+        this.vertx,
+        httpConfig,
+        environmentConfig,
+        notificationConfig
     );
 
 
@@ -94,55 +94,59 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.post("/workspaces/")
       .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleCreateWorkspaceTurtle);
+        .handler(handler::handleCreateWorkspaceTurtle);
     final var createWorkspaceRoute = router.post("/workspaces/")
-      .handler(handler::handleCreateWorkspaceJson);
+        .handler(handler::handleCreateWorkspaceJson);
 
+    // workspace paths CRUD
     router.get(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(WORKSPACE_PATH).handler(handler::handleGetEntity);
+
     router.post(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.post(WORKSPACE_PATH)
       .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleCreateWorkspaceTurtle);
+        .handler(handler::handleCreateWorkspaceTurtle);
     final var createSubWorkspaceRoute = router.post(WORKSPACE_PATH)
-      .handler(handler::handleCreateSubWorkspace);
-    router.put(WORKSPACE_PATH + "/")
-      .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleUpdateEntity);
+        .handler(handler::handleCreateSubWorkspace);
+
+    router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.put(WORKSPACE_PATH)
       .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleUpdateEntity);
-    router.delete(WORKSPACE_PATH + "/").handler(handler::handleDeleteEntity);
+        .handler(handler::handleUpdateEntity);
+
+    router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(WORKSPACE_PATH).handler(handler::handleDeleteEntity);
 
     router.post(WORKSPACE_PATH + "/join/").handler(handler::handleRedirectWithoutSlash);
     final var joinRoute = router.post(WORKSPACE_PATH + "/join")
-      .handler(handler::handleJoinWorkspace);
+        .handler(handler::handleJoinWorkspace);
 
 
     router.post(WORKSPACE_PATH + "/leave/").handler(handler::handleRedirectWithoutSlash);
     final var leaveRoute = router.post(WORKSPACE_PATH + "/leave")
-      .handler(handler::handleLeaveWorkspace);
+        .handler(handler::handleLeaveWorkspace);
     router.post(WORKSPACE_PATH + "/focus/").handler(handler::handleRedirectWithoutSlash);
     final var focusRoute = router.post(WORKSPACE_PATH + "/focus")
-      .consumes(ContentType.APPLICATION_JSON.getMimeType())
-      .handler(handler::handleFocus);
+        .consumes(ContentType.APPLICATION_JSON.getMimeType())
+        .handler(handler::handleFocus);
 
     router.post("/workspaces/:wkspid/artifacts/")
       .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleCreateArtifact);
+        .handler(handler::handleCreateArtifact);
     final var createArtifactRoute = router.post("/workspaces/:wkspid/artifacts/")
-      .handler(handler::handleCreateArtifact);
+        .handler(handler::handleCreateArtifact);
 
+    // Artifact and Body paths
     router.get(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(ARTIFACT_PATH).handler(handler::handleGetEntity);
+
     router.put(ARTIFACT_PATH + "/")
-      .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleUpdateEntity);
+        .handler(handler::handleRedirectWithoutSlash);
     router.put(ARTIFACT_PATH)
       .consumes(TURTLE_CONTENT_TYPE)
-      .handler(handler::handleUpdateEntity);
-    router.delete(ARTIFACT_PATH + "/").handler(handler::handleDeleteEntity);
+        .handler(handler::handleUpdateEntity);
+
+    router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.delete(ARTIFACT_PATH).handler(handler::handleDeleteEntity);
 
     final var actionRoute = router.post(ARTIFACT_PATH + "/*").handler(handler::handleAction);
@@ -168,8 +172,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.post("/query")
       .consumes(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
       .consumes("application/sparql-query")
-      .handler(handler::handleQuery);
+        .handler(handler::handleQuery);
 
     return router;
   }
+
 }

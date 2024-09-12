@@ -3,7 +3,6 @@ package org.hyperagents.yggdrasil.model;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * An interface representing an Artifact in the Yggdrasil model.
@@ -22,7 +21,7 @@ public interface Artifact {
 
   List<?> getInitializationParameters();
 
-  Set<FocusingAgent> getFocusingAgents();
-
   Optional<Path> getRepresentation();
+
+  Optional<Path> getMetaData();
 }

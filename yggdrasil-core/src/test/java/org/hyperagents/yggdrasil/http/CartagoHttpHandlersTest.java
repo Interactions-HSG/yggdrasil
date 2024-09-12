@@ -32,16 +32,24 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
 import org.hyperagents.yggdrasil.utils.impl.EnvironmentConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.HttpInterfaceConfigImpl;
 import org.hyperagents.yggdrasil.utils.impl.WebSubConfigImpl;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+/**
+ * testclass.
+ */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
 public class CartagoHttpHandlersTest {
   private static final int TEST_PORT = 8080;
   private static final String TEST_HOST = "localhost";
   private static final String AGENT_WEBID = "X-Agent-WebID";
+  private static final String AGENT_LOCALNAME = "x-Agent-LocalName";
   private static final String TEST_AGENT_ID = "http://localhost:8080/agents/test_agent";
+  private static final String AGENT_NAME = "test_agent";
   private static final String SLUG_HEADER = "Slug";
   private static final String MAIN_WORKSPACE_NAME = "test";
   private static final String SUB_WORKSPACE_NAME = "sub";
@@ -64,7 +72,6 @@ public class CartagoHttpHandlersTest {
   private static final String BAD_REQUEST_ERROR_STATUS_MESSAGE =
       "The status code should be BAD REQUEST";
   private static final String NONEXISTENT_NAME = "nonexistent";
-  private static final String INTERNAL_SERVER_ERROR_BODY = "Internal Server Error";
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
   private static final String ARTIFACT_CLASS_PARAM = "artifactClass";
   private static final String INIT_PARAMS_PARAM = "initParams";
@@ -78,37 +85,46 @@ public class CartagoHttpHandlersTest {
   private WebClient client;
   private HttpServerVerticleTestHelper helper;
 
+  /**
+   * Constructor.
+   */
   public CartagoHttpHandlersTest() {
     this.storeMessageQueue = new LinkedBlockingQueue<>();
     this.cartagoMessageQueue = new LinkedBlockingQueue<>();
     this.notificationMessageQueue = new LinkedBlockingQueue<>();
   }
 
+  /**
+   * setup method.
+   *
+   * @param vertx vertx
+   * @param ctx ctx
+   */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     this.client = WebClient.create(vertx);
     this.helper = new HttpServerVerticleTestHelper(this.client, this.storeMessageQueue);
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
     vertx.sharedData()
-         .<String, HttpInterfaceConfig>getLocalMap("http-config")
-         .put("default", httpConfig);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .put("default", httpConfig);
     final var environmentConfig = new EnvironmentConfigImpl(JsonObject.of(
         "environment-config",
         JsonObject.of("enabled", true, "ontology", "td")
     ));
     vertx.sharedData()
-         .<String, EnvironmentConfig>getLocalMap("environment-config")
-         .put("default", environmentConfig);
+        .<String, EnvironmentConfig>getLocalMap("environment-config")
+        .put("default", environmentConfig);
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(
-          "notification-config",
-          JsonObject.of("enabled", true)
+            "notification-config",
+            JsonObject.of("enabled", true)
         ),
         httpConfig
     );
     vertx.sharedData()
-         .<String, WebSubConfig>getLocalMap("notification-config")
-         .put("default", notificationConfig);
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .put("default", notificationConfig);
     final var storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     storeMessagebox.init();
     storeMessagebox.receiveMessages(this.storeMessageQueue::add);
@@ -134,13 +150,13 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var expectedWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .send();
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
 
@@ -195,8 +211,8 @@ public class CartagoHttpHandlersTest {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
-                   .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
-                   .send()
+            .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+            .send()
     );
   }
 
@@ -205,13 +221,14 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var expectedWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) cartagoMessage.body();
@@ -267,37 +284,37 @@ public class CartagoHttpHandlersTest {
 
   @Test
   public void testCreateTwoWorkspacesWithTheSameName(final VertxTestContext ctx)
-    throws InterruptedException {
+      throws InterruptedException {
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
-      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
-      .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .send();
 
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createWorkspaceMessage = (CartagoMessage.CreateWorkspace) cartagoMessage.body();
 
     Assertions.assertEquals(
-      MAIN_WORKSPACE_NAME,
-      createWorkspaceMessage.workspaceName(),
-      NAMES_EQUAL_MESSAGE
+        MAIN_WORKSPACE_NAME,
+        createWorkspaceMessage.workspaceName(),
+        NAMES_EQUAL_MESSAGE
     );
 
     ctx.checkpoint();
 
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
-      .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-      .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
-      .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .send();
 
     this.storeMessageQueue.take().reply("UUID");
     final var cartagoMessage2 = this.cartagoMessageQueue.take();
     final var createWorkspaceMessage2 = (CartagoMessage.CreateWorkspace) cartagoMessage2.body();
 
     Assertions.assertEquals(
-      "UUID",
-      createWorkspaceMessage2.workspaceName(),
-      NAMES_EQUAL_MESSAGE
+        "UUID",
+        createWorkspaceMessage2.workspaceName(),
+        NAMES_EQUAL_MESSAGE
     );
 
     ctx.completeNow();
@@ -308,9 +325,10 @@ public class CartagoHttpHandlersTest {
   public void testPostSubWorkspaceWithParentNotFound(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .send();
     final var message = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) message.body();
@@ -339,8 +357,9 @@ public class CartagoHttpHandlersTest {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
-                   .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-                   .send()
+            .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
+            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+            .send()
     );
   }
 
@@ -358,25 +377,25 @@ public class CartagoHttpHandlersTest {
       throws URISyntaxException, IOException, InterruptedException {
     final var expectedArtifactRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var artifactInitialization =
         JsonObject.of(
-          ARTIFACT_NAME_PARAM,
-          COUNTER_ARTIFACT_NAME,
-          ARTIFACT_CLASS_PARAM,
-          COUNTER_CLASS_NAME,
-          INIT_PARAMS_PARAM,
-          JsonArray.of(5)
+            ARTIFACT_NAME_PARAM,
+            COUNTER_ARTIFACT_NAME,
+            ARTIFACT_CLASS_PARAM,
+            COUNTER_CLASS_NAME,
+            INIT_PARAMS_PARAM,
+            JsonArray.of(5)
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, "/workspaces/test/artifacts/")
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(
-                                     HttpHeaders.CONTENT_TYPE.toString(),
-                                     ContentType.APPLICATION_JSON.getMimeType()
-                                   )
-                                   .sendBuffer(artifactInitialization.toBuffer());
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(
+            HttpHeaders.CONTENT_TYPE.toString(),
+            ContentType.APPLICATION_JSON.getMimeType()
+        )
+        .sendBuffer(artifactInitialization.toBuffer());
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createArtifactMessage =
@@ -441,25 +460,25 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException {
     final var artifactInitialization =
         JsonObject.of(
-          ARTIFACT_NAME_PARAM,
-          COUNTER_ARTIFACT_NAME,
-          ARTIFACT_CLASS_PARAM,
-          COUNTER_CLASS_NAME,
-          INIT_PARAMS_PARAM,
-          JsonArray.of(5)
+            ARTIFACT_NAME_PARAM,
+            COUNTER_ARTIFACT_NAME,
+            ARTIFACT_CLASS_PARAM,
+            COUNTER_CLASS_NAME,
+            INIT_PARAMS_PARAM,
+            JsonArray.of(5)
         );
     final var request = this.client.post(
-                                     TEST_PORT,
-                                     TEST_HOST,
-                                     WORKSPACES_PATH + NONEXISTENT_NAME + ARTIFACTS_PATH
-                                   )
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
-                                   .putHeader(
-                                     HttpHeaders.CONTENT_TYPE.toString(),
-                                     ContentType.APPLICATION_JSON.getMimeType()
-                                   )
-                                   .sendBuffer(artifactInitialization.toBuffer());
+            TEST_PORT,
+            TEST_HOST,
+            WORKSPACES_PATH + NONEXISTENT_NAME + ARTIFACTS_PATH
+        )
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
+        .putHeader(
+            HttpHeaders.CONTENT_TYPE.toString(),
+            ContentType.APPLICATION_JSON.getMimeType()
+        )
+        .sendBuffer(artifactInitialization.toBuffer());
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
@@ -504,22 +523,22 @@ public class CartagoHttpHandlersTest {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, MAIN_ARTIFACTS_PATH)
-                   .putHeader(
-                     HttpHeaders.CONTENT_TYPE.toString(),
-                     ContentType.APPLICATION_JSON.getMimeType()
-                   )
-                   .sendBuffer(
-                     JsonObject
-                       .of(
-                         ARTIFACT_NAME_PARAM,
-                         COUNTER_ARTIFACT_NAME,
-                         ARTIFACT_CLASS_PARAM,
-                         COUNTER_CLASS_NAME,
-                         INIT_PARAMS_PARAM,
-                         JsonArray.of(5)
-                       )
-                       .toBuffer()
-                   )
+            .putHeader(
+                HttpHeaders.CONTENT_TYPE.toString(),
+                ContentType.APPLICATION_JSON.getMimeType()
+            )
+            .sendBuffer(
+                JsonObject
+                    .of(
+                        ARTIFACT_NAME_PARAM,
+                        COUNTER_ARTIFACT_NAME,
+                        ARTIFACT_CLASS_PARAM,
+                        COUNTER_CLASS_NAME,
+                        INIT_PARAMS_PARAM,
+                        JsonArray.of(5)
+                    )
+                    .toBuffer()
+            )
     );
   }
 
@@ -531,12 +550,12 @@ public class CartagoHttpHandlersTest {
         MAIN_ARTIFACTS_PATH,
         JsonObject
             .of(
-              ARTIFACT_NAME_PARAM,
-              COUNTER_ARTIFACT_NAME,
-              ARTIFACT_CLASS_PARAM,
-              COUNTER_CLASS_NAME,
-              INIT_PARAMS_PARAM,
-              JsonArray.of(5)
+                ARTIFACT_NAME_PARAM,
+                COUNTER_ARTIFACT_NAME,
+                ARTIFACT_CLASS_PARAM,
+                COUNTER_CLASS_NAME,
+                INIT_PARAMS_PARAM,
+                JsonArray.of(5)
             )
             .toBuffer()
     );
@@ -547,17 +566,18 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException, URISyntaxException, IOException {
     final var initialBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("test_agent_body_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var fullBodyRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_agent_body_full.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("test_agent_body_full.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME, AGENT_NAME)
+        .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) cartagoMessage.body();
     Assertions.assertEquals(
@@ -609,8 +629,9 @@ public class CartagoHttpHandlersTest {
   public void testPostJoinWorkspaceFails(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/join")
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME, AGENT_NAME)
+        .send();
     final var message = this.cartagoMessageQueue.take();
     final var joinWorkspaceMessage = (CartagoMessage.JoinWorkspace) message.body();
     Assertions.assertEquals(
@@ -654,8 +675,8 @@ public class CartagoHttpHandlersTest {
   public void testPostLeaveWorkspaceSucceeds(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) cartagoMessage.body();
     Assertions.assertEquals(
@@ -697,8 +718,8 @@ public class CartagoHttpHandlersTest {
   public void testPostLeaveWorkspaceFails(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .send();
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .send();
     final var message = this.cartagoMessageQueue.take();
     final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) message.body();
     Assertions.assertEquals(
@@ -742,17 +763,17 @@ public class CartagoHttpHandlersTest {
   public void testPostFocusArtifactSucceeds(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, FOCUS_PATH)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(
-                                     HttpHeaders.CONTENT_TYPE.toString(),
-                                     ContentType.APPLICATION_JSON.getMimeType()
-                                   )
-                                   .sendBuffer(JsonObject.of(
-                                     ARTIFACT_NAME_PARAM,
-                                     COUNTER_ARTIFACT_NAME,
-                                     CALLBACK_IRI_PARAM,
-                                     CALLBACK_IRI
-                                   ).toBuffer());
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(
+            HttpHeaders.CONTENT_TYPE.toString(),
+            ContentType.APPLICATION_JSON.getMimeType()
+        )
+        .sendBuffer(JsonObject.of(
+            ARTIFACT_NAME_PARAM,
+            COUNTER_ARTIFACT_NAME,
+            CALLBACK_IRI_PARAM,
+            CALLBACK_IRI
+        ).toBuffer());
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var focusMessage = (CartagoMessage.Focus) cartagoMessage.body();
     Assertions.assertEquals(
@@ -775,7 +796,7 @@ public class CartagoHttpHandlersTest {
     final var addCallbackMessage =
         (HttpNotificationDispatcherMessage.AddCallback) notificationMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME +"/"),
+        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME + "/"),
         addCallbackMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );
@@ -805,17 +826,17 @@ public class CartagoHttpHandlersTest {
   public void testPostFocusArtifactFails(final VertxTestContext ctx)
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, FOCUS_PATH)
-                                   .putHeader(AGENT_WEBID, TEST_AGENT_ID)
-                                   .putHeader(
-                                     HttpHeaders.CONTENT_TYPE.toString(),
-                                     ContentType.APPLICATION_JSON.getMimeType()
-                                   )
-                                   .sendBuffer(JsonObject.of(
-                                     ARTIFACT_NAME_PARAM,
-                                     "c1",
-                                     CALLBACK_IRI_PARAM,
-                                     CALLBACK_IRI
-                                   ).toBuffer());
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(
+            HttpHeaders.CONTENT_TYPE.toString(),
+            ContentType.APPLICATION_JSON.getMimeType()
+        )
+        .sendBuffer(JsonObject.of(
+            ARTIFACT_NAME_PARAM,
+            "c1",
+            CALLBACK_IRI_PARAM,
+            CALLBACK_IRI
+        ).toBuffer());
     final var message = this.cartagoMessageQueue.take();
     final var leaveWorkspaceMessage = (CartagoMessage.Focus) message.body();
     Assertions.assertEquals(
@@ -848,16 +869,16 @@ public class CartagoHttpHandlersTest {
     this.helper.testResourceRequestFailsWithoutWebId(
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, FOCUS_PATH)
-                   .putHeader(
-                     HttpHeaders.CONTENT_TYPE.toString(),
-                     ContentType.APPLICATION_JSON.getMimeType()
-                   )
-                   .sendBuffer(JsonObject.of(
-                     ARTIFACT_NAME_PARAM,
-                     COUNTER_ARTIFACT_NAME,
-                     CALLBACK_IRI_PARAM,
-                     CALLBACK_IRI
-                   ).toBuffer())
+            .putHeader(
+                HttpHeaders.CONTENT_TYPE.toString(),
+                ContentType.APPLICATION_JSON.getMimeType()
+            )
+            .sendBuffer(JsonObject.of(
+                ARTIFACT_NAME_PARAM,
+                COUNTER_ARTIFACT_NAME,
+                CALLBACK_IRI_PARAM,
+                CALLBACK_IRI
+            ).toBuffer())
     );
   }
 
@@ -878,10 +899,10 @@ public class CartagoHttpHandlersTest {
         FOCUS_PATH,
         JsonObject
             .of(
-              ARTIFACT_NAME_PARAM,
-              COUNTER_ARTIFACT_NAME,
-              CALLBACK_IRI_PARAM,
-              CALLBACK_IRI
+                ARTIFACT_NAME_PARAM,
+                COUNTER_ARTIFACT_NAME,
+                CALLBACK_IRI_PARAM,
+                CALLBACK_IRI
             )
             .toBuffer()
     );

@@ -51,5 +51,5 @@
         ]
     ] .
 
-<workspaces/test/artifacts/c0/> a hmas:ResourceProfile;
+<workspaces/test/artifacts/c0> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/test/artifacts/c0/#artifact> .

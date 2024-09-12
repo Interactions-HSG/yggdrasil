@@ -12,10 +12,6 @@
       {
         "class" : "http://example.org/Counter",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
-      },
-      {
-        "class": "http://example.org/Artifact",
-        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
       }
     ],
     "workspaces" : [
@@ -28,17 +24,18 @@
             "class" : "http://example.org/Counter",
             "init-params" : [
               5
-            ],
-            "focused-by" : [
-              {
-                "agent-uri" : "http://localhost:8080/agents/test",
-                "callback-uri" : "http://localhost:8081/"
-              }
             ]
           }
         ],
         "agents" : [
-          "http://localhost:8080/agents/test_agent"
+          {
+            "name" : "test_agent",
+            "agent-uri" : "http://localhost:8080/agents/test",
+            "callback-uri" : "http://localhost:8081",
+            "focused-artifacts" : [
+              "c0"
+            ]
+          }
         ]
       },
       {

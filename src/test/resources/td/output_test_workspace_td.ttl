@@ -13,7 +13,15 @@
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:MakeArtifact;
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
+      td:name "createSubWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/test>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:MakeArtifact;
       td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -24,7 +32,7 @@
       td:hasInputSchema [ a js:ObjectSchema;
           js:properties [ a js:StringSchema, jacamo:ArtifactTemplate;
               js:propertyName "artifactClass";
-              js:enum ex:Counter, ex:Artifact
+              js:enum ex:Counter
             ], [ a js:ArraySchema, jacamo:InitParams;
               js:propertyName "initParams"
             ], [ a js:StringSchema, jacamo:ArtifactName;
@@ -63,14 +71,6 @@
               js:propertyName "callbackIri"
             ];
           js:required "artifactName", "callbackIri"
-        ]
-    ], [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
-      td:name "createSubWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/test/>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
         ]
     ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspace>;
       td:name "subscribeToWorkspace";
@@ -111,7 +111,7 @@
     ];
   hmas:isHostedOn <#platform> .
 
-<workspaces/test/> a hmas:ResourceProfile;
+<workspaces/test> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/test/#workspace> .
 
 <#platform> a hmas:HypermediaMASPlatform .

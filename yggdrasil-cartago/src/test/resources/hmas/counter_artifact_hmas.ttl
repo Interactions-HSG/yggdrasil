@@ -10,7 +10,7 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/sub/artifacts/c1/> a hmas:ResourceProfile;
+<http://localhost:8080/workspaces/sub/artifacts/c1> a hmas:ResourceProfile;
   hmas:exposesSignifier <http://localhost:8080/workspaces/sub/artifacts/c1/#inc-Signifier>,
     <http://localhost:8080/workspaces/sub/artifacts/c1/#getArtifactRepresentation>, <http://localhost:8080/workspaces/sub/artifacts/c1/#focusArtifact>,
     <http://localhost:8080/workspaces/sub/artifacts/c1/#updateArtifact>, <http://localhost:8080/workspaces/sub/artifacts/c1/#subscribeToArtifact>,
