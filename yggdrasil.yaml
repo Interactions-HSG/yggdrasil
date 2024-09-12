@@ -28,8 +28,6 @@ tags:
     description: All operations concering workspaces
   - name: artifact
     description: All operations concerning artifacts
-  - name: body
-    description: All operations concerning bodies
 paths:
   /:
     get:
@@ -95,11 +93,6 @@ paths:
         * ".../workspaces/:wkspid/artifacts/", gives notifications about artifacts creation (the workspace must exist prior to subscription)
 
         * ".../workspaces/:wkspid/artifacts/:artid", gives notifications about this artifact update and deletion (the artifact must exist prior to subscription)
-
-        * ".../workspaces/:wkspid/agents/", gives notifications about body artifacts creation (the workspace must exist prior to subscription)
-        
-        * ".../workspaces/:wkspid/agents/:agt", gives notifications about this body artifact update and deletion, but also the notifications related to the owner agent starting and completing its actions in the given workspace
-
 
         The callback to which the notifications should be sent also needs to be specified. This endpoint can be used in two modes, one for subscribing and one for unsubscribing. All creation and update notifications are the TURTLE representation of the resource which was created or updated. All deletion notifications are empty by default. Action notifications are in JSON format and follow a schema made of the following four properties
 
@@ -1564,8 +1557,14 @@ paths:
           schema:
             type: string
             examples:
-              - "agent"
+              - "https://wiser-solid-xi.interactions.ics.unisg.ch/JamesBond/profile/card#me"
           required: true
+        - in: header
+          name: X-Agent-LocalName
+          schema:
+            type: string
+            examples:
+              - "JamesBond"
         - in: path
           name: workspaceName
           schema:
@@ -2223,192 +2222,6 @@ paths:
                 type: string
                 examples:
                   - "Unauthorized"
-        '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Internal Server Error"
-  /workspaces/{workspaceName}/agents/{agentName}:
-    get:
-      tags:
-        - body
-      summary: Get the representation for this body artifact
-      description: Get the representation for this body artifact as a TURTLE formatted string. It describes its operations.
-      operationId: getBody
-      parameters:
-        - in: path
-          name: workspaceName
-          schema:
-            type: string
-            examples:
-              - "sub"
-          required: true
-        - in: path
-          name: agentName
-          schema:
-            type: string
-            examples:
-              - "test_agent"
-          required: true
-      responses:
-        '200':
-          description: Successful retrieval
-          content:
-            text/turtle:
-              schema:
-                type: string
-                examples: 
-                  - |
-                    @prefix td: <https://www.w3.org/2019/wot/td#> .
-                    @prefix htv: <http://www.w3.org/2011/http#> .
-                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-                    @prefix dct: <http://purl.org/dc/terms/> .
-                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-                    @prefix hmas: <https://purl.org/hmas/> .
-
-                    <http://localhost:8080/workspaces/sub/agents/test_agent> a td:Thing, <https://example.org/Body>, hmas:Artifact;
-                      td:title "test_agent";
-                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-                        ];
-                      hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
-                      <https://example.org/isBodyOf> <http://localhost:8080/agents/test_agent> .
-
-                    <http://localhost:8080/workspaces/sub> a hmas:Workspace .
-
-                    <http://localhost:8080/agents/test_agent> a hmas:Agent .
-        '400':
-          description: Malformed parameters given
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Bad Request"
-        '404':
-          description: Body artifact not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Not Found"
-        '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Internal Server Error"
-    put:
-      tags:
-        - body
-      summary: Update this body artifact
-      description: Update this body artifact. The new representation must be given as a TURTLE formatted body in the request.
-      operationId: updateBody
-      parameters:
-        - in: header
-          name: X-Agent-WebID
-          schema:
-            type: string
-            examples:
-              - "test_agent"
-          required: true
-        - in: path
-          name: workspaceName
-          schema:
-            type: string
-            examples:
-              - "sub"
-          required: true
-        - in: path
-          name: agentName
-          schema:
-            type: string
-            examples:
-              - "test_agent"
-          required: true
-      requestBody:
-        description: Update this body artifact
-        content:
-          text/turtle:
-            schema:
-              type: string
-              examples: 
-                  - |
-                    @prefix td: <https://www.w3.org/2019/wot/td#> .
-                    @prefix htv: <http://www.w3.org/2011/http#> .
-                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-                    @prefix dct: <http://purl.org/dc/terms/> .
-                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-                    @prefix hmas: <https://purl.org/hmas/> .
-
-                    <http://localhost:8080/workspaces/sub/agents/test_agent> a td:Thing, <https://example.org/Body>, hmas:Artifact;
-                      td:title "test_agent";
-                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-                        ];
-                      hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
-                      <https://example.org/isBodyOf> <http://localhost:8080/agents/test_agent> .
-
-                    <http://localhost:8080/workspaces/sub> a hmas:Workspace .
-
-                    <http://localhost:8080/agents/test_agent> a hmas:Agent .
-      responses:
-        '200':
-          description: Entity successfully updated
-          content:
-            text/turtle:
-              schema:
-                type: string
-                examples: 
-                  - |
-                    @prefix td: <https://www.w3.org/2019/wot/td#> .
-                    @prefix htv: <http://www.w3.org/2011/http#> .
-                    @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-                    @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-                    @prefix dct: <http://purl.org/dc/terms/> .
-                    @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
-                    @prefix hmas: <https://purl.org/hmas/> .
-
-                    <http://localhost:8080/workspaces/sub/agents/test_agent> a td:Thing, <https://example.org/Body>, hmas:Artifact;
-                      td:title "test_agent";
-                      td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
-                        ];
-                      hmas:isContainedIn <http://localhost:8080/workspaces/sub>;
-                      <https://example.org/isBodyOf> <http://localhost:8080/agents/test_agent> .
-
-                    <http://localhost:8080/workspaces/sub> a hmas:Workspace .
-
-                    <http://localhost:8080/agents/test_agent> a hmas:Agent .
-        '400':
-          description: Malformed parameters given
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Bad Request"
-        '401':
-          description: No WebID header supplied
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Unauthorized"
-        '404':
-          description: Body artifact not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                examples:
-                  - "Not Found"
         '500':
           description: Internal server error
           content:
