@@ -114,7 +114,7 @@ If it is not enabled the HttpNotificationVerticle will not be deployed.
 The above config illustrates the default values that are used if the notification-config is not specified in the configuration.
 
 ### ENVIRONMENT-CONFIG
-The environment-config specifies how the environment should look like upon launch, further it specifies if cartago should be used to enable
+The environment-config specifies how the environment should look like upon launch, further it specifies if CArtAgO should be used to enable
 e.g. virtual artifacts. You can also specify the wanted ontology for the given yggdrasil instance in the environment config.
 
 #### Environment settings
@@ -151,7 +151,7 @@ parameter "known-artifacts" to inform the given yggdrasil instance of the availa
 The "known-artifacts" key takes a JsonArray as its value. Each Json Object contains the class and template for an artifact.
 The class is then used as a key to identify the artifacts at runtime. The template is simply the java class of the wanted artifact.
 When a virtual artifact is in the "known-artifacts" array users are then able to create instances of this class by using the makeArtifact endpoint
-in a workspace (needs to be a workspace that has an underlying cartago workspace). Correctly specified artifacts can then be used to remotely
+in a workspace (needs to be a workspace that has an underlying CArtAgO workspace). Correctly specified artifacts can then be used to remotely
 execute operations.
 
 ### Workspaces
@@ -199,7 +199,7 @@ If you have the environment enabled, a workspace only needs a name and every oth
 If the environment is disabled the "representation" parameter is also mandatory.
 
 ##### Environment disabled
-If the environment is disabled, we do not use Cartago and therefore provide less functionality. This also means
+If the environment is disabled, we do not use CArtAgO and therefore provide less functionality. This also means
 the setup is a little simpler. Currently, you can only specify workspaces and artifacts. In both cases the name and the
 representation are mandatory fields. A simple configuration could look like this:
 ```json
@@ -230,10 +230,10 @@ Optionally you can also define parent - child relationships between workspaces.
 #### Environment enabled
 If the environment is enabled, the given yggdrasil instance will provide more funcionality in interacting with the environment.
 This is reflected in the more extendable configuration file. It is still possible to specifiy a workspace with a name and representation.
-If you do it this way NO underlying cartago workspace will be created!
+If you do it this way NO underlying CArtAgO workspace will be created!
 
 ##### workspaces
-The following configurations will all create an underlying cartago workspace instance.
+The following configurations will all create an underlying CArtAgO workspace instance.
 
 To start with a workspace you only need to specify a name. This will instantiate a top-level workspace and its representation
 will have the default signifiers that are available to workspaces. Optionally you can also use the "metadata" key to specifiy a files
@@ -282,7 +282,7 @@ relations inside the workspaces.
 ```
 ##### artifacts
 With the environment enabled artifacts can still be statically instantiated with the "representation" key. If this key is
-specified the other keys will be disregarded and no virtual artifact (cartago instance) will be created.
+specified the other keys will be disregarded and no virtual artifact (CArtAgO instance) will be created.
 
 If instead the "class" key is specified then the application will check the "known-artifacts" array and if the "class" is
 present it will create an instance of the specified template class. It is possible to instantiate artifacts with parameters,
@@ -293,13 +293,13 @@ Enabling the enviroment allows the creation of body artifacts and the ability of
 An agent consists of a name which will be given to the body artifact, an agent-uri which should point to the WebID of the agent and a callback-uri
 which should point to an endpoint of the agent that is capable of handling the update messages sent from yggdrasil.
 
-Specifying an agent in a workspace will automatically create a body artifact in said workspace as well as join the agent in the cartago workspace.
+Specifying an agent in a workspace will automatically create a body artifact in said workspace as well as join the agent in the CArtAgO workspace.
 This will be verifiable by checking the workspace and observing that it contains a body artifact of said agent.
 
 It is also possible to specify which artifacts the agent should be focused on by adding the optional "focused-artifacts" param and a list of artifact names.
 Note that these artifacts must exist in the same workspace.
 
-Additional metadata can again be specified through the "metadata" parameter. Agents cannot be instantiated in workspaces that are NOT created ontop of cartago.
+Additional metadata can again be specified through the "metadata" parameter. Agents cannot be instantiated in workspaces that are NOT created ontop of CArtAgO.
 
 ## HTTP API Overview
 
