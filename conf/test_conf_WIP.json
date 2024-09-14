@@ -1,0 +1,47 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "agents" :  [
+    {
+      "name" : "test_agent",
+      "agent-uri" : "http://localhost:8081",
+      "callback-uri" : "http://localhost:8081/callback",
+      "body-config" : [
+        {
+          "metadata" : "src/main/resources/a1_body_metadata.ttl",
+          "join" : [ "w1"]
+        },
+        {
+          "metadata" : "src/main/resources/a1_body_metadata.ttl"
+        }
+      ]
+    }
+  ],
+  "environment-config" : {
+    "workspaces" : [
+      {
+        "name" : "w1",
+        "metadata" : "src/main/resources/w1_test_metadata.ttl",
+        "artifacts" : [
+          {
+            "name" : "c1",
+            "class" : "http://example.org/Counter",
+            "metadata" : "src/main/resources/c1_test_metadata.ttl",
+            "focused-by" : [
+              "agent_name"
+            ]
+          }
+        ],
+        "joined-by" : [
+          "agent_name"
+        ]
+      }
+    ]
+  }
+}
