@@ -97,11 +97,34 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addThingURI(thingIri + "/#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform")
         .addAction(new ActionAffordance.Builder(
-        "createWorkspace",
+        "createWorkspaceJson",
             new Form.Builder(this.httpConfig.getWorkspacesUri())
           .setMethodName(HttpMethod.POST.name())
           .build())
-        .addSemanticType(JACAMO + "createWorkspace")
+        .addSemanticType(JACAMO + "createWorkspaceJson")
+        .build()
+      ).addAction(new ActionAffordance.Builder(
+        "createWorkspaceTurtle",
+        new Form.Builder(this.httpConfig.getWorkspacesUri())
+          .setMethodName(HttpMethod.POST.name())
+          .build())
+        .addSemanticType(JACAMO + "createWorkspaceTurle")
+        .build()
+      ).addAction(new ActionAffordance.Builder(
+        "sparqlGetQuery",
+        new Form.Builder(this.httpConfig.getBaseUri() + "query/")
+          .setMethodName(HttpMethod.GET.name())
+          .setContentType("application/sparql-query")
+          .build())
+        .addSemanticType(JACAMO + "sparqlGetQuery")
+        .build()
+      ).addAction(new ActionAffordance.Builder(
+        "sparqlPostQuery",
+        new Form.Builder(this.httpConfig.getBaseUri() + "query/")
+          .setMethodName(HttpMethod.POST.name())
+          .setContentType("application/sparql-query")
+          .build())
+        .addSemanticType(JACAMO + "sparqlPostQuery")
         .build()
       );
 
@@ -136,6 +159,35 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
           ).addSemanticType(JACAMO + "CreateSubWorkspace")
             .build()
         );
+
+    // add default actions
+    td.addAction(
+      new ActionAffordance.Builder(
+        "getCurrentWorkspace",
+        new Form.Builder(thingUri)
+          .setMethodName(HttpMethod.GET.name())
+          .build()
+      ).addSemanticType(JACAMO + "getCurrentWorkspace")
+        .build()
+    ).addAction(
+     new ActionAffordance.Builder(
+       "updateCurrentWorkspace",
+       new Form.Builder(thingUri)
+         .setMethodName(HttpMethod.PUT.name())
+         .build()
+     ).addSemanticType(JACAMO + "updateCurrentWorkspace")
+       .build()
+    ).addAction(
+      new ActionAffordance.Builder(
+        "deleteCurrentWorkspace",
+      new Form.Builder(thingUri)
+        .setMethodName(HttpMethod.DELETE.name())
+        .build()
+    ).addSemanticType(JACAMO + "deleteCurrentWorkspace")
+    .build()
+    );
+
+
 
     if (isCartagoWorkspace) {
       td.addAction(
@@ -267,6 +319,11 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addGraph(metadata);
 
     actionAffordancesMap.values().forEach(td::addAction);
+
+
+
+
+
 
     addWebSub(td, "Artifact");
     wrapInResourceProfile(td, thingUri, thingUri + "/" + HASH_ARTIFACT);
