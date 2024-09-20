@@ -54,11 +54,22 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                          String target,
                          String methodName,
                          String semanticType) {
+    addAction(thingDescription, name, target, "application/json", methodName,
+        semanticType);
+  }
+
+  private void addAction(ThingDescription.Builder thingDescription,
+                         String name,
+                         String target,
+                         String contentType,
+                         String methodName,
+                         String semanticType) {
     thingDescription.addAction(
         new ActionAffordance.Builder(
             name,
             new Form.Builder(target)
                 .setMethodName(methodName)
+                .setContentType(contentType)
                 .build()
         ).addSemanticType(JACAMO + semanticType).build()
     );
@@ -119,13 +130,13 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
     addAction(td, "createWorkspaceJson", this.httpConfig.getWorkspacesUri(), POST,
         "makeWorkspace");
-    addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUri(), POST,
-        "createWorkspace");
+    addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUri(),
+        "text/turtle", POST, "createWorkspace");
 
     addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUri() + "query/",
-        GET, "sparqlGetQuery");
+        "application/sparql-query", GET, "sparqlGetQuery");
     addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUri() + "query/",
-        POST, "sparqlPostQuery");
+        "application/sparql-query", POST, "sparqlPostQuery");
 
     addWebSub(td, "Workspaces");
 
@@ -148,43 +159,20 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         new ThingDescription
             .Builder(workspaceName)
             .addThingURI(thingUri + "/#workspace")
-            .addSemanticType(HMAS + "Workspace")
-            .addAction(
-                new ActionAffordance.Builder(
-                    "createSubWorkspace",
-                    new Form.Builder(thingUri)
-                        .setMethodName(HttpMethod.POST.name())
-                        .build()
-                ).addSemanticType(JACAMO + "CreateSubWorkspace")
-                    .build()
-            );
+            .addSemanticType(HMAS + "Workspace");
 
-    // add default actions
-    td.addAction(
-        new ActionAffordance.Builder(
-            "getCurrentWorkspace",
-            new Form.Builder(thingUri)
-                .setMethodName(HttpMethod.GET.name())
-                .build()
-        ).addSemanticType(JACAMO + "getCurrentWorkspace")
-            .build()
-    ).addAction(
-        new ActionAffordance.Builder(
-            "updateCurrentWorkspace",
-            new Form.Builder(thingUri)
-                .setMethodName(HttpMethod.PUT.name())
-                .build()
-        ).addSemanticType(JACAMO + "updateCurrentWorkspace")
-            .build()
-    ).addAction(
-        new ActionAffordance.Builder(
-            "deleteCurrentWorkspace",
-            new Form.Builder(thingUri)
-                .setMethodName(HttpMethod.DELETE.name())
-                .build()
-        ).addSemanticType(JACAMO + "deleteCurrentWorkspace")
-            .build()
-    );
+    addAction(td, "createSubWorkspaceJson", thingUri, POST, "makeSubWorkspace");
+    addAction(td, "createSubWorkspaceTurtle",  thingUri,
+        "text/turtle", POST, "createSubWorkspace");
+
+    addAction(td, "getCurrentWorkspace", thingUri, GET, "getCurrentWorkspace");
+    addAction(td, "updateCurrentWorkspace",
+        thingUri, PUT, "updateCurrentWorkspace");
+    addAction(td, "deleteCurrentWorkspace",
+        thingUri, DELETE, "deleteCurrentWorkspace");
+
+    addAction(td, "createArtifact", this.httpConfig.getArtifactsUri(workspaceName), "text/turtle",
+        POST, "createArtifact");
 
 
     if (isCartagoWorkspace) {
