@@ -49,6 +49,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     this.notificationConfig = notificationConfig;
   }
 
+  private void addHttpSignifiers(ThingDescription.Builder td, String target, String type) {
+    addAction(td, "get" + type + "Representation", target, GET, "Perceive" + type);
+    addAction(td, "update" + type + "Representation", target, PUT, "Update" + type);
+    addAction(td, "delete" + type + "Representation", target, DELETE, "Delete" + type);
+  }
+
   private void addAction(ThingDescription.Builder thingDescription,
                          String name,
                          String target,
@@ -165,17 +171,15 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addAction(td, "createSubWorkspaceTurtle",  thingUri,
         "text/turtle", POST, "createSubWorkspace");
 
-    addAction(td, "getCurrentWorkspace", thingUri, GET, "getCurrentWorkspace");
-    addAction(td, "updateCurrentWorkspace",
-        thingUri, PUT, "updateCurrentWorkspace");
-    addAction(td, "deleteCurrentWorkspace",
-        thingUri, DELETE, "deleteCurrentWorkspace");
+    addHttpSignifiers(td, thingUri, "Workspace");
 
-    addAction(td, "createArtifact", this.httpConfig.getArtifactsUri(workspaceName), "text/turtle",
-        POST, "createArtifact");
+    addAction(td, "createArtifact", this.httpConfig.getArtifactsUri(workspaceName),
+        "text/turtle", POST, "createArtifact");
 
 
     if (isCartagoWorkspace) {
+      addAction(td, "joinWorkspace", thingUri + "/join", POST, "JoinWorkspace");
+      addAction(td, "quitWorkspace", thingUri + "/leave", POST, "QuitWorkspace");
       td.addAction(
               new ActionAffordance.Builder(
                   "makeArtifact",
@@ -199,24 +203,6 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                           .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
                           .build()
                   ).addSemanticType(JACAMO + "MakeArtifact")
-                  .build()
-          )
-          .addAction(
-              new ActionAffordance.Builder(
-                  "joinWorkspace",
-                  new Form.Builder(thingUri + "/join")
-                      .setMethodName(HttpMethod.POST.name())
-                      .build()
-              ).addSemanticType(JACAMO + "JoinWorkspace")
-                  .build()
-          )
-          .addAction(
-              new ActionAffordance.Builder(
-                  "quitWorkspace",
-                  new Form.Builder(thingUri + "/leave")
-                      .setMethodName(HttpMethod.POST.name())
-                      .build()
-              ).addSemanticType(JACAMO + "QuitWorkspace")
                   .build()
           )
           .addAction(
@@ -308,11 +294,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
     actionAffordancesMap.values().forEach(td::addAction);
 
-    addAction(td, "getArtifactRepresentation", thingUri, HttpMethod.GET.name(), "PerceiveArtifact");
-    addAction(td, "updateArtifactRepresentation", thingUri, HttpMethod.PUT.name(),
-        "UpdateArtifact");
-    addAction(td, "deleteArtifactRepresentation", thingUri, HttpMethod.DELETE.name(),
-        "DeleteArtifact");
+    addHttpSignifiers(td, thingUri, "Artifact");
 
     if (isCartagoArtifact) {
       addAction(td, "focusArtifact", thingUri + "focus/", HttpMethod.POST.name(), "Focus");
