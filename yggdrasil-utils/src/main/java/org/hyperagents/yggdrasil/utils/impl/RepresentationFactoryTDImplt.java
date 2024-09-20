@@ -298,7 +298,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         new Form.Builder(target)
           .setMethodName(methodName)
           .build()
-      ).addSemanticType(semanticType).build()
+      ).addSemanticType(JACAMO + semanticType).build()
     );
   }
 
@@ -335,12 +335,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
     actionAffordancesMap.values().forEach(td::addAction);
 
-    addAction(td, "getArtifactRepresentation", thingUri,HttpMethod.GET.name(), "getArtifactRepresentation");
-    addAction(td, "updateArtifactRepresentation", thingUri,HttpMethod.PUT.name(), "updateArtifactRepresentation");
-    addAction(td, "deleteArtifactRepresentation", thingUri,HttpMethod.DELETE.name(), "deleteArtifactRepresentation");
+    addAction(td, "getArtifactRepresentation", thingUri,HttpMethod.GET.name(), "PerceiveArtifact");
+    addAction(td, "updateArtifactRepresentation", thingUri,HttpMethod.PUT.name(), "UpdateArtifact");
+    addAction(td, "deleteArtifactRepresentation", thingUri,HttpMethod.DELETE.name(), "DeleteArtifact");
 
     if (isCartagoArtifact) {
-      addAction(td, "focusArtifact",thingUri + "focus/",HttpMethod.POST.name(), "focusArtifact");
+      addAction(td, "focusArtifact",thingUri + "focus/",HttpMethod.POST.name(), "Focus");
     }
 
     addWebSub(td, "Artifact");
@@ -391,6 +391,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       .setNamespace("hmas", HMAS)
       .setNamespace("ex", "http://example.org/")
       .setNamespace("jacamo", JACAMO)
+      .setNamespace("websub", "http://example.org/websub#")
       .write();
   }
 }
