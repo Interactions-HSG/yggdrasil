@@ -48,15 +48,16 @@ public class HttpNotificationVerticle extends AbstractVerticle {
         .<String, Environment>getLocalMap("environment")
         .get("default")
         .getWorkspaces()
-        .forEach(w -> w.getAgents()
-                       .forEach(a -> a.getFocusedArtifactNames()
-                                      .forEach(artifactName -> this.registry.addCallbackIri(
-                                        httpConfig.getArtifactUri(w.getName(), artifactName),
-                                        a.getAgentCallbackUri()
-                                      ))
-                       )
-        );
-
+        .forEach(w -> w.getArtifacts()
+          .forEach(
+            a -> a.getFocusedBy().forEach(
+              agentName -> this.registry.addCallbackIri(
+                httpConfig.getArtifactUri(w.getName(), a.getName()),
+                w.getAgents().stream().filter(ag -> ag.getName().equals(agentName))
+                  .findFirst().orElseThrow().getAgentCallbackUri()
+                )
+              )
+          ));
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(
         this.vertx.eventBus(),
         notificationConfig

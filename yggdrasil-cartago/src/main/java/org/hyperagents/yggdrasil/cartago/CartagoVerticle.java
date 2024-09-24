@@ -21,6 +21,7 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -201,38 +202,16 @@ public class CartagoVerticle extends AbstractVerticle {
                       ))
               ));
 
-              // creating artifacts
-              w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
-                this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                        this.httpConfig.getArtifactsUri(w.getName()),
-                        a.getName(),
-                        this.instantiateArtifact(
-                            this.httpConfig.getAgentUri("yggdrasil"),
-                            w.getName(),
-                            registry.getArtifactTemplate(c).orElseThrow(),
-                            a.getName(),
-                            Optional.of(a.getInitializationParameters())
-                                .filter(p -> !p.isEmpty())
-                                .map(List::toArray).orElse(null)
-                        )
-                    ));
-                a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
-                        this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-                            this.httpConfig.getArtifactUri(w.getName(), a.getName()),
-                            Files.readString(metadata, StandardCharsets.UTF_8)
-                        ))));
-              }),
-                  () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
-                      this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                          httpConfig.getArtifactsUri(w.getName()),
-                          a.getName(),
-                          Files.readString(ar, StandardCharsets.UTF_8)
-                      )))
-                  )));
-
               // creating bodies and joining workspaces
               w.getAgents().forEach(
                   Failable.asConsumer(a -> {
+
+                    final var body = a.getBodyConfig().stream().filter(b ->
+                      b.getJoinedWorkspaces().contains(w.getName())
+                    ).findFirst().orElse(null);
+
+
+
                     this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
                         w.getName(),
                         a.getAgentUri(),
@@ -240,18 +219,60 @@ public class CartagoVerticle extends AbstractVerticle {
                         this.joinWorkspace(a.getAgentUri(), a.getName(), w.getName())
                     ));
 
-                    a.getMetaData().ifPresent(
-                        Failable.asConsumer(metaData ->
-                            this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-                                this.httpConfig.getAgentBodyUri(w.getName(), a.getName()),
-                                Files.readString(metaData, StandardCharsets.UTF_8)
-                            )))
-                    );
-                    a.getFocusedArtifactNames().forEach(Failable.asConsumer(
-                        artifactName -> this.focus(a.getAgentUri(), w.getName(), artifactName)
-                    ));
+
+                    if (body != null) {
+                      body.getMetadata().ifPresent(Failable.asConsumer(metadata ->
+                          this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+                            this.httpConfig.getAgentBodyUri(w.getName(), a.getName()),
+                            Files.readString(Path.of(metadata), StandardCharsets.UTF_8)
+                          )))
+                        );
+
+                    }
                   })
               );
+
+              // creating artifacts
+              w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
+                  this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                    this.httpConfig.getArtifactsUri(w.getName()),
+                    a.getName(),
+                    this.instantiateArtifact(
+                      this.httpConfig.getAgentUri("yggdrasil"),
+                      w.getName(),
+                      registry.getArtifactTemplate(c).orElseThrow(),
+                      a.getName(),
+                      Optional.of(a.getInitializationParameters())
+                        .filter(p -> !p.isEmpty())
+                        .map(List::toArray).orElse(null)
+                    )
+                  ));
+                  a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
+                    this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+                      this.httpConfig.getArtifactUri(w.getName(), a.getName()),
+                      Files.readString(metadata, StandardCharsets.UTF_8)
+                    ))));
+                  a.getFocusedBy().forEach(Failable.asConsumer(
+                    focusingAgent -> this.focus(w.getAgents()
+                      .stream()
+                      .filter(ag -> ag.getName().equals(focusingAgent))
+                      .findFirst().orElseThrow()
+                      .getAgentUri()
+                      ,w.getName()
+                      ,a.getName()
+                    )
+                  ));
+                }),
+                () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
+                  this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                    httpConfig.getArtifactsUri(w.getName()),
+                    a.getName(),
+                    Files.readString(ar, StandardCharsets.UTF_8)
+                  )))
+                )));
+
+              // focusing on artifacts
+
             }
         ));
   }

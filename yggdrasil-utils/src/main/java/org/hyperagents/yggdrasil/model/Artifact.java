@@ -24,4 +24,6 @@ public interface Artifact {
   Optional<Path> getRepresentation();
 
   Optional<Path> getMetaData();
+
+  List<String> getFocusedBy();
 }

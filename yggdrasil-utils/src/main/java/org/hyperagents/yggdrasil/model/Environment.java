@@ -15,6 +15,7 @@ import java.util.Set;
  * present for all artifacts.
  */
 public interface Environment extends Shareable {
+  List<YggdrasilAgent> getAgents();
   List<Workspace> getWorkspaces();
 
   Set<KnownArtifact> getKnownArtifacts();
