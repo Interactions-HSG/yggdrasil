@@ -42,6 +42,25 @@ public final class EnvironmentParser {
    * parses the environment given a config.
    */
   public static Environment parse(final JsonObject config) {
+    final var agents =
+        JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error);
+
+    final var agentsList =
+        agents.flatMap(a -> IntStream.range(0, a.size())
+            .mapToObj(a::getValue)
+            .flatMap(o -> (
+                o instanceof JsonObject j
+                    ? Optional.of(j)
+                    : Optional.<JsonObject>empty()
+                ).stream()
+            ).<YggdrasilAgent>flatMap(o ->  {
+              final var name = JsonObjectUtils.getString(o,"name",LOGGER::error);
+
+        }).collect(Collectors.toSet());
+
+
+
+
     final var envConfig =
         JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
     final var knownArtifacts =
