@@ -207,7 +207,8 @@ public class CartagoVerticle extends AbstractVerticle {
 
                     final var body = a.getBodyConfig().stream().filter(b ->
                         b.getJoinedWorkspaces().contains(w.getName())
-                    ).findFirst().orElse(null);
+                    ).findFirst().orElse(a.getBodyConfig().stream().filter(b ->
+                        b.getJoinedWorkspaces().isEmpty()).findFirst().orElse(null));
 
 
 
@@ -267,9 +268,6 @@ public class CartagoVerticle extends AbstractVerticle {
                     Files.readString(ar, StandardCharsets.UTF_8)
                   )))
                 )));
-
-              // focusing on artifacts
-
             }
         ));
   }
