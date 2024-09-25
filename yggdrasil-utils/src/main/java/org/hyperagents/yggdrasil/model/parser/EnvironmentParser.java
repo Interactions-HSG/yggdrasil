@@ -180,6 +180,14 @@ public final class EnvironmentParser {
                   + " joined-by of the workspace.");
             }
 
+            // create a joined set so that it doesnt matter where it is specified that an agent
+            // should join the workspace
+
+            joinedBy.forEach(agentName -> joiningAgents.add(
+                agents.stream().filter(agent -> agent.getName().equals(agentName))
+                  .findFirst().orElseThrow()
+            ));
+
             return Stream.of(new WorkspaceImpl(
               name.get(),
               JsonObjectUtils.getString(w, "metadata", LOGGER::error).map(Path::of),

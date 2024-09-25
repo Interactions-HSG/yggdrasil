@@ -7,6 +7,18 @@
   "notification-config" : {
     "enabled" : true
   },
+  "agents" : [
+    {
+      "name" : "test",
+      "agent-uri" : "http://localhost:8080/agents/test",
+      "callback-uri" : "http://localhost:8081",
+      "body-config" : [
+        {
+          "join" : ["w1"]
+        }
+      ]
+    }
+  ],
   "environment-config" : {
     "known-artifacts" : [
       {
@@ -16,8 +28,7 @@
     ],
     "workspaces" : [
       {
-        "name" : "w1",
-        "metadata" : ""
+        "name" : "w1"
       },
       {
         "name" : "w0",
@@ -28,19 +39,7 @@
             "class" : "http://example.org/Counter",
             "init-params" : [
               5
-              ],
-            "metadata" :  ""
-          }
-        ],
-        "agents" : [
-          {
-            "name" : "test",
-            "agent-uri" : "http://localhost:8080/agents/test",
-            "callback-uri" : "http://localhost:8081",
-            "focused-artifacts" : [
-              "c0"
-            ],
-            "metadata" : ""
+              ]
           }
         ]
       }
