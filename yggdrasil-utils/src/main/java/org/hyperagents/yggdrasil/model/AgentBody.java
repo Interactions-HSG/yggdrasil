@@ -6,5 +6,6 @@ import java.util.Optional;
 public interface AgentBody {
 
   Optional<String> getMetadata();
+
   List<String> getJoinedWorkspaces();
 }

@@ -207,7 +207,7 @@ public class CartagoVerticle extends AbstractVerticle {
                   Failable.asConsumer(a -> {
 
                     final var body = a.getBodyConfig().stream().filter(b ->
-                      b.getJoinedWorkspaces().contains(w.getName())
+                        b.getJoinedWorkspaces().contains(w.getName())
                     ).findFirst().orElse(null);
 
 
@@ -226,7 +226,7 @@ public class CartagoVerticle extends AbstractVerticle {
                             this.httpConfig.getAgentBodyUri(w.getName(), a.getName()),
                             Files.readString(Path.of(metadata), StandardCharsets.UTF_8)
                           )))
-                        );
+                      );
 
                     }
                   })
@@ -234,7 +234,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
               // creating artifacts
               w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
-                  this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                     this.httpConfig.getArtifactsUri(w.getName()),
                     a.getName(),
                     this.instantiateArtifact(
@@ -247,23 +247,21 @@ public class CartagoVerticle extends AbstractVerticle {
                         .map(List::toArray).orElse(null)
                     )
                   ));
-                  a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
+                a.getMetaData().ifPresent(Failable.asConsumer(metadata ->
                     this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
                       this.httpConfig.getArtifactUri(w.getName(), a.getName()),
                       Files.readString(metadata, StandardCharsets.UTF_8)
                     ))));
-                  a.getFocusedBy().forEach(Failable.asConsumer(
+                a.getFocusedBy().forEach(Failable.asConsumer(
                     focusingAgent -> this.focus(w.getAgents()
                       .stream()
                       .filter(ag -> ag.getName().equals(focusingAgent))
                       .findFirst().orElseThrow()
-                      .getAgentUri()
-                      ,w.getName()
-                      ,a.getName()
+                      .getAgentUri(), w.getName(), a.getName()
                     )
                   ));
-                }),
-                () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
+              }),
+                  () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                   this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                     httpConfig.getArtifactsUri(w.getName()),
                     a.getName(),

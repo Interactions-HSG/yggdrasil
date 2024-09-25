@@ -2,7 +2,6 @@ package org.hyperagents.yggdrasil.model.impl;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,10 +12,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperagents.yggdrasil.model.*;
+import org.hyperagents.yggdrasil.model.AgentBody;
+import org.hyperagents.yggdrasil.model.Artifact;
+import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.KnownArtifact;
+import org.hyperagents.yggdrasil.model.Workspace;
+import org.hyperagents.yggdrasil.model.YggdrasilAgent;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
@@ -42,37 +45,41 @@ public final class EnvironmentParser {
    */
   public static Environment parse(final JsonObject config) {
     final var agents =
-      JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error)
+        JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error)
         .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue)
-      .flatMap(o -> (o instanceof JsonObject j ? Optional.of(j) : Optional.<JsonObject>empty())
-        .stream()
-      ))
-      .<YggdrasilAgent>flatMap(o -> {
-        final var name = JsonObjectUtils.getString(o,"name",LOGGER::error);
-        final var agentUri = JsonObjectUtils.getString(o,"agent-uri",LOGGER::error);
-        final var callbackUri = JsonObjectUtils.getString(o,"callback-uri",LOGGER::error);
-        if (name.isEmpty() || agentUri.isEmpty() || callbackUri.isEmpty()) {
-          LOGGER.warn("Name, Uri or CallbackUri of agent is empty, skipping");
-          return Stream.empty();
-        }
+          .flatMap(o -> (o instanceof JsonObject j ? Optional.of(j) : Optional.<JsonObject>empty())
+            .stream()
+          ))
+        .<YggdrasilAgent>flatMap(o -> {
+          final var name = JsonObjectUtils.getString(o, "name", LOGGER::error);
+          final var agentUri = JsonObjectUtils.getString(o, "agent-uri", LOGGER::error);
+          final var callbackUri = JsonObjectUtils.getString(o, "callback-uri", LOGGER::error);
+          if (name.isEmpty() || agentUri.isEmpty() || callbackUri.isEmpty()) {
+            LOGGER.warn("Name, Uri or CallbackUri of agent is empty, skipping");
+            return Stream.empty();
+          }
 
-        final var bodies = JsonObjectUtils.getJsonArray(o,"body-config", LOGGER::error);
-        final var t = bodies.stream().flatMap(c -> IntStream.range(0, c.size()).mapToObj(c::getValue))
-          .flatMap(q -> (q instanceof JsonObject s ? Optional.of(s) : Optional.<JsonObject>empty()).stream())
-          .<AgentBody>flatMap(e -> {
-            final var metadata = JsonObjectUtils.getString(e,"metadata",LOGGER::error);
-            final var joined = JsonObjectUtils.getJsonArray(e,"join", LOGGER::error)
-              .stream().flatMap(q -> IntStream.range(0, q.size()).mapToObj(q::getValue)).map(q -> (String) q);
-            return Stream.of(new AgentBodyImpl(metadata,joined.toList()));
-          });
-        return Stream.of(new AgentImpl(name.get(), agentUri.get(), callbackUri.get(), t.toList()));
-      })
-      .collect(Collectors.toSet());
+          final var bodies = JsonObjectUtils.getJsonArray(o, "body-config", LOGGER::error);
+          final var t =
+              bodies.stream().flatMap(c -> IntStream.range(0, c.size()).mapToObj(c::getValue))
+              .flatMap(q -> (q instanceof JsonObject s ? Optional.of(s) :
+                Optional.<JsonObject>empty()).stream())
+              .<AgentBody>flatMap(e -> {
+                final var metadata = JsonObjectUtils.getString(e, "metadata", LOGGER::error);
+                final var joined = JsonObjectUtils.getJsonArray(e, "join", LOGGER::error)
+                    .stream().flatMap(q -> IntStream.range(0, q.size()).mapToObj(q::getValue))
+                    .map(q -> (String) q);
+                return Stream.of(new AgentBodyImpl(metadata, joined.toList()));
+              });
+          return Stream.of(
+            new AgentImpl(name.get(), agentUri.get(), callbackUri.get(), t.toList()));
+        })
+        .collect(Collectors.toSet());
 
     final var envConfig =
-      JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
+        JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
     final var knownArtifacts =
-      envConfig
+        envConfig
         .flatMap(c -> JsonObjectUtils.getJsonArray(c, "known-artifacts", LOGGER::error))
         .stream()
         .flatMap(a -> IntStream.range(0, a.size())
@@ -96,10 +103,10 @@ public final class EnvironmentParser {
         })
         .collect(Collectors.toSet());
     final var artifactClasses = knownArtifacts.stream()
-      .map(KnownArtifact::getClazz)
-      .collect(Collectors.toSet());
+        .map(KnownArtifact::getClazz)
+        .collect(Collectors.toSet());
     final var jsonWorkspaces =
-      envConfig.flatMap(c -> JsonObjectUtils.getJsonArray(c, "workspaces", LOGGER::error))
+        envConfig.flatMap(c -> JsonObjectUtils.getJsonArray(c, "workspaces", LOGGER::error))
         .stream()
         .flatMap(a -> IntStream.range(0, a.size())
           .mapToObj(a::getValue)
@@ -113,7 +120,7 @@ public final class EnvironmentParser {
           ))
         .toList();
     final var workspaceNames =
-      jsonWorkspaces.stream()
+        jsonWorkspaces.stream()
         .flatMap(w -> JsonObjectUtils.getString(w, NAME, LOGGER::error).stream())
         .collect(Collectors.toSet());
     return new EnvironmentImpl(
@@ -129,7 +136,8 @@ public final class EnvironmentParser {
             }
 
             final var joinedBy = JsonObjectUtils.getJsonArray(w, "joined-by", LOGGER::error)
-              .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue)).map(a -> (String) a).toList();
+                .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
+                .map(a -> (String) a).toList();
 
 
             return Stream.of(new WorkspaceImpl(
@@ -140,13 +148,13 @@ public final class EnvironmentParser {
                 .filter(p -> {
                   if (!workspaceNames.contains(p)) {
                     LOGGER.warn(
-                      "Workspace has an undefined parent without definition, ignoring parent name"
+                        "Workspace has an undefined parent without definition, ignoring parent name"
                     );
                   }
                   return workspaceNames.contains(p);
                 }),
-               agents.stream().filter(a -> joinedBy.contains(a.getName())).collect(Collectors.toSet())
-              ,
+              agents.stream().filter(a -> joinedBy.contains(a.getName()))
+                .collect(Collectors.toSet()),
               JsonObjectUtils
                 .getJsonArray(w, "artifacts", LOGGER::error)
                 .stream()
@@ -160,15 +168,15 @@ public final class EnvironmentParser {
                   }
                   if (artifactClass.map(c -> !artifactClasses.contains(c)).orElse(false)) {
                     LOGGER.warn(
-                      "Artifact in workspace not having a known artifact class, skipping"
+                        "Artifact in workspace not having a known artifact class, skipping"
                     );
                     return Stream.empty();
                   }
                   final var representation =
-                    JsonObjectUtils.getString(ar, "representation", LOGGER::error);
+                      JsonObjectUtils.getString(ar, "representation", LOGGER::error);
                   if (artifactClass.isEmpty() && representation.isEmpty()) {
                     LOGGER.warn(
-                      "Artifact in workspace not having a class for creating it"
+                        "Artifact in workspace not having a class for creating it"
                         + " or a static representation, skipping"
                     );
                     return Stream.empty();
@@ -183,7 +191,8 @@ public final class EnvironmentParser {
                     representation.map(Path::of),
                     JsonObjectUtils.getString(ar, "metadata", LOGGER::error).map(Path::of),
                     JsonObjectUtils.getJsonArray(ar, "focused-by", LOGGER::error)
-                      .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue)).map(a -> (String) a).toList()
+                      .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
+                      .map(a -> (String) a).toList()
                   ));
                 })
                 .collect(Collectors.toSet()),
@@ -198,14 +207,14 @@ public final class EnvironmentParser {
 
   private static List<Workspace> reorderWorkspaces(final List<Workspace> unorderedWorkspaces) {
     final var workspacesToVisit =
-      unorderedWorkspaces.stream()
+        unorderedWorkspaces.stream()
         .filter(w -> w.getParentName().isEmpty())
         .collect(Collectors.toCollection(LinkedList::new));
     final var orderedWorkspaces = new ArrayList<>(workspacesToVisit);
     while (!workspacesToVisit.isEmpty()) {
       final var currentWorkspace = workspacesToVisit.remove();
       final var childrenWorkspaces =
-        unorderedWorkspaces.stream()
+          unorderedWorkspaces.stream()
           .filter(w ->
             w.getParentName().isPresent()
               && w.getParentName().get().equals(currentWorkspace.getName())
@@ -218,13 +227,15 @@ public final class EnvironmentParser {
   }
 
   private record EnvironmentImpl(
-    List<YggdrasilAgent> agents,
-    List<Workspace> workspaces,
-    Set<KnownArtifact> knownArtifacts
+      List<YggdrasilAgent> agents,
+      List<Workspace> workspaces,
+      Set<KnownArtifact> knownArtifacts
   ) implements Environment {
 
     @Override
-    public List<YggdrasilAgent> getAgents() {return this.agents();}
+    public List<YggdrasilAgent> getAgents() {
+      return this.agents();
+    }
 
     @Override
     public List<Workspace> getWorkspaces() {
@@ -238,7 +249,7 @@ public final class EnvironmentParser {
   }
 
   private record KnownArtifactImpl(String clazz, String template)
-    implements KnownArtifact {
+      implements KnownArtifact {
     @Override
     public String getClazz() {
       return this.clazz();
@@ -251,12 +262,12 @@ public final class EnvironmentParser {
   }
 
   private record WorkspaceImpl(
-    String name,
-    Optional<Path> metaData,
-    Optional<String> parentName,
-    Set<YggdrasilAgent> joinedAgents,
-    Set<Artifact> artifacts,
-    Optional<Path> representation
+      String name,
+      Optional<Path> metaData,
+      Optional<String> parentName,
+      Set<YggdrasilAgent> joinedAgents,
+      Set<Artifact> artifacts,
+      Optional<Path> representation
   ) implements Workspace {
     @Override
     public String getName() {
@@ -290,12 +301,12 @@ public final class EnvironmentParser {
   }
 
   private record ArtifactImpl(
-    String name,
-    Optional<String> clazz,
-    List<?> initializationParameters,
-    Optional<Path> representation,
-    Optional<Path> metaData,
-    List<String> focusedBy
+      String name,
+      Optional<String> clazz,
+      List<?> initializationParameters,
+      Optional<Path> representation,
+      Optional<Path> metaData,
+      List<String> focusedBy
   ) implements Artifact {
     @Override
     public String getName() {
@@ -323,14 +334,16 @@ public final class EnvironmentParser {
     }
 
     @Override
-    public List<String> getFocusedBy() {return this.focusedBy();}
+    public List<String> getFocusedBy() {
+      return this.focusedBy();
+    }
   }
 
   private record AgentImpl(
-    String name,
-    String agentUri,
-    String agentCallbackUri,
-    List<AgentBody> bodies
+      String name,
+      String agentUri,
+      String agentCallbackUri,
+      List<AgentBody> bodies
   ) implements YggdrasilAgent {
 
     @Override
@@ -356,8 +369,8 @@ public final class EnvironmentParser {
   }
 
   private record AgentBodyImpl(
-    Optional<String> metadata,
-    List<String> joined
+      Optional<String> metadata,
+      List<String> joined
   ) implements AgentBody {
 
     @Override
@@ -370,6 +383,4 @@ public final class EnvironmentParser {
       return this.joined();
     }
   }
-
-
 }
