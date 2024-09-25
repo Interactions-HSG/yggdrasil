@@ -21,7 +21,6 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,7 +46,7 @@ import org.hyperagents.yggdrasil.eventbus.messageboxes.RdfStoreMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.CartagoMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
 import org.hyperagents.yggdrasil.eventbus.messages.RdfStoreMessage;
-import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.interfaces.Environment;
 import org.hyperagents.yggdrasil.utils.EnvironmentConfig;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
@@ -224,7 +223,7 @@ public class CartagoVerticle extends AbstractVerticle {
                       body.getMetadata().ifPresent(Failable.asConsumer(metadata ->
                           this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
                             this.httpConfig.getAgentBodyUri(w.getName(), a.getName()),
-                            Files.readString(Path.of(metadata), StandardCharsets.UTF_8)
+                            Files.readString(metadata, StandardCharsets.UTF_8)
                           )))
                       );
 

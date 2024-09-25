@@ -9,7 +9,7 @@
   },
   "agents" :  [
     {
-      "name" : "agent_name",
+      "name" : "test_name",
       "agent-uri" : "http://localhost:8081",
       "callback-uri" : "http://localhost:8081/callback",
       "body-config" : [
@@ -29,18 +29,6 @@
       {
         "class" : "http://example.org/Counter",
         "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
-      },
-      {
-        "class": "http://example.org/Artifact",
-        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
-      },
-      {
-        "class" : "http://example.org/Math",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathTD"
-      },
-      {
-        "class" : "http://example.org/Adder",
-        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderTD"
       }
     ],
     "workspaces" : [

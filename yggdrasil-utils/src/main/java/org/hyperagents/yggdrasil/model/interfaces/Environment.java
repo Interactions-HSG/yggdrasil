@@ -1,8 +1,8 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
-import java.nio.file.Path;
+import io.vertx.core.shareddata.Shareable;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 /**
  * An interface representing an Artifact in the Yggdrasil model.
@@ -14,16 +14,10 @@ import java.util.Optional;
  * <p>The class, initialization parameters, and representation are optional and may not be
  * present for all artifacts.
  */
-public interface Artifact {
-  String getName();
+public interface Environment extends Shareable {
+  List<YggdrasilAgent> getAgents();
 
-  Optional<String> getClazz();
+  List<Workspace> getWorkspaces();
 
-  List<?> getInitializationParameters();
-
-  Optional<Path> getRepresentation();
-
-  Optional<Path> getMetaData();
-
-  List<String> getFocusedBy();
+  Set<KnownArtifact> getKnownArtifacts();
 }

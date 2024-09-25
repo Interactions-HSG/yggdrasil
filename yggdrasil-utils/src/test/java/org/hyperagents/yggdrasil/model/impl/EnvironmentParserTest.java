@@ -1,6 +1,17 @@
 package org.hyperagents.yggdrasil.model.impl;
 
+
 import io.vertx.core.json.JsonObject;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
+import org.hyperagents.yggdrasil.model.interfaces.Artifact;
+import org.hyperagents.yggdrasil.model.interfaces.KnownArtifact;
+import org.hyperagents.yggdrasil.model.interfaces.Workspace;
+import org.hyperagents.yggdrasil.model.interfaces.YggdrasilAgent;
+import org.hyperagents.yggdrasil.model.parser.EnvironmentParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +23,13 @@ import java.nio.file.Path;
 
 class EnvironmentParserTest {
 
+  private static final Path METADATA_AGENT_BODY =
+    Path.of("src/main/resources/a1_test_metadata.ttl");
+  private static final Path METADATA_WORKSPACE =
+    Path.of("src/main/resources/w1_test_metadata.ttl");
+  private static final Path METADATA_ARTIFACT =
+    Path.of("src/main/resources/c1_test_metadata.ttl");
+
   @Test
   void parse() throws IOException, URISyntaxException {
     // import test config file as jsonObject
@@ -19,18 +37,61 @@ class EnvironmentParserTest {
       Path.of(ClassLoader.getSystemResource("test_conf.json").toURI()),
       StandardCharsets.UTF_8
     );
-    JsonObject config = new JsonObject(configString);
+    final var environment = EnvironmentParser.parse(new JsonObject(configString));
 
-    final var environment = EnvironmentParser.parse(config);
+    // expected outcomes
+    final var expectedListOfAgents = new ArrayList<YggdrasilAgent>();
+    expectedListOfAgents.add(
+      new YggdrasilAgentImpl(
+        "test_name",
+        "http://localhost:8081",
+        Optional.of("http://localhost:8081/callback"),
+        List.of(
+          new AgentBodyImpl(Optional.of(METADATA_AGENT_BODY), List.of("w1")),
+          new AgentBodyImpl(Optional.of(METADATA_AGENT_BODY), List.of())
+        )
+      )
+    );
 
-    final var agents = environment.getAgents();
-    final var workspaces = environment.getWorkspaces();
-    final var knownArtifacts = environment.getKnownArtifacts();
+    final var expectedListOfArtifacts = new ArrayList<Artifact>();
+    expectedListOfArtifacts.add(
+      new ArtifactImpl(
+        "c1",
+        Optional.of("http://example.org/Counter"),
+        List.of(),
+        Optional.empty(),
+        Optional.of(METADATA_ARTIFACT),
+        List.of("agent_name")
+      )
+    );
 
-    Assertions.assertEquals(1, agents.size());
-    Assertions.assertEquals("agent_name", agents.getFirst().getName());
-    Assertions.assertEquals("http://localhost:8081", agents.getFirst().getAgentUri());
-    Assertions.assertEquals("http://localhost:8081/callback", agents.getFirst().getAgentCallbackUri());
 
+    final var expectedListOfWorkspaces = new ArrayList<Workspace>();
+    expectedListOfWorkspaces.add(
+      new WorkspaceImpl(
+        "w1",
+        Optional.of(METADATA_WORKSPACE),
+        Optional.empty(),
+        new HashSet<>(expectedListOfAgents),
+        new HashSet<>(expectedListOfArtifacts),
+        Optional.empty()
+      )
+    );
+
+    final var expectedListOfKnownArtifacts = new HashSet<KnownArtifact>();
+    expectedListOfKnownArtifacts.add(
+      new KnownArtifactImpl(
+        "http://example.org/Counter",
+        "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
+      )
+    );
+
+    final var expectedEnvironment = new EnvironmentImpl(expectedListOfAgents,
+      expectedListOfWorkspaces, expectedListOfKnownArtifacts);
+
+    Assertions.assertEquals(expectedListOfAgents, environment.getAgents());
+    Assertions.assertEquals(expectedListOfWorkspaces, environment.getWorkspaces());
+    Assertions.assertEquals(expectedListOfKnownArtifacts,environment.getKnownArtifacts());
+    Assertions.assertEquals(expectedEnvironment, environment);
   }
 }

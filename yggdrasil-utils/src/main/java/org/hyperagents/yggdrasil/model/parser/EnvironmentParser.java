@@ -1,10 +1,11 @@
-package org.hyperagents.yggdrasil.model.impl;
+package org.hyperagents.yggdrasil.model.parser;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -14,12 +15,18 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperagents.yggdrasil.model.AgentBody;
-import org.hyperagents.yggdrasil.model.Artifact;
-import org.hyperagents.yggdrasil.model.Environment;
-import org.hyperagents.yggdrasil.model.KnownArtifact;
-import org.hyperagents.yggdrasil.model.Workspace;
-import org.hyperagents.yggdrasil.model.YggdrasilAgent;
+import org.hyperagents.yggdrasil.model.impl.AgentBodyImpl;
+import org.hyperagents.yggdrasil.model.impl.ArtifactImpl;
+import org.hyperagents.yggdrasil.model.impl.EnvironmentImpl;
+import org.hyperagents.yggdrasil.model.impl.KnownArtifactImpl;
+import org.hyperagents.yggdrasil.model.impl.WorkspaceImpl;
+import org.hyperagents.yggdrasil.model.impl.YggdrasilAgentImpl;
+import org.hyperagents.yggdrasil.model.interfaces.AgentBody;
+import org.hyperagents.yggdrasil.model.interfaces.Artifact;
+import org.hyperagents.yggdrasil.model.interfaces.Environment;
+import org.hyperagents.yggdrasil.model.interfaces.KnownArtifact;
+import org.hyperagents.yggdrasil.model.interfaces.Workspace;
+import org.hyperagents.yggdrasil.model.interfaces.YggdrasilAgent;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
 
 /**
@@ -41,11 +48,13 @@ public final class EnvironmentParser {
   }
 
   /**
-   * parses the environment given a config.
+   * returns the List of agents specified in an Yggdrasil configuration file.
+   *
+   * @param config a valid Yggdrasil configuration
+   * @return a List containing all agents
    */
-  public static Environment parse(final JsonObject config) {
-    final var agents =
-        JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error)
+  private static List<YggdrasilAgent> parseAgents(JsonObject  config) {
+    return JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error)
         .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue)
           .flatMap(o -> (o instanceof JsonObject j ? Optional.of(j) : Optional.<JsonObject>empty())
             .stream()
@@ -54,57 +63,73 @@ public final class EnvironmentParser {
           final var name = JsonObjectUtils.getString(o, "name", LOGGER::error);
           final var agentUri = JsonObjectUtils.getString(o, "agent-uri", LOGGER::error);
           final var callbackUri = JsonObjectUtils.getString(o, "callback-uri", LOGGER::error);
-          if (name.isEmpty() || agentUri.isEmpty() || callbackUri.isEmpty()) {
-            LOGGER.warn("Name, Uri or CallbackUri of agent is empty, skipping");
+          if (name.isEmpty() || agentUri.isEmpty()) {
+            LOGGER.warn("Name or Uri of agent is empty, skipping");
             return Stream.empty();
           }
 
-          final var bodies = JsonObjectUtils.getJsonArray(o, "body-config", LOGGER::error);
-          final var t =
-              bodies.stream().flatMap(c -> IntStream.range(0, c.size()).mapToObj(c::getValue))
+          final var bodies = JsonObjectUtils.getJsonArray(o, "body-config", LOGGER::error)
+              .stream().flatMap(c -> IntStream.range(0, c.size()).mapToObj(c::getValue))
               .flatMap(q -> (q instanceof JsonObject s ? Optional.of(s) :
                 Optional.<JsonObject>empty()).stream())
               .<AgentBody>flatMap(e -> {
                 final var metadata = JsonObjectUtils.getString(e, "metadata", LOGGER::error);
                 final var joined = JsonObjectUtils.getJsonArray(e, "join", LOGGER::error)
                     .stream().flatMap(q -> IntStream.range(0, q.size()).mapToObj(q::getValue))
-                    .map(q -> (String) q);
-                return Stream.of(new AgentBodyImpl(metadata, joined.toList()));
-              });
-          return Stream.of(
-            new AgentImpl(name.get(), agentUri.get(), callbackUri.get(), t.toList()));
-        })
-        .collect(Collectors.toSet());
+                    .map(q -> (String) q).toList();
+
+                if (metadata.isEmpty() && joined.isEmpty()) {
+                  LOGGER.warn("Metadata and join is empty, skipping");
+                  return Stream.empty();
+                }
+
+                return Stream.of(new AgentBodyImpl(metadata.map(Path::of), joined));
+              }).toList();
+
+          return Stream.of(new YggdrasilAgentImpl(name.get(), agentUri.get(), callbackUri, bodies));
+        }).collect(Collectors.toList());
+  }
+
+  private static Set<KnownArtifact> parseKnownArtifacts(Optional<JsonObject> envConfig) {
+    return envConfig
+      .flatMap(c -> JsonObjectUtils.getJsonArray(c, "known-artifacts", LOGGER::error))
+      .stream()
+      .flatMap(a -> IntStream.range(0, a.size())
+        .mapToObj(a::getValue)
+        .flatMap(o ->
+          (
+            o instanceof JsonObject j
+              ? Optional.of(j)
+              : Optional.<JsonObject>empty()
+          )
+            .stream()
+        ))
+      .<KnownArtifact>flatMap(o -> {
+        final var clazz = JsonObjectUtils.getString(o, "class", LOGGER::error);
+        final var template = JsonObjectUtils.getString(o, "template", LOGGER::error);
+        if (clazz.isEmpty() || template.isEmpty()) {
+          LOGGER.warn("Known artifact missing class or template, skipping");
+          return Stream.empty();
+        }
+        return Stream.of(new KnownArtifactImpl(clazz.get(), template.get()));
+      })
+      .collect(Collectors.toSet());
+  }
+
+  /**
+   * parses the environment given a config.
+   */
+  public static Environment parse(final JsonObject config) {
+    final var agents = parseAgents(config);
 
     final var envConfig =
         JsonObjectUtils.getJsonObject(config, "environment-config", LOGGER::error);
-    final var knownArtifacts =
-        envConfig
-        .flatMap(c -> JsonObjectUtils.getJsonArray(c, "known-artifacts", LOGGER::error))
-        .stream()
-        .flatMap(a -> IntStream.range(0, a.size())
-          .mapToObj(a::getValue)
-          .flatMap(o ->
-            (
-              o instanceof JsonObject j
-                ? Optional.of(j)
-                : Optional.<JsonObject>empty()
-            )
-              .stream()
-          ))
-        .<KnownArtifact>flatMap(o -> {
-          final var clazz = JsonObjectUtils.getString(o, "class", LOGGER::error);
-          final var template = JsonObjectUtils.getString(o, "template", LOGGER::error);
-          if (clazz.isEmpty() || template.isEmpty()) {
-            LOGGER.warn("Known artifact missing class or template, skipping");
-            return Stream.empty();
-          }
-          return Stream.of(new KnownArtifactImpl(clazz.get(), template.get()));
-        })
-        .collect(Collectors.toSet());
+    final var knownArtifacts = parseKnownArtifacts(envConfig);
+
     final var artifactClasses = knownArtifacts.stream()
         .map(KnownArtifact::getClazz)
         .collect(Collectors.toSet());
+
     final var jsonWorkspaces =
         envConfig.flatMap(c -> JsonObjectUtils.getJsonArray(c, "workspaces", LOGGER::error))
         .stream()
@@ -119,12 +144,14 @@ public final class EnvironmentParser {
               .stream()
           ))
         .toList();
+
     final var workspaceNames =
         jsonWorkspaces.stream()
         .flatMap(w -> JsonObjectUtils.getString(w, NAME, LOGGER::error).stream())
         .collect(Collectors.toSet());
+
     return new EnvironmentImpl(
-      agents.stream().toList(),
+      agents,
       reorderWorkspaces(
         jsonWorkspaces
           .stream()
@@ -139,6 +166,19 @@ public final class EnvironmentParser {
                 .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
                 .map(a -> (String) a).toList();
 
+            final Set<YggdrasilAgent> joiningAgents = new HashSet<>();
+            agents.forEach(agent -> agent.getBodyConfig().forEach(body -> {
+              if (body.getJoinedWorkspaces().contains(name.get())) {
+                joiningAgents.add(agent);
+              }
+            })
+            );
+
+            if (!joiningAgents.stream().allMatch(a -> joinedBy.contains(a.getName()))
+                || joinedBy.size() != joiningAgents.size()) {
+              LOGGER.warn("Not all agents that have bodies specified as joining are listed in the"
+                  + " joined-by of the workspace.");
+            }
 
             return Stream.of(new WorkspaceImpl(
               name.get(),
@@ -153,8 +193,7 @@ public final class EnvironmentParser {
                   }
                   return workspaceNames.contains(p);
                 }),
-              agents.stream().filter(a -> joinedBy.contains(a.getName()))
-                .collect(Collectors.toSet()),
+              joiningAgents,
               JsonObjectUtils
                 .getJsonArray(w, "artifacts", LOGGER::error)
                 .stream()
@@ -224,163 +263,5 @@ public final class EnvironmentParser {
       orderedWorkspaces.addAll(childrenWorkspaces);
     }
     return orderedWorkspaces;
-  }
-
-  private record EnvironmentImpl(
-      List<YggdrasilAgent> agents,
-      List<Workspace> workspaces,
-      Set<KnownArtifact> knownArtifacts
-  ) implements Environment {
-
-    @Override
-    public List<YggdrasilAgent> getAgents() {
-      return this.agents();
-    }
-
-    @Override
-    public List<Workspace> getWorkspaces() {
-      return this.workspaces();
-    }
-
-    @Override
-    public Set<KnownArtifact> getKnownArtifacts() {
-      return this.knownArtifacts();
-    }
-  }
-
-  private record KnownArtifactImpl(String clazz, String template)
-      implements KnownArtifact {
-    @Override
-    public String getClazz() {
-      return this.clazz();
-    }
-
-    @Override
-    public String getTemplate() {
-      return this.template();
-    }
-  }
-
-  private record WorkspaceImpl(
-      String name,
-      Optional<Path> metaData,
-      Optional<String> parentName,
-      Set<YggdrasilAgent> joinedAgents,
-      Set<Artifact> artifacts,
-      Optional<Path> representation
-  ) implements Workspace {
-    @Override
-    public String getName() {
-      return this.name();
-    }
-
-    @Override
-    public Optional<Path> getMetaData() {
-      return this.metaData();
-    }
-
-    @Override
-    public Optional<String> getParentName() {
-      return this.parentName();
-    }
-
-    @Override
-    public Set<Artifact> getArtifacts() {
-      return this.artifacts();
-    }
-
-    @Override
-    public Set<YggdrasilAgent> getAgents() {
-      return this.joinedAgents();
-    }
-
-    @Override
-    public Optional<Path> getRepresentation() {
-      return this.representation();
-    }
-  }
-
-  private record ArtifactImpl(
-      String name,
-      Optional<String> clazz,
-      List<?> initializationParameters,
-      Optional<Path> representation,
-      Optional<Path> metaData,
-      List<String> focusedBy
-  ) implements Artifact {
-    @Override
-    public String getName() {
-      return this.name();
-    }
-
-    @Override
-    public Optional<String> getClazz() {
-      return this.clazz();
-    }
-
-    @Override
-    public List<?> getInitializationParameters() {
-      return this.initializationParameters();
-    }
-
-    @Override
-    public Optional<Path> getRepresentation() {
-      return this.representation();
-    }
-
-    @Override
-    public Optional<Path> getMetaData() {
-      return this.metaData();
-    }
-
-    @Override
-    public List<String> getFocusedBy() {
-      return this.focusedBy();
-    }
-  }
-
-  private record AgentImpl(
-      String name,
-      String agentUri,
-      String agentCallbackUri,
-      List<AgentBody> bodies
-  ) implements YggdrasilAgent {
-
-    @Override
-    public String getName() {
-      return this.name();
-    }
-
-    @Override
-    public String getAgentUri() {
-      return this.agentUri();
-    }
-
-    @Override
-    public String getAgentCallbackUri() {
-      return this.agentCallbackUri();
-    }
-
-    @Override
-    public List<AgentBody> getBodyConfig() {
-      return this.bodies();
-    }
-
-  }
-
-  private record AgentBodyImpl(
-      Optional<String> metadata,
-      List<String> joined
-  ) implements AgentBody {
-
-    @Override
-    public Optional<String> getMetadata() {
-      return this.metadata();
-    }
-
-    @Override
-    public List<String> getJoinedWorkspaces() {
-      return this.joined();
-    }
   }
 }

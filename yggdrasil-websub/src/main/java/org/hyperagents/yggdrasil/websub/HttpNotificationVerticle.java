@@ -16,7 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.interfaces.Environment;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
@@ -54,7 +54,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
               agentName -> this.registry.addCallbackIri(
                 httpConfig.getArtifactUri(w.getName(), a.getName()),
                 w.getAgents().stream().filter(ag -> ag.getName().equals(agentName))
-                  .findFirst().orElseThrow().getAgentCallbackUri()
+                  .findFirst().orElseThrow().getAgentCallbackUri().orElseThrow()
                 )
               )
           ));
