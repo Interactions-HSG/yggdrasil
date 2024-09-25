@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.model.impl;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -12,24 +13,36 @@ import org.hyperagents.yggdrasil.model.interfaces.Artifact;
 public class ArtifactImpl implements Artifact {
 
   private final String name;
-  private final Optional<String> clazz;
+  private final String clazz;
   private final List<?> initializationParameters;
-  private final Optional<Path> representation;
-  private final Optional<Path> metadata;
+  private final Path representation;
+  private final Path metadata;
   private final List<String> focusedBy;
 
   /**
    *  Default constructor.
    */
-  public ArtifactImpl(String name, Optional<String> clazz, List<?> initializationParameters,
-                      Optional<Path> representation, Optional<Path> metadata,
+  public ArtifactImpl(String name, String clazz, List<?> initializationParameters,
+                      String representation, String metadata,
                       List<String> focusedBy) {
     this.name = name;
     this.clazz = clazz;
     this.initializationParameters = initializationParameters;
-    this.representation = representation;
-    this.metadata = metadata;
     this.focusedBy = focusedBy;
+
+    if (representation != null && new File(representation).isFile()) {
+      this.representation = Path.of(representation);
+    } else {
+      this.representation = null;
+    }
+
+    if (metadata != null && new File(metadata).isFile()) {
+      this.metadata = Path.of(metadata);
+    } else {
+      this.metadata = null;
+    }
+
+
   }
 
   @Override
@@ -59,7 +72,7 @@ public class ArtifactImpl implements Artifact {
   }
 
   public Optional<String> getClazz() {
-    return clazz;
+    return Optional.ofNullable(clazz);
   }
 
   @Override
@@ -69,11 +82,11 @@ public class ArtifactImpl implements Artifact {
 
   @Override
   public Optional<Path> getRepresentation() {
-    return representation;
+    return Optional.ofNullable(representation);
   }
 
   public Optional<Path> getMetaData() {
-    return metadata;
+    return Optional.ofNullable(metadata);
   }
 
   @Override

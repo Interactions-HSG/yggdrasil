@@ -25,7 +25,7 @@
   ],
   "environment-config" : {
     "enabled" : true,
-    "ontology" : "TD",
+    "ontology" : "td",
     "known-artifacts" : [
       {
         "class" : "http://example.org/Counter",

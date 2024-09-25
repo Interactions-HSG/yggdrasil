@@ -1,5 +1,6 @@
 package org.hyperagents.yggdrasil.model.impl;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
@@ -14,7 +15,7 @@ import org.hyperagents.yggdrasil.model.interfaces.YggdrasilAgent;
 public class WorkspaceImpl implements Workspace {
 
   private final String name;
-  private final Optional<Path> metaData;
+  private final Path metaData;
   private final Optional<String> parentName;
   private final Set<Artifact> artifacts;
   private final Set<YggdrasilAgent> agents;
@@ -23,15 +24,20 @@ public class WorkspaceImpl implements Workspace {
   /**
    * Default constructor.
    */
-  public WorkspaceImpl(String name, Optional<Path> metaData, Optional<String> parentName,
+  public WorkspaceImpl(String name, String metaData, Optional<String> parentName,
                        Set<YggdrasilAgent> agents, Set<Artifact> artifacts,
                        Optional<Path> representation) {
     this.name = name;
-    this.metaData = metaData;
     this.parentName = parentName;
     this.artifacts = artifacts;
     this.agents = agents;
     this.representation = representation;
+
+    if (metaData != null && new File(metaData).isFile()) {
+      this.metaData = Path.of(metaData);
+    } else {
+      this.metaData = null;
+    }
   }
 
   @Override
@@ -62,7 +68,7 @@ public class WorkspaceImpl implements Workspace {
 
   @Override
   public Optional<Path> getMetaData() {
-    return metaData;
+    return Optional.ofNullable(metaData);
   }
 
   @Override

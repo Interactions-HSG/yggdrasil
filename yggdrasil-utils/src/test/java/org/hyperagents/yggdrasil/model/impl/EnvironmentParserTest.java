@@ -23,12 +23,12 @@ import java.nio.file.Path;
 
 class EnvironmentParserTest {
 
-  private static final Path METADATA_AGENT_BODY =
-    Path.of("src/main/resources/a1_test_metadata.ttl");
-  private static final Path METADATA_WORKSPACE =
-    Path.of("src/main/resources/w1_test_metadata.ttl");
-  private static final Path METADATA_ARTIFACT =
-    Path.of("src/main/resources/c1_test_metadata.ttl");
+  private static final String METADATA_AGENT_BODY =
+    "src/test/resources/a1_test_metadata.ttl";
+  private static final String METADATA_WORKSPACE =
+    "src/test/resources/w1_test_metadata.ttl";
+  private static final String METADATA_ARTIFACT =
+    "src/test/resources/c1_test_metadata.ttl";
 
   @Test
   void parse() throws IOException, URISyntaxException {
@@ -47,8 +47,8 @@ class EnvironmentParserTest {
         "http://localhost:8081",
         Optional.of("http://localhost:8081/callback"),
         List.of(
-          new AgentBodyImpl(Optional.of(METADATA_AGENT_BODY), List.of("w1")),
-          new AgentBodyImpl(Optional.of(METADATA_AGENT_BODY), List.of())
+          new AgentBodyImpl(METADATA_AGENT_BODY, List.of("w1")),
+          new AgentBodyImpl(METADATA_AGENT_BODY, List.of())
         )
       )
     );
@@ -57,11 +57,11 @@ class EnvironmentParserTest {
     expectedListOfArtifacts.add(
       new ArtifactImpl(
         "c1",
-        Optional.of("http://example.org/Counter"),
+        "http://example.org/Counter",
         List.of(),
-        Optional.empty(),
-        Optional.of(METADATA_ARTIFACT),
-        List.of("agent_name")
+        null,
+        null,
+        List.of("test_name")
       )
     );
 
@@ -70,7 +70,7 @@ class EnvironmentParserTest {
     expectedListOfWorkspaces.add(
       new WorkspaceImpl(
         "w1",
-        Optional.of(METADATA_WORKSPACE),
+        null,
         Optional.empty(),
         new HashSet<>(expectedListOfAgents),
         new HashSet<>(expectedListOfArtifacts),

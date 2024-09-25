@@ -1,9 +1,9 @@
 package org.hyperagents.yggdrasil.model.impl;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import org.hyperagents.yggdrasil.model.interfaces.AgentBody;
 
 /**
@@ -11,12 +11,22 @@ import org.hyperagents.yggdrasil.model.interfaces.AgentBody;
  */
 public class AgentBodyImpl implements AgentBody {
 
-  private final Optional<Path> metadata;
+  private final Path metadata;
   private final List<String> joinedWorkspaces;
 
-  public AgentBodyImpl(Optional<Path> metadata, List<String> joinedWorkspaces) {
+
+  /**
+   * Default constructor, does path / file validation.
+   */
+  public AgentBodyImpl(String metadata, List<String> joinedWorkspaces) {
+    File f = new File(metadata);
+    if (f.exists() && !f.isDirectory()) {
+      this.metadata = Path.of(metadata);
+    } else {
+      System.out.println("unable to identify file for metadata");
+      this.metadata = null;
+    }
     this.joinedWorkspaces = joinedWorkspaces;
-    this.metadata = metadata;
   }
 
   @Override
@@ -38,7 +48,7 @@ public class AgentBodyImpl implements AgentBody {
   }
 
   @Override
-  public Optional<Path> getMetadata() {
+  public Path getMetadata() {
     return metadata;
   }
 

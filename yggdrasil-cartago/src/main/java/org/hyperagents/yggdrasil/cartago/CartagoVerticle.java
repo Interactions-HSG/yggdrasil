@@ -220,14 +220,11 @@ public class CartagoVerticle extends AbstractVerticle {
                     ));
 
 
-                    if (body != null) {
-                      body.getMetadata().ifPresent(Failable.asConsumer(metadata ->
-                          this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
+                    if (body != null && body.getMetadata() != null) {
+                      this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
                             this.httpConfig.getAgentBodyUri(w.getName(), a.getName()),
-                            Files.readString(metadata, StandardCharsets.UTF_8)
-                          )))
-                      );
-
+                            Files.readString(body.getMetadata(), StandardCharsets.UTF_8)
+                          ));
                     }
                   })
               );

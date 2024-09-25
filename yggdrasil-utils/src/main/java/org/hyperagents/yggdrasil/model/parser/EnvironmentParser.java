@@ -83,7 +83,7 @@ public final class EnvironmentParser {
                   return Stream.empty();
                 }
 
-                return Stream.of(new AgentBodyImpl(metadata.map(Path::of), joined));
+                return Stream.of(new AgentBodyImpl(metadata.orElse(null), joined));
               }).toList();
 
           return Stream.of(new YggdrasilAgentImpl(name.get(), agentUri.get(), callbackUri, bodies));
@@ -190,7 +190,7 @@ public final class EnvironmentParser {
 
             return Stream.of(new WorkspaceImpl(
               name.get(),
-              JsonObjectUtils.getString(w, "metadata", LOGGER::error).map(Path::of),
+              JsonObjectUtils.getString(w, "metadata", LOGGER::error).orElse(null),
               JsonObjectUtils
                 .getString(w, "parent-name", LOGGER::error)
                 .filter(p -> {
@@ -230,13 +230,13 @@ public final class EnvironmentParser {
                   }
                   return Stream.of(new ArtifactImpl(
                     artifactName.get(),
-                    artifactClass,
+                    artifactClass.orElse(null),
                     JsonObjectUtils
                       .getJsonArray(ar, "init-params", LOGGER::error)
                       .map(JsonArray::getList)
                       .orElse(Collections.emptyList()),
-                    representation.map(Path::of),
-                    JsonObjectUtils.getString(ar, "metadata", LOGGER::error).map(Path::of),
+                    representation.orElse(null),
+                    JsonObjectUtils.getString(ar, "metadata", LOGGER::error).orElse(null),
                     JsonObjectUtils.getJsonArray(ar, "focused-by", LOGGER::error)
                       .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
                       .map(a -> (String) a).toList()
