@@ -1,0 +1,3 @@
+@prefix test: <http://www.test.org/>.
+
+<> <http://www.test.org/testPredicate> <http://www.test.org/testObject>.

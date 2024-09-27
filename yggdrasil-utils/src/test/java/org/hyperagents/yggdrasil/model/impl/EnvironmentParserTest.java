@@ -2,11 +2,14 @@ package org.hyperagents.yggdrasil.model.impl;
 
 
 import io.vertx.core.json.JsonObject;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-
 import org.hyperagents.yggdrasil.model.interfaces.Artifact;
 import org.hyperagents.yggdrasil.model.interfaces.KnownArtifact;
 import org.hyperagents.yggdrasil.model.interfaces.Workspace;
@@ -15,27 +18,20 @@ import org.hyperagents.yggdrasil.model.parser.EnvironmentParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+
 
 class EnvironmentParserTest {
 
-  private static final String METADATA_AGENT_BODY =
-    "src/test/resources/a1_test_metadata.ttl";
-  private static final String METADATA_WORKSPACE =
-    "src/test/resources/w1_test_metadata.ttl";
-  private static final String METADATA_ARTIFACT =
-    "src/test/resources/c1_test_metadata.ttl";
+  private static final String METADATA_AGENT_BODY = "src/test/resources/a1_test_metadata.ttl";
+  private static final String METADATA_WORKSPACE = "src/test/resources/w1_test_metadata.ttl";
+  private static final String METADATA_ARTIFACT = "src/test/resources/c1_test_metadata.ttl";
 
   @Test
   void parse() throws IOException, URISyntaxException {
     // import test config file as jsonObject
     final var configString = Files.readString(
-      Path.of(ClassLoader.getSystemResource("test_conf.json").toURI()),
-      StandardCharsets.UTF_8
+        Path.of(ClassLoader.getSystemResource("test_conf.json").toURI()),
+        StandardCharsets.UTF_8
     );
     final var environment = EnvironmentParser.parse(new JsonObject(configString));
 
@@ -45,7 +41,7 @@ class EnvironmentParserTest {
       new YggdrasilAgentImpl(
         "test_name",
         "http://localhost:8081",
-        Optional.of("http://localhost:8081/callback"),
+        "http://localhost:8081/callback",
         List.of(
           new AgentBodyImpl(METADATA_AGENT_BODY, List.of("w1")),
           new AgentBodyImpl(METADATA_AGENT_BODY, List.of())
@@ -60,7 +56,7 @@ class EnvironmentParserTest {
         "http://example.org/Counter",
         List.of(),
         null,
-        null,
+        METADATA_ARTIFACT,
         List.of("test_name")
       )
     );
@@ -70,11 +66,11 @@ class EnvironmentParserTest {
     expectedListOfWorkspaces.add(
       new WorkspaceImpl(
         "w1",
+        METADATA_WORKSPACE,
         null,
-        Optional.empty(),
-        new HashSet<>(expectedListOfAgents),
-        new HashSet<>(expectedListOfArtifacts),
-        Optional.empty()
+          new HashSet<>(expectedListOfAgents),
+          new HashSet<>(expectedListOfArtifacts),
+        null
       )
     );
 
@@ -87,11 +83,11 @@ class EnvironmentParserTest {
     );
 
     final var expectedEnvironment = new EnvironmentImpl(expectedListOfAgents,
-      expectedListOfWorkspaces, expectedListOfKnownArtifacts);
+        expectedListOfWorkspaces, expectedListOfKnownArtifacts);
 
     Assertions.assertEquals(expectedListOfAgents, environment.getAgents());
     Assertions.assertEquals(expectedListOfWorkspaces, environment.getWorkspaces());
-    Assertions.assertEquals(expectedListOfKnownArtifacts,environment.getKnownArtifacts());
+    Assertions.assertEquals(expectedListOfKnownArtifacts, environment.getKnownArtifacts());
     Assertions.assertEquals(expectedEnvironment, environment);
   }
 }

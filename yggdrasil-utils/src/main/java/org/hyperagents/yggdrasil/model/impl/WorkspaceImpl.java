@@ -16,28 +16,34 @@ public class WorkspaceImpl implements Workspace {
 
   private final String name;
   private final Path metaData;
-  private final Optional<String> parentName;
+  private final String parentName;
   private final Set<Artifact> artifacts;
   private final Set<YggdrasilAgent> agents;
-  private final Optional<Path> representation;
+  private final Path representation;
 
   /**
    * Default constructor.
    */
-  public WorkspaceImpl(String name, String metaData, Optional<String> parentName,
+  public WorkspaceImpl(String name, String metaData, String parentName,
                        Set<YggdrasilAgent> agents, Set<Artifact> artifacts,
-                       Optional<Path> representation) {
+                       String representation) {
     this.name = name;
     this.parentName = parentName;
     this.artifacts = artifacts;
     this.agents = agents;
-    this.representation = representation;
 
     if (metaData != null && new File(metaData).isFile()) {
       this.metaData = Path.of(metaData);
     } else {
       this.metaData = null;
     }
+
+    if (representation != null && new File(representation).isFile()) {
+      this.representation = Path.of(representation);
+    } else {
+      this.representation = null;
+    }
+
   }
 
   @Override
@@ -73,7 +79,7 @@ public class WorkspaceImpl implements Workspace {
 
   @Override
   public Optional<String> getParentName() {
-    return parentName;
+    return Optional.ofNullable(parentName);
   }
 
   @Override
@@ -88,6 +94,6 @@ public class WorkspaceImpl implements Workspace {
 
   @Override
   public Optional<Path> getRepresentation() {
-    return representation;
+    return Optional.ofNullable(representation);
   }
 }

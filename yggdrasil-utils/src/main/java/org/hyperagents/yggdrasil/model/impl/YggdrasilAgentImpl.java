@@ -13,13 +13,13 @@ public class YggdrasilAgentImpl  implements YggdrasilAgent {
 
   private final String name;
   private final String agentUri;
-  private final Optional<String> agentCallbackUri;
+  private final String agentCallbackUri;
   private final List<AgentBody> bodies;
 
   /**
    * Default constructor.
    */
-  public YggdrasilAgentImpl(String name, String agentUri, Optional<String> agentCallbackUri,
+  public YggdrasilAgentImpl(String name, String agentUri, String agentCallbackUri,
                             List<AgentBody> bodies) {
     this.name = name;
     this.agentUri = agentUri;
@@ -58,7 +58,7 @@ public class YggdrasilAgentImpl  implements YggdrasilAgent {
 
   @Override
   public Optional<String> getAgentCallbackUri() {
-    return agentCallbackUri;
+    return Optional.ofNullable(agentCallbackUri);
   }
 
   @Override

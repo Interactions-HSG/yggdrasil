@@ -34,10 +34,12 @@
     "workspaces" : [
       {
         "name" : "w1",
+        "metadata" : "src/test/resources/w1_test_metadata.ttl",
         "artifacts" : [
           {
             "name" : "c1",
             "class" : "http://example.org/Counter",
+            "metadata" : "src/test/resources/c1_test_metadata.ttl",
             "focused-by" : [
               "test_name"
             ]
