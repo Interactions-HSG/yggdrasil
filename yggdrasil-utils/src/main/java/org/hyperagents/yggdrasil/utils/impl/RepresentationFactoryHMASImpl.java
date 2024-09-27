@@ -199,7 +199,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final boolean isCartagoWorkspace
   ) {
     // TODO: Add artifactTemplates to makeArtifact signifier
-    final String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
+    final String baseUri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
     final Workspace workspace = new Workspace.Builder()
         .setIRIAsString(baseUri + "#workspace")
         .addSemanticType(HMAS + "Workspace")
@@ -391,7 +391,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final ListMultimap<String, Object> signifiers,
       final boolean isCartagoArtifact
   ) {
-    final String baseUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final String baseUri = this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName);
 
     final Artifact artifact = new Artifact.Builder()
         .addSemanticType(semanticType)
@@ -495,7 +495,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final String agentName,
       final Model metadata
   ) {
-    final String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
+    final String baseUri = this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName);
 
     final Artifact agent = new Artifact.Builder()
         .setIRIAsString(baseUri + "#artifact")

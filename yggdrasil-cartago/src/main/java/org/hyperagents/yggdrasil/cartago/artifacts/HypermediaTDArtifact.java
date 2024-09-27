@@ -146,7 +146,7 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   }
 
   protected final String getArtifactUri() {
-    return this.httpConfig.getArtifactUri(
+    return this.httpConfig.getArtifactUriTrailingSlash(
         this.getId().getWorkspaceId().getName(),
         this.getId().getName()
     );

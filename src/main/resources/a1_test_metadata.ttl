@@ -1,4 +1,4 @@
 @prefix customAgent: <http://www.metadataAgent.com/>.
 
-<http://localhost:8080/workspaces/w1/artifacts/body_test_agent> a customAgent:CustomAgent.
-<http://localhost:8080/workspaces/w1/artifacts/body_test_agent> customAgent:does customAgent:SomethingVeryCool.
+<> a customAgent:CustomAgent.
+<#artifact> customAgent:does customAgent:SomethingVeryCool.

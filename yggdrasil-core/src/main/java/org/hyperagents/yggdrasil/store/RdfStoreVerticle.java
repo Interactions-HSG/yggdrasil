@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.function.Failable;
@@ -184,7 +185,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                          ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
                              httpConfig.getWorkspacesUri(),
                              w.getName(),
-                             w.getParentName().map(httpConfig::getWorkspaceUri),
+                             w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
                              Files.readString(r, StandardCharsets.UTF_8)
                          ));
                          w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
@@ -233,7 +234,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final RdfStoreMessage.CreateBody content,
       final Message<RdfStoreMessage> message
   ) {
-    final var bodyIri = this.httpConfig.getAgentBodyUri(
+    final var bodyIri = this.httpConfig.getAgentBodyUriTrailingSlash(
         content.workspaceName(),
         content.agentName()
     );
@@ -247,7 +248,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
           Failable.asConsumer(s -> {
             final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
-            final var workspaceIri = this.httpConfig.getWorkspaceUri(content.workspaceName());
+            final var workspaceIri = this.httpConfig
+                .getWorkspaceUriTrailingSlash(content.workspaceName());
+            // TODO: This could be removed should always have trailing slash
             final var workspaceActualIri = workspaceIri.endsWith("/")
                 ?
                 RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) :
@@ -539,6 +542,27 @@ public class RdfStoreVerticle extends AbstractVerticle {
     );
   }
 
+  private String fillEmptyURIs(String representation, String uri) {
+    Pattern pattern = Pattern.compile("<(#?[^>]*)>");
+    Matcher matcher = pattern.matcher(representation);
+    StringBuilder sb = new StringBuilder();
+
+    while (matcher.find()) {
+      String matched = matcher.group(1);
+      String replacement;
+
+      if (matched.isEmpty()) {
+        replacement = "<" + uri + ">";
+      } else if (matched.startsWith("#")) {
+        replacement = "<" + uri + "/" + matched + ">";
+      } else {
+        replacement = "<" + matched + ">";
+      }
+      matcher.appendReplacement(sb, replacement);
+    }
+    return matcher.appendTail(sb).toString();
+  }
+
   private void handleUpdateEntity(
       final IRI requestIri,
       final RdfStoreMessage.UpdateEntity content,
@@ -547,7 +571,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.store.getEntityModel(requestIri).ifPresentOrElse(
         Failable.asConsumer(m -> {
           final var additionalTriples = RdfModelUtils.stringToModel(
-              content.entityRepresentation(),
+              fillEmptyURIs(content.entityRepresentation(), requestIri.toString()),
               requestIri,
               RDFFormat.TURTLE
           );

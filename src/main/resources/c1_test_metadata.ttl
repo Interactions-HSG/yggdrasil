@@ -1,4 +1,4 @@
 @prefix customArtifact: <http://www.metadata.com/>.
 
-<http://localhost:8080/workspaces/w1/artifacts/c1> a customArtifact:CustomArtifact.
-<http://localhost:8080/workspaces/w1/artifacts/c1> customArtifact:does customArtifact:SomethingVeryCool.
+<#artifact> a customArtifact:CustomArtifact.
+<> customArtifact:does customArtifact:SomethingVeryCool.

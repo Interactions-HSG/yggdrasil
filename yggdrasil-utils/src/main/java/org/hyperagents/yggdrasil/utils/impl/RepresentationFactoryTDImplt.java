@@ -159,8 +159,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       final Set<String> artifactTemplates,
       final boolean isCartagoWorkspace
   ) {
-    final var thingUri = this.httpConfig.getWorkspaceUri(workspaceName).substring(0,
-        this.httpConfig.getWorkspaceUri(workspaceName).length() - 1);
+    final var thingUri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName).substring(0,
+        this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName).length() - 1);
     final var td =
         new ThingDescription
             .Builder(workspaceName)
@@ -281,8 +281,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     });
 
 
-    final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName).substring(0,
-        this.httpConfig.getArtifactUri(workspaceName, artifactName).length() - 1);
+    final var thingUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
     final var td =
         new ThingDescription.Builder(artifactName)
@@ -322,8 +321,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       final SecurityScheme securityScheme,
       final Model metadata
   ) {
-    final var bodyUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName).substring(0,
-        this.httpConfig.getAgentBodyUri(workspaceName, agentName).length() - 1);
+    final var bodyUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
     final var td =
         new ThingDescription
             .Builder(agentName)

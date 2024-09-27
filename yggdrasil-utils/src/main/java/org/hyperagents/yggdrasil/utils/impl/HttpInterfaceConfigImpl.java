@@ -3,10 +3,8 @@ package org.hyperagents.yggdrasil.utils.impl;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.rdf4j.model.IRI;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.JsonObjectUtils;
-import org.hyperagents.yggdrasil.utils.RdfModelUtils;
 
 /**
  * Implementation of the HttpInterfaceConfig interface
@@ -57,40 +55,52 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   }
 
   @Override
-  public IRI getBaseIrI() {
-    return RdfModelUtils.createIri(this.baseUri);
-  }
-
-  @Override
   public String getWorkspacesUri() {
     return this.baseUri + "workspaces/";
   }
 
   @Override
-  public String getWorkspaceUri(final String workspaceName) {
+  public String getWorkspaceUriTrailingSlash(final String workspaceName) {
     return this.getWorkspacesUri() + validateInput(workspaceName) + "/";
   }
 
   @Override
-  public String getArtifactsUri(final String workspaceName) {
-    return this.getWorkspaceUri(workspaceName) + "artifacts/";
+  public String getWorkspaceUri(final String workspaceName) {
+    return this.getWorkspacesUri() + validateInput(workspaceName);
   }
 
   @Override
-  public String getArtifactUri(final String workspaceName, final String artifactName) {
+  public String getArtifactsUri(final String workspaceName) {
+    return this.getWorkspaceUriTrailingSlash(workspaceName) + "artifacts/";
+  }
+
+  @Override
+  public String getArtifactUriTrailingSlash(final String workspaceName, final String artifactName) {
     final var cleanArtifactName = validateInput(artifactName);
     return this.getArtifactsUri(workspaceName) + cleanArtifactName + "/";
   }
 
   @Override
+  public String getArtifactUri(final String workspaceName, final String artifactName) {
+    final var cleanArtifactName = validateInput(artifactName);
+    return this.getArtifactsUri(workspaceName) + cleanArtifactName;
+  }
+
+  @Override
   public String getAgentBodiesUri(final String workspaceName) {
-    return this.getWorkspaceUri(workspaceName) + "artifacts/";
+    return this.getWorkspaceUriTrailingSlash(workspaceName) + "artifacts/";
+  }
+
+  @Override
+  public String getAgentBodyUriTrailingSlash(final String workspaceName, final String agentName) {
+    final var cleanAgentName = validateInput(agentName);
+    return this.getAgentBodiesUri(workspaceName) + "body_" + cleanAgentName + "/";
   }
 
   @Override
   public String getAgentBodyUri(final String workspaceName, final String agentName) {
     final var cleanAgentName = validateInput(agentName);
-    return this.getAgentBodiesUri(workspaceName) + "body_" + cleanAgentName + "/";
+    return this.getAgentBodiesUri(workspaceName) + "body_" + cleanAgentName;
   }
 
   @Override

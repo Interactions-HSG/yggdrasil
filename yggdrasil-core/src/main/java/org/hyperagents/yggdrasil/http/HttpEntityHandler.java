@@ -286,7 +286,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var artifactName = representation.getString("artifactName");
     this.notificationMessagebox
         .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
-        this.httpConfig.getArtifactUri(workspaceName, artifactName),
+        this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName),
         representation.getString("callbackIri")
       ))
         .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
@@ -467,7 +467,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         if (hint == null) {
           return this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.DeleteEntity(
-              this.httpConfig.getAgentBodyUri(
+              this.httpConfig.getAgentBodyUriTrailingSlash(
                 workspaceName,
                 this.getAgentNameFromId(agentId)
               )
@@ -475,7 +475,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         }
         return this.rdfStoreMessagebox
           .sendMessage(new RdfStoreMessage.DeleteEntity(
-            this.httpConfig.getAgentBodyUri(
+            this.httpConfig.getAgentBodyUriTrailingSlash(
               workspaceName,
               hint
             )
@@ -508,11 +508,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
           .sendMessage(new RdfStoreMessage.CreateWorkspace(
             this.httpConfig.getWorkspacesUri(),
             subWorkspaceName,
-            Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
+            Optional.of(this.httpConfig
+                .getWorkspaceUriTrailingSlash(context.pathParam(WORKSPACE_ID_PARAM))),
             response.body()
           ))
             .onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                this.getHeaders(this.httpConfig.getWorkspaceUri(subWorkspaceName))))
+                this.getHeaders(this.httpConfig.getWorkspaceUriTrailingSlash(subWorkspaceName))))
       )
         .onFailure(
             f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
@@ -534,7 +535,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final var artifactIri = this.httpConfig
+        .getArtifactUriTrailingSlash(workspaceName, artifactName);
     final var actionName = request.method().name() + request.absoluteURI();
 
     this.rdfStoreMessagebox
