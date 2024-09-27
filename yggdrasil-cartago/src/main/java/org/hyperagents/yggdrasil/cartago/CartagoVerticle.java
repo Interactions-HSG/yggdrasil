@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.function.Failable;
@@ -39,6 +38,8 @@ import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
+import org.hyperagents.yggdrasil.cartago.entities.errors.AgentNotFoundException;
+import org.hyperagents.yggdrasil.cartago.entities.errors.WorkspaceNotFoundException;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -334,6 +335,10 @@ public class CartagoVerticle extends AbstractVerticle {
       }
     } catch (final DecodeException | NoSuchElementException | CartagoException e) {
       message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (AgentNotFoundException e) {
+      message.fail(HttpStatus.SC_METHOD_NOT_ALLOWED, e.getMessage());
+    } catch (WorkspaceNotFoundException e) {
+      message.fail(HttpStatus.SC_NOT_FOUND, e.getMessage());
     }
   }
 
@@ -381,30 +386,16 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private String joinWorkspace(final String agentUri, final String workspaceName)
-      throws CartagoException {
-    this.workspaceRegistry
-        .getWorkspace(workspaceName)
-        .orElseThrow()
-        .joinWorkspace(this.getAgentCredential(agentUri, workspaceName), e -> {
-        });
-    return this.representationFactory.createBodyRepresentation(
-        workspaceName,
-        this.getAgentNameFromAgentUri(agentUri, workspaceName),
-        new LinkedHashModel()
-    );
-  }
-
   private void focus(
       final String agentUri,
       final String workspaceName,
       final String artifactName
   ) throws CartagoException {
-    this.joinWorkspace(agentUri, workspaceName);
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace
         .focus(
-            this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()),
+            this.getAgentId(this.getAgentCredential(agentUri, workspaceName).orElseThrow(),
+                workspace.getId()),
             p -> true,
             new NotificationCallback(this.httpConfig, this.dispatcherMessagebox, workspaceName,
                 artifactName),
@@ -422,7 +413,8 @@ public class CartagoVerticle extends AbstractVerticle {
       throws CartagoException {
     final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
     workspace.quitAgent(
-        this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()));
+        this.getAgentId(this.getAgentCredential(agentUri, workspaceName).orElseThrow(),
+            workspace.getId()));
   }
 
   private String instantiateArtifact(
@@ -431,12 +423,14 @@ public class CartagoVerticle extends AbstractVerticle {
       final String artifactClass,
       final String artifactName,
       final Object... params
-  ) throws CartagoException {
-    this.joinWorkspace(agentUri, workspaceName);
-    final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+  ) throws CartagoException, WorkspaceNotFoundException, AgentNotFoundException {
+    final var workspace = this.workspaceRegistry.getWorkspace(workspaceName)
+        .orElseThrow(() -> new WorkspaceNotFoundException(workspaceName));
 
     final var artifactId = workspace.makeArtifact(
-        this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()),
+        this.getAgentId(this.getAgentCredential(agentUri, workspaceName)
+                .orElseThrow(() -> new AgentNotFoundException(agentUri)),
+            workspace.getId()),
         artifactName,
         artifactClass,
         new ArtifactConfig(params != null ? params : new Object[0])
@@ -459,7 +453,6 @@ public class CartagoVerticle extends AbstractVerticle {
       final String storeResponse,
       final String context
   ) throws CartagoException {
-    this.joinWorkspace(agentUri, workspaceName);
 
     final var hypermediaArtifact = registry.getArtifact(artifactName);
     if (apiKey != null) {
@@ -516,7 +509,8 @@ public class CartagoVerticle extends AbstractVerticle {
         )
     );
     workspace.execOp(0L,
-        this.getAgentId(this.getAgentCredential(agentUri, workspaceName), workspace.getId()),
+        this.getAgentId(this.getAgentCredential(agentUri, workspaceName).orElseThrow(),
+            workspace.getId()),
         e -> {
           if (e instanceof ActionSucceededEvent) {
             this.dispatcherMessagebox.sendMessage(
@@ -573,7 +567,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
     } else {
       final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
-      final var agentId = getAgentId(credentials, workspace.getId());
+      final var agentId = getAgentId(credentials.orElseThrow(), workspace.getId());
       final var artifact = workspace.getArtifact(requestUri);
       workspace.disposeArtifact(agentId, artifact);
     }
@@ -604,21 +598,19 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private AgentCredential getAgentCredential(final String agentUri, final String workspaceName) {
-    this.agentCredentials.putIfAbsent(agentUri, new HashMap<>());
-    this.agentCredentials.get(agentUri)
-        .putIfAbsent(workspaceName, new AgentIdCredential(UUID.randomUUID().toString()));
-    return this.agentCredentials.get(agentUri).get(workspaceName);
+  // should give error if no body name since that will indicate that agent has not yet joined
+  private Optional<AgentCredential> getAgentCredential(
+      final String agentUri, final String workspaceName) {
+    if (this.agentCredentials.get(agentUri) == null
+        || this.agentCredentials.get(agentUri).get(workspaceName) == null) {
+      return Optional.empty();
+    }
+    return Optional.of(this.agentCredentials.get(agentUri).get(workspaceName));
   }
 
   private AgentCredential getAgentCredential(final String agentUri, final String agentBodyName,
-                                             final String workspaceName) throws CartagoException {
+                                             final String workspaceName) {
     this.agentCredentials.putIfAbsent(agentUri, new HashMap<>());
-
-    if (this.agentCredentials.get(agentUri).get(workspaceName) != null) {
-      this.leaveWorkspace(agentUri, workspaceName);
-    }
-
     this.agentCredentials.get(agentUri).put(workspaceName, new AgentIdCredential(agentBodyName));
     return this.agentCredentials.get(agentUri).get(workspaceName);
   }

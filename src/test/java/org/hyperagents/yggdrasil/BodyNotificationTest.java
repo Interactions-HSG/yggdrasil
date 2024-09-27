@@ -178,8 +178,54 @@ public class BodyNotificationTest {
               workspaceRepresentation,
               r.bodyAsString()
           );
-        })
-        .compose(r -> this.client
+        }).compose(r -> this.client
+            .post(TEST_PORT, TEST_HOST, HUB_PATH)
+            .sendJsonObject(JsonObject.of(
+                HUB_MODE_PARAM,
+                HUB_MODE_SUBSCRIBE,
+                HUB_TOPIC_PARAM,
+                this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+                HUB_CALLBACK_PARAM,
+                CALLBACK_URL
+            )))
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+        }).compose(r -> this.client
+            .post(TEST_PORT, TEST_HOST, HUB_PATH)
+            .sendJsonObject(JsonObject.of(
+                HUB_MODE_PARAM,
+                HUB_MODE_SUBSCRIBE,
+                HUB_TOPIC_PARAM,
+                this.getUrl(
+                    WORKSPACES_PATH
+                        + MAIN_WORKSPACE_NAME
+                        + ARTIFACTS_PATH
+                ),
+                HUB_CALLBACK_PARAM,
+                CALLBACK_URL
+            ))
+        ).onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+        }).compose(r -> this.client
+            .post(
+                TEST_PORT,
+                TEST_HOST,
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/join"
+            )
+            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send()
+        ).compose(r -> this.client
             .post(
                 TEST_PORT,
                 TEST_HOST,
@@ -210,28 +256,6 @@ public class BodyNotificationTest {
                 HUB_MODE_SUBSCRIBE,
                 HUB_TOPIC_PARAM,
                 this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
-                HUB_CALLBACK_PARAM,
-                CALLBACK_URL
-            )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, HUB_PATH)
-            .sendJsonObject(JsonObject.of(
-                HUB_MODE_PARAM,
-                HUB_MODE_SUBSCRIBE,
-                HUB_TOPIC_PARAM,
-                this.getUrl(
-                    WORKSPACES_PATH
-                        + MAIN_WORKSPACE_NAME
-                        + ARTIFACTS_PATH
-                ),
                 HUB_CALLBACK_PARAM,
                 CALLBACK_URL
             )))

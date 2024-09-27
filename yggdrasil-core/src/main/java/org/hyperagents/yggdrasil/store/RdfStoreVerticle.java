@@ -233,12 +233,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private void handleCreateBody(
       final RdfStoreMessage.CreateBody content,
       final Message<RdfStoreMessage> message
-  ) {
+  ) throws IOException {
     final var bodyIri = this.httpConfig.getAgentBodyUriTrailingSlash(
         content.workspaceName(),
         content.agentName()
     );
+
     final var entityIri = RdfModelUtils.createIri(bodyIri);
+
+    if (this.store.containsEntityModel(entityIri)) {
+      this.replyWithPayload(message,
+          RdfModelUtils.modelToString(
+              this.store.getEntityModel(entityIri).orElseThrow(),
+              RDFFormat.TURTLE,
+              this.httpConfig.getBaseUri()));
+      return;
+    }
+
     final var entityBodyIri = RdfModelUtils.createIri(bodyIri + "#artifact");
     Optional
         .ofNullable(content.bodyRepresentation())
