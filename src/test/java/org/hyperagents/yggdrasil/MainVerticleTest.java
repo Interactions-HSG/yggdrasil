@@ -102,7 +102,7 @@ public class MainVerticleTest {
     this.client = WebClient.create(vertx);
     this.callbackMessages =
         Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(12)
+            .limit(8)
             .collect(Collectors.toList());
     this.promiseIndex = 0;
     vertx
@@ -169,16 +169,6 @@ public class MainVerticleTest {
     final var artifactRepresentation =
         Files.readString(
             Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var subWorkspaceWithArtifactRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var testAgentBodyRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/test_agent_body_sub.ttl").toURI()),
             StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactAndBodyRepresentation =
@@ -321,6 +311,11 @@ public class MainVerticleTest {
           );
         })
         .compose(r -> this.client
+            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
+            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send())
+        .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
@@ -394,7 +389,7 @@ public class MainVerticleTest {
               URIS_EQUAL_MESSAGE
           );
           assertEqualsThingDescriptions(
-              subWorkspaceWithArtifactRepresentation,
+              subWorkspaceWithArtifactAndBodyRepresentation,
               m.getValue()
           );
         })
@@ -407,50 +402,6 @@ public class MainVerticleTest {
           );
           assertEqualsThingDescriptions(
               artifactRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
-            .send())
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              testAgentBodyRepresentation,
-              r.bodyAsString()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(6).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              subWorkspaceWithArtifactAndBodyRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(7).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              testAgentBodyRepresentation,
               m.getValue()
           );
         })
@@ -479,9 +430,8 @@ public class MainVerticleTest {
               OK_STATUS_MESSAGE
           );
         })
-        .compose(r -> this.callbackMessages.get(8).future())
+        .compose(r -> this.callbackMessages.get(6).future())
         .onSuccess(m -> {
-          System.out.println(m.getValue());
           Assertions.assertEquals(
               this.getUrl(
                   WORKSPACES_PATH
@@ -519,7 +469,7 @@ public class MainVerticleTest {
           );
           Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(9).future())
+        .compose(r -> this.callbackMessages.get(7).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(
@@ -566,16 +516,6 @@ public class MainVerticleTest {
     final var artifactRepresentation =
         Files.readString(
             Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var subWorkspaceWithArtifactRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_hmas.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var testAgentBodyRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_sub.ttl").toURI()),
             StandardCharsets.UTF_8
         );
     final var subWorkspaceWithArtifactAndBodyRepresentation =
@@ -719,6 +659,11 @@ public class MainVerticleTest {
           );
         })
         .compose(r -> this.client
+            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
+            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send())
+        .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
@@ -792,7 +737,7 @@ public class MainVerticleTest {
               URIS_EQUAL_MESSAGE
           );
           assertEqualsHMASDescriptions(
-              subWorkspaceWithArtifactRepresentation,
+              subWorkspaceWithArtifactAndBodyRepresentation,
               m.getValue()
           );
         })
@@ -805,50 +750,6 @@ public class MainVerticleTest {
           );
           assertEqualsHMASDescriptions(
               artifactRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
-            .send())
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              testAgentBodyRepresentation,
-              r.bodyAsString()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(6).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              subWorkspaceWithArtifactAndBodyRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(7).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              testAgentBodyRepresentation,
               m.getValue()
           );
         })
@@ -877,7 +778,7 @@ public class MainVerticleTest {
               "The response body should contain the OK status code"
           );
         })
-        .compose(r -> this.callbackMessages.get(8).future())
+        .compose(r -> this.callbackMessages.get(6).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(
@@ -916,7 +817,7 @@ public class MainVerticleTest {
           );
           Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(9).future())
+        .compose(r -> this.callbackMessages.get(7).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(

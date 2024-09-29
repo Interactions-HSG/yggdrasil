@@ -1,11 +1,14 @@
 @base <http://localhost:8080/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix dct: <http://purl.org/dc/terms/> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix websub: <http://example.org/websub#> .
 
 <workspaces/sub/artifacts/c0/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
   td:title "c0";
@@ -17,6 +20,38 @@
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/sub/artifacts/c0/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:PerceiveArtifact;
+      td:name "getArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <workspaces/sub/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateArtifact;
+      td:name "updateArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <workspaces/sub/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteArtifact;
+      td:name "deleteArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <workspaces/sub/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:Focus;
+      td:name "focusArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub/artifacts/c0focus/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]

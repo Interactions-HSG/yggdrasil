@@ -115,19 +115,6 @@ public final class TConstants {
                       METADATA,
                       "src/main/resources/c1_test_metadata.ttl"
                   )
-              ),
-              "agents",
-              JsonArray.of(
-                  JsonObject.of(
-                      NAME,
-                      TEST_AGENT_NAME,
-                      "agent-uri",
-                      TEST_AGENT_ID,
-                      "callback-uri",
-                      CALLBACK_URL,
-                      METADATA,
-                      "src/main/resources/a1_test_metadata.ttl"
-                  )
               )
           )
       )
