@@ -735,7 +735,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
    */
   private void handleCreateWorkspaceTurtle(final RoutingContext context,
                                            final String entityRepresentation) {
-    final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
+    final var requestUri = this.httpConfig.getBaseUriTrailingSlash()
+        + context.request().path().substring(1);
     final var hint = context.request().getHeader(SLUG_HEADER);
     final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
@@ -772,7 +773,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                         workspaceRepresentation, entityIri, RDFFormat.TURTLE));
                 baseModel.getNamespaces().forEach(entityGraph::setNamespace);
                 workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE,
-                    this.httpConfig.getBaseUri());
+                    this.httpConfig.getBaseUriTrailingSlash());
               } catch (IOException e) {
                 throw new RuntimeException(e);
               }

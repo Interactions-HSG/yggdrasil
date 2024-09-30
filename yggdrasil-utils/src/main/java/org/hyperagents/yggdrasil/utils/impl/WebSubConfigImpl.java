@@ -35,7 +35,7 @@ public class WebSubConfigImpl implements WebSubConfig {
                   .orElse(false);
     this.webSubHubUri =
       webSubConfig.flatMap(c -> JsonObjectUtils.getString(c, "websub-hub-base-uri", LOGGER::error))
-                  .orElse(httpConfig.getBaseUri())
+                  .orElse(httpConfig.getBaseUriTrailingSlash())
       + "hub/";
   }
 

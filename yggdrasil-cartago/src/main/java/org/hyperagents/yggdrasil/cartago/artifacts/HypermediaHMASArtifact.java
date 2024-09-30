@@ -130,7 +130,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   protected abstract void registerInteractionAffordances();
 
   protected URI getBaseUri() {
-    return URI.create(this.httpConfig.getBaseUri());
+    return URI.create(this.httpConfig.getBaseUriTrailingSlash());
   }
 
   private String getWorkspaceName() {
@@ -145,7 +145,7 @@ public abstract class HypermediaHMASArtifact extends Artifact implements Hyperme
   protected void setupOperations() throws CartagoException {
     super.setupOperations();
     final var baseUri = this.getBaseUri();
-    if (!baseUri.toString().equals(this.httpConfig.getBaseUri())) {
+    if (!baseUri.toString().equals(this.httpConfig.getBaseUriTrailingSlash())) {
       this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
           "http-config",
           JsonObject.of(

@@ -128,8 +128,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
   @Override
   public String createPlatformRepresentation() {
-    final var thingIri = this.httpConfig.getBaseUri()
-        .substring(0, this.httpConfig.getBaseUri().length() - 1);
+    final var thingIri = this.httpConfig.getBaseUriTrailingSlash()
+        .substring(0, this.httpConfig.getBaseUriTrailingSlash().length() - 1);
     final var td = new ThingDescription.Builder("Yggdrasil Node")
         .addThingURI(thingIri + "/#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform");
@@ -139,9 +139,9 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUri(),
         "text/turtle", POST, "createWorkspace");
 
-    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUri() + "query/",
+    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
         "application/sparql-query", GET, "sparqlGetQuery");
-    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUri() + "query/",
+    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
         "application/sparql-query", POST, "sparqlPostQuery");
 
     addWebSub(td, "Workspaces");

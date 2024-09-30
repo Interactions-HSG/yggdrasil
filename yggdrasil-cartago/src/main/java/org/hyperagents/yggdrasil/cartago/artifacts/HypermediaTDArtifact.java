@@ -120,14 +120,14 @@ public abstract class HypermediaTDArtifact extends Artifact implements Hypermedi
   protected abstract void registerInteractionAffordances();
 
   protected URI getBaseUri() {
-    return URI.create(this.httpConfig.getBaseUri());
+    return URI.create(this.httpConfig.getBaseUriTrailingSlash());
   }
 
   @Override
   public void setupOperations() throws CartagoException {
     super.setupOperations();
     final var baseUri = this.getBaseUri();
-    if (!baseUri.toString().equals(this.httpConfig.getBaseUri())) {
+    if (!baseUri.toString().equals(this.httpConfig.getBaseUriTrailingSlash())) {
       this.httpConfig = new HttpInterfaceConfigImpl(JsonObject.of(
           "http-config",
           JsonObject.of(

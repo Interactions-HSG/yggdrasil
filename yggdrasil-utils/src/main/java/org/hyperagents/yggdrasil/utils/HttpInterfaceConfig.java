@@ -28,6 +28,13 @@ public interface HttpInterfaceConfig extends Shareable {
    *
    * @return the base URI
    */
+  String getBaseUriTrailingSlash();
+
+  /**
+   * Gets the base URI of the HTTP interface.
+   *
+   * @return the base URI
+   */
   String getBaseUri();
 
   /**

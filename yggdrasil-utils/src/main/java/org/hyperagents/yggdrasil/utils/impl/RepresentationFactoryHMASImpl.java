@@ -131,7 +131,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   @Override
   public String createPlatformRepresentation() {
-    final String baseUri = this.httpConfig.getBaseUri();
+    final String baseUri = this.httpConfig.getBaseUriTrailingSlash();
     final String workspaces = this.httpConfig.getWorkspacesUri();
     final HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
         .setIRIAsString(baseUri + "#platform")

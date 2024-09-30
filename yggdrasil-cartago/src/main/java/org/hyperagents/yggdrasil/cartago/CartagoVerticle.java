@@ -230,6 +230,14 @@ public class CartagoVerticle extends AbstractVerticle {
                   })
               );
 
+              // Yggdrasil Agent must join to create the artifacts
+              try {
+                this.joinWorkspace(
+                    this.httpConfig.getAgentUri("yggdrasil"), "yggdrasil", w.getName());
+              } catch (CartagoException e) {
+                throw new RuntimeException(e);
+              }
+
               // creating artifacts
               w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
@@ -266,6 +274,12 @@ public class CartagoVerticle extends AbstractVerticle {
                     Files.readString(ar, StandardCharsets.UTF_8)
                   )))
                 )));
+
+              try {
+                this.leaveWorkspace(this.httpConfig.getAgentUri("yggdrasil"), w.getName());
+              } catch (CartagoException e) {
+                throw new RuntimeException(e);
+              }
             }
         ));
   }

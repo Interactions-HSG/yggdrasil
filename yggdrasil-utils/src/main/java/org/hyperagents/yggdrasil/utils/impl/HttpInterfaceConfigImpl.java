@@ -16,6 +16,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   private final String host;
   private final String baseUri;
+  private final String baseUriTrailingSlash;
   private final int port;
 
   /**
@@ -35,8 +36,8 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
         .orElseGet(()
             -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":"
             + this.port + "/");
-    baseUri1 = baseUri1.endsWith("/") ? baseUri1 : baseUri1 + "/";
-    this.baseUri = baseUri1;
+    this.baseUriTrailingSlash = baseUri1.endsWith("/") ? baseUri1 : baseUri1 + "/";
+    this.baseUri = baseUri1.endsWith("/") ? baseUri1.substring(0, baseUri1.length() - 1) : baseUri1;
   }
 
   @Override
@@ -50,13 +51,18 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   }
 
   @Override
+  public String getBaseUriTrailingSlash() {
+    return this.baseUriTrailingSlash;
+  }
+
+  @Override
   public String getBaseUri() {
     return this.baseUri;
   }
 
   @Override
   public String getWorkspacesUri() {
-    return this.baseUri + "workspaces/";
+    return this.baseUriTrailingSlash + "workspaces/";
   }
 
   @Override
@@ -106,7 +112,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   @Override
   public String getAgentUri(final String agentName) {
     final var cleanAgentName = validateInput(agentName);
-    return this.baseUri + "artifacts/" + cleanAgentName + "/";
+    return this.baseUriTrailingSlash + "artifacts/" + cleanAgentName + "/";
   }
 
 
