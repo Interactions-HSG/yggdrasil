@@ -31,7 +31,7 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
     this.port = httpConfig.flatMap(c -> JsonObjectUtils.getInteger(c, "port", LOGGER::error))
       .orElse(8080);
 
-    String baseUri1;
+    final String baseUri1;
     baseUri1 = httpConfig.flatMap(c -> JsonObjectUtils.getString(c, "base-uri", LOGGER::error))
         .orElseGet(()
             -> "http://" + (this.host.equals("0.0.0.0") ? "localhost" : this.host) + ":"

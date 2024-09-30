@@ -30,6 +30,7 @@ import org.hyperagents.yggdrasil.utils.WebSubConfig;
  */
 public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private static final String ARTIFACT_NAME_PARAM = "artifactName";
+  private static final String ARTIFACT = "Artifact";
 
   private final HttpInterfaceConfig httpConfig;
   private final WebSubConfig notificationConfig;
@@ -49,27 +50,28 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     this.notificationConfig = notificationConfig;
   }
 
-  private void addHttpSignifiers(ThingDescription.Builder td, String target, String type) {
+  private void addHttpSignifiers(final ThingDescription.Builder td, final String target,
+                                 final String type) {
     addAction(td, "get" + type + "Representation", target, GET, "Perceive" + type);
     addAction(td, "update" + type + "Representation", target, PUT, "Update" + type);
     addAction(td, "delete" + type + "Representation", target, DELETE, "Delete" + type);
   }
 
-  private void addAction(ThingDescription.Builder thingDescription,
-                         String name,
-                         String target,
-                         String methodName,
-                         String semanticType) {
+  private void addAction(final ThingDescription.Builder thingDescription,
+                         final String name,
+                         final String target,
+                         final String methodName,
+                         final String semanticType) {
     addAction(thingDescription, name, target, "application/json", methodName,
         semanticType);
   }
 
-  private void addAction(ThingDescription.Builder thingDescription,
-                         String name,
-                         String target,
-                         String contentType,
-                         String methodName,
-                         String semanticType) {
+  private void addAction(final ThingDescription.Builder thingDescription,
+                         final String name,
+                         final String target,
+                         final String contentType,
+                         final String methodName,
+                         final String semanticType) {
     thingDescription.addAction(
         new ActionAffordance.Builder(
             name,
@@ -286,20 +288,20 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     final var td =
         new ThingDescription.Builder(artifactName)
             .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
-            .addSemanticType(HMAS + "Artifact")
+            .addSemanticType(HMAS + ARTIFACT)
             .addSemanticType(semanticType)
             .addThingURI(thingUri + "/" + HASH_ARTIFACT)
             .addGraph(metadata);
 
     actionAffordancesMap.values().forEach(td::addAction);
 
-    addHttpSignifiers(td, thingUri, "Artifact");
+    addHttpSignifiers(td, thingUri, ARTIFACT);
 
     if (isCartagoArtifact) {
       addAction(td, "focusArtifact", thingUri + "focus/", HttpMethod.POST.name(), "Focus");
     }
 
-    addWebSub(td, "Artifact");
+    addWebSub(td, ARTIFACT);
     wrapInResourceProfile(td, thingUri, thingUri + "/" + HASH_ARTIFACT);
 
     return serializeThingDescription(td);
@@ -326,7 +328,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         new ThingDescription
             .Builder(agentName)
             .addSecurityScheme(securityScheme.getSchemeName(), securityScheme)
-            .addSemanticType(HMAS + "Artifact")
+            .addSemanticType(HMAS + ARTIFACT)
             .addSemanticType(JACAMO + "Body")
             .addThingURI(bodyUri + "/" + HASH_ARTIFACT)
             .addGraph(metadata);

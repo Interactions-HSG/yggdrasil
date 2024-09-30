@@ -22,13 +22,13 @@ public class ArtifactImpl implements Artifact {
   /**
    *  Default constructor.
    */
-  public ArtifactImpl(String name, String clazz, List<?> initializationParameters,
-                      String representation, String metadata,
-                      List<String> focusedBy) {
+  public ArtifactImpl(final String name, final String clazz, final List<?> initializationParameters,
+                      final String representation, final String metadata,
+                      final List<String> focusedBy) {
     this.name = name;
     this.clazz = clazz;
-    this.initializationParameters = initializationParameters;
-    this.focusedBy = focusedBy;
+    this.initializationParameters = List.copyOf(initializationParameters);
+    this.focusedBy = List.copyOf(focusedBy);
 
     if (representation != null && new File(representation).isFile()) {
       this.representation = Path.of(representation);
@@ -46,7 +46,7 @@ public class ArtifactImpl implements Artifact {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -77,7 +77,7 @@ public class ArtifactImpl implements Artifact {
 
   @Override
   public List<?> getInitializationParameters() {
-    return initializationParameters;
+    return List.copyOf(initializationParameters);
   }
 
   @Override
@@ -91,6 +91,6 @@ public class ArtifactImpl implements Artifact {
 
   @Override
   public List<String> getFocusedBy() {
-    return focusedBy;
+    return List.copyOf(focusedBy);
   }
 }

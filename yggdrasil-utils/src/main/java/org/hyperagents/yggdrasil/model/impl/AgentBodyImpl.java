@@ -18,19 +18,19 @@ public class AgentBodyImpl implements AgentBody {
   /**
    * Default constructor, does path / file validation.
    */
-  public AgentBodyImpl(String metadata, List<String> joinedWorkspaces) {
-    File f = new File(metadata);
+  public AgentBodyImpl(final String metadata, final List<String> joinedWorkspaces) {
+    final File f = new File(metadata);
     if (f.exists() && !f.isDirectory()) {
       this.metadata = Path.of(metadata);
     } else {
       System.out.println("unable to identify file for metadata");
       this.metadata = null;
     }
-    this.joinedWorkspaces = joinedWorkspaces;
+    this.joinedWorkspaces = List.copyOf(joinedWorkspaces);
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -54,6 +54,6 @@ public class AgentBodyImpl implements AgentBody {
 
   @Override
   public List<String> getJoinedWorkspaces() {
-    return joinedWorkspaces;
+    return List.copyOf(joinedWorkspaces);
   }
 }

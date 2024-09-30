@@ -3,8 +3,10 @@ package org.hyperagents.yggdrasil.cartago.entities.errors;
 /**
  * Exception thrown when an agent is not found.
  */
+@SuppressWarnings("serial")
 public class AgentNotFoundException extends Exception {
-  public AgentNotFoundException(String message) {
+  public AgentNotFoundException(final String message) {
     super(message);
   }
+
 }

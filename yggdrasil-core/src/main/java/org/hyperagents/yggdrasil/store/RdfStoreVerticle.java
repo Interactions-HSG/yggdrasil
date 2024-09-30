@@ -554,14 +554,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
     );
   }
 
-  private String fillEmptyURIs(String representation, String uri) {
-    Pattern pattern = Pattern.compile("<(#?[^>]*)>");
-    Matcher matcher = pattern.matcher(representation);
-    StringBuilder sb = new StringBuilder();
+  private String fillEmptyURIs(final String representation, final String uri) {
+    final Pattern pattern = Pattern.compile("<(#?[^>]*)>");
+    final Matcher matcher = pattern.matcher(representation);
+    final StringBuilder sb = new StringBuilder();
 
     while (matcher.find()) {
-      String matched = matcher.group(1);
-      String replacement;
+      final String matched = matcher.group(1);
+      final String replacement;
 
       if (matched.isEmpty()) {
         replacement = "<" + uri + ">";

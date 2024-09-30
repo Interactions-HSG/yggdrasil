@@ -7,16 +7,73 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix websub: <http://example.org/websub#> .
 
 <http://localhost:8080/workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
-      td:name "createSubWorkspace";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeSubWorkspace;
+      td:name "createSubWorkspaceJson";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:createSubWorkspace;
+      td:name "createSubWorkspaceTurtle";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "text/turtle";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:PerceiveWorkspace;
+      td:name "getWorkspaceRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateWorkspace;
+      td:name "updateWorkspaceRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteWorkspace;
+      td:name "deleteWorkspaceRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:createArtifact;
+      td:name "createArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/>;
+          hctl:forContentType "text/turtle";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:JoinWorkspace;
+      td:name "joinWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:QuitWorkspace;
+      td:name "quitWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -38,22 +95,6 @@
               js:propertyName "artifactName"
             ];
           js:required "artifactClass", "artifactName"
-        ]
-    ], [ a td:ActionAffordance, jacamo:JoinWorkspace;
-      td:name "joinWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/join>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance, jacamo:QuitWorkspace;
-      td:name "quitWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/sub/leave>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
         ]
     ], [ a td:ActionAffordance, jacamo:Focus;
       td:name "focus";

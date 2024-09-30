@@ -24,13 +24,13 @@ public class WorkspaceImpl implements Workspace {
   /**
    * Default constructor.
    */
-  public WorkspaceImpl(String name, String metaData, Optional<String> parentName,
-                       Set<YggdrasilAgent> agents, Set<Artifact> artifacts,
-                       Optional<Path> representation) {
+  public WorkspaceImpl(final String name, final String metaData, final Optional<String> parentName,
+                       final Set<YggdrasilAgent> agents, final Set<Artifact> artifacts,
+                       final Optional<Path> representation) {
     this.name = name;
     this.parentName = parentName;
-    this.artifacts = artifacts;
-    this.agents = agents;
+    this.artifacts = Set.copyOf(artifacts);
+    this.agents = Set.copyOf(agents);
     this.representation = representation;
 
     if (metaData != null && new File(metaData).isFile()) {
@@ -41,7 +41,7 @@ public class WorkspaceImpl implements Workspace {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -78,12 +78,12 @@ public class WorkspaceImpl implements Workspace {
 
   @Override
   public Set<Artifact> getArtifacts() {
-    return artifacts;
+    return Set.copyOf(artifacts);
   }
 
   @Override
   public Set<YggdrasilAgent> getAgents() {
-    return agents;
+    return Set.copyOf(agents);
   }
 
   @Override

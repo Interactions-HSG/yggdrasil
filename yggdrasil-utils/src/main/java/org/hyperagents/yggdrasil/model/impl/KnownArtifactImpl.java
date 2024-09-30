@@ -11,13 +11,13 @@ public class KnownArtifactImpl implements KnownArtifact {
   private final String clazz;
   private final String template;
 
-  public KnownArtifactImpl(String clazz, String template) {
+  public KnownArtifactImpl(final String clazz, final String template) {
     this.clazz = clazz;
     this.template = template;
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }

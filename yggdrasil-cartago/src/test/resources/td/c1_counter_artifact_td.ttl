@@ -7,6 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix websub: <http://example.org/websub#> .
 
 <http://localhost:8080/workspaces/sub/artifacts/c1/#artifact> a td:Thing, hmas:Artifact,
     ex:Counter;
@@ -19,6 +20,38 @@
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:PerceiveArtifact;
+      td:name "getArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateArtifact;
+      td:name "updateArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteArtifact;
+      td:name "deleteArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:Focus;
+      td:name "focusArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/sub/artifacts/c1focus/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]

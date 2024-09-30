@@ -20,15 +20,15 @@ public class EnvironmentImpl  implements Environment {
   /**
    * Default constructor.
    */
-  public EnvironmentImpl(List<YggdrasilAgent> agents, List<Workspace> workspaces,
-                         Set<KnownArtifact> knownArtifacts) {
-    this.agents = agents;
-    this.workspaces = workspaces;
-    this.knownArtifacts = knownArtifacts;
+  public EnvironmentImpl(final List<YggdrasilAgent> agents, final List<Workspace> workspaces,
+                         final Set<KnownArtifact> knownArtifacts) {
+    this.agents = List.copyOf(agents);
+    this.workspaces = List.copyOf(workspaces);
+    this.knownArtifacts = Set.copyOf(knownArtifacts);
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -47,16 +47,16 @@ public class EnvironmentImpl  implements Environment {
 
   @Override
   public List<YggdrasilAgent> getAgents() {
-    return this.agents;
+    return List.copyOf(agents);
   }
 
   @Override
   public List<Workspace> getWorkspaces() {
-    return this.workspaces;
+    return List.copyOf(workspaces);
   }
 
   @Override
   public Set<KnownArtifact> getKnownArtifacts() {
-    return this.knownArtifacts;
+    return Set.copyOf(knownArtifacts);
   }
 }

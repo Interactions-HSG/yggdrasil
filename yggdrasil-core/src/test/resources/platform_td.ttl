@@ -1,22 +1,46 @@
 @base <http://localhost:8080/> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
-@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 
 <#platform> a td:Thing, hmas:HypermediaMASPlatform;
   td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createWorkspace;
-      td:name "createWorkspace";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeWorkspace;
+      td:name "createWorkspaceJson";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/>;
           hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:createWorkspace;
+      td:name "createWorkspaceTurtle";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/>;
+          hctl:forContentType "text/turtle";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:sparqlGetQuery;
+      td:name "sparqlGetQuery";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <query/>;
+          hctl:forContentType "application/sparql-query";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:sparqlPostQuery;
+      td:name "sparqlPostQuery";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <query/>;
+          hctl:forContentType "application/sparql-query";
           hctl:hasOperationType td:invokeAction
         ]
     ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspaces>;
@@ -56,5 +80,6 @@
             ]
         ]
     ] .
+
 <> a hmas:ResourceProfile;
   hmas:isProfileOf <#platform> .

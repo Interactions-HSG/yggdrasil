@@ -53,7 +53,7 @@ public final class EnvironmentParser {
    * @param config a valid Yggdrasil configuration
    * @return a List containing all agents
    */
-  private static List<YggdrasilAgent> parseAgents(JsonObject  config) {
+  private static List<YggdrasilAgent> parseAgents(final JsonObject  config) {
     return JsonObjectUtils.getJsonArray(config, "agents", LOGGER::error)
         .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue)
           .flatMap(o -> (o instanceof JsonObject j ? Optional.of(j) : Optional.<JsonObject>empty())
@@ -90,7 +90,7 @@ public final class EnvironmentParser {
         }).collect(Collectors.toList());
   }
 
-  private static Set<KnownArtifact> parseKnownArtifacts(Optional<JsonObject> envConfig) {
+  private static Set<KnownArtifact> parseKnownArtifacts(final Optional<JsonObject> envConfig) {
     return envConfig
       .flatMap(c -> JsonObjectUtils.getJsonArray(c, "known-artifacts", LOGGER::error))
       .stream()

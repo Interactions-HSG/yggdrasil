@@ -6,9 +6,10 @@
 @prefix ex: <http://example.org/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/w1/artifacts/c1/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
+<workspaces/w1/artifacts/c1/#artifact> a td:Thing, hmas:Artifact, ex:Counter, customArtifact:CustomArtifact;
   td:title "c1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -18,6 +19,38 @@
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/w1/artifacts/c1/increment>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:PerceiveArtifact;
+      td:name "getArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateArtifact;
+      td:name "updateArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteArtifact;
+      td:name "deleteArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:Focus;
+      td:name "focusArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/w1/artifacts/c1focus/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -60,7 +93,7 @@
     ];
   hmas:isContainedIn <workspaces/w1/#workspace> .
 
-<workspaces/w1/artifacts/c1> a hmas:ResourceProfile, customArtifact:CustomArtifact;
+<workspaces/w1/artifacts/c1> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/w1/artifacts/c1/#artifact>;
   customArtifact:does customArtifact:SomethingVeryCool .
 

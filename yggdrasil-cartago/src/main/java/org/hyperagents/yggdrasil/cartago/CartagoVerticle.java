@@ -39,6 +39,7 @@ import org.hyperagents.yggdrasil.cartago.artifacts.HypermediaArtifact;
 import org.hyperagents.yggdrasil.cartago.entities.NotificationCallback;
 import org.hyperagents.yggdrasil.cartago.entities.WorkspaceRegistry;
 import org.hyperagents.yggdrasil.cartago.entities.errors.AgentNotFoundException;
+import org.hyperagents.yggdrasil.cartago.entities.errors.ArtifactNotFoundException;
 import org.hyperagents.yggdrasil.cartago.entities.errors.WorkspaceNotFoundException;
 import org.hyperagents.yggdrasil.cartago.entities.impl.WorkspaceRegistryImpl;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.CartagoMessagebox;
@@ -63,6 +64,7 @@ import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 public class CartagoVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(CartagoVerticle.class);
   private static final String DEFAULT_CONFIG_VALUE = "default";
+  private static final String YGGDRASIL = "yggdrasil";
 
   private HttpInterfaceConfig httpConfig;
   private WorkspaceRegistry workspaceRegistry;
@@ -233,7 +235,7 @@ public class CartagoVerticle extends AbstractVerticle {
               // Yggdrasil Agent must join to create the artifacts
               try {
                 this.joinWorkspace(
-                    this.httpConfig.getAgentUri("yggdrasil"), "yggdrasil", w.getName());
+                    this.httpConfig.getAgentUri(YGGDRASIL), YGGDRASIL, w.getName());
               } catch (CartagoException e) {
                 throw new RuntimeException(e);
               }
@@ -244,7 +246,7 @@ public class CartagoVerticle extends AbstractVerticle {
                     this.httpConfig.getArtifactsUri(w.getName()),
                     a.getName(),
                     this.instantiateArtifact(
-                      this.httpConfig.getAgentUri("yggdrasil"),
+                      this.httpConfig.getAgentUri(YGGDRASIL),
                       w.getName(),
                       registry.getArtifactTemplate(c).orElseThrow(),
                       a.getName(),
@@ -276,7 +278,7 @@ public class CartagoVerticle extends AbstractVerticle {
                 )));
 
               try {
-                this.leaveWorkspace(this.httpConfig.getAgentUri("yggdrasil"), w.getName());
+                this.leaveWorkspace(this.httpConfig.getAgentUri(YGGDRASIL), w.getName());
               } catch (CartagoException e) {
                 throw new RuntimeException(e);
               }
@@ -351,7 +353,7 @@ public class CartagoVerticle extends AbstractVerticle {
       message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
     } catch (AgentNotFoundException e) {
       message.fail(HttpStatus.SC_METHOD_NOT_ALLOWED, e.getMessage());
-    } catch (WorkspaceNotFoundException e) {
+    } catch (WorkspaceNotFoundException | ArtifactNotFoundException e) {
       message.fail(HttpStatus.SC_NOT_FOUND, e.getMessage());
     }
   }
@@ -404,16 +406,20 @@ public class CartagoVerticle extends AbstractVerticle {
       final String agentUri,
       final String workspaceName,
       final String artifactName
-  ) throws CartagoException {
-    final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
+  ) throws CartagoException, AgentNotFoundException, ArtifactNotFoundException,
+      WorkspaceNotFoundException {
+    final var workspace = this.workspaceRegistry.getWorkspace(workspaceName)
+        .orElseThrow(() -> new WorkspaceNotFoundException(workspaceName));
     workspace
         .focus(
-            this.getAgentId(this.getAgentCredential(agentUri, workspaceName).orElseThrow(),
+            this.getAgentId(this.getAgentCredential(agentUri, workspaceName)
+                    .orElseThrow(() -> new AgentNotFoundException(agentUri)),
                 workspace.getId()),
             p -> true,
             new NotificationCallback(this.httpConfig, this.dispatcherMessagebox, workspaceName,
                 artifactName),
-            Optional.ofNullable(workspace.getArtifact(artifactName)).orElseThrow()
+            Optional.ofNullable(workspace.getArtifact(artifactName))
+                .orElseThrow(() -> new ArtifactNotFoundException(artifactName))
         )
         .forEach(p -> this.dispatcherMessagebox.sendMessage(
             new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
@@ -466,7 +472,7 @@ public class CartagoVerticle extends AbstractVerticle {
       final String apiKey,
       final String storeResponse,
       final String context
-  ) throws CartagoException {
+  ) throws CartagoException, AgentNotFoundException {
 
     final var hypermediaArtifact = registry.getArtifact(artifactName);
     if (apiKey != null) {
@@ -566,7 +572,7 @@ public class CartagoVerticle extends AbstractVerticle {
 
   private void deleteEntity(final String workspaceName, final String requestUri)
       throws CartagoException {
-    final var credentials = getAgentCredential(this.httpConfig.getAgentUri("yggdrasil"), "root");
+    final var credentials = getAgentCredential(this.httpConfig.getAgentUri(YGGDRASIL), "root");
 
 
     if (workspaceName.equals(requestUri)) {
@@ -596,10 +602,14 @@ public class CartagoVerticle extends AbstractVerticle {
     );
   }
 
-  private String getAgentNameFromAgentUri(final String agentUri, final String workspaceName) {
-    final var agentCred =
-        (AgentIdCredential) this.agentCredentials.get(agentUri).get(workspaceName);
-    return agentCred.getId();
+  private String getAgentNameFromAgentUri(final String agentUri, final String workspaceName)
+      throws AgentNotFoundException {
+
+    if (this.agentCredentials.get(agentUri) == null
+        || this.agentCredentials.get(agentUri).get(workspaceName) == null) {
+      throw new AgentNotFoundException(agentUri);
+    }
+    return this.agentCredentials.get(agentUri).get(workspaceName).getId();
   }
 
   private AgentId getAgentId(final AgentCredential credential, final WorkspaceId workspaceId) {

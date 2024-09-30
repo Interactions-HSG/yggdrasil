@@ -52,10 +52,11 @@ public class CartagoVerticleHMASTest {
   private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String CLASS = "class";
   private static final String TEMPLATE = "template";
+  private static final String TEST_AGENT_NAME = "test_agent";
   private static final String TEST_AGENT_IRI = "http://localhost:8080/agents/test";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
-      "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test/";
+      "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test_agent/";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
   private static final String SIGNAL_SEMANTIC_TYPE = "http://example.org/Sign";
@@ -88,7 +89,7 @@ public class CartagoVerticleHMASTest {
    * setup method.
    *
    * @param vertx vertx
-   * @param ctx ctx
+   * @param ctx   ctx
    */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
@@ -382,6 +383,9 @@ public class CartagoVerticleHMASTest {
         );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -416,6 +420,9 @@ public class CartagoVerticleHMASTest {
                 MAIN_WORKSPACE_NAME,
                 SUB_WORKSPACE_NAME
             )))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, SUB_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -445,6 +452,9 @@ public class CartagoVerticleHMASTest {
         );
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -491,7 +501,11 @@ public class CartagoVerticleHMASTest {
   @Test
   public void testCreateArtifactFailsWithUnknownWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME))
+        .compose(r ->
+            this.cartagoMessagebox.sendMessage(
+                new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME)))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -516,6 +530,9 @@ public class CartagoVerticleHMASTest {
   public void testCreateArtifactFailsWithWrongParametersHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -573,9 +590,12 @@ public class CartagoVerticleHMASTest {
   public void testFocusSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            FOCUSING_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
-                TEST_AGENT_IRI,
+                FOCUSING_AGENT_IRI,
                 MAIN_WORKSPACE_NAME,
                 "c0",
                 Json.encode(Map.of(
@@ -614,6 +634,9 @@ public class CartagoVerticleHMASTest {
   public void testFocusFailsWithNonexistentWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -633,7 +656,7 @@ public class CartagoVerticleHMASTest {
                 "c0"
             )))
         .onFailure(t -> Assertions.assertEquals(
-            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            HttpStatus.SC_NOT_FOUND,
             ((ReplyException) t).failureCode(),
             OPERATION_FAIL_MESSAGE
         ))
@@ -644,9 +667,12 @@ public class CartagoVerticleHMASTest {
   public void testFocusFailsWithNonexistentArtifactNameHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            FOCUSING_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
-                TEST_AGENT_IRI,
+                FOCUSING_AGENT_IRI,
                 MAIN_WORKSPACE_NAME,
                 "c0",
                 Json.encode(Map.of(
@@ -663,7 +689,7 @@ public class CartagoVerticleHMASTest {
                 NONEXISTENT_NAME
             )))
         .onFailure(t -> Assertions.assertEquals(
-            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            HttpStatus.SC_NOT_FOUND,
             ((ReplyException) t).failureCode(),
             OPERATION_FAIL_MESSAGE
         ))
@@ -674,9 +700,11 @@ public class CartagoVerticleHMASTest {
   public void testFocusIsIdempotentHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            FOCUSING_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME)))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
-                TEST_AGENT_IRI,
+                FOCUSING_AGENT_IRI,
                 MAIN_WORKSPACE_NAME,
                 "c0",
                 Json.encode(Map.of(
@@ -721,6 +749,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionSucceedsHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -763,13 +794,13 @@ public class CartagoVerticleHMASTest {
                 SUB_WORKSPACE_NAME
             )))
         .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
-            TEST_AGENT_IRI,
-            "test",
+            FOCUSING_AGENT_IRI,
+            TEST_AGENT_NAME,
             SUB_WORKSPACE_NAME
         )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
-                TEST_AGENT_IRI,
+                FOCUSING_AGENT_IRI,
                 SUB_WORKSPACE_NAME,
                 "c1",
                 Json.encode(Map.of(
@@ -788,7 +819,7 @@ public class CartagoVerticleHMASTest {
         .compose(r ->
             this.cartagoMessagebox
                 .sendMessage(new CartagoMessage.DoAction(
-                    TEST_AGENT_IRI,
+                    FOCUSING_AGENT_IRI,
                     SUB_WORKSPACE_NAME,
                     "c1",
                     "POSThttp://localhost:8080/workspaces/sub/artifacts/c1/sign",
@@ -804,7 +835,7 @@ public class CartagoVerticleHMASTest {
             (HttpNotificationDispatcherMessage.ActionRequested) this.notificationQueue.take();
         Assertions.assertEquals(
             actionRequested.requestIri(),
-            "http://localhost:8080/workspaces/sub/artifacts/body_test/",
+            "http://localhost:8080/workspaces/sub/artifacts/body_test_agent/",
             URIS_EQUAL_MESSAGE
         );
         final var artifactObsPropertyUpdated =
@@ -819,7 +850,7 @@ public class CartagoVerticleHMASTest {
             (HttpNotificationDispatcherMessage.ActionSucceeded) this.notificationQueue.take();
         Assertions.assertEquals(
             actionSucceeded.requestIri(),
-            "http://localhost:8080/workspaces/sub/artifacts/body_test/",
+            TEST_AGENT_BODY_URI,
             URIS_EQUAL_MESSAGE
         );
       } catch (InterruptedException e) {
@@ -850,13 +881,13 @@ public class CartagoVerticleHMASTest {
             )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.JoinWorkspace(
-                TEST_AGENT_IRI,
-                "test",
+                FOCUSING_AGENT_IRI,
+                TEST_AGENT_NAME,
                 SUB_WORKSPACE_NAME
             )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
-                TEST_AGENT_IRI,
+                FOCUSING_AGENT_IRI,
                 SUB_WORKSPACE_NAME,
                 "c1",
                 Json.encode(Map.of(
@@ -888,7 +919,7 @@ public class CartagoVerticleHMASTest {
             ctx.failNow(e);
           }
           return this.cartagoMessagebox.sendMessage(new CartagoMessage.DoAction(
-              TEST_AGENT_IRI,
+              FOCUSING_AGENT_IRI,
               SUB_WORKSPACE_NAME,
               "c1",
               "POSThttp://localhost:8080/workspaces/sub/artifacts/c1/increment",
@@ -956,6 +987,10 @@ public class CartagoVerticleHMASTest {
   public void testDoActionSucceedsWithNoPayloadButOneFeedBackParams(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(
+            new CartagoMessage.JoinWorkspace(TEST_AGENT_IRI,
+                TEST_AGENT_NAME,
+                MAIN_WORKSPACE_NAME)))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -990,6 +1025,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionSucceedsWithNoPayloadButTwoFeedBackParams(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -1024,6 +1062,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionWithMultipleFeedbackParameterSucceeds(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -1060,6 +1101,9 @@ public class CartagoVerticleHMASTest {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
         .compose(r -> this.cartagoMessagebox
+            .sendMessage(new CartagoMessage.JoinWorkspace(
+                TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME)))
+        .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
                 MAIN_WORKSPACE_NAME,
@@ -1094,6 +1138,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionFailsWithNonexistentWorkspaceHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -1128,6 +1175,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionFailsWithNonexistentArtifactHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -1160,8 +1210,11 @@ public class CartagoVerticleHMASTest {
 
   @Test
   public void testDoActionFailsWithNonexistentOperationHMAS(final VertxTestContext ctx) {
-    this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+    this.cartagoMessagebox.sendMessage(
+            new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME))
+        )
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
@@ -1196,6 +1249,9 @@ public class CartagoVerticleHMASTest {
   public void testDoActionFailsWithWrongParametersHMAS(final VertxTestContext ctx) {
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateWorkspace(MAIN_WORKSPACE_NAME))
+        .compose(r -> this.cartagoMessagebox.sendMessage(new CartagoMessage.JoinWorkspace(
+            TEST_AGENT_IRI, TEST_AGENT_NAME, MAIN_WORKSPACE_NAME
+        )))
         .compose(r -> this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateArtifact(
                 TEST_AGENT_IRI,
