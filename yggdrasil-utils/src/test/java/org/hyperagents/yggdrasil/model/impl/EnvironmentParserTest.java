@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import org.hyperagents.yggdrasil.model.interfaces.Artifact;
 import org.hyperagents.yggdrasil.model.interfaces.KnownArtifact;
 import org.hyperagents.yggdrasil.model.interfaces.Workspace;
@@ -22,8 +21,9 @@ import org.junit.jupiter.api.Test;
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 class EnvironmentParserTest {
 
-  private static final String METADATA_AGENT_BODY =
-      "src/test/resources/a1_test_metadata.ttl";
+  private static final String METADATA_AGENT_BODY = "src/test/resources/a1_test_metadata.ttl";
+  private static final String METADATA_WORKSPACE = "src/test/resources/w1_test_metadata.ttl";
+  private static final String METADATA_ARTIFACT = "src/test/resources/c1_test_metadata.ttl";
 
   @Test
   void parse() throws IOException, URISyntaxException {
@@ -40,7 +40,7 @@ class EnvironmentParserTest {
         new YggdrasilAgentImpl(
             "test_name",
             "http://localhost:8081",
-            Optional.of("http://localhost:8081/callback"),
+            "http://localhost:8081/callback",
             List.of(
                 new AgentBodyImpl(METADATA_AGENT_BODY, List.of("w1")),
                 new AgentBodyImpl(METADATA_AGENT_BODY, List.of())
@@ -55,7 +55,7 @@ class EnvironmentParserTest {
             "http://example.org/Counter",
             List.of(),
             null,
-            null,
+            METADATA_ARTIFACT,
             List.of("test_name")
         )
     );
@@ -65,11 +65,11 @@ class EnvironmentParserTest {
     expectedListOfWorkspaces.add(
         new WorkspaceImpl(
             "w1",
+            METADATA_WORKSPACE,
             null,
-            Optional.empty(),
             new HashSet<>(expectedListOfAgents),
             new HashSet<>(expectedListOfArtifacts),
-            Optional.empty()
+            null
         )
     );
 

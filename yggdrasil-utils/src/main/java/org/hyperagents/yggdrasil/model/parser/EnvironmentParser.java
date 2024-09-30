@@ -2,7 +2,6 @@ package org.hyperagents.yggdrasil.model.parser;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -86,7 +85,8 @@ public final class EnvironmentParser {
                 return Stream.of(new AgentBodyImpl(metadata.orElse(null), joined));
               }).toList();
 
-          return Stream.of(new YggdrasilAgentImpl(name.get(), agentUri.get(), callbackUri, bodies));
+          return Stream.of(new YggdrasilAgentImpl(
+              name.get(), agentUri.get(), callbackUri.orElse(null), bodies));
         }).collect(Collectors.toList());
   }
 
@@ -200,7 +200,7 @@ public final class EnvironmentParser {
                     );
                   }
                   return workspaceNames.contains(p);
-                }),
+                }).orElse(null),
               joiningAgents,
               JsonObjectUtils
                 .getJsonArray(w, "artifacts", LOGGER::error)
@@ -243,7 +243,7 @@ public final class EnvironmentParser {
                   ));
                 })
                 .collect(Collectors.toSet()),
-              JsonObjectUtils.getString(w, "representation", LOGGER::error).map(Path::of)
+              JsonObjectUtils.getString(w, "representation", LOGGER::error).orElse(null)
             ));
           })
           .toList()

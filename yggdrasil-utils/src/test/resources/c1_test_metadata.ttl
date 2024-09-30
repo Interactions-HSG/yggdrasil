@@ -1,0 +1,4 @@
+@prefix customArtifact: <http://www.metadata.com/>.
+
+<#artifact> a customArtifact:CustomArtifact.
+<> customArtifact:does customArtifact:SomethingVeryCool.
