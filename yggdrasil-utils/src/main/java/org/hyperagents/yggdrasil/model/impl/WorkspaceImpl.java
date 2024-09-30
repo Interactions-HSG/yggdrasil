@@ -24,9 +24,9 @@ public class WorkspaceImpl implements Workspace {
   /**
    * Default constructor.
    */
-  public WorkspaceImpl(String name, String metaData, String parentName,
-                       Set<YggdrasilAgent> agents, Set<Artifact> artifacts,
-                       String representation) {
+  public WorkspaceImpl(final String name, final String metaData, final String parentName,
+                       final Set<YggdrasilAgent> agents, final Set<Artifact> artifacts,
+                       final String representation) {
     this.name = name;
     this.parentName = parentName;
     this.artifacts = Set.copyOf(artifacts);

@@ -19,8 +19,8 @@ public class YggdrasilAgentImpl  implements YggdrasilAgent {
   /**
    * Default constructor.
    */
-  public YggdrasilAgentImpl(String name, String agentUri, String agentCallbackUri,
-                            List<AgentBody> bodies) {
+  public YggdrasilAgentImpl(final String name, final String agentUri, final String agentCallbackUri,
+                            final List<AgentBody> bodies) {
     this.name = name;
     this.agentUri = agentUri;
     this.agentCallbackUri = agentCallbackUri;
