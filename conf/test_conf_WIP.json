@@ -53,6 +53,7 @@
             "name" : "c1",
             "class" : "http://example.org/Counter",
             "metadata" : "src/main/resources/c1_test_metadata.ttl",
+            "created-by" : "agent_name",
             "focused-by" : [
               "agent_name"
             ]

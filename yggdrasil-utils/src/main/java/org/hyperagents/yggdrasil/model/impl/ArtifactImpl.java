@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import org.hyperagents.yggdrasil.model.interfaces.Artifact;
+import org.hyperagents.yggdrasil.model.interfaces.YggdrasilAgent;
 
 /**
  * Implements Artifact interface, used to build environment from config file.
@@ -18,15 +19,18 @@ public class ArtifactImpl implements Artifact {
   private final Path representation;
   private final Path metadata;
   private final List<String> focusedBy;
+  private final YggdrasilAgent createdBy;
 
   /**
    *  Default constructor.
    */
-  public ArtifactImpl(final String name, final String clazz, final List<?> initializationParameters,
+  public ArtifactImpl(final String name, final String clazz,
+                      final YggdrasilAgent createdBy, final List<?> initializationParameters,
                       final String representation, final String metadata,
                       final List<String> focusedBy) {
     this.name = name;
     this.clazz = clazz;
+    this.createdBy = createdBy;
     this.initializationParameters = List.copyOf(initializationParameters);
     this.focusedBy = List.copyOf(focusedBy);
 
@@ -92,5 +96,10 @@ public class ArtifactImpl implements Artifact {
   @Override
   public List<String> getFocusedBy() {
     return List.copyOf(focusedBy);
+  }
+
+  @Override
+  public Optional<YggdrasilAgent> getCreatedBy() {
+    return Optional.ofNullable(createdBy);
   }
 }

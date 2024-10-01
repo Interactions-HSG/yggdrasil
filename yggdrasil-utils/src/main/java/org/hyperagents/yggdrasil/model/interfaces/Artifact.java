@@ -25,5 +25,7 @@ public interface Artifact {
 
   Optional<Path> getMetaData();
 
+  Optional<YggdrasilAgent> getCreatedBy();
+
   List<String> getFocusedBy();
 }

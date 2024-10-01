@@ -228,9 +228,49 @@ public final class EnvironmentParser {
                     );
                     return Stream.empty();
                   }
+
+                  final var createdBy = JsonObjectUtils.getString(ar, "created-by", LOGGER::error);
+                  if (createdBy.isPresent()) {
+                    if (agents.stream().noneMatch(a -> a.getName().equals(createdBy.get()))) {
+                      LOGGER.warn(
+                          "Artifact in workspace created by an undefined agent, skipping"
+                      );
+                      return Stream.empty();
+                    }
+                    final var creatorAgent = agents.stream()
+                        .filter(a -> a.getName().equals(createdBy.get()))
+                        .findFirst().orElseThrow();
+
+                    if (joiningAgents.stream()
+                        .noneMatch(a -> a.getName().equals(createdBy.get()))) {
+                      LOGGER.warn(
+                          "Artifact in workspace created by an agent "
+                              + "that is not joining the workspace"
+                      );
+                    }
+
+                    return Stream.of(new ArtifactImpl(
+                      artifactName.get(),
+                      artifactClass.orElse(null),
+                      joiningAgents.stream().noneMatch(a -> a.getName().equals(createdBy.get()))
+                          ? null
+                          : creatorAgent,
+                      JsonObjectUtils
+                        .getJsonArray(ar, "init-params", LOGGER::error)
+                        .map(JsonArray::getList)
+                        .orElse(Collections.emptyList()),
+                      representation.orElse(null),
+                      JsonObjectUtils.getString(ar, "metadata", LOGGER::error).orElse(null),
+                      JsonObjectUtils.getJsonArray(ar, "focused-by", LOGGER::error)
+                        .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
+                        .map(a -> (String) a).toList()
+                    ));
+                  }
+
                   return Stream.of(new ArtifactImpl(
                     artifactName.get(),
                     artifactClass.orElse(null),
+                    null,
                     JsonObjectUtils
                       .getJsonArray(ar, "init-params", LOGGER::error)
                       .map(JsonArray::getList)

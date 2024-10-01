@@ -53,6 +53,7 @@ class EnvironmentParserTest {
         new ArtifactImpl(
             "c1",
             "http://example.org/Counter",
+            null,
             List.of(),
             null,
             METADATA_ARTIFACT,

@@ -246,7 +246,9 @@ public class CartagoVerticle extends AbstractVerticle {
                     this.httpConfig.getArtifactsUri(w.getName()),
                     a.getName(),
                     this.instantiateArtifact(
-                      this.httpConfig.getAgentUri(YGGDRASIL),
+                        a.getCreatedBy().isPresent()
+                            ? a.getCreatedBy().get().getAgentUri()
+                            : this.httpConfig.getAgentUri(YGGDRASIL),
                       w.getName(),
                       registry.getArtifactTemplate(c).orElseThrow(),
                       a.getName(),
