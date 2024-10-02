@@ -42,6 +42,7 @@ public final class EnvironmentParser {
   private static final Logger LOGGER = LogManager.getLogger(EnvironmentParser.class);
 
   private static final String NAME = "name";
+  private static final String METADATA = "metadata";
 
   private EnvironmentParser() {
   }
@@ -72,7 +73,7 @@ public final class EnvironmentParser {
               .flatMap(q -> (q instanceof JsonObject s ? Optional.of(s) :
                 Optional.<JsonObject>empty()).stream())
               .<AgentBody>flatMap(e -> {
-                final var metadata = JsonObjectUtils.getString(e, "metadata", LOGGER::error);
+                final var metadata = JsonObjectUtils.getString(e, METADATA, LOGGER::error);
                 final var joined = JsonObjectUtils.getJsonArray(e, "join", LOGGER::error)
                     .stream().flatMap(q -> IntStream.range(0, q.size()).mapToObj(q::getValue))
                     .map(q -> (String) q).toList();
@@ -190,7 +191,7 @@ public final class EnvironmentParser {
 
             return Stream.of(new WorkspaceImpl(
               name.get(),
-              JsonObjectUtils.getString(w, "metadata", LOGGER::error).orElse(null),
+              JsonObjectUtils.getString(w, METADATA, LOGGER::error).orElse(null),
               JsonObjectUtils
                 .getString(w, "parent-name", LOGGER::error)
                 .filter(p -> {
@@ -260,7 +261,7 @@ public final class EnvironmentParser {
                         .map(JsonArray::getList)
                         .orElse(Collections.emptyList()),
                       representation.orElse(null),
-                      JsonObjectUtils.getString(ar, "metadata", LOGGER::error).orElse(null),
+                      JsonObjectUtils.getString(ar, METADATA, LOGGER::error).orElse(null),
                       JsonObjectUtils.getJsonArray(ar, "focused-by", LOGGER::error)
                         .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
                         .map(a -> (String) a).toList()
@@ -276,7 +277,7 @@ public final class EnvironmentParser {
                       .map(JsonArray::getList)
                       .orElse(Collections.emptyList()),
                     representation.orElse(null),
-                    JsonObjectUtils.getString(ar, "metadata", LOGGER::error).orElse(null),
+                    JsonObjectUtils.getString(ar, METADATA, LOGGER::error).orElse(null),
                     JsonObjectUtils.getJsonArray(ar, "focused-by", LOGGER::error)
                       .stream().flatMap(a -> IntStream.range(0, a.size()).mapToObj(a::getValue))
                       .map(a -> (String) a).toList()
