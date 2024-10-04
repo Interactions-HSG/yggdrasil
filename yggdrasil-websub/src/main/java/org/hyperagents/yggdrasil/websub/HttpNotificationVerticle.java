@@ -52,7 +52,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
           .forEach(
             a -> a.getFocusedBy().forEach(
               agentName -> this.registry.addCallbackIri(
-                httpConfig.getArtifactUriTrailingSlash(w.getName(), a.getName()),
+                httpConfig.getArtifactUri(w.getName(), a.getName()),
                 w.getAgents().stream().filter(ag -> ag.getName().equals(agentName))
                   .findFirst().orElseThrow().getAgentCallbackUri().orElseThrow()
                 )

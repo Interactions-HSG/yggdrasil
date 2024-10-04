@@ -427,26 +427,29 @@ public class RdfStoreVerticle extends AbstractVerticle {
             final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
 
             if (content.parentWorkspaceUri().isPresent()) {
-              final var parentIri = RdfModelUtils.createIri(
+              final var parentIriTrailingSlash = RdfModelUtils.createIri(
                   content.parentWorkspaceUri().get().endsWith("/")
                       ?
                       content.parentWorkspaceUri().get() :
                       content.parentWorkspaceUri().get() + "/");
+              final var parentIri = RdfModelUtils.createIri(
+                  parentIriTrailingSlash.toString()
+                      .substring(0, parentIriTrailingSlash.toString().length() - 1));
               entityModel.add(
                   workspaceIRI,
                   RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-                  RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT)
+                  RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT)
               );
               entityModel.add(
-                  RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT),
+                  RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
                   RDF.TYPE,
                   RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
               );
               this.store
-                  .getEntityModel(parentIri)
+                  .getEntityModel(parentIriTrailingSlash)
                   .ifPresent(Failable.asConsumer(parentModel -> {
                     parentModel.add(
-                        RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT),
+                        RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
                         RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
                         workspaceIRI
                     );
@@ -455,7 +458,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         RDF.TYPE,
                         RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                     );
-                    this.store.replaceEntityModel(parentIri, parentModel);
+                    this.store.replaceEntityModel(parentIriTrailingSlash, parentModel);
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         parentIri.toString(),
@@ -606,7 +609,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleDeleteEntity(final IRI requestIri, final Message<RdfStoreMessage> message)
       throws IllegalArgumentException, IOException {
-
     this.store
         .getEntityModel(requestIri)
         .ifPresentOrElse(
@@ -655,6 +657,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         .endsWith("/")
                         ? workspaceIri.toString().substring(0, workspaceIri.toString().length() - 1)
                         : workspaceIri.toString();
+                    System.out.println("Entity changed: " + workspaceIriWIthoutTrailingSlash);
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         workspaceIriWIthoutTrailingSlash,

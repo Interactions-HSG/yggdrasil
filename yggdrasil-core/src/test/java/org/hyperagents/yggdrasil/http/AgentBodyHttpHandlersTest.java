@@ -106,6 +106,7 @@ public class AgentBodyHttpHandlersTest {
   @AfterEach
   public void tearDown(final Vertx vertx, final VertxTestContext ctx) {
     vertx.close(ctx.succeedingThenComplete());
+    this.client.close();
   }
 
   @Test

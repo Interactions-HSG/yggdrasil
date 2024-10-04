@@ -71,7 +71,7 @@ public final class TConstants {
 
   public static final String SUB_WORKSPACE_NAME = "sub";
   public static final String COUNTER_ARTIFACT_URI =
-      "http://localhost:8080/workspaces/sub/artifacts/c0/";
+      "http://localhost:8080/workspaces/sub/artifacts/c0";
 
   public static final String HINT_HEADER = "Slug";
 

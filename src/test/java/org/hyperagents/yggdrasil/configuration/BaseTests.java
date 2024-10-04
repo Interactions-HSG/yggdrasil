@@ -51,6 +51,7 @@ public class BaseTests {
   @AfterEach
   public void tearDown(final Vertx vertx, final VertxTestContext ctx) {
     vertx.close().onComplete(ctx.succeedingThenComplete());
+    this.client.close();
   }
 
   @Test
@@ -227,7 +228,7 @@ public class BaseTests {
               this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1/").send().onSuccess(
                   rs -> {
                     assertEqualsThingDescriptions(workspaceRepresentation, rs.bodyAsString());
-                    this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1/artifacts/c1/").send()
+                    this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1/artifacts/c1").send()
                         .onSuccess(
                             rx -> {
                               assertEqualsThingDescriptions(artifactRepresentation,

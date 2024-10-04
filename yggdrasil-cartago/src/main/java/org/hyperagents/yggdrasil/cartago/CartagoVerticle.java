@@ -264,11 +264,11 @@ public class CartagoVerticle extends AbstractVerticle {
                     ))));
                 a.getFocusedBy().forEach(Failable.asConsumer(
                     focusingAgent -> this.focus(w.getAgents()
-                      .stream()
-                      .filter(ag -> ag.getName().equals(focusingAgent))
-                      .findFirst().orElseThrow()
-                      .getAgentUri(), w.getName(), a.getName()
-                    )
+                    .stream()
+                    .filter(ag -> ag.getName().equals(focusingAgent))
+                    .findFirst().orElseThrow()
+                    .getAgentUri(), w.getName(), a.getName()
+                  )
                   ));
               }),
                   () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->

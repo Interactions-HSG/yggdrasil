@@ -11,7 +11,7 @@
     {
       "name" : "test_agent",
       "agent-uri" : "http://localhost:8080/agents/test",
-      "callback-uri" : "http://localhost:8081"
+      "callback-uri" : "http://localhost:8081/"
     }
   ],
   "environment-config" : {

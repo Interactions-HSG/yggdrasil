@@ -55,7 +55,7 @@ public class CartagoVerticleTDTest {
   private static final String TEST_AGENT_BODY = "test_agent";
   private static final String FOCUSING_AGENT_IRI = "http://localhost:8080/agents/focusing_agent";
   private static final String TEST_AGENT_BODY_URI =
-      "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test_agent/";
+      "http://localhost:8080/workspaces/" + SUB_WORKSPACE_NAME + "/artifacts/body_test_agent";
   private static final String ADDER_SEMANTIC_TYPE = "http://example.org/Adder";
   private static final String MATH_SEMANTIC_TYPE = "http://example.org/Math";
   private static final String COUNTER_SEMANTIC_TYPE = "http://example.org/Counter";
@@ -1225,7 +1225,7 @@ public class CartagoVerticleTDTest {
         (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
             this.notificationQueue.take();
     Assertions.assertEquals(
-        getArtifactsIriFromWorkspace(workspace) + artifact + "/",
+        getArtifactsIriFromWorkspace(workspace) + artifact,
         notifyPropertyMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );

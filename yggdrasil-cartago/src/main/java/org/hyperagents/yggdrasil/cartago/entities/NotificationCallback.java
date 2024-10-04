@@ -54,7 +54,7 @@ public class NotificationCallback implements ICartagoCallback {
             .flatMap(Optional::stream)
             .forEach(p -> this.messagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                    this.httpConfig.getArtifactUriTrailingSlash(
+                    this.httpConfig.getArtifactUri(
                         workspaceName,
                         artifactName
                     ),
@@ -77,7 +77,7 @@ public class NotificationCallback implements ICartagoCallback {
           .flatMap(Arrays::stream)
           .forEach(p -> this.messagebox.sendMessage(
               new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                  this.httpConfig.getArtifactUriTrailingSlash(
+                  this.httpConfig.getArtifactUri(
                       workspaceName,
                       artifactName
                   ),

@@ -104,6 +104,7 @@ public class EnvironmentConfigurationTest {
   @AfterEach
   public void tearDown(final Vertx vertx, final VertxTestContext ctx) {
     vertx.close().onComplete(ctx.succeedingThenComplete());
+    this.client.close();
   }
 
   @Test

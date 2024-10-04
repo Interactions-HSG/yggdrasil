@@ -206,7 +206,7 @@ public class RdfStoreVerticleCreateTest {
             final var entityUpdatedMessage =
                 (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH + "test/",
+                WORKSPACES_PATH + "test",
                 entityUpdatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
