@@ -19,17 +19,14 @@ public final class NotificationSubscriberRegistry {
   }
 
   public Set<String> getCallbackIris(final String entityIri) {
-    System.out.println("Getting callbacks for " + entityIri);
     return new HashSet<>(this.subscriptions.get(entityIri));
   }
 
   public void addCallbackIri(final String entityIri, final String callbackIri) {
-    System.out.println("Registering callback for " + entityIri + " at " + callbackIri);
     this.subscriptions.put(entityIri, callbackIri);
   }
 
   public void removeCallbackIri(final String entityIri, final String callbackIri) {
-    System.out.println("Removing callback for " + entityIri + " at " + callbackIri);
     this.subscriptions.remove(entityIri, callbackIri);
   }
 }
