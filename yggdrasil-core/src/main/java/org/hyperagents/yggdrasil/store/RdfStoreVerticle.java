@@ -657,7 +657,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         .endsWith("/")
                         ? workspaceIri.toString().substring(0, workspaceIri.toString().length() - 1)
                         : workspaceIri.toString();
-                    System.out.println("Entity changed: " + workspaceIriWIthoutTrailingSlash);
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
                         workspaceIriWIthoutTrailingSlash,
