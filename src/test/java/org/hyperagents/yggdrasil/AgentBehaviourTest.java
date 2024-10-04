@@ -1,16 +1,19 @@
 package org.hyperagents.yggdrasil;
 
+import static org.hyperagents.yggdrasil.TConstants.ACTION_NAME;
 import static org.hyperagents.yggdrasil.TConstants.AGENT_ID_HEADER;
 import static org.hyperagents.yggdrasil.TConstants.AGENT_LOCALNAME_HEADER;
 import static org.hyperagents.yggdrasil.TConstants.ARTIFACTS_PATH;
 import static org.hyperagents.yggdrasil.TConstants.ARTIFACT_CLASS;
 import static org.hyperagents.yggdrasil.TConstants.ARTIFACT_NAME;
 import static org.hyperagents.yggdrasil.TConstants.CALLBACK_URL;
+import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_ACTION_NAME;
 import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_CLASS;
 import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_NAME;
 import static org.hyperagents.yggdrasil.TConstants.CREATED_STATUS_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.ENABLED;
 import static org.hyperagents.yggdrasil.TConstants.ENVIRONMENT_CONFIG;
+import static org.hyperagents.yggdrasil.TConstants.EVENT_TYPE;
 import static org.hyperagents.yggdrasil.TConstants.HINT_HEADER;
 import static org.hyperagents.yggdrasil.TConstants.HMAS;
 import static org.hyperagents.yggdrasil.TConstants.HMASEnv;
@@ -20,16 +23,15 @@ import static org.hyperagents.yggdrasil.TConstants.HUB_MODE_PARAM;
 import static org.hyperagents.yggdrasil.TConstants.HUB_MODE_SUBSCRIBE;
 import static org.hyperagents.yggdrasil.TConstants.HUB_PATH;
 import static org.hyperagents.yggdrasil.TConstants.HUB_TOPIC_PARAM;
-import static org.hyperagents.yggdrasil.TConstants.INIT_PARAMS;
 import static org.hyperagents.yggdrasil.TConstants.MAIN_WORKSPACE_NAME;
 import static org.hyperagents.yggdrasil.TConstants.NOTIFICATION_CONFIG;
 import static org.hyperagents.yggdrasil.TConstants.OK_STATUS_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.ONTOLOGY_SPECIFIED_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.REPRESENTATIONS_EQUAL_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.RESPONSE_BODY_EMPTY_MESSAGE;
-import static org.hyperagents.yggdrasil.TConstants.SUB_WORKSPACE_NAME;
 import static org.hyperagents.yggdrasil.TConstants.TD;
 import static org.hyperagents.yggdrasil.TConstants.TDEnv;
+import static org.hyperagents.yggdrasil.TConstants.TEST_AGENT_BODY_NAME;
 import static org.hyperagents.yggdrasil.TConstants.TEST_AGENT_ID;
 import static org.hyperagents.yggdrasil.TConstants.TEST_AGENT_NAME;
 import static org.hyperagents.yggdrasil.TConstants.TEST_HOST;
@@ -39,11 +41,9 @@ import static org.hyperagents.yggdrasil.TConstants.WORKSPACES_PATH;
 import static org.hyperagents.yggdrasil.TConstants.assertEqualsHMASDescriptions;
 import static org.hyperagents.yggdrasil.TConstants.assertEqualsThingDescriptions;
 
-import com.google.common.net.HttpHeaders;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -68,12 +68,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 
 /**
- * Tests the main functionality -> system tests.
+ * Tests regarding notifications being sent upon changes in the environment.
  */
 @SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
 @ExtendWith(VertxExtension.class)
-public class MainVerticleTest {
-
+public class AgentBehaviourTest {
 
   private List<Promise<Map.Entry<String, String>>> callbackMessages;
   private WebClient client;
@@ -88,7 +87,6 @@ public class MainVerticleTest {
    */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx, final TestInfo testInfo) {
-
     final JsonObject env;
     final String testName = testInfo.getTestMethod().orElseThrow().getName();
     if (testName.contains(TD.toUpperCase(Locale.ENGLISH))) {
@@ -98,7 +96,6 @@ public class MainVerticleTest {
     } else {
       throw new RuntimeException(ONTOLOGY_SPECIFIED_MESSAGE);
     }
-
     this.client = WebClient.create(vertx);
     this.callbackMessages =
         Stream.generate(Promise::<Map.Entry<String, String>>promise)
@@ -146,76 +143,41 @@ public class MainVerticleTest {
 
   @Test
   public void testRunTD(final VertxTestContext ctx) throws URISyntaxException, IOException {
-    final var platformRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/platform_test_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
     final var workspaceRepresentation =
         Files.readString(
             Path.of(ClassLoader.getSystemResource("td/output_test_workspace_td.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    final var subWorkspaceRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/output_sub_workspace_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var workspaceWithSubWorkspaceRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
     final var artifactRepresentation =
         Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_sub_td.ttl").toURI()),
+            Path.of(ClassLoader.getSystemResource("td/c0_counter_artifact_test_td.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    final var subWorkspaceWithArtifactAndBodyRepresentation =
+    final var testAgentBodyRepresentation =
         Files.readString(
-            Path.of(ClassLoader.getSystemResource("td/sub_workspace_c0_body.ttl").toURI()),
+            Path.of(ClassLoader.getSystemResource("td/test_agent_body_test_td.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
-        .sendJsonObject(JsonObject.of(
-            HUB_MODE_PARAM,
-            HUB_MODE_SUBSCRIBE,
-            HUB_TOPIC_PARAM,
-            this.getUrl("/"),
-            HUB_CALLBACK_PARAM,
-            CALLBACK_URL
-        ))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, HUB_PATH)
-            .sendJsonObject(JsonObject.of(
-                HUB_MODE_PARAM,
-                HUB_MODE_SUBSCRIBE,
-                HUB_TOPIC_PARAM,
-                this.getUrl(WORKSPACES_PATH),
-                HUB_CALLBACK_PARAM,
-                CALLBACK_URL
-            )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
-            .send())
+    final var workspaceWithBodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("td/test_workspace_body_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var workspaceWithArtifactRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("td/test_workspace_c0_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var workspaceWithArtifactAndBodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("td/test_workspace_c0_body_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    this.client
+        .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_CREATED,
@@ -226,32 +188,7 @@ public class MainVerticleTest {
               workspaceRepresentation,
               r.bodyAsString()
           );
-        })
-        .compose(r -> this.callbackMessages.getFirst().future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl("/"),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              platformRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(1).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              workspaceRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.client
+        }).compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
@@ -268,72 +205,7 @@ public class MainVerticleTest {
               OK_STATUS_MESSAGE
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .putHeader(HINT_HEADER, SUB_WORKSPACE_NAME)
-            .send())
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_CREATED,
-              r.statusCode(),
-              CREATED_STATUS_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              subWorkspaceRepresentation,
-              r.bodyAsString()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(2).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              workspaceWithSubWorkspaceRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(3).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsThingDescriptions(
-              subWorkspaceRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
-            .send())
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, HUB_PATH)
-            .sendJsonObject(JsonObject.of(
-                HUB_MODE_PARAM,
-                HUB_MODE_SUBSCRIBE,
-                HUB_TOPIC_PARAM,
-                this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
-                HUB_CALLBACK_PARAM,
-                CALLBACK_URL
-            )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
+        }).compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
@@ -341,34 +213,40 @@ public class MainVerticleTest {
                 HUB_TOPIC_PARAM,
                 this.getUrl(
                     WORKSPACES_PATH
-                        + SUB_WORKSPACE_NAME
+                        + MAIN_WORKSPACE_NAME
                         + ARTIFACTS_PATH
                 ),
                 HUB_CALLBACK_PARAM,
                 CALLBACK_URL
-            )))
-        .onSuccess(r -> {
+            ))
+        ).onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
+        }).compose(r -> this.client
             .post(
                 TEST_PORT,
                 TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/join"
+            )
+            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send()
+        ).compose(r -> this.client
+            .post(
+                TEST_PORT,
+                TEST_HOST,
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH
             )
             .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
             .sendJsonObject(JsonObject.of(
                 ARTIFACT_NAME,
                 COUNTER_ARTIFACT_NAME,
                 ARTIFACT_CLASS,
-                COUNTER_ARTIFACT_CLASS,
-                INIT_PARAMS,
-                JsonArray.of(5)
+                COUNTER_ARTIFACT_CLASS
             )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -381,22 +259,46 @@ public class MainVerticleTest {
               r.bodyAsString()
           );
         })
-        .compose(r -> this.callbackMessages.get(4).future())
+        .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
           assertEqualsThingDescriptions(
-              subWorkspaceWithArtifactAndBodyRepresentation,
+              workspaceWithBodyRepresentation,
               m.getValue()
           );
         })
-        .compose(r -> this.callbackMessages.get(5).future())
+        .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          assertEqualsThingDescriptions(
+              testAgentBodyRepresentation,
+              m.getValue()
+          );
+        })
+        .compose(r -> this.callbackMessages.get(2).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          assertEqualsThingDescriptions(
+              workspaceWithArtifactAndBodyRepresentation,
+              m.getValue()
+          );
+        })
+        .compose(r -> this.callbackMessages.get(3).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -406,145 +308,17 @@ public class MainVerticleTest {
           );
         })
         .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/focus"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .sendJsonObject(JsonObject.of(
-                ARTIFACT_NAME,
-                COUNTER_ARTIFACT_NAME,
-                "callbackIri",
-                CALLBACK_URL
-            )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertEquals(
-              String.valueOf(HttpStatus.SC_OK),
-              r.bodyAsString(),
-              OK_STATUS_MESSAGE
-          );
-        })
-        .compose(r -> this.callbackMessages.get(6).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(
-                  WORKSPACES_PATH
-                      + SUB_WORKSPACE_NAME
-                      + ARTIFACTS_PATH
-                      + COUNTER_ARTIFACT_NAME
-              ),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          Assertions.assertEquals(
-              "count(5)",
-              m.getValue(),
-              REPRESENTATIONS_EQUAL_MESSAGE
-          );
-        })
-        .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH
-                    + SUB_WORKSPACE_NAME
-                    + ARTIFACTS_PATH
-                    + COUNTER_ARTIFACT_NAME
-                    + "/increment"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .send())
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.callbackMessages.get(7).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(
-                  WORKSPACES_PATH
-                      + SUB_WORKSPACE_NAME
-                      + ARTIFACTS_PATH
-                      + COUNTER_ARTIFACT_NAME
-              ),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          Assertions.assertEquals(
-              "count(6)",
-              m.getValue(),
-              REPRESENTATIONS_EQUAL_MESSAGE
-          );
-        })
-        .onComplete(ctx.succeedingThenComplete());
-  }
-
-  @Test
-  public void testRunHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
-    final var platformRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/platform_test_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var workspaceRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/output_test_workspace_hmas.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var subWorkspaceRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/output_sub_workspace_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var workspaceWithSubWorkspaceRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/test_workspace_sub_hmas.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var artifactRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/c0_counter_artifact_sub_hmas.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    final var subWorkspaceWithArtifactAndBodyRepresentation =
-        Files.readString(
-            Path.of(ClassLoader.getSystemResource("hmas/sub_workspace_c0_body.ttl").toURI()),
-            StandardCharsets.UTF_8
-        );
-    this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
-        .sendJsonObject(JsonObject.of(
-            HUB_MODE_PARAM,
-            HUB_MODE_SUBSCRIBE,
-            HUB_TOPIC_PARAM,
-            this.getUrl("/"),
-            HUB_CALLBACK_PARAM,
-            CALLBACK_URL
-        ))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
                 HUB_MODE_SUBSCRIBE,
                 HUB_TOPIC_PARAM,
-                this.getUrl(WORKSPACES_PATH),
+                this.getUrl(
+                    WORKSPACES_PATH
+                        + MAIN_WORKSPACE_NAME
+                        + ARTIFACTS_PATH
+                        + TEST_AGENT_BODY_NAME
+                ),
                 HUB_CALLBACK_PARAM,
                 CALLBACK_URL
             )))
@@ -556,11 +330,147 @@ public class MainVerticleTest {
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+        .compose(r ->
+            this.client
+                .post(
+                    TEST_PORT,
+                    TEST_HOST,
+                    WORKSPACES_PATH
+                        + MAIN_WORKSPACE_NAME
+                        + ARTIFACTS_PATH
+                        + COUNTER_ARTIFACT_NAME
+                        + "/increment"
+                )
+                .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+                .send())
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
+        })
+        .compose(r -> this.callbackMessages.get(4).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(
+                  WORKSPACES_PATH
+                      + MAIN_WORKSPACE_NAME
+                      + ARTIFACTS_PATH
+                      + TEST_AGENT_BODY_NAME
+              ),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          Assertions.assertEquals(
+              JsonObject
+                  .of(
+                      ARTIFACT_NAME,
+                      COUNTER_ARTIFACT_NAME,
+                      ACTION_NAME,
+                      COUNTER_ARTIFACT_ACTION_NAME,
+                      EVENT_TYPE,
+                      "actionRequested"
+                  )
+                  .encode(),
+              m.getValue(),
+              REPRESENTATIONS_EQUAL_MESSAGE
+          );
+        })
+        .compose(r -> this.callbackMessages.get(5).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(
+                  WORKSPACES_PATH
+                      + MAIN_WORKSPACE_NAME
+                      + ARTIFACTS_PATH
+                      + TEST_AGENT_BODY_NAME
+              ),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          Assertions.assertEquals(
+              JsonObject
+                  .of(
+                      ARTIFACT_NAME,
+                      COUNTER_ARTIFACT_NAME,
+                      ACTION_NAME,
+                      COUNTER_ARTIFACT_ACTION_NAME,
+                      EVENT_TYPE,
+                      "actionSucceeded"
+                  )
+                  .encode(),
+              m.getValue(),
+              REPRESENTATIONS_EQUAL_MESSAGE
+          );
+        }).compose(r -> this.client.post(TEST_PORT, TEST_HOST,
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/leave")
             .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
-            .send())
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send()
+        ).onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          assertEqualsThingDescriptions(testAgentBodyRepresentation, r.bodyAsString());
+        })
+        .compose(r -> this.callbackMessages.get(6).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          assertEqualsThingDescriptions(workspaceWithArtifactRepresentation, m.getValue());
+        })
+        .compose(r -> this.callbackMessages.get(7).future())
+        .onSuccess(m -> Assertions.assertEquals(
+            this.getUrl(WORKSPACES_PATH
+                + MAIN_WORKSPACE_NAME
+                + ARTIFACTS_PATH
+                + TEST_AGENT_BODY_NAME),
+            m.getKey(),
+            URIS_EQUAL_MESSAGE
+        ))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testRunHMAS(final VertxTestContext ctx) throws URISyntaxException, IOException {
+    final var workspaceRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("hmas/output_test_workspace_hmas.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var artifactRepresentation =
+        Files.readString(
+            Path.of(
+                ClassLoader.getSystemResource("hmas/c0_counter_artifact_test_hmas.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var testAgentBodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("hmas/test_agent_body_test_hmas.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var workspaceWithArtifactAndBodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("hmas/test_workspace_c0_body_hmas.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var workspaceWithBodyRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("hmas/test_workspace_body_hmas.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    this.client
+        .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+        .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+        .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_CREATED,
@@ -570,30 +480,6 @@ public class MainVerticleTest {
           assertEqualsHMASDescriptions(
               workspaceRepresentation,
               r.bodyAsString()
-          );
-        })
-        .compose(r -> this.callbackMessages.getFirst().future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl("/"),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              platformRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(1).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              workspaceRepresentation,
-              m.getValue()
           );
         })
         .compose(r -> this.client
@@ -615,71 +501,6 @@ public class MainVerticleTest {
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
         .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .putHeader(HINT_HEADER, SUB_WORKSPACE_NAME)
-            .send())
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_CREATED,
-              r.statusCode(),
-              CREATED_STATUS_MESSAGE
-          );
-
-          assertEqualsHMASDescriptions(
-              subWorkspaceRepresentation,
-              r.bodyAsString()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(2).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              workspaceWithSubWorkspaceRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.callbackMessages.get(3).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          assertEqualsHMASDescriptions(
-              subWorkspaceRepresentation,
-              m.getValue()
-          );
-        })
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
-            .send())
-        .compose(r -> this.client
-            .post(TEST_PORT, TEST_HOST, HUB_PATH)
-            .sendJsonObject(JsonObject.of(
-                HUB_MODE_PARAM,
-                HUB_MODE_SUBSCRIBE,
-                HUB_TOPIC_PARAM,
-                this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
-                HUB_CALLBACK_PARAM,
-                CALLBACK_URL
-            )))
-        .onSuccess(r -> {
-          Assertions.assertEquals(
-              HttpStatus.SC_OK,
-              r.statusCode(),
-              OK_STATUS_MESSAGE
-          );
-          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
-        })
-        .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
                 HUB_MODE_PARAM,
@@ -687,7 +508,7 @@ public class MainVerticleTest {
                 HUB_TOPIC_PARAM,
                 this.getUrl(
                     WORKSPACES_PATH
-                        + SUB_WORKSPACE_NAME
+                        + MAIN_WORKSPACE_NAME
                         + ARTIFACTS_PATH
                 ),
                 HUB_CALLBACK_PARAM,
@@ -705,16 +526,34 @@ public class MainVerticleTest {
             .post(
                 TEST_PORT,
                 TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + "/join"
+            )
+            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .putHeader(AGENT_LOCALNAME_HEADER, TEST_AGENT_NAME)
+            .send())
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          assertEqualsHMASDescriptions(
+              testAgentBodyRepresentation,
+              r.bodyAsString()
+          );
+        })
+        .compose(r -> this.client
+            .post(
+                TEST_PORT,
+                TEST_HOST,
+                WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH
             )
             .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
             .sendJsonObject(JsonObject.of(
                 ARTIFACT_NAME,
                 COUNTER_ARTIFACT_NAME,
-                "artifactClass",
-                COUNTER_ARTIFACT_CLASS,
-                "initParams",
-                JsonArray.of(5)
+                ARTIFACT_CLASS,
+                COUNTER_ARTIFACT_CLASS
             )))
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -727,22 +566,46 @@ public class MainVerticleTest {
               r.bodyAsString()
           );
         })
-        .compose(r -> this.callbackMessages.get(4).future())
+        .compose(r -> this.callbackMessages.getFirst().future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
           assertEqualsHMASDescriptions(
-              subWorkspaceWithArtifactAndBodyRepresentation,
+              workspaceWithBodyRepresentation,
               m.getValue()
           );
         })
-        .compose(r -> this.callbackMessages.get(5).future())
+        .compose(r -> this.callbackMessages.get(1).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH + SUB_WORKSPACE_NAME + ARTIFACTS_PATH),
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          assertEqualsHMASDescriptions(
+              testAgentBodyRepresentation,
+              m.getValue()
+          );
+        })
+        .compose(r -> this.callbackMessages.get(2).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          assertEqualsHMASDescriptions(
+              workspaceWithArtifactAndBodyRepresentation,
+              m.getValue()
+          );
+        })
+        .compose(r -> this.callbackMessages.get(3).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
@@ -752,16 +615,18 @@ public class MainVerticleTest {
           );
         })
         .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/focus"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+            .post(TEST_PORT, TEST_HOST, HUB_PATH)
             .sendJsonObject(JsonObject.of(
-                ARTIFACT_NAME,
-                COUNTER_ARTIFACT_NAME,
-                "callbackIri",
+                HUB_MODE_PARAM,
+                HUB_MODE_SUBSCRIBE,
+                HUB_TOPIC_PARAM,
+                this.getUrl(
+                    WORKSPACES_PATH
+                        + MAIN_WORKSPACE_NAME
+                        + ARTIFACTS_PATH
+                        + TEST_AGENT_BODY_NAME
+                ),
+                HUB_CALLBACK_PARAM,
                 CALLBACK_URL
             )))
         .onSuccess(r -> {
@@ -770,42 +635,21 @@ public class MainVerticleTest {
               r.statusCode(),
               OK_STATUS_MESSAGE
           );
-          Assertions.assertEquals(
-              String.valueOf(HttpStatus.SC_OK),
-              r.bodyAsString(),
-              "The response body should contain the OK status code"
-          );
+          Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(6).future())
-        .onSuccess(m -> {
-          Assertions.assertEquals(
-              this.getUrl(
-                  WORKSPACES_PATH
-                      + SUB_WORKSPACE_NAME
-                      + ARTIFACTS_PATH
-                      + COUNTER_ARTIFACT_NAME
-              ),
-              m.getKey(),
-              URIS_EQUAL_MESSAGE
-          );
-          Assertions.assertEquals(
-              "count(5)",
-              m.getValue(),
-              REPRESENTATIONS_EQUAL_MESSAGE
-          );
-        })
-        .compose(r -> this.client
-            .post(
-                TEST_PORT,
-                TEST_HOST,
-                WORKSPACES_PATH
-                    + SUB_WORKSPACE_NAME
-                    + ARTIFACTS_PATH
-                    + COUNTER_ARTIFACT_NAME
-                    + "/increment"
-            )
-            .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
-            .send())
+        .compose(r ->
+            this.client
+                .post(
+                    TEST_PORT,
+                    TEST_HOST,
+                    WORKSPACES_PATH
+                        + MAIN_WORKSPACE_NAME
+                        + ARTIFACTS_PATH
+                        + COUNTER_ARTIFACT_NAME
+                        + "/increment"
+                )
+                .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
+                .send())
         .onSuccess(r -> {
           Assertions.assertEquals(
               HttpStatus.SC_OK,
@@ -814,20 +658,56 @@ public class MainVerticleTest {
           );
           Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(7).future())
+        .compose(r -> this.callbackMessages.get(4).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(
                   WORKSPACES_PATH
-                      + SUB_WORKSPACE_NAME
+                      + MAIN_WORKSPACE_NAME
                       + ARTIFACTS_PATH
-                      + COUNTER_ARTIFACT_NAME
+                      + TEST_AGENT_BODY_NAME
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              "count(6)",
+              JsonObject
+                  .of(
+                      ARTIFACT_NAME,
+                      COUNTER_ARTIFACT_NAME,
+                      ACTION_NAME,
+                      COUNTER_ARTIFACT_ACTION_NAME,
+                      EVENT_TYPE,
+                      "actionRequested"
+                  )
+                  .encode(),
+              m.getValue(),
+              REPRESENTATIONS_EQUAL_MESSAGE
+          );
+        })
+        .compose(r -> this.callbackMessages.get(5).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(
+                  WORKSPACES_PATH
+                      + MAIN_WORKSPACE_NAME
+                      + ARTIFACTS_PATH
+                      + TEST_AGENT_BODY_NAME
+              ),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
+          Assertions.assertEquals(
+              JsonObject
+                  .of(
+                      ARTIFACT_NAME,
+                      COUNTER_ARTIFACT_NAME,
+                      ACTION_NAME,
+                      COUNTER_ARTIFACT_ACTION_NAME,
+                      EVENT_TYPE,
+                      "actionSucceeded"
+                  )
+                  .encode(),
               m.getValue(),
               REPRESENTATIONS_EQUAL_MESSAGE
           );
@@ -835,7 +715,9 @@ public class MainVerticleTest {
         .onComplete(ctx.succeedingThenComplete());
   }
 
+
   private String getUrl(final String path) {
     return "http://" + TEST_HOST + ":" + TEST_PORT + path;
   }
+
 }

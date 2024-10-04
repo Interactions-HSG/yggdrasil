@@ -313,7 +313,6 @@ public class BodyNotificationTest {
                         + MAIN_WORKSPACE_NAME
                         + ARTIFACTS_PATH
                         + TEST_AGENT_BODY_NAME
-                        + "/"
                 ),
                 HUB_CALLBACK_PARAM,
                 CALLBACK_URL
@@ -355,7 +354,6 @@ public class BodyNotificationTest {
                       + MAIN_WORKSPACE_NAME
                       + ARTIFACTS_PATH
                       + TEST_AGENT_BODY_NAME
-                      + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -383,7 +381,6 @@ public class BodyNotificationTest {
                       + MAIN_WORKSPACE_NAME
                       + ARTIFACTS_PATH
                       + TEST_AGENT_BODY_NAME
-                      + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -593,7 +590,6 @@ public class BodyNotificationTest {
                         + MAIN_WORKSPACE_NAME
                         + ARTIFACTS_PATH
                         + TEST_AGENT_BODY_NAME
-                        + "/"
                 ),
                 HUB_CALLBACK_PARAM,
                 CALLBACK_URL
@@ -635,7 +631,6 @@ public class BodyNotificationTest {
                       + MAIN_WORKSPACE_NAME
                       + ARTIFACTS_PATH
                       + TEST_AGENT_BODY_NAME
-                      + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE
@@ -663,7 +658,6 @@ public class BodyNotificationTest {
                       + MAIN_WORKSPACE_NAME
                       + ARTIFACTS_PATH
                       + TEST_AGENT_BODY_NAME
-                      + "/"
               ),
               m.getKey(),
               URIS_EQUAL_MESSAGE

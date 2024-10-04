@@ -164,7 +164,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                             response.body()
                         )
                     ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                        this.getHeaders(requestUri + nameResponse.body() + "/")))
+                        this.getHeaders(requestUri + nameResponse.body())))
             )
             .onFailure(context::fail)
     );
@@ -226,7 +226,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                             response.body()
                         )
                     ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                        this.getHeaders(requestUri + nameResponse.body() + "/")))
+                        this.getHeaders(requestUri + nameResponse.body())))
             )
             .onFailure(r -> {
                   if (r instanceof ReplyException e) {
@@ -294,7 +294,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var artifactName = representation.getString("artifactName");
     this.notificationMessagebox
         .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
-            this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName),
+            this.httpConfig.getArtifactUri(workspaceName, artifactName),
             representation.getString("callbackIri")
         ))
         .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(

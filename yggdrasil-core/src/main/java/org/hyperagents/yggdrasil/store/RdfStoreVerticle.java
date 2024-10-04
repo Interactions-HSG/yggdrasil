@@ -651,18 +651,25 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         RdfModelUtils.createIri("https://purl.org/hmas/jacamo/Body")
                     );
                     this.store.replaceEntityModel(workspaceIri, workspaceModel);
+                    final var workspaceIriWIthoutTrailingSlash = workspaceIri.toString()
+                        .endsWith("/")
+                        ? workspaceIri.toString().substring(0, workspaceIri.toString().length() - 1)
+                        : workspaceIri.toString();
                     this.dispatcherMessagebox.sendMessage(
                       new HttpNotificationDispatcherMessage.EntityChanged(
-                        workspaceIri.toString(),
+                        workspaceIriWIthoutTrailingSlash,
                           RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
                               this.httpConfig.getBaseUriTrailingSlash())
                       )
                     );
                   }));
               this.store.removeEntityModel(requestIri);
+              final var requestIriWithoutTrailingSlash = requestIri.toString().endsWith("/")
+                  ? requestIri.toString().substring(0, requestIri.toString().length() - 1)
+                  : requestIri.toString();
               this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.EntityDeleted(
-                  requestIri.toString(),
+                  requestIriWithoutTrailingSlash,
                   entityModelString
                 )
               );

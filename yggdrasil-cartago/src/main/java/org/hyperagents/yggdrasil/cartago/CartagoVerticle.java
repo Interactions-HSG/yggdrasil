@@ -425,7 +425,7 @@ public class CartagoVerticle extends AbstractVerticle {
         )
         .forEach(p -> this.dispatcherMessagebox.sendMessage(
             new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName),
+                this.httpConfig.getArtifactUri(workspaceName, artifactName),
                 p.toString()
             )
         ));
@@ -526,7 +526,7 @@ public class CartagoVerticle extends AbstractVerticle {
     final var agentName = this.getAgentNameFromAgentUri(agentUri, workspaceName);
     this.dispatcherMessagebox.sendMessage(
         new HttpNotificationDispatcherMessage.ActionRequested(
-            this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName),
+            this.httpConfig.getAgentBodyUri(workspaceName, agentName),
             this.getActionNotificationContent(artifactName, action).encode()
         )
     );
@@ -537,7 +537,7 @@ public class CartagoVerticle extends AbstractVerticle {
           if (e instanceof ActionSucceededEvent) {
             this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.ActionSucceeded(
-                    this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName),
+                    this.httpConfig.getAgentBodyUri(workspaceName, agentName),
                     this.getActionNotificationContent(artifactName, action).encode()
                 )
             );
@@ -545,7 +545,7 @@ public class CartagoVerticle extends AbstractVerticle {
           } else if (e instanceof ActionFailedEvent f) {
             this.dispatcherMessagebox.sendMessage(
                 new HttpNotificationDispatcherMessage.ActionFailed(
-                    this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName),
+                    this.httpConfig.getAgentBodyUri(workspaceName, agentName),
                     this.getActionNotificationContent(artifactName, action)
                         .put("cause", f.getFailureMsg())
                         .encode()
