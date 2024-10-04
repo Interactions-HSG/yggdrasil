@@ -173,7 +173,7 @@ public class RdfStoreVerticleDeleteTest {
                 bodyDeletionMessage.content()
             );
             Assertions.assertEquals(
-                TEST_AGENT_BODY_URI,
+                TEST_AGENT_BODY_URI + "/",
                 bodyDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -251,7 +251,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            SUB_WORKSPACE_URI
+            SUB_WORKSPACE_URI + "/"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -266,7 +266,7 @@ public class RdfStoreVerticleDeleteTest {
                 parentWorkspaceUpdateMessage.content()
             );
             Assertions.assertEquals(
-                TEST_WORKSPACE_URI,
+                TEST_WORKSPACE_URI + "/",
                 parentWorkspaceUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -349,7 +349,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            COUNTER_ARTIFACT_URI
+            COUNTER_ARTIFACT_URI + "/"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -437,7 +437,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            TEST_AGENT_BODY_URI
+            TEST_AGENT_BODY_URI + "/"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -523,9 +523,7 @@ public class RdfStoreVerticleDeleteTest {
         )).onSuccess(r -> {
           try {
             this.notificationQueue.take();
-            System.out.println("1");
             this.notificationQueue.take();
-            System.out.println("2");
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -538,9 +536,7 @@ public class RdfStoreVerticleDeleteTest {
         ))).onSuccess(r -> {
           try {
             this.notificationQueue.take();
-            System.out.println("1");
             this.notificationQueue.take();
-            System.out.println("2");
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -552,9 +548,7 @@ public class RdfStoreVerticleDeleteTest {
         ))).onSuccess(r -> {
           try {
             this.notificationQueue.take();
-            System.out.println("1");
             this.notificationQueue.take();
-            System.out.println("2");
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -568,9 +562,7 @@ public class RdfStoreVerticleDeleteTest {
         .onSuccess(r -> {
           try {
             this.notificationQueue.take();
-            System.out.println("1");
             this.notificationQueue.take();
-            System.out.println("2");
           } catch (final Exception e) {
             ctx.failNow(e);
           }
