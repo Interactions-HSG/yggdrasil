@@ -474,9 +474,12 @@ public class CartagoVerticle extends AbstractVerticle {
       final String apiKey,
       final String storeResponse,
       final String context
-  ) throws CartagoException, AgentNotFoundException {
+  ) throws CartagoException, AgentNotFoundException, ArtifactNotFoundException {
 
     final var hypermediaArtifact = registry.getArtifact(artifactName);
+    if (hypermediaArtifact == null) {
+      throw new ArtifactNotFoundException(artifactName);
+    }
     if (apiKey != null) {
       hypermediaArtifact.setApiKey(apiKey);
     }
@@ -487,12 +490,7 @@ public class CartagoVerticle extends AbstractVerticle {
       return Future.failedFuture("No action");
     }
 
-    final Optional<String> payload;
-    try {
-      payload = hypermediaArtifact.handleInput(storeResponse, action, context);
-    } catch (Exception e) {
-      return Future.failedFuture(e);
-    }
+    final Optional<String> payload = hypermediaArtifact.handleInput(storeResponse, action, context);
 
 
     final var listOfParams = new ArrayList<OpFeedbackParam<Object>>();
@@ -501,11 +499,10 @@ public class CartagoVerticle extends AbstractVerticle {
       listOfParams.add(new OpFeedbackParam<>());
     }
 
-    final Optional<String> finalPayload = payload;
     final var operation =
         payload
             .map(p -> {
-              final var params = CartagoDataBundle.fromJson(finalPayload.get());
+              final var params = CartagoDataBundle.fromJson(payload.get());
 
               return new Op(
                   action,
