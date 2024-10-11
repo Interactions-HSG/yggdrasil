@@ -87,6 +87,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     if (notificationConfig.isEnabled()) {
       td.addAction(websubActions("subscribeTo" + actionName));
       td.addAction(websubActions("unsubscribeFrom" + actionName));
+
     }
   }
 
@@ -136,17 +137,33 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .addThingURI(thingIri + "/#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform");
 
-    addAction(td, "createWorkspaceJson", this.httpConfig.getWorkspacesUri(), POST,
+    addAction(td, "createWorkspaceJson", this.httpConfig.getWorkspacesUriTrailingSlash(), POST,
         "makeWorkspace");
-    addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUri(),
+    addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUriTrailingSlash(),
         "text/turtle", POST, "createWorkspace");
 
-    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
-        "application/sparql-query", GET, "sparqlGetQuery");
-    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
-        "application/sparql-query", POST, "sparqlPostQuery");
+    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUriTrailingSlash()
+        + "query/", "application/sparql-query", GET, "sparqlGetQuery");
+    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUriTrailingSlash()
+            + "query/", "application/sparql-query",
+        POST, "sparqlPostQuery");
 
-    addWebSub(td, "Workspaces");
+
+    if (notificationConfig.isEnabled()) {
+      td.addAction(
+          new ActionAffordance.Builder(
+              "subscribeToWorkspaces",
+              new Form.Builder(this.httpConfig.getWorkspacesUriTrailingSlash())
+                  .setMethodName(HttpMethod.GET.name())
+                  .setContentType("application/json")
+                  .addSubProtocol("websub")
+                  .build()
+          ).build()
+      );
+    }
+
+
+    addWebSub(td, "Platform");
 
     wrapInResourceProfile(td, thingIri + "/", thingIri + "/#platform");
 
@@ -170,12 +187,12 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             .addSemanticType(HMAS + "Workspace");
 
     addAction(td, "createSubWorkspaceJson", thingUri, POST, "makeSubWorkspace");
-    addAction(td, "createSubWorkspaceTurtle",  thingUri,
+    addAction(td, "createSubWorkspaceTurtle", thingUri,
         "text/turtle", POST, "createSubWorkspace");
 
     addHttpSignifiers(td, thingUri, "Workspace");
 
-    addAction(td, "createArtifact", this.httpConfig.getArtifactsUri(workspaceName),
+    addAction(td, "createArtifact", this.httpConfig.getArtifactsUriTrailingSlash(workspaceName),
         "text/turtle", POST, "createArtifact");
 
 
@@ -185,7 +202,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       td.addAction(
               new ActionAffordance.Builder(
                   "makeArtifact",
-                  new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName)).build()
+                  new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName))
+                      .build()
               )
                   .addInputSchema(
                       new ObjectSchema
@@ -224,6 +242,18 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                   ).addSemanticType(JACAMO + "Focus")
                   .build()
           );
+    }
+
+    if (notificationConfig.isEnabled()) {
+      td.addAction(
+          new ActionAffordance.Builder(
+              "getSubWorkspaces",
+              new Form.Builder(this.httpConfig.getWorkspacesUri() + "?parent=" + workspaceName)
+                  .setMethodName(HttpMethod.GET.name())
+                  .addSubProtocol("websub")
+                  .build()
+          ).build()
+      );
     }
 
     addWebSub(td, "Workspace");
@@ -348,7 +378,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .setNamespace("hmas", HMAS)
         .setNamespace("ex", "http://example.org/")
         .setNamespace("jacamo", JACAMO)
-        .setNamespace("websub", "http://example.org/websub#")
+        .setNamespace("websub", HMAS + "websub/")
         .write();
   }
 }

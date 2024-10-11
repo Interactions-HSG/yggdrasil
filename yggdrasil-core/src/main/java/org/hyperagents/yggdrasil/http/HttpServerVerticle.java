@@ -92,6 +92,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/").handler(handler::handleGetEntity);
 
+
+    router.get("/workspaces/").handler(handler::handleRedirectWithoutSlash);
+    // TODO: workspaces should return collection of workspaces, need the websub links as well
+    router.get("/workspaces").handler(handler::handleGetWorkspaces);
+
     router.post("/workspaces/")
       .consumes(TURTLE_CONTENT_TYPE)
         .handler(handler::handleCreateWorkspaceTurtle);
@@ -129,6 +134,11 @@ public class HttpServerVerticle extends AbstractVerticle {
     final var focusRoute = router.post(WORKSPACE_PATH + "/focus")
         .consumes(ContentType.APPLICATION_JSON.getMimeType())
         .handler(handler::handleFocus);
+
+
+    router.get("/workspaces/:wkspid/artifacts/").handler(handler::handleRedirectWithoutSlash);
+    // TODO: artifacts should return collection of artifacts, need the websub links as well
+    router.get("/workspaces/:wkspid/artifacts").handler(handler::handleGetArtifacts);
 
     router.post("/workspaces/:wkspid/artifacts/")
       .consumes(TURTLE_CONTENT_TYPE)

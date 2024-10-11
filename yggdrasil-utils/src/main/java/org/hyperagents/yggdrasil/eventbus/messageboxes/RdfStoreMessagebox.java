@@ -76,6 +76,20 @@ public class RdfStoreMessagebox implements Messagebox<RdfStoreMessage> {
       )
     );
     this.eventBus.registerDefaultCodec(
+        RdfStoreMessage.GetWorkspaces.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.GetWorkspaces.class,
+          new RdfStoreMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
+        RdfStoreMessage.GetArtifacts.class,
+        new GenericMessageCodec<>(
+          RdfStoreMessage.GetArtifacts.class,
+          new RdfStoreMessageMarshaller()
+        )
+    );
+    this.eventBus.registerDefaultCodec(
         RdfStoreMessage.QueryKnowledgeGraph.class,
         new GenericMessageCodec<>(
           RdfStoreMessage.QueryKnowledgeGraph.class,

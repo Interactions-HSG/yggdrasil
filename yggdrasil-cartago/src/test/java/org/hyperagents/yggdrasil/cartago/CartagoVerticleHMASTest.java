@@ -1164,7 +1164,7 @@ public class CartagoVerticleHMASTest {
                 Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
             )))
         .onFailure(t -> Assertions.assertEquals(
-            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            HttpStatus.SC_NOT_FOUND,
             ((ReplyException) t).failureCode(),
             OPERATION_FAIL_MESSAGE
         ))
@@ -1201,7 +1201,7 @@ public class CartagoVerticleHMASTest {
                 Optional.of(CartagoDataBundle.toJson(List.of(2, 2))).toString()
             )))
         .onFailure(t -> Assertions.assertEquals(
-            HttpStatus.SC_INTERNAL_SERVER_ERROR,
+            HttpStatus.SC_NOT_FOUND,
             ((ReplyException) t).failureCode(),
             OPERATION_FAIL_MESSAGE
         ))

@@ -187,7 +187,7 @@ public class RdfStoreVerticleDeleteTest {
                 subWorkspaceDeletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI,
+                SUB_WORKSPACE_URI + "/",
                 subWorkspaceDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -201,7 +201,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI,
+                COUNTER_ARTIFACT_URI + "/",
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -277,7 +277,7 @@ public class RdfStoreVerticleDeleteTest {
                 deletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI,
+                SUB_WORKSPACE_URI + "/",
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -291,7 +291,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI,
+                COUNTER_ARTIFACT_URI + "/",
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
