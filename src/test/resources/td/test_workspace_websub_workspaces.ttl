@@ -1,0 +1,8 @@
+@base<http://localhost:8080/>.
+@prefixhmas:<https://purl.org/hmas/>.
+@prefixtd:<https://www.w3.org/2019/wot/td#>.
+
+<workspaces/test/#workspace>atd:Thing,hmas:Workspace;
+hmas:contains<workspaces/sub/#workspace>.
+
+<workspaces/sub/#workspace>ahmas:Workspace.

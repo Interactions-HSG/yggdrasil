@@ -1,4 +1,5 @@
 @base <http://localhost:8080/> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
@@ -43,8 +44,17 @@
           hctl:forContentType "application/sparql-query";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspaces>;
+    ], [ a td:ActionAffordance;
       td:name "subscribeToWorkspaces";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <workspaces/>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ]
+    ], [ a td:ActionAffordance, websub:subscribeToPlatform;
+      td:name "subscribeToPlatform";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <hub/>;
@@ -61,8 +71,8 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromWorkspaces>;
-      td:name "unsubscribeFromWorkspaces";
+    ], [ a td:ActionAffordance, websub:unsubscribeFromPlatform;
+      td:name "unsubscribeFromPlatform";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <hub/>;

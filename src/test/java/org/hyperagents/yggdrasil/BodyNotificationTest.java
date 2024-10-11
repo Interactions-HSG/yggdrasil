@@ -99,7 +99,7 @@ public class BodyNotificationTest {
     this.client = WebClient.create(vertx);
     this.callbackMessages =
         Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(6)
+            .limit(7)
             .collect(Collectors.toList());
     this.promiseIndex = 0;
     vertx
@@ -156,6 +156,18 @@ public class BodyNotificationTest {
     final var testAgentBodyRepresentation =
         Files.readString(
             Path.of(ClassLoader.getSystemResource("td/test_agent_body_test_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var websubArtifactsRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(
+                "td/test_websub_update_new_artifact.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var websubArtifactsTwoRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(
+                "td/test_websub_update_new_artifact_two.ttl").toURI()),
             StandardCharsets.UTF_8
         );
     final var workspaceWithBodyRepresentation =
@@ -273,12 +285,23 @@ public class BodyNotificationTest {
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
+          Assertions.assertEquals(
+              websubArtifactsRepresentation.replaceAll(" ",""),
+              m.getValue().replaceAll(" ",""));
+        })
+        .compose(r -> this.callbackMessages.get(2).future())
+        .onSuccess(m -> {
+          Assertions.assertEquals(
+              this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
+              m.getKey(),
+              URIS_EQUAL_MESSAGE
+          );
           assertEqualsThingDescriptions(
               testAgentBodyRepresentation,
               m.getValue()
           );
         })
-        .compose(r -> this.callbackMessages.get(2).future())
+        .compose(r -> this.callbackMessages.get(3).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME),
@@ -290,17 +313,16 @@ public class BodyNotificationTest {
               m.getValue()
           );
         })
-        .compose(r -> this.callbackMessages.get(3).future())
+        .compose(r -> this.callbackMessages.get(4).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(WORKSPACES_PATH + MAIN_WORKSPACE_NAME + ARTIFACTS_PATH),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
-          assertEqualsThingDescriptions(
-              artifactRepresentation,
-              m.getValue()
-          );
+          Assertions.assertEquals(
+              websubArtifactsTwoRepresentation.replaceAll(" ",""),
+              m.getValue().replaceAll(" ",""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -346,7 +368,7 @@ public class BodyNotificationTest {
           );
           Assertions.assertNull(r.bodyAsString(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
-        .compose(r -> this.callbackMessages.get(4).future())
+        .compose(r -> this.callbackMessages.get(5).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(
@@ -373,7 +395,7 @@ public class BodyNotificationTest {
               REPRESENTATIONS_EQUAL_MESSAGE
           );
         })
-        .compose(r -> this.callbackMessages.get(5).future())
+        .compose(r -> this.callbackMessages.get(6).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
               this.getUrl(

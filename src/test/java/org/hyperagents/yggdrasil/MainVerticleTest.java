@@ -27,6 +27,7 @@ import static org.hyperagents.yggdrasil.TConstants.OK_STATUS_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.ONTOLOGY_SPECIFIED_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.REPRESENTATIONS_EQUAL_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.RESPONSE_BODY_EMPTY_MESSAGE;
+import static org.hyperagents.yggdrasil.TConstants.SUBSCRIBE_WORKSPACE_PATH;
 import static org.hyperagents.yggdrasil.TConstants.SUB_WORKSPACE_NAME;
 import static org.hyperagents.yggdrasil.TConstants.TD;
 import static org.hyperagents.yggdrasil.TConstants.TDEnv;
@@ -102,7 +103,7 @@ public class MainVerticleTest {
     this.client = WebClient.create(vertx);
     this.callbackMessages =
         Stream.generate(Promise::<Map.Entry<String, String>>promise)
-            .limit(8)
+            .limit(9)
             .collect(Collectors.toList());
     this.promiseIndex = 0;
     vertx
@@ -164,6 +165,24 @@ public class MainVerticleTest {
     final var workspaceWithSubWorkspaceRepresentation =
         Files.readString(
             Path.of(ClassLoader.getSystemResource("td/test_workspace_sub_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var websubArtifactsRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(
+                "td/platform_test_websub_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var websubArtifactsTwoRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(
+                "td/test_workspace_websub_workspaces.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var websubArtifactsThreeRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(
+                "td/sub_websub_update_new_artifact_two.ttl").toURI()),
             StandardCharsets.UTF_8
         );
     final var artifactRepresentation =
@@ -246,10 +265,9 @@ public class MainVerticleTest {
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
-          assertEqualsThingDescriptions(
-              workspaceRepresentation,
-              m.getValue()
-          );
+          Assertions.assertEquals(
+              websubArtifactsRepresentation.replaceAll(" ",""),
+              m.getValue().replaceAll(" ",""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -269,6 +287,23 @@ public class MainVerticleTest {
           );
           Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
         })
+        .compose(r -> this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
+            .sendJsonObject(JsonObject.of(
+                HUB_MODE_PARAM,
+                HUB_MODE_SUBSCRIBE,
+                HUB_TOPIC_PARAM,
+                this.getUrl(SUBSCRIBE_WORKSPACE_PATH + MAIN_WORKSPACE_NAME),
+                HUB_CALLBACK_PARAM,
+                CALLBACK_URL
+            )))
+        .onSuccess(r -> {
+            Assertions.assertEquals(
+                HttpStatus.SC_OK,
+                r.statusCode(),
+                OK_STATUS_MESSAGE
+            );
+            Assertions.assertNull(r.body(), RESPONSE_BODY_EMPTY_MESSAGE);
+            })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + MAIN_WORKSPACE_NAME)
             .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
@@ -301,14 +336,13 @@ public class MainVerticleTest {
         .compose(r -> this.callbackMessages.get(3).future())
         .onSuccess(m -> {
           Assertions.assertEquals(
-              this.getUrl(WORKSPACES_PATH),
+              this.getUrl(SUBSCRIBE_WORKSPACE_PATH + MAIN_WORKSPACE_NAME),
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
-          assertEqualsThingDescriptions(
-              subWorkspaceRepresentation,
-              m.getValue()
-          );
+          Assertions.assertEquals(
+              websubArtifactsTwoRepresentation.replaceAll(" ",""),
+              m.getValue().replaceAll(" ",""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
@@ -400,10 +434,9 @@ public class MainVerticleTest {
               m.getKey(),
               URIS_EQUAL_MESSAGE
           );
-          assertEqualsThingDescriptions(
-              artifactRepresentation,
-              m.getValue()
-          );
+          Assertions.assertEquals(
+              websubArtifactsThreeRepresentation.replaceAll(" ",""),
+              m.getValue().replaceAll(" ",""));
         })
         .compose(r -> this.client
             .post(
