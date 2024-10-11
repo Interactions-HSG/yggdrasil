@@ -102,8 +102,8 @@ public final class HypermediaArtifactRegistry {
     return this.artifactTemplateDescriptions.get(artifactName);
   }
 
-  public String getActionName(final String method) {
-    return this.artifactActionRouter.get(method);
+  public Optional<String> getActionName(final String method) {
+    return Optional.ofNullable(this.artifactActionRouter.get(method));
   }
 
   public String getName() {
@@ -111,7 +111,7 @@ public final class HypermediaArtifactRegistry {
     return "hypermedia_body_" + this.counter;
   }
 
-  public HypermediaArtifact getArtifact(final String artifactName) {
-    return this.artifacts.get(artifactName);
+  public Optional<HypermediaArtifact> getArtifact(final String artifactName) {
+    return Optional.ofNullable(this.artifacts.get(artifactName));
   }
 }

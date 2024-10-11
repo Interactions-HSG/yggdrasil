@@ -598,7 +598,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 }
               })
               .onFailure(
-                  t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
+                  t -> {
+                    if(t instanceof ReplyException e) {
+                      context.response().setStatusCode(e.failureCode()).end();
+                    } else {
+                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+                    }
+                    });
         }).onFailure(
             t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
