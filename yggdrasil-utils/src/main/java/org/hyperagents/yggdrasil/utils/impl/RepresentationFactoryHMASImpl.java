@@ -38,6 +38,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   private static final String CONTENT_TYPE_TURTLE = "text/turtle";
   private static final String HMAS = "https://purl.org/hmas/";
+  private static final String WEBSUB = HMAS + "websub/";
   private static final String JACAMO = "https://purl.org/hmas/jacamo/";
 
   private final HttpInterfaceConfig httpConfig;
@@ -84,9 +85,9 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
                 .setIRIAsString(specs.resourceUri() + "#webSub"
                     + specs.mode().toString().substring(0, 1).toUpperCase(Locale.ENGLISH)
                     + specs.mode().toString().substring(1) + "Input")
-              .addRequiredSemanticType("http://www.example.org/websub#websubsubscription")
+              .addRequiredSemanticType(WEBSUB + "websubsubscription")
               .setRequired(true)
-              .addPropertySpecification("http://www.example.org/websub#topic",
+              .addPropertySpecification(WEBSUB + "topic",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setValue(specs.topicAdress())
@@ -94,14 +95,14 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
                   .setDescription("The topic of the WebSub hub")
                   .build()
               )
-              .addPropertySpecification("http://www.example.org/websub#callback",
+              .addPropertySpecification(WEBSUB + "callback",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setName("hub.callback")
                   .setDescription("The callback URL of the WebSub hub")
                   .build()
               )
-              .addPropertySpecification("http://www.example.org/websub#mode",
+              .addPropertySpecification(WEBSUB + "mode",
                 new StringSpecification.Builder()
                   .setRequired(true)
                   .setValue(specs.mode().name())
@@ -132,10 +133,15 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   @Override
   public String createPlatformRepresentation() {
     final String baseUri = this.httpConfig.getBaseUriTrailingSlash();
-    final String workspaces = this.httpConfig.getWorkspacesUri();
+    final String workspaces = this.httpConfig.getWorkspacesUriTrailingSlash();
     final HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
         .setIRIAsString(baseUri + "#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform")
+        .build();
+
+    final Form getWorkspacesForm = new Form.Builder(this.httpConfig.getWorkspacesUriTrailingSlash())
+        .setIRIAsString(baseUri + "#getWorkspacesForm")
+        .setMethodName(HttpMethod.GET.name())
         .build();
 
     final Form createWorkspaceFormJson = new Form.Builder(workspaces)
@@ -184,10 +190,17 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
           new Signifier.Builder(
               new ActionSpecification.Builder(sparqlPostQueryForm)
             .build()
-        ).setIRIAsString(baseUri + "#sparqlPostQuery").build());
+        ).setIRIAsString(baseUri + "#sparqlPostQuery").build()
+        ).exposeSignifier(
+            new Signifier.Builder(
+                new ActionSpecification.Builder(getWorkspacesForm)
+                    .build()
+            ).setIRIAsString(baseUri + "#subscribeToWorkspaces")
+                .build()
+        );
 
     addWebSubSignifier(resourceProfile,
-        baseUri, "Workspaces", baseUri + "workspaces/");
+        baseUri, "Platform", baseUri);
 
     return serializeHmasResourceProfile(resourceProfile.build());
   }
@@ -203,6 +216,12 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     final Workspace workspace = new Workspace.Builder()
         .setIRIAsString(baseUri + "#workspace")
         .addSemanticType(HMAS + "Workspace")
+        .build();
+
+    final Form getSubWorkspacesForm = new Form.Builder(this.httpConfig.getWorkspacesUri() +
+        "?parent=" + workspaceName)
+        .setMethodName(HttpMethod.GET.name())
+        .setIRIAsString(baseUri + "#getSubWorkspacesForm")
         .build();
 
     // makeArtifact Signifier
@@ -296,6 +315,12 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .setIRIAsString(baseUri + "#deleteCurrentWorkspaceForm")
         .build();
 
+    final var getSubWorkspacesSignifier =
+        new Signifier.Builder(new ActionSpecification.Builder(getSubWorkspacesForm)
+            .addRequiredSemanticType(WEBSUB + "Initiate")
+            .build())
+            .setIRIAsString(baseUri + "#getSubWorkspaces")
+            .build();
 
     final var makeArtifactSignifier =
         new Signifier.Builder(new ActionSpecification.Builder(makeArtifactForm)
@@ -348,6 +373,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     final var resourceProfile = new ResourceProfile.Builder(workspace)
         .setIRIAsString(baseUri.substring(0, baseUri.length() - 1))
+        .exposeSignifier(getSubWorkspacesSignifier)
         .exposeSignifier(registerArtifactSignifier)
         .exposeSignifier(createSubWorkspaceSignifier)
         .exposeSignifier(getCurrentWorkspaceSignifier)
@@ -554,7 +580,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       .setNamespace("hmas", HMAS)
       .setNamespace("jacamo", JACAMO)
       .setNamespace("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-      .setNamespace("websub", "http://www.example.org/websub#")
+      .setNamespace("websub", WEBSUB)
       .write();
   }
 }

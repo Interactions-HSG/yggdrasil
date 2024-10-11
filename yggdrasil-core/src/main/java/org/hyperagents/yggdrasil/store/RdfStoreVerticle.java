@@ -184,7 +184,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
             environment.getWorkspaces()
                 .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
                   ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
-                      httpConfig.getWorkspacesUri(),
+                      httpConfig.getWorkspacesUriTrailingSlash(),
                       w.getName(),
                       w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
                       Files.readString(r, StandardCharsets.UTF_8)
@@ -524,6 +524,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                   this.httpConfig.getBaseUriTrailingSlash())
                           )
                       );
+
+                      final var parentWorkspaceName = parentIri.toString()
+                          .substring(parentIri.toString().lastIndexOf("/") + 1);
+
+                      this.dispatcherMessagebox.sendMessage(
+                          new HttpNotificationDispatcherMessage.EntityCreated(
+                                this.httpConfig.getWorkspacesUri()
+                                    + "?parent=" + parentWorkspaceName,
+                                resourceIRI.toString()
+                          )
+                      );
                     }));
               } else {
                 final var platformResourceProfileIri = RdfModelUtils.createIri(
@@ -562,12 +573,19 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                   this.httpConfig.getBaseUriTrailingSlash())
                           )
                       );
+                      this.dispatcherMessagebox.sendMessage(
+                          new HttpNotificationDispatcherMessage.EntityCreated(
+                              this.httpConfig.getWorkspacesUriTrailingSlash(),
+                              resourceIRI.toString()
+                          )
+                      );
                     }));
               }
               this.store.addEntityModel(resourceIRI, entityModel);
               final var stringGraphResult =
                   RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
                       this.httpConfig.getBaseUriTrailingSlash());
+              /*
               if (requestIri.toString().endsWith("//")) {
                 this.dispatcherMessagebox.sendMessage(
                     new HttpNotificationDispatcherMessage.EntityCreated(
@@ -583,6 +601,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     )
                 );
               }
+
+               */
+
               this.replyWithPayload(message, stringGraphResult);
             }),
             () -> this.replyFailed(message)

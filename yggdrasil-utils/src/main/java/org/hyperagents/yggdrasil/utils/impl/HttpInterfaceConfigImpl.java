@@ -61,18 +61,23 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   }
 
   @Override
-  public String getWorkspacesUri() {
+  public String getWorkspacesUriTrailingSlash() {
     return this.baseUriTrailingSlash + "workspaces/";
   }
 
   @Override
+  public String getWorkspacesUri() {
+    return this.baseUriTrailingSlash + "workspaces";
+  }
+
+  @Override
   public String getWorkspaceUriTrailingSlash(final String workspaceName) {
-    return this.getWorkspacesUri() + validateInput(workspaceName) + "/";
+    return this.getWorkspacesUriTrailingSlash() + validateInput(workspaceName) + "/";
   }
 
   @Override
   public String getWorkspaceUri(final String workspaceName) {
-    return this.getWorkspacesUri() + validateInput(workspaceName);
+    return this.getWorkspacesUriTrailingSlash() + validateInput(workspaceName);
   }
 
   @Override

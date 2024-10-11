@@ -180,7 +180,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     this.rdfStoreMessagebox.sendMessage(
-        new RdfStoreMessage.GetEntityIri(this.httpConfig.getWorkspacesUri(), workspaceName)
+        new RdfStoreMessage.GetEntityIri(this.httpConfig.getWorkspacesUriTrailingSlash(), workspaceName)
     ).compose(nameResponse ->
         this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateWorkspace(nameResponse.body()))
@@ -398,9 +398,10 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var entityIri = subscribeRequest.getString("hub.topic");
     final var callbackIri = subscribeRequest.getString("hub.callback");
 
+
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
-        if (entityIri.matches("^https?://.*?:[0-9]+/workspaces/$")) {
+        if (entityIri.matches("^https?://.*?:[0-9]+/workspaces(/)?(\\?(parent=[^&]+))?$")) {
           this.notificationMessagebox
               .sendMessage(
                   new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
@@ -543,7 +544,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         .compose(response ->
             this.rdfStoreMessagebox
                 .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                    this.httpConfig.getWorkspacesUri(),
+                    this.httpConfig.getWorkspacesUriTrailingSlash(),
                     subWorkspaceName,
                     Optional.of(this.httpConfig
                         .getWorkspaceUriTrailingSlash(context.pathParam(WORKSPACE_ID_PARAM))),

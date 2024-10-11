@@ -155,7 +155,7 @@ public class CartagoVerticle extends AbstractVerticle {
             // Not creating a cartago workspace since we're using representation from file
             Failable.asConsumer(r -> {
               this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
-                  httpConfig.getWorkspacesUri(),
+                  httpConfig.getWorkspacesUriTrailingSlash(),
                   w.getName(),
                   w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
                   Files.readString(r, StandardCharsets.UTF_8)
@@ -178,7 +178,7 @@ public class CartagoVerticle extends AbstractVerticle {
               w.getParentName().ifPresentOrElse(
                   Failable.asConsumer(p -> this.storeMessagebox.sendMessage(
                       new RdfStoreMessage.CreateWorkspace(
-                          this.httpConfig.getWorkspacesUri(),
+                          this.httpConfig.getWorkspacesUriTrailingSlash(),
                           w.getName(),
                           Optional.of(this.httpConfig.getWorkspaceUriTrailingSlash(p)),
                           this.instantiateSubWorkspace(p, w.getName())
@@ -187,7 +187,7 @@ public class CartagoVerticle extends AbstractVerticle {
                   // workspace
                   Failable.asRunnable(() -> this.storeMessagebox.sendMessage(
                       new RdfStoreMessage.CreateWorkspace(
-                          this.httpConfig.getWorkspacesUri(),
+                          this.httpConfig.getWorkspacesUriTrailingSlash(),
                           w.getName(),
                           Optional.empty(),
                           this.instantiateWorkspace(w.getName())
