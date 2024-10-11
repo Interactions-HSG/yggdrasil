@@ -23,6 +23,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
@@ -126,7 +127,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               List<String> defaultGraphUris,
               List<String> namedGraphUris,
               String responseContentType
-            ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
+          ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
               message);
           case RdfStoreMessage.CreateBody content -> this.handleCreateBody(content, message);
         }
@@ -384,12 +385,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
               final var stringGraphResult =
                   RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
                       this.httpConfig.getBaseUriTrailingSlash());
-              this.dispatcherMessagebox.sendMessage(
-                  new HttpNotificationDispatcherMessage.EntityCreated(
-                      removeDuplicateSlashes(requestIri.toString()),
-                      stringGraphResult
-                  )
-              );
               this.replyWithPayload(message, stringGraphResult);
             }),
             () -> this.replyFailed(message)
@@ -446,6 +441,37 @@ public class RdfStoreVerticle extends AbstractVerticle {
               new HttpNotificationDispatcherMessage.EntityChanged(
                   workspaceIri.toString(),
                   RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash())
+              )
+          );
+
+          final Model m = new LinkedHashModel();
+
+          final var artifactsContained = workspaceModel
+              .filter(null, null, iri("https://purl.org/hmas/Artifact"));
+
+          final var workspaceDefTriple = workspaceModel
+              .filter(workspaceActualIRI, RDF.TYPE, null);
+
+
+          final var containedThings = workspaceModel
+              .filter(null, iri("https://purl.org/hmas/contains"), null);
+
+          containedThings.removeIf(
+              triple -> !triple.getObject().stringValue().contains("#artifact")
+          );
+
+          m.addAll(containedThings);
+          m.addAll(workspaceDefTriple);
+          m.addAll(artifactsContained);
+          m.setNamespace("hmas", "https://purl.org/hmas/");
+          m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+
+
+          this.dispatcherMessagebox.sendMessage(
+              new HttpNotificationDispatcherMessage.EntityChanged(
+                  workspaceIri + "/artifacts/",
+                  RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
                       this.httpConfig.getBaseUriTrailingSlash())
               )
           );
@@ -528,11 +554,38 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       final var parentWorkspaceName = parentIri.toString()
                           .substring(parentIri.toString().lastIndexOf("/") + 1);
 
+                      final Model m = new LinkedHashModel();
+
+                      final var workspaceDefTriple = parentModel
+                          .filter(
+                              RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                              RDF.TYPE, null);
+
+                      final Model containedThings = parentModel
+                          .filter(null, iri("https://purl.org/hmas/contains"), null);
+
+
+                      containedThings.removeIf(
+                          triple -> !triple.getObject().stringValue().contains("#workspace")
+                      );
+
+                      final Model containedDefinitions = parentModel
+                          .filter(null, null, iri("https://purl.org/hmas/Workspace"));
+
+                      m.addAll(containedThings);
+                      m.addAll(workspaceDefTriple);
+                      m.addAll(containedDefinitions);
+
+                      m.setNamespace("hmas", "https://purl.org/hmas/");
+                      m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+
+
                       this.dispatcherMessagebox.sendMessage(
-                          new HttpNotificationDispatcherMessage.EntityCreated(
-                                this.httpConfig.getWorkspacesUri()
-                                    + "?parent=" + parentWorkspaceName,
-                                resourceIRI.toString()
+                          new HttpNotificationDispatcherMessage.EntityChanged(
+                              this.httpConfig.getWorkspacesUri()
+                                  + "?parent=" + parentWorkspaceName,
+                              RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
+                                  this.httpConfig.getBaseUriTrailingSlash())
                           )
                       );
                     }));
@@ -573,10 +626,32 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                   this.httpConfig.getBaseUriTrailingSlash())
                           )
                       );
+
+                      final Model m = new LinkedHashModel();
+
+                      final var workspaceDefTriple = platformModel
+                          .filter(RdfModelUtils.createIri(
+                              platformResourceProfileIri + PLATFORM_FRAGMENT), RDF.TYPE, null);
+
+                      final Model containedThings = platformModel
+                          .filter(null, iri("https://purl.org/hmas/hosts"), null);
+
+                      final Model workspaceDef = platformModel
+                          .filter(null, null, iri("https://purl.org/hmas/Workspace"));
+
+                      m.addAll(workspaceDefTriple);
+                      m.addAll(containedThings);
+                      m.addAll(workspaceDef);
+
+                      m.setNamespace("hmas", "https://purl.org/hmas/");
+                      m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+
+
                       this.dispatcherMessagebox.sendMessage(
-                          new HttpNotificationDispatcherMessage.EntityCreated(
+                          new HttpNotificationDispatcherMessage.EntityChanged(
                               this.httpConfig.getWorkspacesUriTrailingSlash(),
-                              resourceIRI.toString()
+                              RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
+                                  this.httpConfig.getBaseUriTrailingSlash())
                           )
                       );
                     }));
@@ -585,25 +660,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
               final var stringGraphResult =
                   RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
                       this.httpConfig.getBaseUriTrailingSlash());
-              /*
-              if (requestIri.toString().endsWith("//")) {
-                this.dispatcherMessagebox.sendMessage(
-                    new HttpNotificationDispatcherMessage.EntityCreated(
-                        requestIri.toString().substring(0, requestIri.toString().length() - 1),
-                        stringGraphResult
-                    )
-                );
-              } else {
-                this.dispatcherMessagebox.sendMessage(
-                    new HttpNotificationDispatcherMessage.EntityCreated(
-                        requestIri.toString(),
-                        stringGraphResult
-                    )
-                );
-              }
-
-               */
-
               this.replyWithPayload(message, stringGraphResult);
             }),
             () -> this.replyFailed(message)
@@ -953,7 +1009,4 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   }
 
-  private String removeDuplicateSlashes(final String requestIri) {
-    return requestIri.replaceAll("(?<!:)//", "/");
-  }
 }
