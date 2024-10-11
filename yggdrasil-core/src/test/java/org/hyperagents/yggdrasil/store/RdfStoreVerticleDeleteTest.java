@@ -201,7 +201,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI,
+                COUNTER_ARTIFACT_URI + "/",
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -291,7 +291,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI,
+                COUNTER_ARTIFACT_URI + "/",
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );

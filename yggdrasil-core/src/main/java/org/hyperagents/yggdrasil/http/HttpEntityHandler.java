@@ -133,8 +133,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         );
   }
 
-
   // TODO: what if localhost and different baseUri will headers work correctly for websub?
+
+  /**
+   * Returns the representation of the entity at the given Uri.
+   *
+   * @param context the routingContext
+   */
   public void handleGetWorkspaces(final RoutingContext context) {
     var parentUri = context.request().getParam("parent");
     parentUri = parentUri == null ? this.httpConfig.getBaseUriTrailingSlash()
@@ -145,6 +150,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     );
   }
 
+  /**
+   * Returns the representation of the entity at the given Uri.
+   *
+   * @param context the routingContext
+   */
   public void handleGetArtifacts(final RoutingContext context) {
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetArtifacts(workspaceName))
@@ -248,14 +258,13 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                         this.getHeaders(requestUri + nameResponse.body())))
             )
             .onFailure(r -> {
-                  if (r instanceof ReplyException e) {
-                    context.response().setStatusCode(e.failureCode()).end();
-                  } else {
-                    context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
-                  }
-                }
-            ))
-    ;
+              if (r instanceof ReplyException e) {
+                context.response().setStatusCode(e.failureCode()).end();
+              } else {
+                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+              }
+            })
+    );
   }
 
   public void handleCreateArtifactTurtle(final RoutingContext routingContext) {
@@ -286,10 +295,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                         false
                     )
                 )).onComplete(
-                response -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-                        requestUri + actualEntityName.body(),
-                        entityRepresentation
-                    )
+                    response -> this.rdfStoreMessagebox.sendMessage(
+                        new RdfStoreMessage.UpdateEntity(
+                            requestUri + actualEntityName.body(),
+                            entityRepresentation
+                        )
                 ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
                     this.getHeaders(requestUri + actualEntityName.body())))))
         .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
@@ -321,7 +331,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             workspaceName,
             artifactName
         )))
-        .onComplete(this.handleStoreReply(context,HttpStatus.SC_OK,
+        .onComplete(this.handleStoreReply(context, HttpStatus.SC_OK,
             this.getHeaders(context.request().absoluteURI())));
   }
 
@@ -599,12 +609,12 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
               })
               .onFailure(
                   t -> {
-                    if(t instanceof ReplyException e) {
+                    if (t instanceof ReplyException e) {
                       context.response().setStatusCode(e.failureCode()).end();
                     } else {
                       context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
                     }
-                    });
+                  });
         }).onFailure(
             t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }

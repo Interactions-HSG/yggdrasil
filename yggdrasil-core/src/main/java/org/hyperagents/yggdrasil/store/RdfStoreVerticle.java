@@ -126,7 +126,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               List<String> defaultGraphUris,
               List<String> namedGraphUris,
               String responseContentType
-          ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
+            ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
               message);
           case RdfStoreMessage.CreateBody content -> this.handleCreateBody(content, message);
         }
@@ -237,7 +237,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var workspaces = new LinkedList<String>();
       final var model = result.get();
 
-      Model containedThings;
+      final Model containedThings;
       if (containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())) {
         containedThings = model
             .filter(null, iri("https://purl.org/hmas/hosts"), null);

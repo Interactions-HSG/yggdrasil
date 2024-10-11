@@ -141,10 +141,11 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addAction(td, "createWorkspaceTurtle", this.httpConfig.getWorkspacesUri(),
         "text/turtle", POST, "createWorkspace");
 
-    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
-        "application/sparql-query", GET, "sparqlGetQuery");
-    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUriTrailingSlash() + "query/",
-        "application/sparql-query", POST, "sparqlPostQuery");
+    addAction(td, "sparqlGetQuery", this.httpConfig.getBaseUriTrailingSlash()
+            + "query/", "application/sparql-query", GET, "sparqlGetQuery");
+    addAction(td, "sparqlPostQuery", this.httpConfig.getBaseUriTrailingSlash()
+            + "query/", "application/sparql-query",
+        POST, "sparqlPostQuery");
 
     addWebSub(td, "Workspaces");
 
@@ -170,7 +171,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             .addSemanticType(HMAS + "Workspace");
 
     addAction(td, "createSubWorkspaceJson", thingUri, POST, "makeSubWorkspace");
-    addAction(td, "createSubWorkspaceTurtle",  thingUri,
+    addAction(td, "createSubWorkspaceTurtle", thingUri,
         "text/turtle", POST, "createSubWorkspace");
 
     addHttpSignifiers(td, thingUri, "Workspace");
@@ -185,7 +186,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       td.addAction(
               new ActionAffordance.Builder(
                   "makeArtifact",
-                  new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName)).build()
+                  new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName))
+                      .build()
               )
                   .addInputSchema(
                       new ObjectSchema
