@@ -175,7 +175,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
 
     addHttpSignifiers(td, thingUri, "Workspace");
 
-    addAction(td, "createArtifact", this.httpConfig.getArtifactsUri(workspaceName),
+    addAction(td, "createArtifact", this.httpConfig.getArtifactsUriTrailingSlash(workspaceName),
         "text/turtle", POST, "createArtifact");
 
 
@@ -185,7 +185,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       td.addAction(
               new ActionAffordance.Builder(
                   "makeArtifact",
-                  new Form.Builder(this.httpConfig.getArtifactsUri(workspaceName)).build()
+                  new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName)).build()
               )
                   .addInputSchema(
                       new ObjectSchema

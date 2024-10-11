@@ -77,19 +77,24 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
 
   @Override
   public String getArtifactsUri(final String workspaceName) {
+    return this.getWorkspaceUriTrailingSlash(workspaceName) + "artifacts";
+  }
+
+  @Override
+  public String getArtifactsUriTrailingSlash(final String workspaceName) {
     return this.getWorkspaceUriTrailingSlash(workspaceName) + "artifacts/";
   }
 
   @Override
   public String getArtifactUriTrailingSlash(final String workspaceName, final String artifactName) {
     final var cleanArtifactName = validateInput(artifactName);
-    return this.getArtifactsUri(workspaceName) + cleanArtifactName + "/";
+    return this.getArtifactsUriTrailingSlash(workspaceName) + cleanArtifactName + "/";
   }
 
   @Override
   public String getArtifactUri(final String workspaceName, final String artifactName) {
     final var cleanArtifactName = validateInput(artifactName);
-    return this.getArtifactsUri(workspaceName) + cleanArtifactName;
+    return this.getArtifactsUriTrailingSlash(workspaceName) + cleanArtifactName;
   }
 
   @Override

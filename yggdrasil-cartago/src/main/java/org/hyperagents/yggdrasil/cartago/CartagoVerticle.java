@@ -165,7 +165,7 @@ public class CartagoVerticle extends AbstractVerticle {
               w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
                   Failable.asConsumer(ar ->
                       this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                          httpConfig.getArtifactsUri(w.getName()),
+                          httpConfig.getArtifactsUriTrailingSlash(w.getName()),
                           a.getName(),
                           Files.readString(ar, StandardCharsets.UTF_8)
                       ))
@@ -243,7 +243,7 @@ public class CartagoVerticle extends AbstractVerticle {
               // creating artifacts
               w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                    this.httpConfig.getArtifactsUri(w.getName()),
+                    this.httpConfig.getArtifactsUriTrailingSlash(w.getName()),
                     a.getName(),
                     this.instantiateArtifact(
                         a.getCreatedBy().isPresent()
@@ -273,7 +273,7 @@ public class CartagoVerticle extends AbstractVerticle {
               }),
                   () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                   this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                    httpConfig.getArtifactsUri(w.getName()),
+                    httpConfig.getArtifactsUriTrailingSlash(w.getName()),
                     a.getName(),
                     Files.readString(ar, StandardCharsets.UTF_8)
                   )))

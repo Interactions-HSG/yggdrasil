@@ -1,5 +1,7 @@
 package org.hyperagents.yggdrasil.store;
 
+import static org.eclipse.rdf4j.model.util.Values.iri;
+
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.core.eventbus.Message;
@@ -60,74 +62,72 @@ public class RdfStoreVerticle extends AbstractVerticle {
   @Override
   public void start(final Promise<Void> startPromise) {
     this.httpConfig = this.vertx.sharedData()
-                                .<String, HttpInterfaceConfig>getLocalMap("http-config")
-                                .get(DEFAULT_CONFIG_VALUE);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .get(DEFAULT_CONFIG_VALUE);
 
     final WebSubConfig notificationConfig = this.vertx.sharedData()
         .<String, WebSubConfig>getLocalMap("notification-config")
         .get(DEFAULT_CONFIG_VALUE);
 
     final EnvironmentConfig environmentConfig = this.vertx.sharedData()
-                                .<String, EnvironmentConfig>getLocalMap("environment-config")
-                                .get(DEFAULT_CONFIG_VALUE);
+        .<String, EnvironmentConfig>getLocalMap("environment-config")
+        .get(DEFAULT_CONFIG_VALUE);
     this.representationFactory = RepresentationFactoryFactory.getRepresentationFactory(
-      environmentConfig.getOntology(),
-      notificationConfig,
-      this.httpConfig
+        environmentConfig.getOntology(),
+        notificationConfig,
+        this.httpConfig
     );
 
     this.dispatcherMessagebox = new HttpNotificationDispatcherMessagebox(
-      this.vertx.eventBus(),
-      notificationConfig
+        this.vertx.eventBus(),
+        notificationConfig
     );
     final var ownMessagebox = new RdfStoreMessagebox(this.vertx.eventBus());
     ownMessagebox.init();
     ownMessagebox.receiveMessages(message -> {
       try {
         switch (message.body()) {
-          case RdfStoreMessage.GetEntityIri content ->
-            message.reply(this.handleGetEntityIri(
+          case RdfStoreMessage.GetEntityIri content -> message.reply(this.handleGetEntityIri(
               content.requestUri(),
               content.slug())
-            );
-          case RdfStoreMessage.GetEntity content ->
-            this.handleGetEntity(
-              RdfModelUtils.createIri(content.requestUri()),
-              message
-            );
-          case RdfStoreMessage.CreateArtifact content ->
-            this.handleCreateArtifact(
-            RdfModelUtils.createIri(content.requestUri()),
-            content,
-            message
           );
-          case RdfStoreMessage.CreateWorkspace content ->
-            this.handleCreateWorkspace(
+          case RdfStoreMessage.GetEntity content -> this.handleGetEntity(
+              RdfModelUtils.createIri(content.requestUri()),
+              message
+          );
+          case RdfStoreMessage.CreateArtifact content -> this.handleCreateArtifact(
               RdfModelUtils.createIri(content.requestUri()),
               content,
               message
-            );
-          case RdfStoreMessage.ReplaceEntity content ->
-            this.handleReplaceEntity(
+          );
+          case RdfStoreMessage.CreateWorkspace content -> this.handleCreateWorkspace(
               RdfModelUtils.createIri(content.requestUri()),
               content,
               message
-            );
-          case RdfStoreMessage.UpdateEntity content ->
-            this.handleUpdateEntity(
+          );
+          case RdfStoreMessage.ReplaceEntity content -> this.handleReplaceEntity(
               RdfModelUtils.createIri(content.requestUri()),
               content,
               message
-            );
+          );
+          case RdfStoreMessage.UpdateEntity content -> this.handleUpdateEntity(
+              RdfModelUtils.createIri(content.requestUri()),
+              content,
+              message
+          );
           case RdfStoreMessage.DeleteEntity(String requestUri) ->
-            this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
+              this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
+          case RdfStoreMessage.GetWorkspaces(String containerWorkspace) ->
+              this.handleGetWorkspaces(containerWorkspace, message);
+          case RdfStoreMessage.GetArtifacts(String workspaceName) ->
+              this.handleGetArtifacts(workspaceName, message);
           case RdfStoreMessage.QueryKnowledgeGraph(
               String query,
               List<String> defaultGraphUris,
               List<String> namedGraphUris,
               String responseContentType
-            ) ->
-            this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType, message);
+          ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
+              message);
           case RdfStoreMessage.CreateBody content -> this.handleCreateBody(content, message);
         }
       } catch (final IllegalArgumentException e) {
@@ -141,64 +141,64 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.vertx
         .<Void>executeBlocking(() -> {
           this.store =
-            Optional.ofNullable(this.config())
-                    .flatMap(c -> JsonObjectUtils.getBoolean(c, "in-memory", LOGGER::error))
-                    .map(Failable.asFunction(inMemory -> {
-                      if (inMemory) {
-                        return RdfStoreFactory.createInMemoryStore();
-                      } else {
-                        return RdfStoreFactory.createFilesystemStore(
+              Optional.ofNullable(this.config())
+                  .flatMap(c -> JsonObjectUtils.getBoolean(c, "in-memory", LOGGER::error))
+                  .map(Failable.asFunction(inMemory -> {
+                    if (inMemory) {
+                      return RdfStoreFactory.createInMemoryStore();
+                    } else {
+                      return RdfStoreFactory.createFilesystemStore(
                           JsonObjectUtils
                               .getJsonObject(this.config(), "rdf-store", LOGGER::error)
                               .flatMap(c -> JsonObjectUtils.getString(
-                                c,
-                                "store-path",
-                                LOGGER::error
+                                  c,
+                                  "store-path",
+                                  LOGGER::error
                               ))
                               .orElse("data/")
-                        );
-                      }
-                    }))
-                    .orElse(RdfStoreFactory.createInMemoryStore());
+                      );
+                    }
+                  }))
+                  .orElse(RdfStoreFactory.createInMemoryStore());
           final var platformIri =
               RdfModelUtils.createIri(this.httpConfig.getBaseUriTrailingSlash());
           this.store.addEntityModel(
               platformIri,
               RdfModelUtils.stringToModel(
-                this.representationFactory.createPlatformRepresentation(),
-                platformIri,
-                RDFFormat.TURTLE
+                  this.representationFactory.createPlatformRepresentation(),
+                  platformIri,
+                  RDFFormat.TURTLE
               )
           );
           if (
               !this.vertx
-                   .sharedData()
-                   .<String, EnvironmentConfig>getLocalMap("environment-config")
-                   .get(DEFAULT_CONFIG_VALUE)
-                   .isEnabled()
+                  .sharedData()
+                  .<String, EnvironmentConfig>getLocalMap("environment-config")
+                  .get(DEFAULT_CONFIG_VALUE)
+                  .isEnabled()
           ) {
             final var environment =
                 this.vertx.sharedData()
-                          .<String, Environment>getLocalMap("environment")
-                          .get(DEFAULT_CONFIG_VALUE);
+                    .<String, Environment>getLocalMap("environment")
+                    .get(DEFAULT_CONFIG_VALUE);
             environment.getWorkspaces()
-                       .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
-                         ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
-                             httpConfig.getWorkspacesUri(),
-                             w.getName(),
-                             w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
-                             Files.readString(r, StandardCharsets.UTF_8)
-                         ));
-                         w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
-                             Failable.asConsumer(ar ->
-                               ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-                                 httpConfig.getArtifactsUri(w.getName()),
-                                 a.getName(),
-                                 Files.readString(ar, StandardCharsets.UTF_8)
-                               ))
-                             )
-                         ));
-                       })));
+                .forEach(w -> w.getRepresentation().ifPresent(Failable.asConsumer(r -> {
+                  ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
+                      httpConfig.getWorkspacesUri(),
+                      w.getName(),
+                      w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
+                      Files.readString(r, StandardCharsets.UTF_8)
+                  ));
+                  w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
+                      Failable.asConsumer(ar ->
+                          ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
+                              httpConfig.getArtifactsUriTrailingSlash(w.getName()),
+                              a.getName(),
+                              Files.readString(ar, StandardCharsets.UTF_8)
+                          ))
+                      )
+                  ));
+                })));
           }
           return null;
         })
@@ -223,6 +223,64 @@ public class RdfStoreVerticle extends AbstractVerticle {
     if (result.isPresent()) {
       this.replyWithPayload(message, RdfModelUtils.modelToString(result.get(), RDFFormat.TURTLE,
           this.httpConfig.getBaseUriTrailingSlash()));
+    } else {
+      this.replyEntityNotFound(message);
+    }
+  }
+
+  private void handleGetWorkspaces(
+      final String containerWorkspaceUri,
+      final Message<RdfStoreMessage> message
+  ) throws IOException {
+    final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
+    if (result.isPresent()) {
+      final var workspaces = new LinkedList<String>();
+      final var model = result.get();
+
+      Model containedThings;
+      if (containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())) {
+        containedThings = model
+            .filter(null, iri("https://purl.org/hmas/hosts"), null);
+      } else {
+        containedThings = model
+            .filter(null, iri("https://purl.org/hmas/contains"), null);
+      }
+      containedThings
+          .objects()
+          .stream()
+          .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+          .flatMap(Optional::stream)
+          .map(IRI::stringValue)
+          .forEach(s -> {
+            if (s.contains("#workspace")) {
+              workspaces.add(s);
+            }
+          });
+      this.replyWithPayload(message, String.valueOf(workspaces));
+    } else {
+      this.replyEntityNotFound(message);
+    }
+  }
+
+  private void handleGetArtifacts(final String workspaceName,
+                                  final Message<RdfStoreMessage> message) throws IOException {
+    final var workspaceIri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
+    final var result = this.store.getEntityModel(RdfModelUtils.createIri(workspaceIri));
+    if (result.isPresent()) {
+      final var artifacts = new LinkedList<String>();
+      result.get()
+          .filter(null, iri("https://purl.org/hmas/contains"), null)
+          .objects()
+          .stream()
+          .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+          .flatMap(Optional::stream)
+          .map(IRI::stringValue)
+          .forEach(s -> {
+            if (s.contains("#artifact")) {
+              artifacts.add(s);
+            }
+          });
+      this.replyWithPayload(message, String.valueOf(artifacts));
     } else {
       this.replyEntityNotFound(message);
     }
@@ -258,42 +316,42 @@ public class RdfStoreVerticle extends AbstractVerticle {
         // Replace all null relative IRIs with the IRI generated for this entity
         .map(s -> s.replaceAll("<>", "<" + bodyIri + ">"))
         .ifPresentOrElse(
-          Failable.asConsumer(s -> {
-            final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
-            final var workspaceIri = this.httpConfig
-                .getWorkspaceUriTrailingSlash(content.workspaceName());
-            // TODO: This could be removed should always have trailing slash
-            final var workspaceActualIri = workspaceIri.endsWith("/")
-                ?
-                RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) :
-                RdfModelUtils.createIri(workspaceIri);
-            this.enrichArtifactGraphWithWorkspace(
-                entityIri, entityModel, workspaceActualIri, true);
-            final var agentIri =
-                RdfModelUtils.createIri(content.agentID());
-            entityModel.add(
-                entityBodyIri,
-                RdfModelUtils.createIri("https://purl.org/hmas/jacamo/isBodyOf"),
-                agentIri
-            );
-            entityModel.add(
-                agentIri,
-                RDF.TYPE,
-                RdfModelUtils.createIri("https://purl.org/hmas/Agent")
-            );
-            this.store.addEntityModel(entityIri, entityModel);
-            final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                    this.httpConfig.getBaseUriTrailingSlash());
-            this.dispatcherMessagebox.sendMessage(
-              new HttpNotificationDispatcherMessage.EntityCreated(
-                this.httpConfig.getAgentBodiesUri(content.workspaceName()),
-                stringGraphResult
-              )
-            );
-            this.replyWithPayload(message, stringGraphResult);
-          }),
-          () -> this.replyFailed(message)
+            Failable.asConsumer(s -> {
+              final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+              final var workspaceIri = this.httpConfig
+                  .getWorkspaceUriTrailingSlash(content.workspaceName());
+              // TODO: This could be removed should always have trailing slash
+              final var workspaceActualIri = workspaceIri.endsWith("/")
+                  ?
+                  RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) :
+                  RdfModelUtils.createIri(workspaceIri);
+              this.enrichArtifactGraphWithWorkspace(
+                  entityIri, entityModel, workspaceActualIri, true);
+              final var agentIri =
+                  RdfModelUtils.createIri(content.agentID());
+              entityModel.add(
+                  entityBodyIri,
+                  RdfModelUtils.createIri("https://purl.org/hmas/jacamo/isBodyOf"),
+                  agentIri
+              );
+              entityModel.add(
+                  agentIri,
+                  RDF.TYPE,
+                  RdfModelUtils.createIri("https://purl.org/hmas/Agent")
+              );
+              this.store.addEntityModel(entityIri, entityModel);
+              final var stringGraphResult =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash());
+              this.dispatcherMessagebox.sendMessage(
+                  new HttpNotificationDispatcherMessage.EntityCreated(
+                      this.httpConfig.getAgentBodiesUri(content.workspaceName()),
+                      stringGraphResult
+                  )
+              );
+              this.replyWithPayload(message, stringGraphResult);
+            }),
+            () -> this.replyFailed(message)
         );
   }
 
@@ -315,26 +373,26 @@ public class RdfStoreVerticle extends AbstractVerticle {
         // Replace all null relative IRIs with the IRI generated for this entity
         .map(s -> s.replaceAll("<>", "<" + artifactIri + ">"))
         .ifPresentOrElse(
-          Failable.asConsumer(s -> {
-            final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+            Failable.asConsumer(s -> {
+              final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
 
-            final var workspaceIri = RdfModelUtils.createIri(
-                artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
-            );
-            this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
-            this.store.addEntityModel(entityIri, entityModel);
-            final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                    this.httpConfig.getBaseUriTrailingSlash());
-            this.dispatcherMessagebox.sendMessage(
-              new HttpNotificationDispatcherMessage.EntityCreated(
-                removeDuplicateSlashes(requestIri.toString()),
-                stringGraphResult
-              )
-            );
-            this.replyWithPayload(message, stringGraphResult);
-          }),
-          () -> this.replyFailed(message)
+              final var workspaceIri = RdfModelUtils.createIri(
+                  artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
+              );
+              this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
+              this.store.addEntityModel(entityIri, entityModel);
+              final var stringGraphResult =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash());
+              this.dispatcherMessagebox.sendMessage(
+                  new HttpNotificationDispatcherMessage.EntityCreated(
+                      removeDuplicateSlashes(requestIri.toString()),
+                      stringGraphResult
+                  )
+              );
+              this.replyWithPayload(message, stringGraphResult);
+            }),
+            () -> this.replyFailed(message)
         );
   }
 
@@ -385,11 +443,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
           }
           this.store.replaceEntityModel(workspaceIri, workspaceModel);
           this.dispatcherMessagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.EntityChanged(
-              workspaceIri.toString(),
-              RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
-                  this.httpConfig.getBaseUriTrailingSlash())
-            )
+              new HttpNotificationDispatcherMessage.EntityChanged(
+                  workspaceIri.toString(),
+                  RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash())
+              )
           );
         }));
   }
@@ -398,7 +456,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * Creates an entity and adds it to the store.
    *
    * @param requestIri IRI where the request originated from
-   * @param message Request
+   * @param message    Request
    */
   private void handleCreateWorkspace(
       final IRI requestIri,
@@ -423,111 +481,111 @@ public class RdfStoreVerticle extends AbstractVerticle {
         // Replace all null relative IRIs with the IRI generated for this entity
         .map(s -> s.replaceAll("<>", "<" + workspaceIri + ">"))
         .ifPresentOrElse(
-          Failable.asConsumer(s -> {
-            final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
+            Failable.asConsumer(s -> {
+              final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
 
-            if (content.parentWorkspaceUri().isPresent()) {
-              final var parentIriTrailingSlash = RdfModelUtils.createIri(
-                  content.parentWorkspaceUri().get().endsWith("/")
-                      ?
-                      content.parentWorkspaceUri().get() :
-                      content.parentWorkspaceUri().get() + "/");
-              final var parentIri = RdfModelUtils.createIri(
-                  parentIriTrailingSlash.toString()
-                      .substring(0, parentIriTrailingSlash.toString().length() - 1));
-              entityModel.add(
-                  workspaceIRI,
-                  RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-                  RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT)
-              );
-              entityModel.add(
-                  RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
-                  RDF.TYPE,
-                  RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
-              );
-              this.store
-                  .getEntityModel(parentIriTrailingSlash)
-                  .ifPresent(Failable.asConsumer(parentModel -> {
-                    parentModel.add(
-                        RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
-                        RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                        workspaceIRI
-                    );
-                    parentModel.add(
-                        workspaceIRI,
-                        RDF.TYPE,
-                        RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
-                    );
-                    this.store.replaceEntityModel(parentIriTrailingSlash, parentModel);
-                    this.dispatcherMessagebox.sendMessage(
-                      new HttpNotificationDispatcherMessage.EntityChanged(
-                        parentIri.toString(),
-                          RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,
-                              this.httpConfig.getBaseUriTrailingSlash())
-                      )
-                    );
-                  }));
-            } else {
-              final var platformResourceProfileIri = RdfModelUtils.createIri(
-                  workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-              );
-              final var platformIRI =
-                  RdfModelUtils.createIri(platformResourceProfileIri + PLATFORM_FRAGMENT);
-              entityModel.add(
-                  workspaceIRI,
-                  RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
-                  platformIRI
-              );
-              entityModel.add(
-                  platformIRI,
-                  RDF.TYPE,
-                  RdfModelUtils.createIri("https://purl.org/hmas/HypermediaMASPlatform")
-              );
-              this.store
-                  .getEntityModel(platformResourceProfileIri)
-                  .ifPresent(Failable.asConsumer(platformModel -> {
-                    platformModel.add(
-                        platformIRI,
-                        RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
-                        workspaceIRI
-                    );
-                    platformModel.add(
-                        workspaceIRI,
-                        RDF.TYPE,
-                        RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
-                    );
-                    this.store.replaceEntityModel(platformResourceProfileIri, platformModel);
-                    this.dispatcherMessagebox.sendMessage(
-                      new HttpNotificationDispatcherMessage.EntityChanged(
-                        platformResourceProfileIri.toString(),
-                          RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,
-                              this.httpConfig.getBaseUriTrailingSlash())
-                      )
-                    );
-                  }));
-            }
-            this.store.addEntityModel(resourceIRI, entityModel);
-            final var stringGraphResult =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                    this.httpConfig.getBaseUriTrailingSlash());
-            if (requestIri.toString().endsWith("//")) {
-              this.dispatcherMessagebox.sendMessage(
-                new HttpNotificationDispatcherMessage.EntityCreated(
-                  requestIri.toString().substring(0, requestIri.toString().length() - 1),
-                  stringGraphResult
-                )
-              );
-            } else {
-              this.dispatcherMessagebox.sendMessage(
-                new HttpNotificationDispatcherMessage.EntityCreated(
-                  requestIri.toString(),
-                  stringGraphResult
-                )
-              );
-            }
-            this.replyWithPayload(message, stringGraphResult);
-          }),
-          () -> this.replyFailed(message)
+              if (content.parentWorkspaceUri().isPresent()) {
+                final var parentIriTrailingSlash = RdfModelUtils.createIri(
+                    content.parentWorkspaceUri().get().endsWith("/")
+                        ?
+                        content.parentWorkspaceUri().get() :
+                        content.parentWorkspaceUri().get() + "/");
+                final var parentIri = RdfModelUtils.createIri(
+                    parentIriTrailingSlash.toString()
+                        .substring(0, parentIriTrailingSlash.toString().length() - 1));
+                entityModel.add(
+                    workspaceIRI,
+                    RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
+                    RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT)
+                );
+                entityModel.add(
+                    RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                    RDF.TYPE,
+                    RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                );
+                this.store
+                    .getEntityModel(parentIriTrailingSlash)
+                    .ifPresent(Failable.asConsumer(parentModel -> {
+                      parentModel.add(
+                          RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                          RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
+                          workspaceIRI
+                      );
+                      parentModel.add(
+                          workspaceIRI,
+                          RDF.TYPE,
+                          RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                      );
+                      this.store.replaceEntityModel(parentIriTrailingSlash, parentModel);
+                      this.dispatcherMessagebox.sendMessage(
+                          new HttpNotificationDispatcherMessage.EntityChanged(
+                              parentIri.toString(),
+                              RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,
+                                  this.httpConfig.getBaseUriTrailingSlash())
+                          )
+                      );
+                    }));
+              } else {
+                final var platformResourceProfileIri = RdfModelUtils.createIri(
+                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
+                );
+                final var platformIRI =
+                    RdfModelUtils.createIri(platformResourceProfileIri + PLATFORM_FRAGMENT);
+                entityModel.add(
+                    workspaceIRI,
+                    RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
+                    platformIRI
+                );
+                entityModel.add(
+                    platformIRI,
+                    RDF.TYPE,
+                    RdfModelUtils.createIri("https://purl.org/hmas/HypermediaMASPlatform")
+                );
+                this.store
+                    .getEntityModel(platformResourceProfileIri)
+                    .ifPresent(Failable.asConsumer(platformModel -> {
+                      platformModel.add(
+                          platformIRI,
+                          RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                          workspaceIRI
+                      );
+                      platformModel.add(
+                          workspaceIRI,
+                          RDF.TYPE,
+                          RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                      );
+                      this.store.replaceEntityModel(platformResourceProfileIri, platformModel);
+                      this.dispatcherMessagebox.sendMessage(
+                          new HttpNotificationDispatcherMessage.EntityChanged(
+                              platformResourceProfileIri.toString(),
+                              RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,
+                                  this.httpConfig.getBaseUriTrailingSlash())
+                          )
+                      );
+                    }));
+              }
+              this.store.addEntityModel(resourceIRI, entityModel);
+              final var stringGraphResult =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash());
+              if (requestIri.toString().endsWith("//")) {
+                this.dispatcherMessagebox.sendMessage(
+                    new HttpNotificationDispatcherMessage.EntityCreated(
+                        requestIri.toString().substring(0, requestIri.toString().length() - 1),
+                        stringGraphResult
+                    )
+                );
+              } else {
+                this.dispatcherMessagebox.sendMessage(
+                    new HttpNotificationDispatcherMessage.EntityCreated(
+                        requestIri.toString(),
+                        stringGraphResult
+                    )
+                );
+              }
+              this.replyWithPayload(message, stringGraphResult);
+            }),
+            () -> this.replyFailed(message)
         );
   }
 
@@ -546,10 +604,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
           );
           this.store.replaceEntityModel(requestIri, replacingModel);
           this.dispatcherMessagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.EntityChanged(
-              requestIri.toString(),
-              content.entityRepresentation()
-            )
+              new HttpNotificationDispatcherMessage.EntityChanged(
+                  requestIri.toString(),
+                  content.entityRepresentation()
+              )
           );
           this.replyWithPayload(message, content.entityRepresentation());
         }),
@@ -592,14 +650,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
           );
           this.store.addEntityModel(requestIri, additionalTriples);
           final var updatedModel =
-               RdfModelUtils.modelToString(this.store.getEntityModel(requestIri).orElseThrow(),
-               RDFFormat.TURTLE,
-               this.httpConfig.getBaseUriTrailingSlash());
+              RdfModelUtils.modelToString(this.store.getEntityModel(requestIri).orElseThrow(),
+                  RDFFormat.TURTLE,
+                  this.httpConfig.getBaseUriTrailingSlash());
           this.dispatcherMessagebox.sendMessage(
-            new HttpNotificationDispatcherMessage.EntityChanged(
-              requestIri.toString(),
-              updatedModel
-          )
+              new HttpNotificationDispatcherMessage.EntityChanged(
+                  requestIri.toString(),
+                  updatedModel
+              )
           );
           this.replyWithPayload(message, updatedModel);
         }),
@@ -612,157 +670,158 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.store
         .getEntityModel(requestIri)
         .ifPresentOrElse(
-          Failable.asConsumer(entityModel -> {
-            final var entityModelString =
-                RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                    this.httpConfig.getBaseUriTrailingSlash());
-            if (entityModel.contains(
-                RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
-                RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-                RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
-            )) {
-              final var artifactIri = requestIri.toString();
-              final var workspaceIri =
-                  RdfModelUtils.createIri(
-                      Pattern
-                        .compile(
-                          "^(https?://.*?:[0-9]+/workspaces/.*?/)(?:artifacts|agents)/.*?$"
-                        )
-                        .matcher(artifactIri)
-                        .results()
-                        .map(r -> r.group(1))
-                        .findFirst()
-                        .orElseThrow()
-                  );
-              this.store
-                  .getEntityModel(workspaceIri)
-                  .ifPresent(Failable.asConsumer(workspaceModel -> {
-                    workspaceModel.remove(
-                        RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT),
-                        RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                        RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT)
-                    );
-                    workspaceModel.remove(
-                        RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
-                        RDF.TYPE,
-                        RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
-                    );
-                    workspaceModel.remove(
-                        RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
-                        RDF.TYPE,
-                        RdfModelUtils.createIri("https://purl.org/hmas/jacamo/Body")
-                    );
-                    this.store.replaceEntityModel(workspaceIri, workspaceModel);
-                    final var workspaceIriWIthoutTrailingSlash = workspaceIri.toString()
-                        .endsWith("/")
-                        ? workspaceIri.toString().substring(0, workspaceIri.toString().length() - 1)
-                        : workspaceIri.toString();
-                    this.dispatcherMessagebox.sendMessage(
-                      new HttpNotificationDispatcherMessage.EntityChanged(
-                        workspaceIriWIthoutTrailingSlash,
-                          RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
-                              this.httpConfig.getBaseUriTrailingSlash())
-                      )
-                    );
-                  }));
-              this.store.removeEntityModel(requestIri);
-              final var requestIriWithoutTrailingSlash = requestIri.toString().endsWith("/")
-                  ? requestIri.toString().substring(0, requestIri.toString().length() - 1)
-                  : requestIri.toString();
-              this.dispatcherMessagebox.sendMessage(
-                new HttpNotificationDispatcherMessage.EntityDeleted(
-                  requestIriWithoutTrailingSlash,
-                  entityModelString
-                )
-              );
-            } else if (entityModel.contains(
-                RdfModelUtils.createIri(requestIri + WORKSPACE_FRAGMENT),
-                RdfModelUtils.createIri(RDF.TYPE.stringValue()),
-                RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
-            )) {
-              final var workspaceIri = requestIri.toString();
-              final var workspaceIriResource = RdfModelUtils.createIri(
-                  requestIri + WORKSPACE_FRAGMENT
-              );
-              final var platformIri = RdfModelUtils.createIri(
-                  workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-              );
-              final var platformIriResource = RdfModelUtils.createIri(
-                  this.httpConfig.getBaseUriTrailingSlash() + PLATFORM_FRAGMENT
-              );
+            Failable.asConsumer(entityModel -> {
+              final var entityModelString =
+                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                      this.httpConfig.getBaseUriTrailingSlash());
               if (entityModel.contains(
-                  workspaceIriResource,
-                  RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
-                  platformIriResource
+                  RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
+                  RdfModelUtils.createIri(RDF.TYPE.stringValue()),
+                  RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
               )) {
+                final var artifactIri = requestIri.toString();
+                final var workspaceIri =
+                    RdfModelUtils.createIri(
+                        Pattern
+                            .compile(
+                                "^(https?://.*?:[0-9]+/workspaces/.*?/)(?:artifacts|agents)/.*?$"
+                            )
+                            .matcher(artifactIri)
+                            .results()
+                            .map(r -> r.group(1))
+                            .findFirst()
+                            .orElseThrow()
+                    );
                 this.store
-                    .getEntityModel(platformIri)
-                    .ifPresent(Failable.asConsumer(platformModel -> {
-                      platformModel.remove(
-                          platformIriResource,
-                          RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
-                          workspaceIriResource
+                    .getEntityModel(workspaceIri)
+                    .ifPresent(Failable.asConsumer(workspaceModel -> {
+                      workspaceModel.remove(
+                          RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT),
+                          RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
+                          RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT)
                       );
-                      platformModel.remove(
-                          workspaceIriResource,
+                      workspaceModel.remove(
+                          RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
                           RDF.TYPE,
-                          RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                          RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
                       );
-                      this.store.replaceEntityModel(platformIri, platformModel);
+                      workspaceModel.remove(
+                          RdfModelUtils.createIri(requestIri + ARTIFACT_FRAGMENT),
+                          RDF.TYPE,
+                          RdfModelUtils.createIri("https://purl.org/hmas/jacamo/Body")
+                      );
+                      this.store.replaceEntityModel(workspaceIri, workspaceModel);
+                      final var workspaceIriWIthoutTrailingSlash = workspaceIri.toString()
+                          .endsWith("/")
+                          ?
+                          workspaceIri.toString().substring(0, workspaceIri.toString().length() - 1)
+                          : workspaceIri.toString();
                       this.dispatcherMessagebox.sendMessage(
-                        new HttpNotificationDispatcherMessage.EntityChanged(
-                          platformIri.toString(),
-                            RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,
-                                this.httpConfig.getBaseUriTrailingSlash())
-                        )
+                          new HttpNotificationDispatcherMessage.EntityChanged(
+                              workspaceIriWIthoutTrailingSlash,
+                              RdfModelUtils.modelToString(workspaceModel, RDFFormat.TURTLE,
+                                  this.httpConfig.getBaseUriTrailingSlash())
+                          )
                       );
                     }));
-              } else {
-                entityModel
-                    .filter(
-                      workspaceIriResource,
-                      RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-                      null
+                this.store.removeEntityModel(requestIri);
+                final var requestIriWithoutTrailingSlash = requestIri.toString().endsWith("/")
+                    ? requestIri.toString().substring(0, requestIri.toString().length() - 1)
+                    : requestIri.toString();
+                this.dispatcherMessagebox.sendMessage(
+                    new HttpNotificationDispatcherMessage.EntityDeleted(
+                        requestIriWithoutTrailingSlash,
+                        entityModelString
                     )
-                    .objects()
-                    .stream()
-                    .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                    .flatMap(Optional::stream)
-                    .findFirst()
-                    .ifPresent(Failable.asConsumer(parentIri -> {
-                      // strip fragments
-                      final var parentIriDefragmented =
-                          parentIri.getNamespace().replace("#", "");
-                      this.store
-                          .getEntityModel(RdfModelUtils.createIri(parentIriDefragmented))
-                          .ifPresent(Failable.asConsumer(parentModel -> {
-                            parentModel.remove(
-                                parentIri,
-                                RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                                workspaceIriResource
-                            );
-                            parentModel.remove(
-                                workspaceIriResource,
-                                RDF.TYPE,
-                                RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
-                            );
-                            this.store.replaceEntityModel(
-                                RdfModelUtils.createIri(parentIriDefragmented), parentModel);
-                            this.dispatcherMessagebox.sendMessage(
-                              new HttpNotificationDispatcherMessage.EntityChanged(
-                                parentIriDefragmented,
-                                  RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,
-                                      this.httpConfig.getBaseUriTrailingSlash())
-                              )
-                            );
-                          }));
-                    }));
+                );
+              } else if (entityModel.contains(
+                  RdfModelUtils.createIri(requestIri + WORKSPACE_FRAGMENT),
+                  RdfModelUtils.createIri(RDF.TYPE.stringValue()),
+                  RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+              )) {
+                final var workspaceIri = requestIri.toString();
+                final var workspaceIriResource = RdfModelUtils.createIri(
+                    requestIri + WORKSPACE_FRAGMENT
+                );
+                final var platformIri = RdfModelUtils.createIri(
+                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
+                );
+                final var platformIriResource = RdfModelUtils.createIri(
+                    this.httpConfig.getBaseUriTrailingSlash() + PLATFORM_FRAGMENT
+                );
+                if (entityModel.contains(
+                    workspaceIriResource,
+                    RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
+                    platformIriResource
+                )) {
+                  this.store
+                      .getEntityModel(platformIri)
+                      .ifPresent(Failable.asConsumer(platformModel -> {
+                        platformModel.remove(
+                            platformIriResource,
+                            RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                            workspaceIriResource
+                        );
+                        platformModel.remove(
+                            workspaceIriResource,
+                            RDF.TYPE,
+                            RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                        );
+                        this.store.replaceEntityModel(platformIri, platformModel);
+                        this.dispatcherMessagebox.sendMessage(
+                            new HttpNotificationDispatcherMessage.EntityChanged(
+                                platformIri.toString(),
+                                RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,
+                                    this.httpConfig.getBaseUriTrailingSlash())
+                            )
+                        );
+                      }));
+                } else {
+                  entityModel
+                      .filter(
+                          workspaceIriResource,
+                          RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
+                          null
+                      )
+                      .objects()
+                      .stream()
+                      .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                      .flatMap(Optional::stream)
+                      .findFirst()
+                      .ifPresent(Failable.asConsumer(parentIri -> {
+                        // strip fragments
+                        final var parentIriDefragmented =
+                            parentIri.getNamespace().replace("#", "");
+                        this.store
+                            .getEntityModel(RdfModelUtils.createIri(parentIriDefragmented))
+                            .ifPresent(Failable.asConsumer(parentModel -> {
+                              parentModel.remove(
+                                  parentIri,
+                                  RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
+                                  workspaceIriResource
+                              );
+                              parentModel.remove(
+                                  workspaceIriResource,
+                                  RDF.TYPE,
+                                  RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
+                              );
+                              this.store.replaceEntityModel(
+                                  RdfModelUtils.createIri(parentIriDefragmented), parentModel);
+                              this.dispatcherMessagebox.sendMessage(
+                                  new HttpNotificationDispatcherMessage.EntityChanged(
+                                      parentIriDefragmented,
+                                      RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,
+                                          this.httpConfig.getBaseUriTrailingSlash())
+                                  )
+                              );
+                            }));
+                      }));
+                }
+                this.removeResourcesRecursively(requestIri);
               }
-              this.removeResourcesRecursively(requestIri);
-            }
-            this.replyWithPayload(message, entityModelString);
-          }),
-          () -> this.replyEntityNotFound(message)
+              this.replyWithPayload(message, entityModelString);
+            }),
+            () -> this.replyEntityNotFound(message)
         );
   }
 
@@ -772,32 +831,32 @@ public class RdfStoreVerticle extends AbstractVerticle {
     while (!stack.isEmpty()) {
       final var iri = stack.removeLast();
       this.store.getEntityModel(iri)
-                .ifPresent(Failable.asConsumer(model -> {
-                  final var iriResource = RdfModelUtils.createIri(
-                      iri.toString().endsWith("/") ? iri + WORKSPACE_FRAGMENT :
-                          iri + "/" + WORKSPACE_FRAGMENT);
-                  model
-                      .filter(
-                        iriResource,
-                        RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
-                        null
-                      )
-                      .objects()
-                      .stream()
-                      .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                      .flatMap(Optional::stream)
-                      .map(fragmentedIri -> RdfModelUtils.createIri(
-                          fragmentedIri.getNamespace().replace("#", "")))
-                      .peek(irisToDelete::add)
-                      .forEach(stack::add);
-                  this.dispatcherMessagebox.sendMessage(
-                    new HttpNotificationDispatcherMessage.EntityDeleted(
-                      iri.toString(),
-                        RdfModelUtils.modelToString(model, RDFFormat.TURTLE,
-                            this.httpConfig.getBaseUriTrailingSlash())
-                    )
-                  );
-                }));
+          .ifPresent(Failable.asConsumer(model -> {
+            final var iriResource = RdfModelUtils.createIri(
+                iri.toString().endsWith("/") ? iri + WORKSPACE_FRAGMENT :
+                    iri + "/" + WORKSPACE_FRAGMENT);
+            model
+                .filter(
+                    iriResource,
+                    RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
+                    null
+                )
+                .objects()
+                .stream()
+                .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                .flatMap(Optional::stream)
+                .map(fragmentedIri -> RdfModelUtils.createIri(
+                    fragmentedIri.getNamespace().replace("#", "")))
+                .peek(irisToDelete::add)
+                .forEach(stack::add);
+            this.dispatcherMessagebox.sendMessage(
+                new HttpNotificationDispatcherMessage.EntityDeleted(
+                    iri.toString(),
+                    RdfModelUtils.modelToString(model, RDFFormat.TURTLE,
+                        this.httpConfig.getBaseUriTrailingSlash())
+                )
+            );
+          }));
     }
     irisToDelete.forEach(Failable.asConsumer(this.store::removeEntityModel));
   }
@@ -864,8 +923,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     // Generate a new IRI
     final var IRI = Stream.generate(() -> UUID.randomUUID().toString()).map(fullRequestIri::concat)
         .dropWhile(Failable.asPredicate(
-          i -> this.store.containsEntityModel(RdfModelUtils.createIri(i))
-      )).findFirst();
+            i -> this.store.containsEntityModel(RdfModelUtils.createIri(i))
+        )).findFirst();
     if (IRI.isPresent()) {
       return IRI.get().replaceAll(regexPattern, "/");
     }

@@ -66,6 +66,8 @@ public interface HttpInterfaceConfig extends Shareable {
    * @param workspaceName the name of the workspace
    * @return the artifacts URI
    */
+  String getArtifactsUriTrailingSlash(String workspaceName);
+
   String getArtifactsUri(String workspaceName);
 
   /**

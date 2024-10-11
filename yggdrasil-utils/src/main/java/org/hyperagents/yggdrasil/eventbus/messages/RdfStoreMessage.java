@@ -101,6 +101,12 @@ public sealed interface RdfStoreMessage {
   ) implements RdfStoreMessage {
   }
 
+  record GetWorkspaces(String containerWorkspace) implements RdfStoreMessage {
+  }
+
+  record GetArtifacts(String workspaceName) implements RdfStoreMessage {
+  }
+
   /**
    * A record representing a request to query the knowledge graph in the RDF store.
    *
