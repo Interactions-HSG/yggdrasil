@@ -292,7 +292,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           .filter(null, iri(CONTAINS_HMAS_IRI), null);
 
       containedThings.removeIf(
-          triple -> !triple.getObject().stringValue().contains(ARTIFACT_FRAGMENT)
+          triple -> !artifactsContained.contains(triple)
       );
 
       m.addAll(containedThings);
@@ -469,17 +469,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
           final Model m = new LinkedHashModel();
 
           final var artifactsContained = workspaceModel
-              .filter(null, null, iri("https://purl.org/hmas/Artifact"));
+              .filter(null, RDF.TYPE, iri(ARTIFACT_HMAS_IRI));
 
           final var workspaceDefTriple = workspaceModel
               .filter(workspaceActualIRI, RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
 
           final var containedThings = workspaceModel
-              .filter(null, iri("https://purl.org/hmas/contains"), null);
+              .filter(null, iri(CONTAINS_HMAS_IRI), null);
 
           containedThings.removeIf(
-              triple -> !triple.getObject().stringValue().contains("#artifact")
+              triple -> !triple.getObject().stringValue().contains(ARTIFACT_FRAGMENT)
           );
 
           m.addAll(containedThings);

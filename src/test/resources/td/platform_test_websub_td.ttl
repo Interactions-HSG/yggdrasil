@@ -1,8 +1,7 @@
 @base<http://localhost:8080/>.
 @prefixhmas:<https://purl.org/hmas/>.
-@prefixtd:<https://www.w3.org/2019/wot/td#>.
 
-<#platform>atd:Thing,hmas:HypermediaMASPlatform;
+<#platform>ahmas:HypermediaMASPlatform;
 hmas:hosts<workspaces/test/#workspace>.
 
 <workspaces/test/#workspace>ahmas:Workspace.
