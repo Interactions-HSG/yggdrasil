@@ -51,6 +51,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private static final String PLATFORM_HMAS_IRI = "https://purl.org/hmas/HypermediaMASPlatform";
   private static final String ARTIFACT_HMAS_IRI = "https://purl.org/hmas/Artifact";
   private static final String HOSTS_HMAS_IRI = "https://purl.org/hmas/hosts";
+  private static final String HMAS_IRI = "https://purl.org/hmas/";
+  private static final String HMAS = "hmas";
   private static final String ARTIFACT_FRAGMENT = "#artifact";
   private static final String WORKSPACE_FRAGMENT = "#workspace";
   private static final String PLATFORM_FRAGMENT = "#platform";
@@ -130,7 +132,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               List<String> defaultGraphUris,
               List<String> namedGraphUris,
               String responseContentType
-          ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
+            ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
               message);
           case RdfStoreMessage.CreateBody content -> this.handleCreateBody(content, message);
         }
@@ -265,7 +267,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       m.addAll(workspaceDefTriple);
       m.addAll(containedThings);
       m.addAll(workspacesContained);
-      m.setNamespace("hmas", "https://purl.org/hmas/");
+      m.setNamespace(HMAS, HMAS_IRI);
 
       this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
           this.httpConfig.getBaseUriTrailingSlash()));
@@ -298,7 +300,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       m.addAll(containedThings);
       m.addAll(workspaceDefTriple);
       m.addAll(artifactsContained);
-      m.setNamespace("hmas", "https://purl.org/hmas/");
+      m.setNamespace(HMAS, HMAS_IRI);
 
 
       this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
@@ -485,7 +487,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           m.addAll(containedThings);
           m.addAll(workspaceDefTriple);
           m.addAll(artifactsContained);
-          m.setNamespace("hmas", "https://purl.org/hmas/");
+          m.setNamespace(HMAS, HMAS_IRI);
 
 
           this.dispatcherMessagebox.sendMessage(
@@ -572,7 +574,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       );
 
                       final var parentWorkspaceName = parentIri.toString()
-                          .substring(parentIri.toString().lastIndexOf("/") + 1);
+                          .substring(parentIri.toString().lastIndexOf('/') + 1);
 
                       final Model m = new LinkedHashModel();
 
@@ -596,7 +598,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       m.addAll(workspaceDefTriple);
                       m.addAll(containedDefinitions);
 
-                      m.setNamespace("hmas", "https://purl.org/hmas/");
+                      m.setNamespace(HMAS, HMAS_IRI);
 
 
                       this.dispatcherMessagebox.sendMessage(
@@ -622,14 +624,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 entityModel.add(
                     platformIRI,
                     RDF.TYPE,
-                    RdfModelUtils.createIri("https://purl.org/hmas/HypermediaMASPlatform")
+                    RdfModelUtils.createIri(PLATFORM_HMAS_IRI)
                 );
                 this.store
                     .getEntityModel(platformResourceProfileIri)
                     .ifPresent(Failable.asConsumer(platformModel -> {
                       platformModel.add(
                           platformIRI,
-                          RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                          RdfModelUtils.createIri(HOSTS_HMAS_IRI),
                           workspaceIRI
                       );
                       platformModel.add(
@@ -651,10 +653,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       final var workspaceDefTriple = platformModel
                           .filter(RdfModelUtils.createIri(
                                   platformResourceProfileIri + PLATFORM_FRAGMENT),
-                              RDF.TYPE, iri("https://purl.org/hmas/HypermediaMASPlatform"));
+                              RDF.TYPE, iri(PLATFORM_HMAS_IRI));
 
                       final Model containedThings = platformModel
-                          .filter(null, iri("https://purl.org/hmas/hosts"), null);
+                          .filter(null, iri(HOSTS_HMAS_IRI), null);
 
                       final Model workspaceDef = platformModel
                           .filter(null, null, iri("https://purl.org/hmas/Workspace"));
@@ -663,7 +665,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       m.addAll(containedThings);
                       m.addAll(workspaceDef);
 
-                      m.setNamespace("hmas", "https://purl.org/hmas/");
+                      m.setNamespace(HMAS, HMAS_IRI);
 
 
                       this.dispatcherMessagebox.sendMessage(
@@ -855,7 +857,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       .ifPresent(Failable.asConsumer(platformModel -> {
                         platformModel.remove(
                             platformIriResource,
-                            RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                            RdfModelUtils.createIri(HOSTS_HMAS_IRI),
                             workspaceIriResource
                         );
                         platformModel.remove(
@@ -876,10 +878,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
                         final var workspaceDefTriple = platformModel
                             .filter(platformIriResource, RDF.TYPE,
-                                iri("https://purl.org/hmas/HypermediaMASPlatform"));
+                                iri(PLATFORM_HMAS_IRI));
 
                         final Model containedThings = platformModel
-                            .filter(null, iri("https://purl.org/hmas/hosts"), null);
+                            .filter(null, iri(HOSTS_HMAS_IRI), null);
 
                         final Model workspaceDef = platformModel
                             .filter(null, null, iri(WORKSPACE_HMAS_IRI));
@@ -888,7 +890,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         m.addAll(containedThings);
                         m.addAll(workspaceDef);
 
-                        m.setNamespace("hmas", "https://purl.org/hmas/");
+                        m.setNamespace(HMAS, HMAS_IRI);
 
                         this.dispatcherMessagebox.sendMessage(
                             new HttpNotificationDispatcherMessage.EntityChanged(
@@ -957,7 +959,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                               m.addAll(workspaceDefTriple);
                               m.addAll(containedDefinitions);
 
-                              m.setNamespace("hmas", "https://purl.org/hmas/");
+                              m.setNamespace(HMAS, HMAS_IRI);
 
                               final var parentWorkspaceSplit =
                                   parentIriDefragmented.toString().split("/");

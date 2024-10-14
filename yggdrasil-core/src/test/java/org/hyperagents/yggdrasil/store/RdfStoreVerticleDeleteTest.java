@@ -31,7 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * testclass.
  */
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
+@SuppressWarnings({"PMD.JUnitTestsShouldIncludeAssert", "PMD.JUnitAssertionsShouldIncludeMessage"})
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";

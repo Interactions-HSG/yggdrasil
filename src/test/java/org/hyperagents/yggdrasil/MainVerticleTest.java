@@ -70,7 +70,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * Tests the main functionality -> system tests.
  */
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
+@SuppressWarnings({"PMD.JUnitTestsShouldIncludeAssert", "PMD.JUnitAssertionsShouldIncludeMessage"})
 @ExtendWith(VertxExtension.class)
 public class MainVerticleTest {
 
@@ -82,8 +82,8 @@ public class MainVerticleTest {
   /**
    * setup method.
    *
-   * @param vertx vertx
-   * @param ctx ctx
+   * @param vertx    vertx
+   * @param ctx      ctx
    * @param testInfo testInfo
    */
   @BeforeEach
@@ -278,17 +278,17 @@ public class MainVerticleTest {
 
 
   private void testHelper(
-        final VertxTestContext ctx,
-        final String platformRepresentation,
-        final String workspaceRepresentation,
-        final String subWorkspaceRepresentation,
-        final String workspaceWithSubWorkspaceRepresentation,
-        final String websubArtifactsRepresentation,
-        final String websubArtifactsTwoRepresentation,
-        final String websubArtifactsThreeRepresentation,
-        final String artifactRepresentation,
-        final String subWorkspaceWithArtifactAndBodyRepresentation,
-        final BiConsumer<String, String> assertEqualsFunction
+      final VertxTestContext ctx,
+      final String platformRepresentation,
+      final String workspaceRepresentation,
+      final String subWorkspaceRepresentation,
+      final String workspaceWithSubWorkspaceRepresentation,
+      final String websubArtifactsRepresentation,
+      final String websubArtifactsTwoRepresentation,
+      final String websubArtifactsThreeRepresentation,
+      final String artifactRepresentation,
+      final String subWorkspaceWithArtifactAndBodyRepresentation,
+      final BiConsumer<String, String> assertEqualsFunction
   ) {
     this.client.post(TEST_PORT, TEST_HOST, HUB_PATH)
         .sendJsonObject(JsonObject.of(
@@ -361,8 +361,8 @@ public class MainVerticleTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -436,8 +436,8 @@ public class MainVerticleTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsTwoRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsTwoRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + SUB_WORKSPACE_NAME + "/join")
@@ -530,8 +530,8 @@ public class MainVerticleTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsThreeRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsThreeRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.client
             .post(

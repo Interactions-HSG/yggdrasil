@@ -70,7 +70,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * Tests regarding notifications being sent upon changes in the environment.
  */
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
+@SuppressWarnings({"PMD.JUnitTestsShouldIncludeAssert", "PMD.JUnitAssertionsShouldIncludeMessage"})
 @ExtendWith(VertxExtension.class)
 public class BodyNotificationTest {
 
@@ -81,8 +81,8 @@ public class BodyNotificationTest {
   /**
    * setup method.
    *
-   * @param vertx vertx
-   * @param ctx ctx
+   * @param vertx    vertx
+   * @param ctx      ctx
    * @param testInfo testInfo
    */
   @BeforeEach
@@ -286,8 +286,8 @@ public class BodyNotificationTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.callbackMessages.get(2).future())
         .onSuccess(m -> {
@@ -321,8 +321,8 @@ public class BodyNotificationTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsTwoRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsTwoRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
@@ -585,8 +585,8 @@ public class BodyNotificationTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.callbackMessages.get(2).future())
         .onSuccess(m -> {
@@ -620,8 +620,8 @@ public class BodyNotificationTest {
               URIS_EQUAL_MESSAGE
           );
           Assertions.assertEquals(
-              websubArtifactsTwoRepresentation.replaceAll(" ",""),
-              m.getValue().replaceAll(" ",""));
+              websubArtifactsTwoRepresentation.replaceAll(" ", ""),
+              m.getValue().replaceAll(" ", ""));
         })
         .compose(r -> this.client
             .post(TEST_PORT, TEST_HOST, HUB_PATH)
