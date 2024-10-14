@@ -241,7 +241,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var model = result.get();
       final Model m = new LinkedHashModel();
 
-      final var workspacesContained =  model
+      final var workspacesContained = model
           .filter(null, null, iri(WORKSPACE_HMAS_IRI));
 
       final Model workspaceDefTriple;
@@ -650,7 +650,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
                       final var workspaceDefTriple = platformModel
                           .filter(RdfModelUtils.createIri(
-                              platformResourceProfileIri + PLATFORM_FRAGMENT),
+                                  platformResourceProfileIri + PLATFORM_FRAGMENT),
                               RDF.TYPE, iri("https://purl.org/hmas/HypermediaMASPlatform"));
 
                       final Model containedThings = platformModel
@@ -875,7 +875,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
                         final Model m = new LinkedHashModel();
 
                         final var workspaceDefTriple = platformModel
-                            .filter(platformIriResource, RDF.TYPE, iri("https://purl.org/hmas/HypermediaMASPlatform"));
+                            .filter(platformIriResource, RDF.TYPE,
+                                iri("https://purl.org/hmas/HypermediaMASPlatform"));
 
                         final Model containedThings = platformModel
                             .filter(null, iri("https://purl.org/hmas/hosts"), null);
@@ -936,38 +937,41 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                   )
                               );
 
-                                final Model m = new LinkedHashModel();
+                              final Model m = new LinkedHashModel();
 
-                                final var workspaceDefTriple = parentModel
-                                    .filter(parentIriDefragmented, RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
+                              final var workspaceDefTriple = parentModel
+                                  .filter(parentIriDefragmented, RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
 
-                                final Model containedThings = parentModel
-                                    .filter(null, iri("https://purl.org/hmas/contains"), null);
+                              final Model containedThings = parentModel
+                                  .filter(null, iri("https://purl.org/hmas/contains"), null);
 
-                                containedThings.removeIf(
-                                    triple -> !triple.getObject().stringValue().contains("#workspace")
-                                );
+                              containedThings.removeIf(
+                                  triple -> !triple.getObject().stringValue().contains("#workspace")
+                              );
 
-                                final Model containedDefinitions = parentModel
-                                    .filter(null, null, iri(WORKSPACE_HMAS_IRI));
+                              final Model containedDefinitions = parentModel
+                                  .filter(null, null, iri(WORKSPACE_HMAS_IRI));
 
-                                m.addAll(containedThings);
-                                m.addAll(workspaceDefTriple);
-                                m.addAll(containedDefinitions);
+                              m.addAll(containedThings);
+                              m.addAll(workspaceDefTriple);
+                              m.addAll(containedDefinitions);
 
-                                m.setNamespace("hmas", "https://purl.org/hmas/");
+                              m.setNamespace("hmas", "https://purl.org/hmas/");
 
-                                this.dispatcherMessagebox.sendMessage(
-                                    new HttpNotificationDispatcherMessage.EntityChanged(
-                                        this.httpConfig.getWorkspacesUri()
-                                            + "?parent=" + parentIri.toString()
-                                            .substring(parentIri.toString().lastIndexOf("/") + 1),
-                                        RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
-                                            this.httpConfig.getBaseUriTrailingSlash())
-                                    )
-                                );
+                              final var parentWorkspaceSplit =
+                                  parentIriDefragmented.toString().split("/");
+                              final var parentWorkspaceName =
+                                  parentWorkspaceSplit[parentWorkspaceSplit.length - 1];
 
+                              this.dispatcherMessagebox.sendMessage(
+                                  new HttpNotificationDispatcherMessage.EntityChanged(
+                                      this.httpConfig.getWorkspacesUri()
+                                          + "?parent=" + parentWorkspaceName,
+                                      RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
+                                          this.httpConfig.getBaseUriTrailingSlash())
+                                  )
+                              );
                             }));
                       }));
                 }

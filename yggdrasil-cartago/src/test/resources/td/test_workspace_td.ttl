@@ -7,7 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
-@prefix websub: <http://example.org/websub#> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 
 <http://localhost:8080/workspaces/test/#workspace> a td:Thing, hmas:Workspace;
   td:title "test";
@@ -112,7 +112,16 @@
             ];
           js:required "artifactName", "callbackIri"
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspace>;
+    ], [ a td:ActionAffordance;
+      td:name "getSubWorkspaces";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <http://localhost:8080/workspaces?parent=test>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction;
+          hctl:forSubProtocol "websub"
+        ]
+    ], [ a td:ActionAffordance, websub:subscribeToWorkspace;
       td:name "subscribeToWorkspace";
       td:hasForm [
           htv:methodName "POST";
@@ -130,7 +139,7 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromWorkspace>;
+    ], [ a td:ActionAffordance, websub:unsubscribeFromWorkspace;
       td:name "unsubscribeFromWorkspace";
       td:hasForm [
           htv:methodName "POST";

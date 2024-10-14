@@ -214,17 +214,28 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH,
-                entityCreatedMessage.requestIri(),
+                "http://localhost:8080/workspaces?parent=test",
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                outputWorkspaceRepresentation,
-                entityCreatedMessage.content()
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/sub/#workspace> .
+                
+                <workspaces/sub/#workspace> a hmas:Workspace .
+                """,
+                entityChangedMessage.content(),
+                "The content should equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
@@ -299,17 +310,27 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
                 "http://localhost:8080/workspaces/test/artifacts/",
-                entityCreatedMessage.requestIri(),
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                outputArtifactRepresentation,
-                entityCreatedMessage.content()
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/test/artifacts/c0/#artifact> .
+                
+                <workspaces/test/artifacts/c0/#artifact> a hmas:Artifact .
+                """,
+                entityChangedMessage.content(),
+                "The content should be equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
@@ -385,17 +406,28 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
                 "http://localhost:8080/workspaces/test/artifacts/",
-                entityCreatedMessage.requestIri(),
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                bodyArtifactRepresentation,
-                entityCreatedMessage.content()
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/test/artifacts/body_kai/#artifact> .
+                
+                <workspaces/test/artifacts/body_kai/#artifact> a hmas:Artifact .
+                """,
+                entityChangedMessage.content(),
+                "The content should be equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
@@ -452,18 +484,29 @@ public class RdfStoreVerticleCreateTest {
                        platformRepresentation,
                        entityUpdatedMessage.content()
                    );
-                   final var entityCreatedMessage =
-                       (HttpNotificationDispatcherMessage.EntityCreated)
+                   final var entityChangedMessage =
+                       (HttpNotificationDispatcherMessage.EntityChanged)
                          this.notificationQueue.take();
-                   Assertions.assertEquals(
-                       WORKSPACES_PATH,
-                       entityCreatedMessage.requestIri(),
-                       URIS_EQUAL_MESSAGE
-                   );
-                   RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                       outputWorkspaceRepresentation,
-                       entityCreatedMessage.content()
-                   );
+                     Assertions.assertEquals(
+                            WORKSPACES_PATH,
+                            entityChangedMessage.requestIri(),
+                            URIS_EQUAL_MESSAGE
+                        );
+                     Assertions.assertEquals(
+                         """
+                         @base <http://localhost:8080/> .
+                         @prefix hmas: <https://purl.org/hmas/> .
+                         
+                         <#platform> a hmas:HypermediaMASPlatform;
+                           hmas:hosts <workspaces/test/#workspace> .
+                         
+                         <workspaces/test/#workspace> a hmas:Workspace .
+                         """,
+                            entityChangedMessage.content(),
+                            "The content should equal"
+                     );
+
+
                  } catch (final Exception e) {
                    ctx.failNow(e);
                  }
