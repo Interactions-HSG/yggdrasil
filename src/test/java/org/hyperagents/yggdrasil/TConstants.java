@@ -67,6 +67,7 @@ public final class TConstants {
   public static final String WORKSPACES_PATH = "/workspaces/";
   public static final String ARTIFACTS_PATH = "/artifacts/";
   public static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
+  public static final String SUBSCRIBE_WORKSPACE_PATH = "/workspaces?parent=";
 
 
   public static final String SUB_WORKSPACE_NAME = "sub";

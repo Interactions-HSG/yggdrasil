@@ -180,7 +180,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     this.rdfStoreMessagebox.sendMessage(
-        new RdfStoreMessage.GetEntityIri(this.httpConfig.getWorkspacesUriTrailingSlash(), workspaceName)
+        new RdfStoreMessage.GetEntityIri(
+            this.httpConfig.getWorkspacesUriTrailingSlash(),
+            workspaceName)
     ).compose(nameResponse ->
         this.cartagoMessagebox
             .sendMessage(new CartagoMessage.CreateWorkspace(nameResponse.body()))

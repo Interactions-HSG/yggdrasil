@@ -31,7 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 /**
  * testclass.
  */
-@SuppressWarnings("PMD.JUnitTestsShouldIncludeAssert")
+@SuppressWarnings({"PMD.JUnitTestsShouldIncludeAssert", "PMD.JUnitAssertionsShouldIncludeMessage"})
 @ExtendWith(VertxExtension.class)
 public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
@@ -147,6 +147,25 @@ public class RdfStoreVerticleDeleteTest {
                 PLATFORM_URI,
                 platformUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
+            );
+
+            final var changedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+
+            Assertions.assertEquals(
+                PLATFORM_URI + "workspaces/",
+                changedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <#platform> a hmas:HypermediaMASPlatform .
+                """,
+                changedMessage.content()
             );
 
             final var deletionMessage =
@@ -270,6 +289,27 @@ public class RdfStoreVerticleDeleteTest {
                 parentWorkspaceUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
+
+            final var changedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
+
+            Assertions.assertEquals(
+                PLATFORM_URI + "workspaces?parent=test",
+                changedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace .
+                """,
+                changedMessage.content()
+            );
+
+
             final var deletionMessage =
                 (HttpNotificationDispatcherMessage.EntityDeleted) this.notificationQueue.take();
             RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -561,6 +601,7 @@ public class RdfStoreVerticleDeleteTest {
         )))
         .onSuccess(r -> {
           try {
+            this.notificationQueue.take();
             this.notificationQueue.take();
             this.notificationQueue.take();
           } catch (final Exception e) {

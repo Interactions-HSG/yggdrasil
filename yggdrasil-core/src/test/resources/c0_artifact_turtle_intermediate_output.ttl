@@ -7,7 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
-@prefix websub: <http://example.org/websub#> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 
 <http://localhost:8080/workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact;
   td:title "c0";
@@ -37,7 +37,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToArtifact>;
+    ], [ a td:ActionAffordance, websub:subscribeToArtifact;
       td:name "subscribeToArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -55,7 +55,7 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromArtifact>;
+    ], [ a td:ActionAffordance, websub:unsubscribeFromArtifact;
       td:name "unsubscribeFromArtifact";
       td:hasForm [
           htv:methodName "POST";

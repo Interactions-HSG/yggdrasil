@@ -38,6 +38,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
   private static final String HMAS = "https://purl.org/hmas/";
   private static final String JACAMO = HMAS + "jacamo/";
   private static final String HASH_ARTIFACT = "#artifact";
+  private static final String WEBSUB = "websub";
 
   private static final String GET = HttpMethod.GET.name();
   private static final String POST = HttpMethod.POST.name();
@@ -97,7 +98,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         new Form.Builder(this.notificationConfig.getWebSubHubUri())
             .setMethodName(HttpMethod.POST.name())
             .setContentType("application/json")
-            .addSubProtocol("websub")// could be used for websub
+            .addSubProtocol(WEBSUB)// could be used for websub
             .build()
     ).addInputSchema(
             new ObjectSchema
@@ -156,7 +157,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
               new Form.Builder(this.httpConfig.getWorkspacesUriTrailingSlash())
                   .setMethodName(HttpMethod.GET.name())
                   .setContentType("application/json")
-                  .addSubProtocol("websub")
+                  .addSubProtocol(WEBSUB)
                   .build()
           ).build()
       );
@@ -250,7 +251,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
               "getSubWorkspaces",
               new Form.Builder(this.httpConfig.getWorkspacesUri() + "?parent=" + workspaceName)
                   .setMethodName(HttpMethod.GET.name())
-                  .addSubProtocol("websub")
+                  .addSubProtocol(WEBSUB)
                   .build()
           ).build()
       );
@@ -378,7 +379,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
         .setNamespace("hmas", HMAS)
         .setNamespace("ex", "http://example.org/")
         .setNamespace("jacamo", JACAMO)
-        .setNamespace("websub", HMAS + "websub/")
+        .setNamespace(WEBSUB, HMAS + "websub/")
         .write();
   }
 }

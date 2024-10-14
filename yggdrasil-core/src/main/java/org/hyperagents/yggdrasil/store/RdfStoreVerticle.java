@@ -48,6 +48,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
   private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
+  private static final String PLATFORM_HMAS_IRI = "https://purl.org/hmas/HypermediaMASPlatform";
+  private static final String ARTIFACT_HMAS_IRI = "https://purl.org/hmas/Artifact";
+  private static final String HOSTS_HMAS_IRI = "https://purl.org/hmas/hosts";
+  private static final String HMAS_IRI = "https://purl.org/hmas/";
+  private static final String HMAS = "hmas";
   private static final String ARTIFACT_FRAGMENT = "#artifact";
   private static final String WORKSPACE_FRAGMENT = "#workspace";
   private static final String PLATFORM_FRAGMENT = "#platform";
@@ -127,7 +132,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
               List<String> defaultGraphUris,
               List<String> namedGraphUris,
               String responseContentType
-          ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
+            ) -> this.handleQuery(query, defaultGraphUris, namedGraphUris, responseContentType,
               message);
           case RdfStoreMessage.CreateBody content -> this.handleCreateBody(content, message);
         }
@@ -235,29 +240,37 @@ public class RdfStoreVerticle extends AbstractVerticle {
   ) throws IOException {
     final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
     if (result.isPresent()) {
-      final var workspaces = new LinkedList<String>();
       final var model = result.get();
+      final Model m = new LinkedHashModel();
 
+      final var workspacesContained = model
+          .filter(null, null, iri(WORKSPACE_HMAS_IRI));
+
+      final Model workspaceDefTriple;
       final Model containedThings;
       if (containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())) {
+        workspaceDefTriple = model
+            .filter(iri(containerWorkspaceUri),
+                RDF.TYPE, iri(PLATFORM_HMAS_IRI));
         containedThings = model
-            .filter(null, iri("https://purl.org/hmas/hosts"), null);
+            .filter(null, iri(HOSTS_HMAS_IRI), null);
       } else {
+        workspaceDefTriple = model
+            .filter(iri(containerWorkspaceUri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
         containedThings = model
-            .filter(null, iri("https://purl.org/hmas/contains"), null);
+            .filter(null, iri(CONTAINS_HMAS_IRI), null);
       }
-      containedThings
-          .objects()
-          .stream()
-          .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-          .flatMap(Optional::stream)
-          .map(IRI::stringValue)
-          .forEach(s -> {
-            if (s.contains("#workspace")) {
-              workspaces.add(s);
-            }
-          });
-      this.replyWithPayload(message, String.valueOf(workspaces));
+      containedThings.removeIf(
+          triple -> !triple.getObject().stringValue().contains(WORKSPACE_FRAGMENT)
+      );
+
+      m.addAll(workspaceDefTriple);
+      m.addAll(containedThings);
+      m.addAll(workspacesContained);
+      m.setNamespace(HMAS, HMAS_IRI);
+
+      this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
+          this.httpConfig.getBaseUriTrailingSlash()));
     } else {
       this.replyEntityNotFound(message);
     }
@@ -268,20 +281,30 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var workspaceIri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
     final var result = this.store.getEntityModel(RdfModelUtils.createIri(workspaceIri));
     if (result.isPresent()) {
-      final var artifacts = new LinkedList<String>();
-      result.get()
-          .filter(null, iri("https://purl.org/hmas/contains"), null)
-          .objects()
-          .stream()
-          .map(o -> o instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-          .flatMap(Optional::stream)
-          .map(IRI::stringValue)
-          .forEach(s -> {
-            if (s.contains("#artifact")) {
-              artifacts.add(s);
-            }
-          });
-      this.replyWithPayload(message, String.valueOf(artifacts));
+      final Model m = new LinkedHashModel();
+
+      final var artifactsContained = result.get()
+          .filter(null, null, iri(ARTIFACT_HMAS_IRI));
+
+      final var workspaceDefTriple = result.get()
+          .filter(iri(workspaceIri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
+
+
+      final var containedThings = result.get()
+          .filter(null, iri(CONTAINS_HMAS_IRI), null);
+
+      containedThings.removeIf(
+          triple -> !artifactsContained.contains(triple)
+      );
+
+      m.addAll(containedThings);
+      m.addAll(workspaceDefTriple);
+      m.addAll(artifactsContained);
+      m.setNamespace(HMAS, HMAS_IRI);
+
+
+      this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
+          this.httpConfig.getBaseUriTrailingSlash()));
     } else {
       this.replyEntityNotFound(message);
     }
@@ -426,7 +449,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
           workspaceModel.add(
               artifactIRI,
               RDF.TYPE,
-              RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
+              RdfModelUtils.createIri(ARTIFACT_HMAS_IRI)
           );
           if (isBody) {
             workspaceModel.add(
@@ -448,24 +471,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
           final Model m = new LinkedHashModel();
 
           final var artifactsContained = workspaceModel
-              .filter(null, null, iri("https://purl.org/hmas/Artifact"));
+              .filter(null, RDF.TYPE, iri(ARTIFACT_HMAS_IRI));
 
           final var workspaceDefTriple = workspaceModel
-              .filter(workspaceActualIRI, RDF.TYPE, null);
+              .filter(workspaceActualIRI, RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
 
           final var containedThings = workspaceModel
-              .filter(null, iri("https://purl.org/hmas/contains"), null);
+              .filter(null, iri(CONTAINS_HMAS_IRI), null);
 
           containedThings.removeIf(
-              triple -> !triple.getObject().stringValue().contains("#artifact")
+              triple -> !triple.getObject().stringValue().contains(ARTIFACT_FRAGMENT)
           );
 
           m.addAll(containedThings);
           m.addAll(workspaceDefTriple);
           m.addAll(artifactsContained);
-          m.setNamespace("hmas", "https://purl.org/hmas/");
-          m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+          m.setNamespace(HMAS, HMAS_IRI);
 
 
           this.dispatcherMessagebox.sendMessage(
@@ -552,14 +574,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       );
 
                       final var parentWorkspaceName = parentIri.toString()
-                          .substring(parentIri.toString().lastIndexOf("/") + 1);
+                          .substring(parentIri.toString().lastIndexOf('/') + 1);
 
                       final Model m = new LinkedHashModel();
 
                       final var workspaceDefTriple = parentModel
                           .filter(
                               RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
-                              RDF.TYPE, null);
+                              RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
                       final Model containedThings = parentModel
                           .filter(null, iri("https://purl.org/hmas/contains"), null);
@@ -576,8 +598,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       m.addAll(workspaceDefTriple);
                       m.addAll(containedDefinitions);
 
-                      m.setNamespace("hmas", "https://purl.org/hmas/");
-                      m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+                      m.setNamespace(HMAS, HMAS_IRI);
 
 
                       this.dispatcherMessagebox.sendMessage(
@@ -603,14 +624,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
                 entityModel.add(
                     platformIRI,
                     RDF.TYPE,
-                    RdfModelUtils.createIri("https://purl.org/hmas/HypermediaMASPlatform")
+                    RdfModelUtils.createIri(PLATFORM_HMAS_IRI)
                 );
                 this.store
                     .getEntityModel(platformResourceProfileIri)
                     .ifPresent(Failable.asConsumer(platformModel -> {
                       platformModel.add(
                           platformIRI,
-                          RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                          RdfModelUtils.createIri(HOSTS_HMAS_IRI),
                           workspaceIRI
                       );
                       platformModel.add(
@@ -631,10 +652,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
                       final var workspaceDefTriple = platformModel
                           .filter(RdfModelUtils.createIri(
-                              platformResourceProfileIri + PLATFORM_FRAGMENT), RDF.TYPE, null);
+                                  platformResourceProfileIri + PLATFORM_FRAGMENT),
+                              RDF.TYPE, iri(PLATFORM_HMAS_IRI));
 
                       final Model containedThings = platformModel
-                          .filter(null, iri("https://purl.org/hmas/hosts"), null);
+                          .filter(null, iri(HOSTS_HMAS_IRI), null);
 
                       final Model workspaceDef = platformModel
                           .filter(null, null, iri("https://purl.org/hmas/Workspace"));
@@ -643,8 +665,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       m.addAll(containedThings);
                       m.addAll(workspaceDef);
 
-                      m.setNamespace("hmas", "https://purl.org/hmas/");
-                      m.setNamespace("td", "https://www.w3.org/2019/wot/td#");
+                      m.setNamespace(HMAS, HMAS_IRI);
 
 
                       this.dispatcherMessagebox.sendMessage(
@@ -836,7 +857,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       .ifPresent(Failable.asConsumer(platformModel -> {
                         platformModel.remove(
                             platformIriResource,
-                            RdfModelUtils.createIri("https://purl.org/hmas/hosts"),
+                            RdfModelUtils.createIri(HOSTS_HMAS_IRI),
                             workspaceIriResource
                         );
                         platformModel.remove(
@@ -849,6 +870,32 @@ public class RdfStoreVerticle extends AbstractVerticle {
                             new HttpNotificationDispatcherMessage.EntityChanged(
                                 platformIri.toString(),
                                 RdfModelUtils.modelToString(platformModel, RDFFormat.TURTLE,
+                                    this.httpConfig.getBaseUriTrailingSlash())
+                            )
+                        );
+
+                        final Model m = new LinkedHashModel();
+
+                        final var workspaceDefTriple = platformModel
+                            .filter(platformIriResource, RDF.TYPE,
+                                iri(PLATFORM_HMAS_IRI));
+
+                        final Model containedThings = platformModel
+                            .filter(null, iri(HOSTS_HMAS_IRI), null);
+
+                        final Model workspaceDef = platformModel
+                            .filter(null, null, iri(WORKSPACE_HMAS_IRI));
+
+                        m.addAll(workspaceDefTriple);
+                        m.addAll(containedThings);
+                        m.addAll(workspaceDef);
+
+                        m.setNamespace(HMAS, HMAS_IRI);
+
+                        this.dispatcherMessagebox.sendMessage(
+                            new HttpNotificationDispatcherMessage.EntityChanged(
+                                this.httpConfig.getWorkspacesUriTrailingSlash(),
+                                RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
                                     this.httpConfig.getBaseUriTrailingSlash())
                             )
                         );
@@ -868,9 +915,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       .ifPresent(Failable.asConsumer(parentIri -> {
                         // strip fragments
                         final var parentIriDefragmented =
-                            parentIri.getNamespace().replace("#", "");
+                            iri(parentIri.getNamespace().replace("#", ""));
                         this.store
-                            .getEntityModel(RdfModelUtils.createIri(parentIriDefragmented))
+                            .getEntityModel(parentIriDefragmented)
                             .ifPresent(Failable.asConsumer(parentModel -> {
                               parentModel.remove(
                                   parentIri,
@@ -883,11 +930,47 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                   RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                               );
                               this.store.replaceEntityModel(
-                                  RdfModelUtils.createIri(parentIriDefragmented), parentModel);
+                                  parentIriDefragmented, parentModel);
                               this.dispatcherMessagebox.sendMessage(
                                   new HttpNotificationDispatcherMessage.EntityChanged(
-                                      parentIriDefragmented,
+                                      parentIriDefragmented.toString(),
                                       RdfModelUtils.modelToString(parentModel, RDFFormat.TURTLE,
+                                          this.httpConfig.getBaseUriTrailingSlash())
+                                  )
+                              );
+
+                              final Model m = new LinkedHashModel();
+
+                              final var workspaceDefTriple = parentModel
+                                  .filter(parentIriDefragmented, RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
+
+
+                              final Model containedThings = parentModel
+                                  .filter(null, iri("https://purl.org/hmas/contains"), null);
+
+                              containedThings.removeIf(
+                                  triple -> !triple.getObject().stringValue().contains("#workspace")
+                              );
+
+                              final Model containedDefinitions = parentModel
+                                  .filter(null, null, iri(WORKSPACE_HMAS_IRI));
+
+                              m.addAll(containedThings);
+                              m.addAll(workspaceDefTriple);
+                              m.addAll(containedDefinitions);
+
+                              m.setNamespace(HMAS, HMAS_IRI);
+
+                              final var parentWorkspaceSplit =
+                                  parentIriDefragmented.toString().split("/");
+                              final var parentWorkspaceName =
+                                  parentWorkspaceSplit[parentWorkspaceSplit.length - 1];
+
+                              this.dispatcherMessagebox.sendMessage(
+                                  new HttpNotificationDispatcherMessage.EntityChanged(
+                                      this.httpConfig.getWorkspacesUri()
+                                          + "?parent=" + parentWorkspaceName,
+                                      RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
                                           this.httpConfig.getBaseUriTrailingSlash())
                                   )
                               );
