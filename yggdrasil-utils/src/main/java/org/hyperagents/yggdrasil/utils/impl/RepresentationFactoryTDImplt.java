@@ -329,7 +329,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addHttpSignifiers(td, thingUri, ARTIFACT);
 
     if (isCartagoArtifact) {
-      addAction(td, "focusArtifact", thingUri + "focus/", HttpMethod.POST.name(), "Focus");
+      addAction(td, "focusArtifact", thingUri + "/focus", HttpMethod.POST.name(), "Focus");
     }
 
     addWebSub(td, ARTIFACT);

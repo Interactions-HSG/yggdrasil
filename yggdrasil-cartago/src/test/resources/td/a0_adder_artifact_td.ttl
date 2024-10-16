@@ -60,7 +60,7 @@
       td:name "focusArtifact";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0focus/>;
+          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0/focus>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
