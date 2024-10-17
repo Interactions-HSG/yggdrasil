@@ -796,7 +796,7 @@ public class CartagoHttpHandlersTest {
     final var addCallbackMessage =
         (HttpNotificationDispatcherMessage.AddCallback) notificationMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME),
+        this.helper.getUri(MAIN_ARTIFACTS_PATH + COUNTER_ARTIFACT_NAME + "/focus"),
         addCallbackMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );

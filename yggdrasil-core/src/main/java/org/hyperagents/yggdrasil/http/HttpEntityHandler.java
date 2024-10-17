@@ -323,9 +323,10 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
     final var artifactName = representation.getString("artifactName");
+    System.out.println("Focusing on " + artifactName);
     this.notificationMessagebox
         .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
-            this.httpConfig.getArtifactUri(workspaceName, artifactName),
+            this.httpConfig.getArtifactUriFocusing(workspaceName, artifactName),
             representation.getString("callbackIri")
         ))
         .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(

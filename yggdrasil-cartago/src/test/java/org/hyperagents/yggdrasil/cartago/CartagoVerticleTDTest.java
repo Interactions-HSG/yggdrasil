@@ -1225,7 +1225,7 @@ public class CartagoVerticleTDTest {
         (HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated)
             this.notificationQueue.take();
     Assertions.assertEquals(
-        getArtifactsIriFromWorkspace(workspace) + artifact,
+        getArtifactsIriFromWorkspace(workspace) + artifact + "/focus",
         notifyPropertyMessage.requestIri(),
         URIS_EQUAL_MESSAGE
     );
