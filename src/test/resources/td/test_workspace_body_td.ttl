@@ -96,22 +96,6 @@
             ];
           js:required "artifactClass", "artifactName"
         ]
-    ], [ a td:ActionAffordance, jacamo:Focus;
-      td:name "focus";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/test/focus>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ];
-      td:hasInputSchema [ a js:ObjectSchema;
-          js:properties [ a js:StringSchema;
-              js:propertyName "artifactName"
-            ], [ a js:StringSchema;
-              js:propertyName "callbackIri"
-            ];
-          js:required "artifactName", "callbackIri"
-        ]
     ], [ a td:ActionAffordance;
       td:name "getSubWorkspaces";
       td:hasForm [

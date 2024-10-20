@@ -12,6 +12,7 @@ import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimaps;
 import io.vertx.core.http.HttpMethod;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Set;
 import org.eclipse.rdf4j.model.Model;
@@ -225,24 +226,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                           .build()
                   ).addSemanticType(JACAMO + "MakeArtifact")
                   .build()
-          )
-          .addAction(
-              new ActionAffordance.Builder(
-                  "focus",
-                  new Form.Builder(thingUri + "/focus")
-                      .setMethodName(HttpMethod.POST.name())
-                      .build()
-              )
-                  .addInputSchema(
-                      new ObjectSchema
-                          .Builder()
-                          .addProperty(ARTIFACT_NAME_PARAM, new StringSchema.Builder().build())
-                          .addProperty("callbackIri", new StringSchema.Builder().build())
-                          .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
-                          .build()
-                  ).addSemanticType(JACAMO + "Focus")
-                  .build()
           );
+
     }
 
     if (notificationConfig.isEnabled()) {
@@ -329,7 +314,24 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addHttpSignifiers(td, thingUri, ARTIFACT);
 
     if (isCartagoArtifact) {
-      addAction(td, "focusArtifact", thingUri + "/focus", HttpMethod.POST.name(), "Focus");
+                td.addAction(
+          new ActionAffordance.Builder(
+              "focusArtifact",
+              new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
+                  .setMethodName(HttpMethod.POST.name())
+                  .build()
+          )
+              .addInputSchema(
+                  new ObjectSchema
+                      .Builder()
+                      .addProperty(ARTIFACT_NAME_PARAM,
+                          new StringSchema.Builder().addEnum(Collections.singleton(artifactName)).build())
+                      .addProperty("callbackIri", new StringSchema.Builder().build())
+                      .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
+                      .build()
+              ).addSemanticType(JACAMO + "Focus")
+              .build()
+      );
     }
 
     addWebSub(td, ARTIFACT);
