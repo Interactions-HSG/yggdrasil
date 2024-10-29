@@ -256,7 +256,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
             .filter(null, iri(HOSTS_HMAS_IRI), null);
       } else {
         workspaceDefTriple = model
-            .filter(iri(containerWorkspaceUri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
+            .filter(iri(containerWorkspaceUri + WORKSPACE_FRAGMENT),
+                RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
         containedThings = model
             .filter(null, iri(CONTAINS_HMAS_IRI), null);
       }
@@ -283,18 +284,20 @@ public class RdfStoreVerticle extends AbstractVerticle {
     if (result.isPresent()) {
       final Model m = new LinkedHashModel();
 
+      // <> a hmas:Artifact
       final var artifactsContained = result.get()
-          .filter(null, null, iri(ARTIFACT_HMAS_IRI));
+          .filter(null, RDF.TYPE, iri(ARTIFACT_HMAS_IRI));
 
+      // worspaceIri a hmas:Workspace
       final var workspaceDefTriple = result.get()
-          .filter(iri(workspaceIri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
+          .filter(iri(workspaceIri + WORKSPACE_FRAGMENT), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
-
+      // <> hmas:contains <>
       final var containedThings = result.get()
           .filter(null, iri(CONTAINS_HMAS_IRI), null);
 
       containedThings.removeIf(
-          triple -> !artifactsContained.contains(triple)
+          triple -> !triple.getObject().stringValue().contains(ARTIFACT_FRAGMENT)
       );
 
       m.addAll(containedThings);
