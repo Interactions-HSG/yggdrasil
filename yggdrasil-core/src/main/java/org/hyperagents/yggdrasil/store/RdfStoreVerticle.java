@@ -280,7 +280,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var allContainedEntities = container.filter(
         iri(containerIri), iri(containmentAction), null
     );
-    System.out.println(allContainedEntities);
 
     allContainedEntities.removeIf(
         triple -> !triple.getObject().stringValue().contains(containedFragment)
