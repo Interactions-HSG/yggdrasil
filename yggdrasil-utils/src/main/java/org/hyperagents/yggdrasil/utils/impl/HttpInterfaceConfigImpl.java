@@ -103,6 +103,12 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
   }
 
   @Override
+  public String getArtifactUriFocusing(final String workspaceName, final String artifactName) {
+    final var cleanArtifactName = validateInput(artifactName);
+    return this.getArtifactsUriTrailingSlash(workspaceName) + cleanArtifactName + "/focus";
+  }
+
+  @Override
   public String getAgentBodiesUri(final String workspaceName) {
     return this.getWorkspaceUriTrailingSlash(workspaceName) + "artifacts/";
   }
@@ -124,7 +130,6 @@ public class HttpInterfaceConfigImpl implements HttpInterfaceConfig {
     final var cleanAgentName = validateInput(agentName);
     return this.baseUriTrailingSlash + "artifacts/" + cleanAgentName + "/";
   }
-
 
   // TODO: Add better validation
 

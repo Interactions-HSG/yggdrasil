@@ -81,7 +81,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
         case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
             String requestIri,
             String content
-          ) -> this.handleNotificationSending(
+          ) -> this.handleNotificationSendingArtifactObsPropertyUpdated(
             client,
             webSubHubUri,
             requestIri,
@@ -145,6 +145,23 @@ public class HttpNotificationVerticle extends AbstractVerticle {
             )
     );
   }
+
+  private void handleNotificationSendingArtifactObsPropertyUpdated(
+      final WebClient client,
+      final String webSubHubUri,
+      final String requestIri,
+      final String content,
+      final String contentType
+  ) {
+    this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, webSubHubUri, c, requestIri.replace("/focus", ""))
+            .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, contentType)
+            .sendBuffer(Buffer.buffer(content), this.reponseHandler(c))
+    );
+  }
+
+
 
   private void handleNotificationSending(
       final WebClient client,

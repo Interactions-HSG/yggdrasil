@@ -38,14 +38,19 @@ public class RdfStoreVerticleGetTest {
   private static final BlockingQueue<Message<HttpNotificationDispatcherMessage>>
       notificationMessageQueue = new LinkedBlockingQueue<>();
 
-  private static final String WORKSPACES_URI = "http://yggdrasil:8080/workspaces/";
+  private static final String WORKSPACES_URI = "http://localhost:8080/workspaces/";
   private static final String WORKSPACE_NAME = "test";
+  private static final String TEST_WORKSPACE_TTL = "test_workspace_td.ttl";
+  private static final String TEST_GETENTITYIRI_TTL = "test_getEntityIri_testWorkspace_td.ttl";
+  private static final String REPRESENTATION_EQUAL = "Representations should be equal";
+
+
 
   /**
    * setup method.
    *
    * @param vertx vertx
-   * @param ctx ctx
+   * @param ctx   ctx
    */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
@@ -92,12 +97,250 @@ public class RdfStoreVerticleGetTest {
   }
 
   @Test
+  public void testGetWorkspacesNoWorkspaces(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var noContainedWorkspaces = Files.readString(
+        Path.of(ClassLoader.getSystemResource("no_contained_workspaces.ttl").toURI()),
+        StandardCharsets.UTF_8
+    );
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.GetWorkspaces("http://localhost:8080/"))
+        .onSuccess(r -> Assertions.assertEquals(noContainedWorkspaces, r.body(), "should match"))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+
+  @Test
+  public void testGetWorkspacesTopLevelWorkspaces(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var twoContainedWorkspaces = Files.readString(
+        Path.of(ClassLoader.getSystemResource("two_contained_workspaces.ttl").toURI()),
+        StandardCharsets.UTF_8
+    ).replaceAll(" ", "");
+    final var workspaceInput = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var workspaceRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            REPRESENTATION_EQUAL
+        ));
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME + 2,
+            Optional.empty(),
+            workspaceInput
+        ));
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.GetWorkspaces("http://localhost:8080/"))
+        .onSuccess(r -> Assertions.assertEquals(
+            twoContainedWorkspaces, r.body().replaceAll(" ", ""),
+            REPRESENTATION_EQUAL))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testGetSubWorkspacesNoSubWorkspaces(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var noContainedWorkspaces = Files.readString(
+        Path.of(ClassLoader.getSystemResource("no_contained_subworkspaces.ttl").toURI()),
+        StandardCharsets.UTF_8
+    ).replaceAll(" ", "");
+    final var workspaceInput = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var workspaceRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            REPRESENTATION_EQUAL
+        ));
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage
+            .GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME))
+        .onSuccess(r -> Assertions.assertEquals(
+            noContainedWorkspaces, r.body().replaceAll(" ", ""),
+            REPRESENTATION_EQUAL))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void testGetSubWorkspacesTwoSubWorkspaces(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var twoContainedWorkspaces = Files.readString(
+        Path.of(ClassLoader.getSystemResource("two_contained_subworkspaces.ttl").toURI()),
+        StandardCharsets.UTF_8
+    ).replaceAll(" ", "");
+    final var workspaceInput = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var workspaceRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            REPRESENTATION_EQUAL
+        ));
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME + "2",
+            Optional.of(WORKSPACES_URI + WORKSPACE_NAME),
+            workspaceInput
+        ));
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME + "3",
+            Optional.of(WORKSPACES_URI + WORKSPACE_NAME),
+            workspaceInput
+        ));
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage
+            .GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME + "/"))
+        .onSuccess(r -> Assertions.assertEquals(
+            twoContainedWorkspaces, r.body().replaceAll(" ", ""),
+            REPRESENTATION_EQUAL))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void getArtifactsInWorkspaceNoArtifacts(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var noContainedWorkspaces = Files.readString(
+        Path.of(ClassLoader.getSystemResource("no_contained_subworkspaces.ttl").toURI()),
+        StandardCharsets.UTF_8
+    ).replaceAll(" ", "");
+    final var workspaceInput = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var workspaceRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            REPRESENTATION_EQUAL
+        ));
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.GetArtifacts(WORKSPACE_NAME))
+        .onSuccess(r -> Assertions.assertEquals(
+            noContainedWorkspaces, r.body().replaceAll(" ", ""),
+            REPRESENTATION_EQUAL))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
+  public void getArtifactsInWorkspaceTwoArtifacts(final VertxTestContext ctx)
+      throws URISyntaxException, IOException {
+    final var twoContainedArtifacts = Files.readString(
+        Path.of(ClassLoader.getSystemResource("two_contained_artifacts.ttl").toURI()),
+        StandardCharsets.UTF_8
+    ).replaceAll(" ", "");
+    final var workspaceInput = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var workspaceRepresentation = Files.readString(
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
+        StandardCharsets.UTF_8
+    );
+    final var artifactRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
+            StandardCharsets.UTF_8
+        );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_URI,
+            WORKSPACE_NAME,
+            Optional.empty(),
+            workspaceInput
+        )).onSuccess(r -> Assertions.assertEquals(
+            workspaceRepresentation,
+            r.body(),
+            REPRESENTATION_EQUAL
+        ));
+    this.storeMessagebox.sendMessage(
+        new RdfStoreMessage.CreateArtifact(
+            WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            "c1",
+            artifactRepresentation
+        )
+    );
+    this.storeMessagebox.sendMessage(
+        new RdfStoreMessage.CreateArtifact(
+            WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            "c2",
+            artifactRepresentation
+        )
+    );
+
+    this.storeMessagebox
+        .sendMessage(new RdfStoreMessage
+            .GetArtifacts(WORKSPACE_NAME))
+        .onSuccess(r -> Assertions.assertEquals(
+            twoContainedArtifacts, r.body().replaceAll(" ", ""),
+            REPRESENTATION_EQUAL))
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  @Test
   public void testGetEmptyPlatformResource(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var expectedPlatformRepresentation = Files.readString(
         Path.of(ClassLoader.getSystemResource("platform_td.ttl").toURI()),
         StandardCharsets.UTF_8
     );
+
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity("http://localhost:8080/"))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -138,11 +381,11 @@ public class RdfStoreVerticleGetTest {
   public void testGetEntityIriExistsAlredy(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var workspaceInput = Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
         StandardCharsets.UTF_8
     );
     final var workspaceRepresentation = Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
         StandardCharsets.UTF_8
     );
 
@@ -190,11 +433,11 @@ public class RdfStoreVerticleGetTest {
   public void testDifferentUriEndingsForSameResult(final VertxTestContext ctx)
       throws URISyntaxException, IOException {
     final var workspaceInput = Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_TTL).toURI()),
         StandardCharsets.UTF_8
     );
     final var workspaceRepresentation = Files.readString(
-        Path.of(ClassLoader.getSystemResource("test_getEntityIri_testWorkspace_td.ttl").toURI()),
+        Path.of(ClassLoader.getSystemResource(TEST_GETENTITYIRI_TTL).toURI()),
         StandardCharsets.UTF_8
     );
 
@@ -207,7 +450,7 @@ public class RdfStoreVerticleGetTest {
         )).onSuccess(r -> Assertions.assertEquals(
             workspaceRepresentation,
             r.body(),
-            "Representations should be equal"
+            REPRESENTATION_EQUAL
         ));
 
     this.storeMessagebox

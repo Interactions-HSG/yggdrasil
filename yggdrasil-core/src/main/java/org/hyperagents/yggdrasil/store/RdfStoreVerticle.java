@@ -238,36 +238,21 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final String containerWorkspaceUri,
       final Message<RdfStoreMessage> message
   ) throws IOException {
+    // either parentWorkspace or the Platform
     final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
     if (result.isPresent()) {
-      final var model = result.get();
-      final Model m = new LinkedHashModel();
+      final var containerFragment =
+          containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())
+              ? PLATFORM_FRAGMENT : WORKSPACE_FRAGMENT;
 
-      final var workspacesContained = model
-          .filter(null, null, iri(WORKSPACE_HMAS_IRI));
-
-      final Model workspaceDefTriple;
-      final Model containedThings;
-      if (containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())) {
-        workspaceDefTriple = model
-            .filter(iri(containerWorkspaceUri),
-                RDF.TYPE, iri(PLATFORM_HMAS_IRI));
-        containedThings = model
-            .filter(null, iri(HOSTS_HMAS_IRI), null);
-      } else {
-        workspaceDefTriple = model
-            .filter(iri(containerWorkspaceUri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
-        containedThings = model
-            .filter(null, iri(CONTAINS_HMAS_IRI), null);
-      }
-      containedThings.removeIf(
-          triple -> !triple.getObject().stringValue().contains(WORKSPACE_FRAGMENT)
+      final Model m = handleGetContainedThings(
+          result.get(),
+          containerWorkspaceUri + containerFragment,
+          containerFragment.equals(PLATFORM_FRAGMENT) ? PLATFORM_HMAS_IRI : WORKSPACE_HMAS_IRI,
+          containerFragment.equals(PLATFORM_FRAGMENT) ? HOSTS_HMAS_IRI : CONTAINS_HMAS_IRI,
+          WORKSPACE_HMAS_IRI,
+          WORKSPACE_FRAGMENT
       );
-
-      m.addAll(workspaceDefTriple);
-      m.addAll(containedThings);
-      m.addAll(workspacesContained);
-      m.setNamespace(HMAS, HMAS_IRI);
 
       this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
           this.httpConfig.getBaseUriTrailingSlash()));
@@ -276,33 +261,51 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
   }
 
+  private Model handleGetContainedThings(final Model container,
+                                         final String containerIri,
+                                         final String containerType,
+                                         final String containmentAction,
+                                         final String containedIri,
+                                         final String containedFragment) {
+    final Model m = new LinkedHashModel();
+
+    final var containerTriple = container.filter(
+        iri(containerIri), RDF.TYPE, iri(containerType)
+    );
+
+    final var relevantEntities = container.filter(
+        null, RDF.TYPE, iri(containedIri)
+    );
+
+    final var allContainedEntities = container.filter(
+        iri(containerIri), iri(containmentAction), null
+    );
+
+    allContainedEntities.removeIf(
+        triple -> !triple.getObject().stringValue().contains(containedFragment)
+    );
+
+    m.addAll(containerTriple);
+    m.addAll(allContainedEntities);
+    m.addAll(relevantEntities);
+    m.setNamespace(HMAS, HMAS_IRI);
+
+    return m;
+  }
+
   private void handleGetArtifacts(final String workspaceName,
                                   final Message<RdfStoreMessage> message) throws IOException {
     final var workspaceIri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
     final var result = this.store.getEntityModel(RdfModelUtils.createIri(workspaceIri));
     if (result.isPresent()) {
-      final Model m = new LinkedHashModel();
-
-      final var artifactsContained = result.get()
-          .filter(null, null, iri(ARTIFACT_HMAS_IRI));
-
-      final var workspaceDefTriple = result.get()
-          .filter(iri(workspaceIri), RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
-
-
-      final var containedThings = result.get()
-          .filter(null, iri(CONTAINS_HMAS_IRI), null);
-
-      containedThings.removeIf(
-          triple -> !artifactsContained.contains(triple)
+      final Model m = handleGetContainedThings(
+          result.get(),
+          workspaceIri + WORKSPACE_FRAGMENT,
+          WORKSPACE_HMAS_IRI,
+          CONTAINS_HMAS_IRI,
+          ARTIFACT_HMAS_IRI,
+          ARTIFACT_FRAGMENT
       );
-
-      m.addAll(containedThings);
-      m.addAll(workspaceDefTriple);
-      m.addAll(artifactsContained);
-      m.setNamespace(HMAS, HMAS_IRI);
-
-
       this.replyWithPayload(message, RdfModelUtils.modelToString(m, RDFFormat.TURTLE,
           this.httpConfig.getBaseUriTrailingSlash()));
     } else {
@@ -611,9 +614,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       );
                     }));
               } else {
-                final var platformResourceProfileIri = RdfModelUtils.createIri(
-                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-                );
+                final var platformResourceProfileIri =
+                    iri(this.httpConfig.getBaseUriTrailingSlash());
+
                 final var platformIRI =
                     RdfModelUtils.createIri(platformResourceProfileIri + PLATFORM_FRAGMENT);
                 entityModel.add(

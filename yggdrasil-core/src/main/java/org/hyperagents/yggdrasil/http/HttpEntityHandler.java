@@ -325,7 +325,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var artifactName = representation.getString("artifactName");
     this.notificationMessagebox
         .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
-            this.httpConfig.getArtifactUri(workspaceName, artifactName),
+            this.httpConfig.getArtifactUriFocusing(workspaceName, artifactName),
             representation.getString("callbackIri")
         ))
         .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(

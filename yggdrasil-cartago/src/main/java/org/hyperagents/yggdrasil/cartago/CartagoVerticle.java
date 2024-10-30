@@ -263,6 +263,19 @@ public class CartagoVerticle extends AbstractVerticle {
                       Files.readString(metadata, StandardCharsets.UTF_8)
                     ))));
                 a.getFocusedBy().forEach(Failable.asConsumer(
+                    focusingAgent -> this.dispatcherMessagebox
+                        .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
+                            this.httpConfig.getArtifactUriFocusing(w.getName(), a.getName()),
+                            w.getAgents()
+                                .stream()
+                                .filter(ag -> ag.getName().equals(focusingAgent))
+                                .findFirst()
+                                .orElseThrow()
+                                .getAgentCallbackUri()
+                                .orElseThrow()
+                        ))
+                ));
+                a.getFocusedBy().forEach(Failable.asConsumer(
                     focusingAgent -> this.focus(w.getAgents()
                     .stream()
                     .filter(ag -> ag.getName().equals(focusingAgent))
@@ -425,7 +438,7 @@ public class CartagoVerticle extends AbstractVerticle {
         )
         .forEach(p -> this.dispatcherMessagebox.sendMessage(
             new HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
-                this.httpConfig.getArtifactUri(workspaceName, artifactName),
+                this.httpConfig.getArtifactUriFocusing(workspaceName, artifactName),
                 p.toString()
             )
         ));

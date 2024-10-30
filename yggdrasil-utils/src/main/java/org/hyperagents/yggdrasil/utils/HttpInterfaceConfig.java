@@ -127,4 +127,13 @@ public interface HttpInterfaceConfig extends Shareable {
    * @return the agent URI
    */
   String getAgentUri(String agentName);
+
+  /**
+   * Returns the URI string that is used to identify the focus of an artifact.
+   *
+   * @param workspaceName the name of the workspace
+   * @param artifactName the name of the artifact
+   * @return the artifact URI focusing
+   */
+  String getArtifactUriFocusing(String workspaceName, String artifactName);
 }
