@@ -246,14 +246,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final var workspacesContained = model
           .filter(null, null, iri(WORKSPACE_HMAS_IRI));
 
+      System.out.println(workspacesContained);
+
       final Model workspaceDefTriple;
       final Model containedThings;
       if (containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())) {
         workspaceDefTriple = model
-            .filter(iri(containerWorkspaceUri),
+            .filter(iri(containerWorkspaceUri + PLATFORM_FRAGMENT),
                 RDF.TYPE, iri(PLATFORM_HMAS_IRI));
         containedThings = model
             .filter(null, iri(HOSTS_HMAS_IRI), null);
+        System.out.println(containedThings);
       } else {
         workspaceDefTriple = model
             .filter(iri(containerWorkspaceUri + WORKSPACE_FRAGMENT),
@@ -614,11 +617,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
                       );
                     }));
               } else {
-                final var platformResourceProfileIri = RdfModelUtils.createIri(
-                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-                );
+                final var platformResourceProfileIri =
+                    iri(this.httpConfig.getBaseUriTrailingSlash());
+
                 final var platformIRI =
                     RdfModelUtils.createIri(platformResourceProfileIri + PLATFORM_FRAGMENT);
+                System.out.println(platformResourceProfileIri);
                 entityModel.add(
                     workspaceIRI,
                     RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
