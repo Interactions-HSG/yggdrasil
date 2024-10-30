@@ -425,7 +425,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     // focus this artifact
-    final Form focusArtifactForm = new Form.Builder(baseUri + "focus/")
+    final Form focusArtifactForm =
+        new Form.Builder(this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName) + "focus")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#focusArtifactForm")
         .build();

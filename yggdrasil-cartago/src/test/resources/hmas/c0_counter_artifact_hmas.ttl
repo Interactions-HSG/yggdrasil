@@ -28,7 +28,7 @@
     ] .
 
 <http://localhost:8080/workspaces/test/artifacts/c0/#focusArtifactForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/c0/focus/>;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
