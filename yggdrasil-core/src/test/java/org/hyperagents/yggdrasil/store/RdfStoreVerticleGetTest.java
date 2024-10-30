@@ -227,7 +227,7 @@ public class RdfStoreVerticleGetTest {
 
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.
-            GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME))
+            GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME + "/"))
         .onSuccess(r -> Assertions.assertEquals(
             twoContainedWorkspaces,r.body().replaceAll(" ","")))
         .onComplete(ctx.succeedingThenComplete());
