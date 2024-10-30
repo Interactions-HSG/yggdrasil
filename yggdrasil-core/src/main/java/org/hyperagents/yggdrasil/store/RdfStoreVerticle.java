@@ -242,8 +242,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
     if (result.isPresent()) {
       final var containerFragment =
-          containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash()) ?
-              PLATFORM_FRAGMENT : WORKSPACE_FRAGMENT;
+          containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())
+              ? PLATFORM_FRAGMENT : WORKSPACE_FRAGMENT;
 
       final Model m = handleGetContainedThings(
           result.get(),
@@ -266,11 +266,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
                                          final String containerType,
                                          final String containmentAction,
                                          final String containedIri,
-                                         final String containedFragment){
+                                         final String containedFragment) {
     final Model m = new LinkedHashModel();
 
     final var containerTriple = container.filter(
-      iri(containerIri), RDF.TYPE, iri(containerType)
+        iri(containerIri), RDF.TYPE, iri(containerType)
     );
 
     final var relevantEntities = container.filter(

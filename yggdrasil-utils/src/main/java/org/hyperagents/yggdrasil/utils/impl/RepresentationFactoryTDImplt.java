@@ -202,31 +202,31 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
       addAction(td, "joinWorkspace", thingUri + "/join", POST, "JoinWorkspace");
       addAction(td, "quitWorkspace", thingUri + "/leave", POST, "QuitWorkspace");
       td.addAction(
-              new ActionAffordance.Builder(
-                  "makeArtifact",
-                  new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName))
-                      .build()
-              )
-                  .addInputSchema(
-                      new ObjectSchema
-                          .Builder()
-                          .addProperty(
-                              "artifactClass",
-                              new StringSchema.Builder().addEnum(artifactTemplates)
-                                  .addSemanticType(JACAMO + "ArtifactTemplate")
-                                  .build()
-                          )
-                          .addProperty(ARTIFACT_NAME_PARAM,
-                              new StringSchema.Builder().addSemanticType(JACAMO + "ArtifactName")
-                                  .build())
-                          .addProperty("initParams",
-                              new ArraySchema.Builder()
-                                  .addSemanticType(JACAMO + "InitParams").build())
-                          .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
-                          .build()
-                  ).addSemanticType(JACAMO + "MakeArtifact")
+          new ActionAffordance.Builder(
+              "makeArtifact",
+              new Form.Builder(this.httpConfig.getArtifactsUriTrailingSlash(workspaceName))
                   .build()
-          );
+          )
+              .addInputSchema(
+                  new ObjectSchema
+                      .Builder()
+                      .addProperty(
+                          "artifactClass",
+                          new StringSchema.Builder().addEnum(artifactTemplates)
+                              .addSemanticType(JACAMO + "ArtifactTemplate")
+                              .build()
+                      )
+                      .addProperty(ARTIFACT_NAME_PARAM,
+                          new StringSchema.Builder().addSemanticType(JACAMO + "ArtifactName")
+                              .build())
+                      .addProperty("initParams",
+                          new ArraySchema.Builder()
+                              .addSemanticType(JACAMO + "InitParams").build())
+                      .addRequiredProperties("artifactClass", ARTIFACT_NAME_PARAM)
+                      .build()
+              ).addSemanticType(JACAMO + "MakeArtifact")
+              .build()
+      );
 
     }
 
@@ -314,7 +314,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
     addHttpSignifiers(td, thingUri, ARTIFACT);
 
     if (isCartagoArtifact) {
-                td.addAction(
+      td.addAction(
           new ActionAffordance.Builder(
               "focusArtifact",
               new Form.Builder(this.httpConfig.getWorkspaceUri(workspaceName) + "/focus")
@@ -325,7 +325,8 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
                   new ObjectSchema
                       .Builder()
                       .addProperty(ARTIFACT_NAME_PARAM,
-                          new StringSchema.Builder().addEnum(Collections.singleton(artifactName)).build())
+                          new StringSchema.Builder().addEnum(Collections.singleton(artifactName))
+                              .build())
                       .addProperty("callbackIri", new StringSchema.Builder().build())
                       .addRequiredProperties(ARTIFACT_NAME_PARAM, "callbackIri")
                       .build()
