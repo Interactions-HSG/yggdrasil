@@ -60,6 +60,7 @@ public class CartagoHttpHandlersTest {
   private static final String MAIN_ARTIFACTS_PATH = MAIN_WORKSPACE_PATH + ARTIFACTS_PATH;
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String CALLBACK_IRI = "http://localhost:8080/callback";
+  private static final String TEXT_TURTLE = "text/turtle";
   private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
@@ -156,6 +157,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
@@ -212,6 +214,7 @@ public class CartagoHttpHandlersTest {
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
             .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
             .send()
     );
   }
@@ -227,7 +230,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
@@ -288,6 +291,7 @@ public class CartagoHttpHandlersTest {
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
 
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
@@ -305,6 +309,7 @@ public class CartagoHttpHandlersTest {
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "text/turtle")
         .send();
 
     this.storeMessageQueue.take().reply("UUID");
@@ -327,7 +332,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
     final var message = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
@@ -358,7 +363,7 @@ public class CartagoHttpHandlersTest {
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
             .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
             .send()
     );
   }
@@ -676,6 +681,7 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME, AGENT_NAME)
         .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) cartagoMessage.body();

@@ -94,24 +94,20 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
     router.get("/workspaces/").handler(handler::handleRedirectWithoutSlash);
-    // TODO: workspaces should return collection of workspaces, need the websub links as well
     router.get("/workspaces").handler(handler::handleGetWorkspaces);
 
     router.post("/workspaces/")
       .consumes(TURTLE_CONTENT_TYPE)
-        .handler(handler::handleCreateWorkspaceTurtle);
-    final var createWorkspaceRoute = router.post("/workspaces/")
-        .handler(handler::handleCreateWorkspaceJson);
+        .handler(handler::handleCreateWorkspace);
 
     // workspace paths CRUD
     router.get(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.get(WORKSPACE_PATH).handler(handler::handleGetEntity);
 
     router.post(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
+    // TODO: handlecreatesubworkspace also needs to be unified
     router.post(WORKSPACE_PATH)
       .consumes(TURTLE_CONTENT_TYPE)
-        .handler(handler::handleCreateWorkspaceTurtle);
-    final var createSubWorkspaceRoute = router.post(WORKSPACE_PATH)
         .handler(handler::handleCreateSubWorkspace);
 
     router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
@@ -137,7 +133,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
     router.get("/workspaces/:wkspid/artifacts/").handler(handler::handleRedirectWithoutSlash);
-    // TODO: artifacts should return collection of artifacts, need the websub links as well
     router.get("/workspaces/:wkspid/artifacts").handler(handler::handleGetArtifacts);
 
     router.post("/workspaces/:wkspid/artifacts/")
@@ -163,8 +158,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
 
     if (!this.environmentConfig.isEnabled()) {
-      createWorkspaceRoute.disable();
-      createSubWorkspaceRoute.disable();
       joinRoute.disable();
       leaveRoute.disable();
       focusRoute.disable();

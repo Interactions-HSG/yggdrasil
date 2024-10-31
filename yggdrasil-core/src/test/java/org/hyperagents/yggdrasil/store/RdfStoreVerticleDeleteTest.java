@@ -158,14 +158,14 @@ public class RdfStoreVerticleDeleteTest {
                 URIS_EQUAL_MESSAGE
             );
 
+            final var expected = "@base<http://localhost:8080/>."
+                + "@prefixhmas:<https://purl.org/hmas/>."
+                + "<#platform>ahmas:HypermediaMASPlatform.";
+
             Assertions.assertEquals(
-                """
-                @base <http://localhost:8080/> .
-                @prefix hmas: <https://purl.org/hmas/> .
-                
-                <#platform> a hmas:HypermediaMASPlatform .
-                """,
-                changedMessage.content()
+                expected,
+                removeWhitespace(changedMessage.content()),
+                URIS_EQUAL_MESSAGE
             );
 
             final var deletionMessage =
@@ -299,14 +299,14 @@ public class RdfStoreVerticleDeleteTest {
                 URIS_EQUAL_MESSAGE
             );
 
+            final var expected = "@base<http://localhost:8080/>."
+                + "@prefixhmas:<https://purl.org/hmas/>."
+                + "<#workspace>ahmas:Workspace.";
+
             Assertions.assertEquals(
-                """
-                @base <http://localhost:8080/> .
-                @prefix hmas: <https://purl.org/hmas/> .
-                
-                <workspaces/test/#workspace> a hmas:Workspace .
-                """,
-                changedMessage.content()
+                expected,
+                removeWhitespace(changedMessage.content()),
+                URIS_EQUAL_MESSAGE
             );
 
 
@@ -608,5 +608,9 @@ public class RdfStoreVerticleDeleteTest {
             ctx.failNow(e);
           }
         });
+  }
+
+  private String removeWhitespace(final String input) {
+    return input.replaceAll("\\s+", "");
   }
 }

@@ -7,6 +7,7 @@ import static org.hyperagents.yggdrasil.TConstants.ARTIFACTS_PATH;
 import static org.hyperagents.yggdrasil.TConstants.ARTIFACT_CLASS;
 import static org.hyperagents.yggdrasil.TConstants.ARTIFACT_NAME;
 import static org.hyperagents.yggdrasil.TConstants.CALLBACK_URL;
+import static org.hyperagents.yggdrasil.TConstants.CONTENT_TYPE_HEADER;
 import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_ACTION_NAME;
 import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_CLASS;
 import static org.hyperagents.yggdrasil.TConstants.COUNTER_ARTIFACT_NAME;
@@ -36,6 +37,7 @@ import static org.hyperagents.yggdrasil.TConstants.TEST_AGENT_ID;
 import static org.hyperagents.yggdrasil.TConstants.TEST_AGENT_NAME;
 import static org.hyperagents.yggdrasil.TConstants.TEST_HOST;
 import static org.hyperagents.yggdrasil.TConstants.TEST_PORT;
+import static org.hyperagents.yggdrasil.TConstants.TEXT_TURTLE;
 import static org.hyperagents.yggdrasil.TConstants.URIS_EQUAL_MESSAGE;
 import static org.hyperagents.yggdrasil.TConstants.WORKSPACES_PATH;
 import static org.hyperagents.yggdrasil.TConstants.assertEqualsHMASDescriptions;
@@ -189,6 +191,7 @@ public class AgentBehaviourTest {
         .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(CONTENT_TYPE_HEADER, TEXT_TURTLE)
         .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -505,6 +508,7 @@ public class AgentBehaviourTest {
         .post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_ID_HEADER, TEST_AGENT_ID)
         .putHeader(HINT_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(CONTENT_TYPE_HEADER, TEXT_TURTLE)
         .send()
         .onSuccess(r -> {
           Assertions.assertEquals(
