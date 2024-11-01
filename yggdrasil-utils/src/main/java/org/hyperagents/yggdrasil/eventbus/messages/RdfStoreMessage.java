@@ -81,6 +81,7 @@ public sealed interface RdfStoreMessage {
    */
   record CreateArtifact(
       String requestUri,
+      String workspaceName,
       String artifactName,
       String artifactRepresentation
   ) implements RdfStoreMessage {

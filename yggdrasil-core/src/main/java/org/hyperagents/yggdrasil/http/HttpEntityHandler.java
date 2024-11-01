@@ -248,6 +248,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                 this.rdfStoreMessagebox
                     .sendMessage(new RdfStoreMessage.CreateArtifact(
                             requestUri,
+                            context.pathParam(WORKSPACE_ID_PARAM),
                             nameResponse.body(),
                             response.body()
                         )
@@ -279,6 +280,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             actualEntityName -> this.rdfStoreMessagebox.sendMessage(
                 new RdfStoreMessage.CreateArtifact(
                     requestUri,
+                    context.pathParam(WORKSPACE_ID_PARAM),
                     actualEntityName.body(),
                     this.representationFactory.createArtifactRepresentation(
                         context.pathParam(WORKSPACE_ID_PARAM),

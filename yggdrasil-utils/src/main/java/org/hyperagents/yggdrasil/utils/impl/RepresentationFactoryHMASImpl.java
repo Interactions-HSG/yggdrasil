@@ -132,19 +132,14 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
   @Override
   public String createPlatformRepresentation() {
     final String baseUri = this.httpConfig.getBaseUriTrailingSlash();
-    final String workspaces = this.httpConfig.getWorkspacesUri();
+    final String workspaces = this.httpConfig.getWorkspacesUriTrailingSlash();
     final HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
         .setIRIAsString(baseUri + "#platform")
         .addSemanticType(HMAS + "HypermediaMASPlatform")
         .build();
 
-    final Form createWorkspaceFormJson = new Form.Builder(workspaces)
-        .setIRIAsString(baseUri + "#createWorkspaceFormJson")
-        .setMethodName(HttpMethod.POST.name())
-        .build();
-
     final Form createWorkspaceFormTxtTurtle = new Form.Builder(workspaces)
-        .setIRIAsString(baseUri + "#createWorkspaceFormTextTurtle")
+        .setIRIAsString(baseUri + "#createWorkspaceForm")
         .setMethodName(HttpMethod.POST.name())
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
@@ -164,17 +159,10 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .setIRIAsString(baseUri)
         .exposeSignifier(
           new Signifier.Builder(
-              new ActionSpecification.Builder(createWorkspaceFormJson)
-            .addRequiredSemanticType(JACAMO + "MakeWorkspace")
-            .build()
-        ).setIRIAsString(baseUri + "#createWorkspaceJson")
-          .build())
-        .exposeSignifier(
-          new Signifier.Builder(
               new ActionSpecification.Builder(createWorkspaceFormTxtTurtle)
-            .addRequiredSemanticType(JACAMO + "MakeWorkspace")
+            .addRequiredSemanticType(JACAMO + "CreateWorkspace")
             .build()
-        ).setIRIAsString(baseUri + "#createWorkspaceTurtle").build())
+        ).setIRIAsString(baseUri + "#createWorkspace").build())
         .exposeSignifier(
           new Signifier.Builder(
               new ActionSpecification.Builder(sparqlGetQueryForm)
@@ -199,14 +187,15 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final boolean isCartagoWorkspace
   ) {
     // TODO: Add artifactTemplates to makeArtifact signifier
-    final String baseUri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
+    final String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
+
     final Workspace workspace = new Workspace.Builder()
         .setIRIAsString(baseUri + "#workspace")
         .addSemanticType(HMAS + "Workspace")
         .build();
 
     // makeArtifact Signifier
-    final Form makeArtifactForm = new Form.Builder(baseUri + "artifacts/")
+    final Form makeArtifactForm = new Form.Builder(baseUri + "/artifacts/")
         .setMethodName(HttpMethod.POST.name())
         .setContentType("application/json")
         .setIRIAsString(baseUri + "#makeArtifactForm")
@@ -236,7 +225,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     // registerArtifact Signifier
-    final Form registerArtifactForm = new Form.Builder(baseUri + "artifacts/")
+    final Form registerArtifactForm = new Form.Builder(baseUri + "/artifacts/")
         .setMethodName(HttpMethod.POST.name())
         .setContentType(CONTENT_TYPE_TURTLE)
         .setIRIAsString(baseUri + "#registerArtifactForm")
@@ -255,27 +244,28 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     // join Workspace Signifier
-    final Form joinWorkspaceForm = new Form.Builder(baseUri + "join")
+    final Form joinWorkspaceForm = new Form.Builder(baseUri + "/join")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#joinWorkspaceForm")
         .build();
 
 
     // leave Workspace Signifier
-    final Form leaveWorkspaceForm = new Form.Builder(baseUri + "leave")
+    final Form leaveWorkspaceForm = new Form.Builder(baseUri + "/leave")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#leaveWorkspaceForm")
         .build();
 
     // create SubWorkspace Signifier
-    final Form createSubWorkspaceForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+    final Form createSubWorkspaceForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#createSubWorkspaceForm")
+        .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // get current Workspace representation
     final Form getCurrentWorkspaceForm =
-        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+        new Form.Builder(baseUri)
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getCurrentWorkspaceForm")
         .setContentType(CONTENT_TYPE_TURTLE)
@@ -283,7 +273,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     // update current workspace representation
     final Form updateCurrentWorkspaceForm =
-        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+        new Form.Builder(baseUri)
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateCurrentWorkspaceForm")
         .setContentType(CONTENT_TYPE_TURTLE)
@@ -291,7 +281,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
     // delete current workspace
     final Form deleteCurrentWorkspaceForm =
-        new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+        new Form.Builder(baseUri)
         .setMethodName(HttpMethod.DELETE.name())
         .setIRIAsString(baseUri + "#deleteCurrentWorkspaceForm")
         .build();
@@ -347,7 +337,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     final var resourceProfile = new ResourceProfile.Builder(workspace)
-        .setIRIAsString(baseUri.substring(0, baseUri.length() - 1))
+        .setIRIAsString(baseUri)
         .exposeSignifier(registerArtifactSignifier)
         .exposeSignifier(createSubWorkspaceSignifier)
         .exposeSignifier(getCurrentWorkspaceSignifier)
@@ -362,7 +352,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
     }
 
     addWebSubSignifier(resourceProfile,
-        baseUri, "Workspace", baseUri.substring(0, baseUri.length() - 1));
+        baseUri, "Workspace", baseUri);
 
     return serializeHmasResourceProfile(resourceProfile.build());
 
@@ -391,7 +381,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final ListMultimap<String, Object> signifiers,
       final boolean isCartagoArtifact
   ) {
-    final String baseUri = this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName);
+    final String baseUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
 
     final Artifact artifact = new Artifact.Builder()
         .addSemanticType(semanticType)
@@ -399,27 +389,26 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     final ResourceProfile.Builder resourceProfileBuilder = new ResourceProfile.Builder(artifact)
-        .setIRIAsString(baseUri.substring(0, baseUri.length() - 1));
+        .setIRIAsString(baseUri);
     signifiers.values().forEach(obj -> resourceProfileBuilder.exposeSignifier((Signifier) obj));
 
     // add Signifiers that are always given
     // get the representation for this artifact
-    final Form getArtifactRepresentationForm = new Form.Builder(baseUri.substring(0,
-        baseUri.length() - 1))
+    final Form getArtifactRepresentationForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getArtifactRepresentationForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // update this artifact
-    final Form updateArtifactForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+    final Form updateArtifactForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateArtifactForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
     // delete this artifact
-    final Form deleteArtifactForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+    final Form deleteArtifactForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.DELETE.name())
         .setIRIAsString(baseUri + "#deleteArtifactForm")
         .build();
@@ -467,8 +456,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       );
     }
 
-    addWebSubSignifier(resourceProfileBuilder, baseUri, "Artifact", baseUri.substring(0,
-        baseUri.length() - 1));
+    addWebSubSignifier(resourceProfileBuilder, baseUri, "Artifact", baseUri);
 
     return serializeHmasResourceProfile(resourceProfileBuilder.build());
   }
@@ -496,7 +484,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final String agentName,
       final Model metadata
   ) {
-    final String baseUri = this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName);
+    final String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
 
     final Artifact agent = new Artifact.Builder()
         .setIRIAsString(baseUri + "#artifact")
@@ -504,17 +492,16 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     final ResourceProfile.Builder profile = new ResourceProfile.Builder(agent)
-        .setIRIAsString(baseUri.substring(0, baseUri.length() - 1));
+        .setIRIAsString(baseUri);
 
     // Possible Signifiers of body
-    final Form getBodyRepresentationForm = new Form.Builder(baseUri.substring(0,
-        baseUri.length() - 1))
+    final Form getBodyRepresentationForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.GET.name())
         .setIRIAsString(baseUri + "#getBodyRepresentationForm")
         .setContentType(CONTENT_TYPE_TURTLE)
         .build();
 
-    final Form updateBodyForm = new Form.Builder(baseUri.substring(0, baseUri.length() - 1))
+    final Form updateBodyForm = new Form.Builder(baseUri)
         .setMethodName(HttpMethod.PUT.name())
         .setIRIAsString(baseUri + "#updateBodyForm")
         .setContentType(CONTENT_TYPE_TURTLE)
@@ -532,7 +519,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
             .build()
         ).build());
 
-    addWebSubSignifier(profile, baseUri, "Agent", baseUri.substring(0, baseUri.length() - 1));
+    addWebSubSignifier(profile, baseUri, "Agent", baseUri);
 
     return serializeHmasResourceProfile(profile.build());
   }

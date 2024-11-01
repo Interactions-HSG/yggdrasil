@@ -36,6 +36,7 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.CREATE_ARTIFACT.getName()
         );
         json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), m.workspaceName());
         json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), m.artifactName());
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.artifactRepresentation());
       }
@@ -169,6 +170,7 @@ public class RdfStoreMessageMarshaller
       );
       case CREATE_ARTIFACT -> new RdfStoreMessage.CreateArtifact(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_URI_HINT.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
