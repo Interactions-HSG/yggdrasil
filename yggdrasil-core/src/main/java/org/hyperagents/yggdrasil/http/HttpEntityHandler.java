@@ -184,13 +184,17 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
             new RdfStoreMessage.CreateWorkspace(
                 requestUri,
                 response.workspaceName(),
-                parentWorkspaceName == null ? Optional.empty() : Optional.of(parentWorkspaceName),
+                parentWorkspaceName == null ? Optional.empty() : Optional.of(
+                    this.httpConfig.getWorkspaceUri(parentWorkspaceName)
+                ),
                 response.modelString()
             )
         ).onComplete(
             this.handleStoreReply(context, HttpStatus.SC_CREATED,
                 this.getHeaders(requestUri + response.workspaceName()))
-        ).onFailure(context::fail));
+        )).onFailure(
+            f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end()
+        );
   }
 
   /**
@@ -500,70 +504,6 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   /**
-   * Handles the creation of a subworkspace.
-   *
-   * @param context routingContext
-   */
-  public void handleCreateSubWorkspace(final RoutingContext context) {
-    final var agentId = context.request().getHeader(AGENT_WEBID_HEADER);
-    final var parentWorkspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var subWorkspaceName = context.request().getHeader(SLUG_HEADER);
-    final var entityIri =
-        RdfModelUtils.createIri(this.httpConfig.getWorkspaceUri(subWorkspaceName));
-
-    if (agentId == null) {
-      context.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
-      return;
-    }
-
-    final Model additionalMetadataModel;
-    if (!context.body().isEmpty()) {
-      try {
-        additionalMetadataModel = RdfModelUtils.stringToModel(
-            context.body().asString(),
-            entityIri,
-            RDFFormat.TURTLE
-        );
-      } catch (IOException e) {
-        context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
-        return;
-      }
-    }
-
-
-
-    if (environment) {
-      this.cartagoMessagebox
-          .sendMessage(new CartagoMessage.CreateSubWorkspace(
-              context.pathParam(WORKSPACE_ID_PARAM),
-              subWorkspaceName
-          ))
-          .compose(response ->
-              this.rdfStoreMessagebox
-                  .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                      this.httpConfig.getWorkspacesUriTrailingSlash(),
-                      subWorkspaceName,
-                      Optional.of(this.httpConfig
-                          .getWorkspaceUriTrailingSlash(parentWorkspaceName)),
-                      response.body()
-                  ))
-                  .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
-                      this.getHeaders(
-                          this.httpConfig.getWorkspaceUriTrailingSlash(subWorkspaceName))))
-          )
-          .onFailure(
-              f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
-    } else {
-      final var baseRepresentation = this.representationFactory.createWorkspaceRepresentation(
-          subWorkspaceName,
-          new HashSet<>(),
-          false
-      );
-
-    }
-  }
-
-  /**
    * handles the execution of an action.
    *
    * @param context routingContext
@@ -714,10 +654,10 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return Future.succeededFuture(new WorkspaceResult(workspaceName, modelString));
     }
     try {
-      Model baseModel = RdfModelUtils.stringToModel(modelString, entityIri, RDFFormat.TURTLE);
+      final Model baseModel = RdfModelUtils.stringToModel(modelString, entityIri, RDFFormat.TURTLE);
       additionalMetadataModel.addAll(baseModel);
       baseModel.getNamespaces().forEach(additionalMetadataModel::setNamespace);
-      String result = RdfModelUtils.modelToString(additionalMetadataModel, RDFFormat.TURTLE,
+      final String result = RdfModelUtils.modelToString(additionalMetadataModel, RDFFormat.TURTLE,
           this.httpConfig.getBaseUriTrailingSlash());
       return Future.succeededFuture(new WorkspaceResult(workspaceName, result));
     } catch (IOException e) {
@@ -738,7 +678,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       throw new RuntimeException(e);
     }
 
-    Future<WorkspaceResult> baseModelFuture = environment
+    final Future<WorkspaceResult> baseModelFuture = environment
         ? ctx.pathParam(WORKSPACE_ID_PARAM) == null
         ? this.cartagoMessagebox.sendMessage(new CartagoMessage.CreateWorkspace(workspaceName))
         .compose(

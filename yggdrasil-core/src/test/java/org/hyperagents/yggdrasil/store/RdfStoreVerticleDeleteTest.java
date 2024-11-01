@@ -301,7 +301,7 @@ public class RdfStoreVerticleDeleteTest {
 
             final var expected = "@base<http://localhost:8080/>."
                 + "@prefixhmas:<https://purl.org/hmas/>."
-                + "<#workspace>ahmas:Workspace.";
+                + "<workspaces/test/#workspace>ahmas:Workspace.";
 
             Assertions.assertEquals(
                 expected,

@@ -33,19 +33,19 @@ public class HttpServerVerticle extends AbstractVerticle {
         .<String, HttpInterfaceConfig>getLocalMap("http-config")
         .get("default");
     this.environmentConfig = this.vertx
-      .sharedData()
-      .<String, EnvironmentConfig>getLocalMap("environment-config")
-      .get("default");
+        .sharedData()
+        .<String, EnvironmentConfig>getLocalMap("environment-config")
+        .get("default");
     this.notificationConfig = this.vertx
-      .sharedData()
-      .<String, WebSubConfig>getLocalMap("notification-config")
-      .get("default");
+        .sharedData()
+        .<String, WebSubConfig>getLocalMap("notification-config")
+        .get("default");
     this.server = this.vertx.createHttpServer();
     this.server.requestHandler(
-        this.createRouter(httpConfig, this.environmentConfig, this.notificationConfig)
-      )
-      .listen(httpConfig.getPort(), httpConfig.getHost())
-      .<Void>mapEmpty()
+            this.createRouter(httpConfig, this.environmentConfig, this.notificationConfig)
+        )
+        .listen(httpConfig.getPort(), httpConfig.getHost())
+        .<Void>mapEmpty()
         .onComplete(startPromise);
   }
 
@@ -64,22 +64,22 @@ public class HttpServerVerticle extends AbstractVerticle {
   ) {
     final var router = Router.router(this.vertx);
     router.route()
-      .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
-      .handler(CorsHandler.create()
-        .maxAgeSeconds(86400)
-        .allowedMethod(io.vertx.core.http.HttpMethod.GET)
-        .allowedMethod(io.vertx.core.http.HttpMethod.POST)
-        .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
-        .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
-        .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
-        .allowedHeader("Access-Control-Allow-Headers")
-        .allowedHeader("Authorization")
-        .allowedHeader("Access-Control-Allow-Method")
-        .allowedHeader("Access-Control-Allow-Origin")
-        .allowedHeader("Access-Control-Allow-Credentials")
-        .allowedHeader("Content-Type")
-        .allowedHeader("Expires")
-        .allowedHeader("Origin"))
+        .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
+        .handler(CorsHandler.create()
+            .maxAgeSeconds(86400)
+            .allowedMethod(io.vertx.core.http.HttpMethod.GET)
+            .allowedMethod(io.vertx.core.http.HttpMethod.POST)
+            .allowedMethod(io.vertx.core.http.HttpMethod.PUT)
+            .allowedMethod(io.vertx.core.http.HttpMethod.DELETE)
+            .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+            .allowedHeader("Access-Control-Allow-Headers")
+            .allowedHeader("Authorization")
+            .allowedHeader("Access-Control-Allow-Method")
+            .allowedHeader("Access-Control-Allow-Origin")
+            .allowedHeader("Access-Control-Allow-Credentials")
+            .allowedHeader("Content-Type")
+            .allowedHeader("Expires")
+            .allowedHeader("Origin"))
         .handler(BodyHandler.create());
 
     final HttpEntityHandlerInterface handler = new HttpEntityHandler(
@@ -101,21 +101,21 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // workspace paths CRUD
     router.get(WORKSPACE_PATH + "/")
-      .handler(handler::handleRedirectWithoutSlash);
+        .handler(handler::handleRedirectWithoutSlash);
     router.get(WORKSPACE_PATH)
-      .handler(handler::handleGetEntity);
+        .handler(handler::handleGetEntity);
 
     router.post(WORKSPACE_PATH + "/")
-      .handler(handler::handleRedirectWithoutSlash);
+        .handler(handler::handleRedirectWithoutSlash);
 
     // TODO: handlecreatesubworkspace also needs to be unified
     router.post(WORKSPACE_PATH)
-      .consumes(TURTLE_CONTENT_TYPE)
+        .consumes(TURTLE_CONTENT_TYPE)
         .handler(handler::handleCreateWorkspace);
 
     router.put(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
     router.put(WORKSPACE_PATH)
-      .consumes(TURTLE_CONTENT_TYPE)
+        .consumes(TURTLE_CONTENT_TYPE)
         .handler(handler::handleUpdateEntity);
 
     router.delete(WORKSPACE_PATH + "/").handler(handler::handleRedirectWithoutSlash);
@@ -139,7 +139,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.get("/workspaces/:wkspid/artifacts").handler(handler::handleGetArtifacts);
 
     router.post("/workspaces/:wkspid/artifacts/")
-      .consumes(TURTLE_CONTENT_TYPE)
+        .consumes(TURTLE_CONTENT_TYPE)
         .handler(handler::handleCreateArtifact);
     final var createArtifactRoute = router.post("/workspaces/:wkspid/artifacts/")
         .handler(handler::handleCreateArtifact);
@@ -151,7 +151,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     router.put(ARTIFACT_PATH + "/")
         .handler(handler::handleRedirectWithoutSlash);
     router.put(ARTIFACT_PATH)
-      .consumes(TURTLE_CONTENT_TYPE)
+        .consumes(TURTLE_CONTENT_TYPE)
         .handler(handler::handleUpdateEntity);
 
     router.delete(ARTIFACT_PATH + "/").handler(handler::handleRedirectWithoutSlash);
@@ -176,8 +176,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     router.get("/query").handler(handler::handleQuery);
     router.post("/query")
-      .consumes(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
-      .consumes("application/sparql-query")
+        .consumes(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
+        .consumes("application/sparql-query")
         .handler(handler::handleQuery);
 
     return router;

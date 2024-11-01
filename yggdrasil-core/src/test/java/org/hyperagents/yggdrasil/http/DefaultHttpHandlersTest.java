@@ -261,7 +261,7 @@ public class DefaultHttpHandlersTest {
             Path.of(ClassLoader.getSystemResource("sub_workspace_turtle_output.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+    final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -282,7 +282,7 @@ public class DefaultHttpHandlersTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH) + "/#workspace"),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
         createResourceMessage.parentWorkspaceUri(),
         URIS_EQUAL_MESSAGE
     );

@@ -232,6 +232,7 @@ public class CartagoHttpHandlersTest {
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
+    this.storeMessageQueue.take().reply(SUB_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) cartagoMessage.body();
@@ -259,7 +260,7 @@ public class CartagoHttpHandlersTest {
         URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH + "/")),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
         createEntityMessage.parentWorkspaceUri(),
         "The parent workspace URI should be present"
     );
@@ -334,6 +335,7 @@ public class CartagoHttpHandlersTest {
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
+    this.storeMessageQueue.take().reply(SUB_WORKSPACE_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) message.body();

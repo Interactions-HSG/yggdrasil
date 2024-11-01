@@ -35,8 +35,6 @@ public interface HttpEntityHandlerInterface {
 
   void handleLeaveWorkspace(final RoutingContext routingContext);
 
-  void handleCreateSubWorkspace(final RoutingContext context);
-
   void handleQuery(final RoutingContext routingContext);
 
   void handleAction(final RoutingContext routingContext);
