@@ -497,7 +497,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         ))
         .compose(r -> this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.DeleteEntity(
-                this.httpConfig.getAgentBodyUriTrailingSlash(
+                this.httpConfig.getAgentBodyUri(
                     workspaceName,
                     hint
                 )
