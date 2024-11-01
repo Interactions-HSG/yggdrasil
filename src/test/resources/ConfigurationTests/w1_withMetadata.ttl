@@ -10,7 +10,7 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/w1/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/w1#workspace> a td:Thing, hmas:Workspace;
   td:title "w1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -144,12 +144,12 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/w1/artifacts/c1/#artifact> .
+  hmas:contains <workspaces/w1/artifacts/c1#artifact> .
 
 <workspaces/w1> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/w1/#workspace>;
+  hmas:isProfileOf <workspaces/w1#workspace>;
   test:testPredicate test:testObject .
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/w1/artifacts/c1/#artifact> a hmas:Artifact .
+<workspaces/w1/artifacts/c1#artifact> a hmas:Artifact .
