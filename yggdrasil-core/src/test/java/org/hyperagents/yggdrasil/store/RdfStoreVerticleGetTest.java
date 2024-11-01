@@ -312,6 +312,7 @@ public class RdfStoreVerticleGetTest {
     this.storeMessagebox.sendMessage(
         new RdfStoreMessage.CreateArtifact(
             WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            WORKSPACE_NAME,
             "c1",
             artifactRepresentation
         )
@@ -319,6 +320,7 @@ public class RdfStoreVerticleGetTest {
     this.storeMessagebox.sendMessage(
         new RdfStoreMessage.CreateArtifact(
             WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            WORKSPACE_NAME,
             "c2",
             artifactRepresentation
         )

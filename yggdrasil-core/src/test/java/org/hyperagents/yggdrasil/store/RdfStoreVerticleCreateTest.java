@@ -102,6 +102,7 @@ public class RdfStoreVerticleCreateTest {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.CreateArtifact(
             "nonexistent",
+            "someName",
             "c0",
             Files.readString(
                 Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
@@ -287,6 +288,7 @@ public class RdfStoreVerticleCreateTest {
         .compose(r -> this.storeMessagebox
             .sendMessage(new RdfStoreMessage.CreateArtifact(
                 "http://localhost:8080/workspaces/test/artifacts/",
+                "test",
                 "c0",
                 artifactRepresentation
             ))
