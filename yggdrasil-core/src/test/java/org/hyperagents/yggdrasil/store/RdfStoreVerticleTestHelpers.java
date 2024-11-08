@@ -31,8 +31,6 @@ public final class RdfStoreVerticleTestHelpers {
       System.out.println("===============================");
       System.out.println(actual);
       System.out.println("===============================");
-      System.out.println(expected);
-      System.out.println("===============================");
     }
     Assertions.assertTrue(
         theSame,

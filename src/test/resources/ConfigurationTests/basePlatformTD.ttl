@@ -10,14 +10,39 @@
   td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createWorkspace;
-      td:name "createWorkspace";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeWorkspace;
+      td:name "createWorkspaceJson";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
+    ], [ a td:ActionAffordance, jacamo:createWorkspace;
+      td:name "createWorkspaceTurtle";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/>;
+          hctl:forContentType "text/turtle";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:sparqlGetQuery;
+      td:name "sparqlGetQuery";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <query/>;
+          hctl:forContentType "application/sparql-query";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:sparqlPostQuery;
+      td:name "sparqlPostQuery";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <query/>;
+          hctl:forContentType "application/sparql-query";
+          hctl:hasOperationType td:invokeAction
+        ]
     ] .
-    <> a hmas:ResourceProfile;
-      hmas:isProfileOf <#platform> .
+
+<> a hmas:ResourceProfile;
+  hmas:isProfileOf <#platform> .

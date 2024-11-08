@@ -16,7 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperagents.yggdrasil.eventbus.messageboxes.HttpNotificationDispatcherMessagebox;
 import org.hyperagents.yggdrasil.eventbus.messages.HttpNotificationDispatcherMessage;
-import org.hyperagents.yggdrasil.model.Environment;
+import org.hyperagents.yggdrasil.model.interfaces.Environment;
 import org.hyperagents.yggdrasil.utils.HttpInterfaceConfig;
 import org.hyperagents.yggdrasil.utils.WebSubConfig;
 
@@ -48,15 +48,16 @@ public class HttpNotificationVerticle extends AbstractVerticle {
         .<String, Environment>getLocalMap("environment")
         .get("default")
         .getWorkspaces()
-        .forEach(w -> w.getAgents()
-                       .forEach(a -> a.getFocusedArtifactNames()
-                                      .forEach(artifactName -> this.registry.addCallbackIri(
-                                        httpConfig.getArtifactUri(w.getName(), artifactName),
-                                        a.getAgentCallbackUri()
-                                      ))
-                       )
-        );
-
+        .forEach(w -> w.getArtifacts()
+          .forEach(
+            a -> a.getFocusedBy().forEach(
+              agentName -> this.registry.addCallbackIri(
+                httpConfig.getArtifactUri(w.getName(), a.getName()),
+                w.getAgents().stream().filter(ag -> ag.getName().equals(agentName))
+                  .findFirst().orElseThrow().getAgentCallbackUri().orElseThrow()
+                )
+              )
+          ));
     final var ownMessagebox = new HttpNotificationDispatcherMessagebox(
         this.vertx.eventBus(),
         notificationConfig
@@ -80,7 +81,7 @@ public class HttpNotificationVerticle extends AbstractVerticle {
         case HttpNotificationDispatcherMessage.ArtifactObsPropertyUpdated(
             String requestIri,
             String content
-          ) -> this.handleNotificationSending(
+          ) -> this.handleNotificationSendingArtifactObsPropertyUpdated(
             client,
             webSubHubUri,
             requestIri,
@@ -144,6 +145,23 @@ public class HttpNotificationVerticle extends AbstractVerticle {
             )
     );
   }
+
+  private void handleNotificationSendingArtifactObsPropertyUpdated(
+      final WebClient client,
+      final String webSubHubUri,
+      final String requestIri,
+      final String content,
+      final String contentType
+  ) {
+    this.registry.getCallbackIris(requestIri).forEach(c ->
+        this.createNotificationRequest(client, webSubHubUri, c, requestIri.replace("/focus", ""))
+            .putHeader(HttpHeaders.CONTENT_LENGTH, Integer.toString(content.length()))
+            .putHeader(HttpHeaders.CONTENT_TYPE, contentType)
+            .sendBuffer(Buffer.buffer(content), this.reponseHandler(c))
+    );
+  }
+
+
 
   private void handleNotificationSending(
       final WebClient client,

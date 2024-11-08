@@ -120,7 +120,7 @@
     ] .
 
 <workspaces/sub/artifacts/c0/#focusArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/sub/artifacts/c0/focus/>;
+  hctl:hasTarget <workspaces/sub/focus>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 

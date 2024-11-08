@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -24,4 +24,8 @@ public interface Artifact {
   Optional<Path> getRepresentation();
 
   Optional<Path> getMetaData();
+
+  Optional<YggdrasilAgent> getCreatedBy();
+
+  List<String> getFocusedBy();
 }

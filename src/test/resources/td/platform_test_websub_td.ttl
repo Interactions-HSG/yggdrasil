@@ -1,0 +1,7 @@
+@base<http://localhost:8080/>.
+@prefixhmas:<https://purl.org/hmas/>.
+
+<#platform>ahmas:HypermediaMASPlatform;
+hmas:hosts<workspaces/test/#workspace>.
+
+<workspaces/test/#workspace>ahmas:Workspace.

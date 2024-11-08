@@ -51,36 +51,36 @@ public class RdfStoreVerticleCreateTest {
    * setup method.
    *
    * @param vertx vertx
-   * @param ctx ctx
+   * @param ctx   ctx
    */
   @BeforeEach
   public void setUp(final Vertx vertx, final VertxTestContext ctx) {
     final var httpConfig = new HttpInterfaceConfigImpl(JsonObject.of());
     vertx.sharedData()
-         .<String, HttpInterfaceConfig>getLocalMap("http-config")
-         .put("default", httpConfig);
+        .<String, HttpInterfaceConfig>getLocalMap("http-config")
+        .put("default", httpConfig);
     final var notificationConfig = new WebSubConfigImpl(
         JsonObject.of(
-          "notification-config",
-          JsonObject.of("enabled", true)
+            "notification-config",
+            JsonObject.of("enabled", true)
         ),
         httpConfig
     );
     vertx.sharedData()
-         .getLocalMap("environment-config")
-         .put("default",
-              new EnvironmentConfigImpl(JsonObject.of(
+        .getLocalMap("environment-config")
+        .put("default",
+            new EnvironmentConfigImpl(JsonObject.of(
                 "environment-config",
                 JsonObject.of(
-                  "enabled",
-                  true,
-                  "ontology",
-                  "td"
+                    "enabled",
+                    true,
+                    "ontology",
+                    "td"
                 )
-              )));
+            )));
     vertx.sharedData()
-         .getLocalMap("notification-config")
-         .put("default", notificationConfig);
+        .getLocalMap("notification-config")
+        .put("default", notificationConfig);
     this.storeMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     final var notificationMessagebox = new HttpNotificationDispatcherMessagebox(
         vertx.eventBus(),
@@ -101,12 +101,12 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.CreateArtifact(
-          "nonexistent",
-          "c0",
-          Files.readString(
-            Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-          )
+            "nonexistent",
+            "c0",
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource("c0_counter_artifact_td.ttl").toURI()),
+                StandardCharsets.UTF_8
+            )
         ))
         .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
@@ -117,13 +117,13 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage.CreateWorkspace(
-          "nonexistent",
-          TEST_WORKSPACE_NAME,
-          Optional.empty(),
-          Files.readString(
-            Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
-            StandardCharsets.UTF_8
-          )
+            "nonexistent",
+            TEST_WORKSPACE_NAME,
+            Optional.empty(),
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource("test_workspace_td.ttl").toURI()),
+                StandardCharsets.UTF_8
+            )
         ))
         .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
@@ -134,28 +134,28 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     final var platformRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
+            StandardCharsets.UTF_8
         );
     final var outputWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+            StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(ctx, outputWorkspaceRepresentation, platformRepresentation)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/"
+            "http://localhost:8080/"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          platformRepresentation,
-          r.body()
+            platformRepresentation,
+            r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+            WORKSPACES_PATH + TEST_WORKSPACE_NAME
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputWorkspaceRepresentation,
-          r.body()
+            outputWorkspaceRepresentation,
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -165,37 +165,37 @@ public class RdfStoreVerticleCreateTest {
       throws URISyntaxException, IOException {
     final var inputWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("sub_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var outputWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("output_sub_workspace_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("output_sub_workspace_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     final var outputParentWorkspaceRepresentation =
         Files.readString(
-          Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
-          StandardCharsets.UTF_8
+            Path.of(ClassLoader.getSystemResource("test_workspace_sub_td.ttl").toURI()),
+            StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(
-          ctx,
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
-              StandardCharsets.UTF_8
-          ),
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
-              StandardCharsets.UTF_8
-          )
+            ctx,
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                StandardCharsets.UTF_8
+            ),
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
+                StandardCharsets.UTF_8
+            )
         )
-        .compose(r ->  this.storeMessagebox
-                           .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                             WORKSPACES_PATH,
-                             "sub",
-                             Optional.of(WORKSPACES_PATH + TEST_WORKSPACE_NAME),
-                             inputWorkspaceRepresentation
-                           ))
+        .compose(r -> this.storeMessagebox
+            .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                WORKSPACES_PATH,
+                "sub",
+                Optional.of(WORKSPACES_PATH + TEST_WORKSPACE_NAME),
+                inputWorkspaceRepresentation
+            ))
         )
         .onSuccess(r -> {
           try {
@@ -206,7 +206,7 @@ public class RdfStoreVerticleCreateTest {
             final var entityUpdatedMessage =
                 (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH + "test/",
+                WORKSPACES_PATH + "test",
                 entityUpdatedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -214,34 +214,45 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
-                WORKSPACES_PATH,
-                entityCreatedMessage.requestIri(),
+                "http://localhost:8080/workspaces?parent=test",
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                outputWorkspaceRepresentation,
-                entityCreatedMessage.content()
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/sub/#workspace> .
+                
+                <workspaces/sub/#workspace> a hmas:Workspace .
+                """,
+                entityChangedMessage.content(),
+                "The content should equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+            WORKSPACES_PATH + TEST_WORKSPACE_NAME
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputParentWorkspaceRepresentation,
-          r.body()
+            outputParentWorkspaceRepresentation,
+            r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/workspaces/sub"
+            "http://localhost:8080/workspaces/sub"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputWorkspaceRepresentation,
-          r.body()
+            outputWorkspaceRepresentation,
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -265,22 +276,22 @@ public class RdfStoreVerticleCreateTest {
             StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(
-          ctx,
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
-              StandardCharsets.UTF_8
-          ),
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
-              StandardCharsets.UTF_8
-          )
+            ctx,
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                StandardCharsets.UTF_8
+            ),
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
+                StandardCharsets.UTF_8
+            )
         )
         .compose(r -> this.storeMessagebox
-                          .sendMessage(new RdfStoreMessage.CreateArtifact(
-                            "http://localhost:8080/workspaces/test/artifacts/",
-                            "c0",
-                            artifactRepresentation
-                          ))
+            .sendMessage(new RdfStoreMessage.CreateArtifact(
+                "http://localhost:8080/workspaces/test/artifacts/",
+                "c0",
+                artifactRepresentation
+            ))
         )
         .onSuccess(r -> {
           try {
@@ -299,34 +310,44 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
                 "http://localhost:8080/workspaces/test/artifacts/",
-                entityCreatedMessage.requestIri(),
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                outputArtifactRepresentation,
-                entityCreatedMessage.content()
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/test/artifacts/c0/#artifact> .
+                
+                <workspaces/test/artifacts/c0/#artifact> a hmas:Artifact .
+                """,
+                entityChangedMessage.content(),
+                "The content should be equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+            WORKSPACES_PATH + TEST_WORKSPACE_NAME
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputParentWorkspaceRepresentation,
-          r.body()
+            outputParentWorkspaceRepresentation,
+            r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/workspaces/test/artifacts/c0"
+            "http://localhost:8080/workspaces/test/artifacts/c0"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputArtifactRepresentation,
-          r.body()
+            outputArtifactRepresentation,
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -350,23 +371,23 @@ public class RdfStoreVerticleCreateTest {
             StandardCharsets.UTF_8
         );
     this.assertWorkspaceCreated(
-          ctx,
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
-              StandardCharsets.UTF_8
-          ),
-          Files.readString(
-              Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
-              StandardCharsets.UTF_8
-          )
+            ctx,
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(TEST_WORKSPACE_FILE).toURI()),
+                StandardCharsets.UTF_8
+            ),
+            Files.readString(
+                Path.of(ClassLoader.getSystemResource(PLATFORM_FILE).toURI()),
+                StandardCharsets.UTF_8
+            )
         )
         .compose(r -> this.storeMessagebox
-                          .sendMessage(new RdfStoreMessage.CreateBody(
-                            TEST_WORKSPACE_NAME,
-                            "http://localhost:8080/agent/kai",
-                            "kai",
-                            bodyRepresentation
-                          ))
+            .sendMessage(new RdfStoreMessage.CreateBody(
+                TEST_WORKSPACE_NAME,
+                "http://localhost:8080/agent/kai",
+                "kai",
+                bodyRepresentation
+            ))
         )
         .onSuccess(r -> {
           try {
@@ -385,34 +406,45 @@ public class RdfStoreVerticleCreateTest {
                 outputParentWorkspaceRepresentation,
                 entityUpdatedMessage.content()
             );
-            final var entityCreatedMessage =
-                (HttpNotificationDispatcherMessage.EntityCreated) this.notificationQueue.take();
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged) this.notificationQueue.take();
             Assertions.assertEquals(
                 "http://localhost:8080/workspaces/test/artifacts/",
-                entityCreatedMessage.requestIri(),
+                entityChangedMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
-            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                bodyArtifactRepresentation,
-                entityCreatedMessage.content()
+
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace;
+                  hmas:contains <workspaces/test/artifacts/body_kai/#artifact> .
+                
+                <workspaces/test/artifacts/body_kai/#artifact> a hmas:Artifact .
+                """,
+                entityChangedMessage.content(),
+                "The content should be equal"
             );
+
           } catch (final Exception e) {
             ctx.failNow(e);
           }
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          WORKSPACES_PATH + TEST_WORKSPACE_NAME
+            WORKSPACES_PATH + TEST_WORKSPACE_NAME
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          outputParentWorkspaceRepresentation,
-          r.body()
+            outputParentWorkspaceRepresentation,
+            r.body()
         ))
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.GetEntity(
-          "http://localhost:8080/workspaces/test/artifacts/body_kai/"
+            "http://localhost:8080/workspaces/test/artifacts/body_kai/"
         )))
         .onSuccess(r -> RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-          bodyArtifactRepresentation,
-          r.body()
+            bodyArtifactRepresentation,
+            r.body()
         ))
         .onComplete(ctx.succeedingThenComplete());
   }
@@ -428,45 +460,56 @@ public class RdfStoreVerticleCreateTest {
             StandardCharsets.UTF_8
         );
     return this.storeMessagebox
-               .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                 WORKSPACES_PATH,
-                 TEST_WORKSPACE_NAME,
-                 Optional.empty(),
-                 inputWorkspaceRepresentation
-               ))
-               .onSuccess(r -> {
-                 try {
-                   RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                       outputWorkspaceRepresentation,
-                       r.body()
-                   );
-                   final var entityUpdatedMessage =
-                       (HttpNotificationDispatcherMessage.EntityChanged)
-                         this.notificationQueue.take();
-                   Assertions.assertEquals(
-                       "http://localhost:8080/",
-                       entityUpdatedMessage.requestIri(),
-                       URIS_EQUAL_MESSAGE
-                   );
-                   RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                       platformRepresentation,
-                       entityUpdatedMessage.content()
-                   );
-                   final var entityCreatedMessage =
-                       (HttpNotificationDispatcherMessage.EntityCreated)
-                         this.notificationQueue.take();
-                   Assertions.assertEquals(
-                       WORKSPACES_PATH,
-                       entityCreatedMessage.requestIri(),
-                       URIS_EQUAL_MESSAGE
-                   );
-                   RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
-                       outputWorkspaceRepresentation,
-                       entityCreatedMessage.content()
-                   );
-                 } catch (final Exception e) {
-                   ctx.failNow(e);
-                 }
-               });
+        .sendMessage(new RdfStoreMessage.CreateWorkspace(
+            WORKSPACES_PATH,
+            TEST_WORKSPACE_NAME,
+            Optional.empty(),
+            inputWorkspaceRepresentation
+        ))
+        .onSuccess(r -> {
+          try {
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                outputWorkspaceRepresentation,
+                r.body()
+            );
+            final var entityUpdatedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged)
+                    this.notificationQueue.take();
+            Assertions.assertEquals(
+                "http://localhost:8080/",
+                entityUpdatedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
+                platformRepresentation,
+                entityUpdatedMessage.content()
+            );
+            final var entityChangedMessage =
+                (HttpNotificationDispatcherMessage.EntityChanged)
+                    this.notificationQueue.take();
+            Assertions.assertEquals(
+                WORKSPACES_PATH,
+                entityChangedMessage.requestIri(),
+                URIS_EQUAL_MESSAGE
+            );
+            Assertions.assertEquals(
+                """
+                @base <http://localhost:8080/> .
+                @prefix hmas: <https://purl.org/hmas/> .
+                
+                <#platform> a hmas:HypermediaMASPlatform;
+                  hmas:hosts <workspaces/test/#workspace> .
+                
+                <workspaces/test/#workspace> a hmas:Workspace .
+                """,
+                entityChangedMessage.content(),
+                "The content should equal"
+            );
+
+
+          } catch (final Exception e) {
+            ctx.failNow(e);
+          }
+        });
   }
 }

@@ -1,0 +1,9 @@
+@base <http://localhost:8080/> .
+@prefix hmas: <https://purl.org/hmas/> .
+
+<workspaces/test/#workspace> a hmas:Workspace;
+hmas:contains<workspaces/test/artifacts/body_test_agent/#artifact>,<workspaces/test/artifacts/c0/#artifact>.
+
+<workspaces/test/artifacts/body_test_agent/#artifact>ahmas:Artifact.
+
+<workspaces/test/artifacts/c0/#artifact>ahmas:Artifact.

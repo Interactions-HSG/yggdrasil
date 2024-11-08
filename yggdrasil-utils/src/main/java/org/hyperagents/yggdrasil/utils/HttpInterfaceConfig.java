@@ -1,13 +1,11 @@
 package org.hyperagents.yggdrasil.utils;
 
 import io.vertx.core.shareddata.Shareable;
-import org.eclipse.rdf4j.model.IRI;
 
 /**
- * Represents the configuration for an HTTP interface.
- * This interface extends the Shareable interface from the Vert.x library.
- * It provides methods to retrieve the host, port, base URI,
- * and various URIs related to workspaces, artifacts, agents, etc.
+ * Represents the configuration for an HTTP interface. This interface extends the Shareable
+ * interface from the Vert.x library. It provides methods to retrieve the host, port, base URI, and
+ * various URIs related to workspaces, artifacts, agents, etc.
  */
 public interface HttpInterfaceConfig extends Shareable {
   /**
@@ -29,10 +27,21 @@ public interface HttpInterfaceConfig extends Shareable {
    *
    * @return the base URI
    */
+  String getBaseUriTrailingSlash();
+
+  /**
+   * Gets the base URI of the HTTP interface.
+   *
+   * @return the base URI
+   */
   String getBaseUri();
 
-  IRI getBaseIrI();
-
+  /**
+   * Gets the URI for retrieving all workspaces.
+   *
+   * @return the workspaces URI
+   */
+  String getWorkspacesUriTrailingSlash();
 
   /**
    * Gets the URI for retrieving all workspaces.
@@ -40,6 +49,14 @@ public interface HttpInterfaceConfig extends Shareable {
    * @return the workspaces URI
    */
   String getWorkspacesUri();
+
+  /**
+   * Gets the URI for retrieving a specific workspace by name.
+   *
+   * @param workspaceName the name of the workspace
+   * @return the workspace URI
+   */
+  String getWorkspaceUriTrailingSlash(String workspaceName);
 
   /**
    * Gets the URI for retrieving a specific workspace by name.
@@ -55,13 +72,24 @@ public interface HttpInterfaceConfig extends Shareable {
    * @param workspaceName the name of the workspace
    * @return the artifacts URI
    */
+  String getArtifactsUriTrailingSlash(String workspaceName);
+
   String getArtifactsUri(String workspaceName);
+
+  /**
+   * Gets the URI for retrieving a specific artifact within a workspace with trailing slash.
+   *
+   * @param workspaceName the name of the workspace
+   * @param artifactName  the name of the artifact
+   * @return the artifact URI with trailing slash
+   */
+  String getArtifactUriTrailingSlash(String workspaceName, String artifactName);
 
   /**
    * Gets the URI for retrieving a specific artifact within a workspace.
    *
-   * @param workspaceName the name of the workspace
-   * @param artifactName  the name of the artifact
+   * @param workspaceName the name of the workspace.
+   * @param artifactName  the name of the artifact.
    * @return the artifact URI
    */
   String getArtifactUri(String workspaceName, String artifactName);
@@ -75,11 +103,20 @@ public interface HttpInterfaceConfig extends Shareable {
   String getAgentBodiesUri(String workspaceName);
 
   /**
-   * Gets the URI for retrieving a specific agent body within a workspace.
+   * Gets the URI for retrieving a specific agent body within a workspace with a trailing slash.
    *
    * @param workspaceName the name of the workspace
    * @param agentName     the name of the agent
    * @return the agent body URI
+   */
+  String getAgentBodyUriTrailingSlash(String workspaceName, String agentName);
+
+  /**
+   * Gets the URI for retrieving a specific agent body within a workspace.
+   *
+   * @param workspaceName the name of the workspace
+   * @param agentName     the name of the agent
+   * @return the agent body uri
    */
   String getAgentBodyUri(String workspaceName, String agentName);
 
@@ -90,4 +127,13 @@ public interface HttpInterfaceConfig extends Shareable {
    * @return the agent URI
    */
   String getAgentUri(String agentName);
+
+  /**
+   * Returns the URI string that is used to identify the focus of an artifact.
+   *
+   * @param workspaceName the name of the workspace
+   * @param artifactName the name of the artifact
+   * @return the artifact URI focusing
+   */
+  String getArtifactUriFocusing(String workspaceName, String artifactName);
 }

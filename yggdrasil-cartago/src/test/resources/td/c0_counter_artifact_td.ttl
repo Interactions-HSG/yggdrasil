@@ -7,6 +7,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 
 <http://localhost:8080/workspaces/test/artifacts/c0/#artifact> a td:Thing, hmas:Artifact,
     ex:Counter;
@@ -22,7 +23,48 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToArtifact>;
+    ], [ a td:ActionAffordance, jacamo:PerceiveArtifact;
+      td:name "getArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateArtifact;
+      td:name "updateArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteArtifact;
+      td:name "deleteArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/c0>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:Focus;
+      td:name "focusArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactName";
+              js:enum "c0"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ];
+          js:required "artifactName", "callbackIri"
+        ]
+    ], [ a td:ActionAffordance, websub:subscribeToArtifact;
       td:name "subscribeToArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -40,7 +82,7 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromArtifact>;
+    ], [ a td:ActionAffordance, websub:unsubscribeFromArtifact;
       td:name "unsubscribeFromArtifact";
       td:hasForm [
           htv:methodName "POST";

@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
 /**
  * An interface representing a Joined Agent in the Yggdrasil model.

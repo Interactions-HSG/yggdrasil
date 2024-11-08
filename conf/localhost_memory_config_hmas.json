@@ -7,6 +7,18 @@
   "notification-config" : {
     "enabled" : true
   },
+  "agents" : [
+    {
+      "name" : "test_agent",
+      "agent-uri" : "http://localhost:8081",
+      "callback-uri" : "http://localhost:8081/callback",
+      "body-config" : [
+        {
+          "metadata" : "src/main/resources/a1_test_metadata.ttl"
+        }
+      ]
+    }
+  ],
   "environment-config" : {
     "known-artifacts" : [
       {
@@ -34,20 +46,11 @@
           {
             "name" : "c1",
             "class" : "http://example.org/Counter",
-            "metadata" : "src/main/resources/c1_test_metadata.ttl"
+            "metadata" : "src/main/resources/c1_test_metadata.ttl",
+            "focused-by" : ["test_agent"]
           }
         ],
-        "agents" : [
-          {
-            "name" : "test_agent",
-            "agent-uri" : "http://localhost:8081",
-            "callback-uri" : "http://localhost:8081/callback",
-            "focused-artifacts" : [
-              "c1"
-            ],
-            "metadata" : "src/main/resources/a1_test_metadata.ttl"
-          }
-        ]
+        "joined-by" : ["test_agent"]
       }
     ],
     "enabled" : true,

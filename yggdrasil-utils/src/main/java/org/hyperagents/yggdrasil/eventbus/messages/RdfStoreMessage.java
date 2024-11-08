@@ -8,8 +8,8 @@ import java.util.Optional;
  * An interface representing a message for RDF store operations.
  *
  * <p>This interface is used to define different types of messages that can be sent to perform
- * operations on an RDF store.
- * Each record implementing this interface represents a specific operation.
+ * operations on an RDF store. Each record implementing this interface represents a specific
+ * operation.
  */
 public sealed interface RdfStoreMessage {
 
@@ -17,7 +17,7 @@ public sealed interface RdfStoreMessage {
    * A record representing a request to get an entity Iri from the RDF store.
    *
    * @param requestUri the Uri to be requested
-   * @param slug the wanted name
+   * @param slug       the wanted name
    */
   record GetEntityIri(String requestUri, String slug) implements RdfStoreMessage {
   }
@@ -45,7 +45,8 @@ public sealed interface RdfStoreMessage {
    * @param requestUri           The URI of the request to update the entity.
    * @param entityRepresentation The string representation of the entity to be updated.
    */
-  record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {}
+  record UpdateEntity(String requestUri, String entityRepresentation) implements RdfStoreMessage {
+  }
 
   /**
    * A record representing a request to delete an entity from the RDF store.
@@ -99,6 +100,22 @@ public sealed interface RdfStoreMessage {
       Optional<String> parentWorkspaceUri,
       String workspaceRepresentation
   ) implements RdfStoreMessage {
+  }
+
+  /**
+   * A record representing a request to get the workspaces from the RDF store.
+   *
+   * @param containerWorkspace The name of the container workspace.
+   */
+  record GetWorkspaces(String containerWorkspace) implements RdfStoreMessage {
+  }
+
+  /**
+   * A record representing a request to get the artifacts from the RDF store.
+   *
+   * @param workspaceName The name of the workspace.
+   */
+  record GetArtifacts(String workspaceName) implements RdfStoreMessage {
   }
 
   /**

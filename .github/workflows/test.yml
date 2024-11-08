@@ -46,12 +46,13 @@ jobs:
           yggdrasil-websub/build/reports
           build/reports
         if-no-files-found: error
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
-        fail_ci_if_error: true
-        flags: unittests
-        name: codecov-umbrella
-        verbose: true
+
+#    - name: Upload coverage to Codecov
+#     uses: codecov/codecov-action@v3
+#     with:
+#       token: ${{ secrets.CODECOV_TOKEN }}
+#       files: build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml
+#       fail_ci_if_error: true
+#       flags: unittests
+#       name: codecov-umbrella
+#       verbose: true

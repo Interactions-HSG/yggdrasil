@@ -72,8 +72,7 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] .
+    ];
+  hmas:isHostedOn <#platform> .
 
-<http://yggdrasil:8080/workspaces/test/#workspace> hmas:isHostedOn <http://yggdrasil:8080/#platform> .
-
-<http://yggdrasil:8080/#platform> a hmas:HypermediaMASPlatform .
+<#platform> a hmas:HypermediaMASPlatform .

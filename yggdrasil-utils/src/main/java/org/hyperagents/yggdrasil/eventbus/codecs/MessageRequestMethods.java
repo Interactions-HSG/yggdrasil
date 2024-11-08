@@ -17,6 +17,8 @@ enum MessageRequestMethods {
   CREATE_ARTIFACT("createArtifact"),
   CREATE_BODY("createBody"),
   DO_ACTION("performAction"),
+  GET_WORKSPACES("GetWorkspaces"),
+    GET_ARTIFACTS("GetArtifacts"),
   QUERY("query");
 
   private static final String PREFIX = "org.hyperagents.yggdrasil.eventbus.methods.";

@@ -1,3 +1,4 @@
+@base <http://localhost:8080/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
@@ -8,7 +9,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<http://localhost:8080/workspaces/test/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/test/#workspace> a td:Thing, hmas:Workspace;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -16,7 +17,7 @@
       td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/>;
+          hctl:hasTarget <workspaces/test/artifacts/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
@@ -35,7 +36,7 @@
       td:name "joinWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/join>;
+          hctl:hasTarget <workspaces/test/join>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -43,7 +44,7 @@
       td:name "quitWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/leave>;
+          hctl:hasTarget <workspaces/test/leave>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
@@ -51,7 +52,7 @@
       td:name "focus";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
+          hctl:hasTarget <workspaces/test/focus>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ];
@@ -67,8 +68,11 @@
       td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
-          hctl:hasTarget <http://localhost:8080/workspaces/test/>;
+          hctl:hasTarget <workspaces/test/>;
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ] .
+    ];
+  hmas:isHostedOn <#platform> .
+
+<#platform> a hmas:HypermediaMASPlatform .

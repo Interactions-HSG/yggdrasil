@@ -1,4 +1,5 @@
 @base <http://localhost:8080/> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix customArtifact: <http://www.metadata.com/> .
@@ -6,9 +7,10 @@
 @prefix ex: <http://example.org/> .
 @prefix wotsec: <https://www.w3.org/2019/wot/security#> .
 @prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/w1/artifacts/c1/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
+<workspaces/w1/artifacts/c1/#artifact> a td:Thing, hmas:Artifact, ex:Counter, customArtifact:CustomArtifact;
   td:title "c1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -21,7 +23,48 @@
           hctl:forContentType "application/json";
           hctl:hasOperationType td:invokeAction
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToArtifact>;
+    ], [ a td:ActionAffordance, jacamo:PerceiveArtifact;
+      td:name "getArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "GET";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:UpdateArtifact;
+      td:name "updateArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "PUT";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:DeleteArtifact;
+      td:name "deleteArtifactRepresentation";
+      td:hasForm [
+          htv:methodName "DELETE";
+          hctl:hasTarget <workspaces/w1/artifacts/c1>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:Focus;
+      td:name "focusArtifact";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/w1/focus>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ];
+      td:hasInputSchema [ a js:ObjectSchema;
+          js:properties [ a js:StringSchema;
+              js:propertyName "artifactName";
+              js:enum "c1"
+            ], [ a js:StringSchema;
+              js:propertyName "callbackIri"
+            ];
+          js:required "artifactName", "callbackIri"
+        ]
+    ], [ a td:ActionAffordance, websub:subscribeToArtifact;
       td:name "subscribeToArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -39,7 +82,7 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromArtifact>;
+    ], [ a td:ActionAffordance, websub:unsubscribeFromArtifact;
       td:name "unsubscribeFromArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -60,7 +103,7 @@
     ];
   hmas:isContainedIn <workspaces/w1/#workspace> .
 
-<workspaces/w1/artifacts/c1> a hmas:ResourceProfile, customArtifact:CustomArtifact;
+<workspaces/w1/artifacts/c1> a hmas:ResourceProfile;
   hmas:isProfileOf <workspaces/w1/artifacts/c1/#artifact>;
   customArtifact:does customArtifact:SomethingVeryCool .
 

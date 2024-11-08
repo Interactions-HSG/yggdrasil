@@ -1,0 +1,68 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "agents" :  [
+    {
+      "name" : "agent_name",
+      "agent-uri" : "http://localhost:8081",
+      "callback-uri" : "http://localhost:8081/callback",
+      "body-config" : [
+        {
+          "metadata" : "src/main/resources/a1_test_metadata.ttl",
+          "join" : [ "w1"]
+        },
+        {
+          "metadata" : "src/main/resources/a1_test_metadata.ttl"
+        }
+      ]
+    }
+  ],
+  "environment-config" : {
+    "enabled" : true,
+    "ontology" : "td",
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
+      },
+      {
+        "class": "http://example.org/Artifact",
+        "template": "org.hyperagents.yggdrasil.cartago.artifacts.BasicTDArtifact"
+      },
+      {
+        "class" : "http://example.org/Math",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.MathTD"
+      },
+      {
+        "class" : "http://example.org/Adder",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.AdderTD"
+      }
+    ],
+    "workspaces" : [
+      {
+        "name" : "w1",
+        "metadata" : "src/main/resources/w1_test_metadata.ttl",
+        "artifacts" : [
+          {
+            "name" : "c1",
+            "class" : "http://example.org/Counter",
+            "metadata" : "src/main/resources/c1_test_metadata.ttl",
+            "created-by" : "agent_name",
+            "focused-by" : [
+              "agent_name"
+            ]
+          }
+        ],
+        "joined-by" : [
+          "agent_name"
+        ]
+      }
+    ]
+  }
+}

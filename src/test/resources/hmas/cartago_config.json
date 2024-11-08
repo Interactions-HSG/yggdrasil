@@ -7,6 +7,13 @@
   "notification-config" : {
     "enabled" : true
   },
+  "agents" : [
+    {
+      "name" : "test_agent",
+      "agent-uri" : "http://localhost:8080/agents/test",
+      "callback-uri" : "http://localhost:8081"
+    }
+  ],
   "environment-config" : {
     "known-artifacts" : [
       {
@@ -25,24 +32,10 @@
             "init-params" : [
               5
             ],
-            "focused-by" : [
-              {
-                "agent-uri" : "http://localhost:8080/agents/test",
-                "callback-uri" : "http://localhost:8081/"
-              }
-            ]
+            "focused-by" : ["test_agent"]
           }
         ],
-        "agents" : [
-          {
-            "name" : "test_agent",
-            "agent-uri" : "http://localhost:8080/agents/test",
-            "callback-uri" : "http://localhost:8081",
-            "focused-artifacts" : [
-              "c0"
-            ]
-          }
-        ]
+        "joined-by" : ["test_agent"]
       },
       {
         "name" : "test"

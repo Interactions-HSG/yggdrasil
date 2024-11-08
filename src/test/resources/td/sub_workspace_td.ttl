@@ -12,7 +12,15 @@
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:MakeArtifact;
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
+      td:name "createSubWorkspace";
+      td:hasForm [
+          htv:methodName "POST";
+          hctl:hasTarget <workspaces/sub>;
+          hctl:forContentType "application/json";
+          hctl:hasOperationType td:invokeAction
+        ]
+    ], [ a td:ActionAffordance, jacamo:MakeArtifact;
       td:name "makeArtifact";
       td:hasForm [
           htv:methodName "POST";
@@ -62,14 +70,6 @@
               js:propertyName "callbackIri"
             ];
           js:required "artifactName", "callbackIri"
-        ]
-    ], [ a td:ActionAffordance, jacamo:CreateSubWorkspace;
-      td:name "createSubWorkspace";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/sub>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
         ]
     ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToWorkspace>;
       td:name "subscribeToWorkspace";

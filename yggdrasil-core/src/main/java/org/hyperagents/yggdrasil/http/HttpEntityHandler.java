@@ -72,9 +72,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   /**
    * Constructor for the EntityHandler.
    *
-   * @param vertx vertx
-   * @param httpConfig httpConfig
-   * @param environmentConfig environmentConfig
+   * @param vertx              vertx
+   * @param httpConfig         httpConfig
+   * @param environmentConfig  environmentConfig
    * @param notificationConfig notificationConfig
    */
   public HttpEntityHandler(
@@ -86,8 +86,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.httpConfig = httpConfig;
     this.notificationConfig = notificationConfig;
     this.cartagoMessagebox = new CartagoMessagebox(
-      vertx.eventBus(),
-      environmentConfig
+        vertx.eventBus(),
+        environmentConfig
     );
     this.rdfStoreMessagebox = new RdfStoreMessagebox(vertx.eventBus());
     this.notificationMessagebox =
@@ -111,9 +111,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var requestUri = routingContext.request().absoluteURI();
 
     routingContext
-      .response()
-      .setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY)
-      .headers()
+        .response()
+        .setStatusCode(HttpStatus.SC_MOVED_PERMANENTLY)
+        .headers()
         .add(HttpHeaders.LOCATION, requestUri.substring(0, requestUri.length() - 1));
     routingContext.response().end();
   }
@@ -128,15 +128,45 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.GetEntity(entityIri))
         .onComplete(
-        this.handleStoreSucceededReply(routingContext, HttpStatus.SC_OK, this.getHeaders(entityIri))
+            this.handleStoreReply(routingContext, HttpStatus.SC_OK,
+                this.getHeaders(entityIri))
         );
   }
 
+  // TODO: what if localhost and different baseUri will headers work correctly for websub?
+
   /**
-   * Takes a post request with application/json content to create a new workspace.
-   * Will first check validity of request, then get the name for the workspace, will choose the
-   * requested workspaceName if available a random UUID if not. Then create a workspace in Cartago
-   * lastly in the RDFstore. Returns the representation if successful.
+   * Returns the representation of the entity at the given Uri.
+   *
+   * @param context the routingContext
+   */
+  public void handleGetWorkspaces(final RoutingContext context) {
+    var parentUri = context.request().getParam("parent");
+    parentUri = parentUri == null ? this.httpConfig.getBaseUriTrailingSlash()
+        : this.httpConfig.getWorkspaceUriTrailingSlash(parentUri);
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetWorkspaces(parentUri)).onComplete(
+        this.handleStoreReply(context, HttpStatus.SC_OK,
+            this.getHeaders(context.request().absoluteURI()))
+    );
+  }
+
+  /**
+   * Returns the representation of the entity at the given Uri.
+   *
+   * @param context the routingContext
+   */
+  public void handleGetArtifacts(final RoutingContext context) {
+    final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
+    this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetArtifacts(workspaceName))
+        .onComplete(this.handleStoreReply(context, HttpStatus.SC_OK,
+            this.getHeaders(this.httpConfig.getArtifactsUri(workspaceName))));
+  }
+
+  /**
+   * Takes a post request with application/json content to create a new workspace. Will first check
+   * validity of request, then get the name for the workspace, will choose the requested
+   * workspaceName if available a random UUID if not. Then create a workspace in Cartago lastly in
+   * the RDFstore. Returns the representation if successful.
    *
    * @param context routingContext
    */
@@ -150,25 +180,26 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     this.rdfStoreMessagebox.sendMessage(
-      new RdfStoreMessage.GetEntityIri(this.httpConfig.getWorkspacesUri(), workspaceName)
+        new RdfStoreMessage.GetEntityIri(
+            this.httpConfig.getWorkspacesUriTrailingSlash(),
+            workspaceName)
     ).compose(nameResponse ->
         this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateWorkspace(nameResponse.body()))
-        .compose(response ->
-          this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateWorkspace(
-                requestUri,
-                nameResponse.body(),
-                Optional.empty(),
-                response.body()
-              )
-            ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                  this.getHeaders(requestUri + nameResponse.body() + "/")))
-        )
-        .onFailure(context::fail)
+            .sendMessage(new CartagoMessage.CreateWorkspace(nameResponse.body()))
+            .compose(response ->
+                this.rdfStoreMessagebox
+                    .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                            requestUri,
+                            nameResponse.body(),
+                            Optional.empty(),
+                            response.body()
+                        )
+                    ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
+                        this.getHeaders(requestUri + nameResponse.body())))
+            )
+            .onFailure(context::fail)
     );
   }
-
 
 
   /**
@@ -212,24 +243,30 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         requestUri, artifactName)
     ).compose(nameResponse ->
         this.cartagoMessagebox
-        .sendMessage(new CartagoMessage.CreateArtifact(
-          agentId,
-          context.pathParam(WORKSPACE_ID_PARAM),
-          nameResponse.body(),
-          representation
-        ))
-        .compose(response ->
-          this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateArtifact(
-                requestUri,
+            .sendMessage(new CartagoMessage.CreateArtifact(
+                agentId,
+                context.pathParam(WORKSPACE_ID_PARAM),
                 nameResponse.body(),
-                response.body()
-              )
-            ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                  this.getHeaders(requestUri + nameResponse.body() + "/")))
-        )
-        .onFailure(r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()))
-    ;
+                representation
+            ))
+            .compose(response ->
+                this.rdfStoreMessagebox
+                    .sendMessage(new RdfStoreMessage.CreateArtifact(
+                            requestUri,
+                            nameResponse.body(),
+                            response.body()
+                        )
+                    ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
+                        this.getHeaders(requestUri + nameResponse.body())))
+            )
+            .onFailure(r -> {
+              if (r instanceof ReplyException e) {
+                context.response().setStatusCode(e.failureCode()).end();
+              } else {
+                context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+              }
+            })
+    );
   }
 
   public void handleCreateArtifactTurtle(final RoutingContext routingContext) {
@@ -239,7 +276,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   /**
    * Creating an Artifact given content in text/turtle.
    *
-   * @param context routingContext
+   * @param context              routingContext
    * @param entityRepresentation entityRepresentation as a turtle string (RDF syntax)
    */
   public void handleCreateArtifactTurtle(final RoutingContext context,
@@ -247,24 +284,26 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var requestUri = context.request().absoluteURI();
 
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri,
-        context.request().getHeader(SLUG_HEADER)))
-      .compose(
-        actualEntityName -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
-          requestUri,
-          actualEntityName.body(),
-          this.representationFactory.createArtifactRepresentation(
-            context.pathParam(WORKSPACE_ID_PARAM),
-            actualEntityName.body(),
-            "https://purl.org/hmas/Artifact",
-            false
-          )
-        )).onComplete(
-          response -> this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-            requestUri + actualEntityName.body(),
-            entityRepresentation
-          )
-        ).onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-          this.getHeaders(requestUri + actualEntityName.body())))))
+            context.request().getHeader(SLUG_HEADER)))
+        .compose(
+            actualEntityName -> this.rdfStoreMessagebox.sendMessage(
+                new RdfStoreMessage.CreateArtifact(
+                    requestUri,
+                    actualEntityName.body(),
+                    this.representationFactory.createArtifactRepresentation(
+                        context.pathParam(WORKSPACE_ID_PARAM),
+                        actualEntityName.body(),
+                        "https://purl.org/hmas/Artifact",
+                        false
+                    )
+                )).onComplete(
+                    response -> this.rdfStoreMessagebox.sendMessage(
+                        new RdfStoreMessage.UpdateEntity(
+                            requestUri + actualEntityName.body(),
+                            entityRepresentation
+                        )
+                ).onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
+                    this.getHeaders(requestUri + actualEntityName.body())))))
         .onFailure(f -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end());
   }
 
@@ -286,15 +325,15 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var artifactName = representation.getString("artifactName");
     this.notificationMessagebox
         .sendMessage(new HttpNotificationDispatcherMessage.AddCallback(
-        this.httpConfig.getArtifactUri(workspaceName, artifactName),
-        representation.getString("callbackIri")
-      ))
+            this.httpConfig.getArtifactUriFocusing(workspaceName, artifactName),
+            representation.getString("callbackIri")
+        ))
         .compose(v -> this.cartagoMessagebox.sendMessage(new CartagoMessage.Focus(
-        agentId,
-        workspaceName,
-        artifactName
-      )))
-        .onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_OK,
+            agentId,
+            workspaceName,
+            artifactName
+        )))
+        .onComplete(this.handleStoreReply(context, HttpStatus.SC_OK,
             this.getHeaders(context.request().absoluteURI())));
   }
 
@@ -311,11 +350,11 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
     this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.ReplaceEntity(
-        routingContext.request().absoluteURI(),
-        routingContext.body().asString()
-      ))
-        .onComplete(this.handleStoreSucceededReply(routingContext));
+        .sendMessage(new RdfStoreMessage.ReplaceEntity(
+            routingContext.request().absoluteURI(),
+            routingContext.body().asString()
+        ))
+        .onComplete(this.handleStoreReply(routingContext));
   }
 
   /**
@@ -333,7 +372,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var temp = routingContext.request().absoluteURI().endsWith("/")
         ?
         routingContext.request().absoluteURI().substring(0,
-           routingContext.request().absoluteURI().length() - 1) :
+            routingContext.request().absoluteURI().length() - 1) :
         routingContext.request().absoluteURI();
 
     final var parts = temp.split("/");
@@ -346,8 +385,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       );
     }
     this.rdfStoreMessagebox
-      .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
-        .onComplete(this.handleStoreSucceededReply(routingContext));
+        .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
+        .onComplete(this.handleStoreReply(routingContext));
   }
 
   /**
@@ -361,43 +400,44 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var entityIri = subscribeRequest.getString("hub.topic");
     final var callbackIri = subscribeRequest.getString("hub.callback");
 
+
     switch (subscribeRequest.getString("hub.mode").toLowerCase(Locale.ENGLISH)) {
       case "subscribe":
-        if (entityIri.matches("^https?://.*?:[0-9]+/workspaces/$")) {
+        if (entityIri.matches("^https?://.*?:[0-9]+/workspaces(/)?(\\?(parent=[^&]+))?$")) {
           this.notificationMessagebox
-            .sendMessage(
-              new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
-            )
-            .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
+              .sendMessage(
+                  new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
+              )
+              .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
               .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
         } else {
           final var actualEntityIri =
               Pattern.compile("^(https?://.*?:[0-9]+/workspaces/.*?)/(?:artifacts|agents)/$")
-              .matcher(entityIri)
-              .results()
-              .map(r -> r.group(1))
-              .findFirst()
-              .orElse(entityIri);
+                  .matcher(entityIri)
+                  .results()
+                  .map(r -> r.group(1))
+                  .findFirst()
+                  .orElse(entityIri);
           this.rdfStoreMessagebox
               .sendMessage(new RdfStoreMessage.GetEntity(actualEntityIri))
               .compose(r -> this.notificationMessagebox.sendMessage(
-                // TODO: why do we need this if we have the same callback again?
-                new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
-            ))
+                  // TODO: why do we need this if we have the same callback again?
+                  new HttpNotificationDispatcherMessage.AddCallback(entityIri, callbackIri)
+              ))
               .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
               .onFailure(t -> routingContext.fail(
-              t instanceof ReplyException e && e.failureCode() == HttpStatus.SC_NOT_FOUND
-                ? HttpStatus.SC_NOT_FOUND
-                : HttpStatus.SC_INTERNAL_SERVER_ERROR
-            ));
+                  t instanceof ReplyException e && e.failureCode() == HttpStatus.SC_NOT_FOUND
+                      ? HttpStatus.SC_NOT_FOUND
+                      : HttpStatus.SC_INTERNAL_SERVER_ERROR
+              ));
         }
         break;
       case "unsubscribe":
         this.notificationMessagebox
-          .sendMessage(
-            new HttpNotificationDispatcherMessage.RemoveCallback(entityIri, callbackIri)
-          )
-          .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
+            .sendMessage(
+                new HttpNotificationDispatcherMessage.RemoveCallback(entityIri, callbackIri)
+            )
+            .onSuccess(r -> routingContext.response().setStatusCode(HttpStatus.SC_OK).end())
             .onFailure(t -> routingContext.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR));
         break;
       default:
@@ -427,20 +467,20 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
 
     this.cartagoMessagebox
-      .sendMessage(new CartagoMessage.JoinWorkspace(
-        agentId,
-        agentBodyName,
-        workspaceName
-      ))
-      .compose(response -> this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateBody(
-            workspaceName,
+        .sendMessage(new CartagoMessage.JoinWorkspace(
             agentId,
             agentBodyName,
-            response.body()
-          ))
-      )
-        .onComplete(this.handleStoreSucceededReply(routingContext));
+            workspaceName
+        ))
+        .compose(response -> this.rdfStoreMessagebox
+            .sendMessage(new RdfStoreMessage.CreateBody(
+                workspaceName,
+                agentId,
+                agentBodyName,
+                response.body()
+            ))
+        )
+        .onComplete(this.handleStoreReply(routingContext));
   }
 
   /**
@@ -459,29 +499,29 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
     this.cartagoMessagebox
-      .sendMessage(new CartagoMessage.LeaveWorkspace(
-        agentId,
-        workspaceName
-      ))
-      .compose(r -> {
-        if (hint == null) {
+        .sendMessage(new CartagoMessage.LeaveWorkspace(
+            agentId,
+            workspaceName
+        ))
+        .compose(r -> {
+          if (hint == null) {
+            return this.rdfStoreMessagebox
+                .sendMessage(new RdfStoreMessage.DeleteEntity(
+                    this.httpConfig.getAgentBodyUriTrailingSlash(
+                        workspaceName,
+                        this.getAgentNameFromId(agentId)
+                    )
+                ));
+          }
           return this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.DeleteEntity(
-              this.httpConfig.getAgentBodyUri(
-                workspaceName,
-                this.getAgentNameFromId(agentId)
-              )
-            ));
-        }
-        return this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.DeleteEntity(
-            this.httpConfig.getAgentBodyUri(
-              workspaceName,
-              hint
-            )
-          ));
-      })
-        .onComplete(this.handleStoreSucceededReply(routingContext));
+              .sendMessage(new RdfStoreMessage.DeleteEntity(
+                  this.httpConfig.getAgentBodyUriTrailingSlash(
+                      workspaceName,
+                      hint
+                  )
+              ));
+        })
+        .onComplete(this.handleStoreReply(routingContext));
   }
 
   /**
@@ -500,20 +540,22 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var subWorkspaceName = context.request().getHeader(SLUG_HEADER);
     this.cartagoMessagebox
         .sendMessage(new CartagoMessage.CreateSubWorkspace(
-        context.pathParam(WORKSPACE_ID_PARAM),
-        subWorkspaceName
-      ))
+            context.pathParam(WORKSPACE_ID_PARAM),
+            subWorkspaceName
+        ))
         .compose(response ->
-        this.rdfStoreMessagebox
-          .sendMessage(new RdfStoreMessage.CreateWorkspace(
-            this.httpConfig.getWorkspacesUri(),
-            subWorkspaceName,
-            Optional.of(this.httpConfig.getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM))),
-            response.body()
-          ))
-            .onComplete(this.handleStoreSucceededReply(context, HttpStatus.SC_CREATED,
-                this.getHeaders(this.httpConfig.getWorkspaceUri(subWorkspaceName))))
-      )
+            this.rdfStoreMessagebox
+                .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                    this.httpConfig.getWorkspacesUriTrailingSlash(),
+                    subWorkspaceName,
+                    Optional.of(this.httpConfig
+                        .getWorkspaceUriTrailingSlash(context.pathParam(WORKSPACE_ID_PARAM))),
+                    response.body()
+                ))
+                .onComplete(this.handleStoreReply(context, HttpStatus.SC_CREATED,
+                    this.getHeaders(
+                        this.httpConfig.getWorkspaceUriTrailingSlash(subWorkspaceName))))
+        )
         .onFailure(
             f -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
@@ -534,7 +576,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     final var artifactName = context.pathParam("artid");
     final var workspaceName = context.pathParam(WORKSPACE_ID_PARAM);
-    final var artifactIri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final var artifactIri = this.httpConfig
+        .getArtifactUriTrailingSlash(workspaceName, artifactName);
     final var actionName = request.method().name() + request.absoluteURI();
 
     this.rdfStoreMessagebox
@@ -554,21 +597,27 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                   apiKey,
                   storeResponse.body(),
                   context.body().asString()
-          )).onSuccess(cartagoResponse -> {
-            final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
-            if (cartagoResponse.body() == null) {
-              httpResponse.end();
-            } else {
-              // TODO: Once we remove constriction on return type being json array this will
-              // move into CartagoVerticle
-              final var responseString = "[" + cartagoResponse.body() + "]";
-              httpResponse.putHeader(HttpHeaders.CONTENT_TYPE,
+              )).onSuccess(cartagoResponse -> {
+                final var httpResponse = context.response().setStatusCode(HttpStatus.SC_OK);
+                if (cartagoResponse.body() == null) {
+                  httpResponse.end();
+                } else {
+                  // TODO: Once we remove constriction on return type being json array this will
+                  // move into CartagoVerticle
+                  final var responseString = "[" + cartagoResponse.body() + "]";
+                  httpResponse.putHeader(HttpHeaders.CONTENT_TYPE,
                           HttpHeaderValues.APPLICATION_JSON)
                       .end(responseString);
-            }
-          })
+                }
+              })
               .onFailure(
-                  t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
+                  t -> {
+                    if (t instanceof ReplyException e) {
+                      context.response().setStatusCode(e.failureCode()).end();
+                    } else {
+                      context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end();
+                    }
+                  });
         }).onFailure(
             t -> context.response().setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR).end());
   }
@@ -630,20 +679,20 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   ) {
     this.rdfStoreMessagebox
         .sendMessage(new RdfStoreMessage.QueryKnowledgeGraph(
-        query,
-        defaultGraphUris.stream()
-          .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
-          .toList(),
-        namedGraphUris.stream()
-          .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
-          .toList(),
-        Optional.ofNullable(resultContentType).orElse("application/sparql-results+json")
-      ))
+            query,
+            defaultGraphUris.stream()
+                .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
+                .toList(),
+            namedGraphUris.stream()
+                .map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8))
+                .toList(),
+            Optional.ofNullable(resultContentType).orElse("application/sparql-results+json")
+        ))
         .onSuccess(r ->
-        routingContext.response()
-          .putHeader(HttpHeaders.CONTENT_TYPE, resultContentType)
-          .end(r.body())
-      )
+            routingContext.response()
+                .putHeader(HttpHeaders.CONTENT_TYPE, resultContentType)
+                .end(r.body())
+        )
         .onFailure(t -> {
           if (t instanceof ReplyException e) {
             routingContext.response().setStatusCode(e.failureCode()).end();
@@ -673,31 +722,31 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
   private Map<String, List<String>> getWebSubHeaders(final String entityIri) {
     return this.notificationConfig.isEnabled()
-      ? Map.of(
-      "Link",
-      Arrays.asList(
-        "<" + this.notificationConfig.getWebSubHubUri() + ">; rel=\"hub\"",
-        "<" + entityIri + ">; rel=\"self\""
-      )
+        ? Map.of(
+        "Link",
+        Arrays.asList(
+            "<" + this.notificationConfig.getWebSubHubUri() + ">; rel=\"hub\"",
+            "<" + entityIri + ">; rel=\"self\""
+        )
     )
-      : Collections.emptyMap();
+        : Collections.emptyMap();
   }
 
   private Map<String, List<String>> getCorsHeaders() {
     return Map.of(
-      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
-      Collections.singletonList("*"),
-      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
-      Collections.singletonList("true"),
-      com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
-      List.of(
-        HttpMethod.GET.name(),
-        HttpMethod.POST.name(),
-        HttpMethod.PUT.name(),
-        HttpMethod.DELETE.name(),
-        HttpMethod.HEAD.name(),
-        HttpMethod.OPTIONS.name()
-      )
+        com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN,
+        Collections.singletonList("*"),
+        com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS,
+        Collections.singletonList("true"),
+        com.google.common.net.HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS,
+        List.of(
+            HttpMethod.GET.name(),
+            HttpMethod.POST.name(),
+            HttpMethod.PUT.name(),
+            HttpMethod.DELETE.name(),
+            HttpMethod.HEAD.name(),
+            HttpMethod.OPTIONS.name()
+        )
     );
   }
 
@@ -715,15 +764,17 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
   }
 
   // TODO: support different content types
+
   /**
    * Handles the creation of a workspace given a turtle representation.
    *
-   * @param context routingContext
+   * @param context              routingContext
    * @param entityRepresentation entityRepresentation
    */
   private void handleCreateWorkspaceTurtle(final RoutingContext context,
                                            final String entityRepresentation) {
-    final var requestUri = this.httpConfig.getBaseUri() + context.request().path().substring(1);
+    final var requestUri = this.httpConfig.getBaseUriTrailingSlash()
+        + context.request().path().substring(1);
     final var hint = context.request().getHeader(SLUG_HEADER);
     final var name = hint.endsWith("/") ? hint : hint + "/";
     final var entityIri = RdfModelUtils.createIri(requestUri + name);
@@ -731,9 +782,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final Model entityGraph;
     try {
       entityGraph = RdfModelUtils.stringToModel(
-        entityRepresentation,
-        entityIri,
-        RDFFormat.TURTLE
+          entityRepresentation,
+          entityIri,
+          RDFFormat.TURTLE
       );
     } catch (Exception e) {
       context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end();
@@ -742,64 +793,68 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
 
     // TODO: if slug is without trailing backslash and representation is with then doesnt work
 
-    entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/ResourceProfile"));
+    entityGraph.remove(null, RDF.TYPE,
+        RdfModelUtils.createIri("https://purl.org/hmas/ResourceProfile"));
     entityGraph.remove(null, RdfModelUtils.createIri("https://purl.org/hmas/isProfileOf"), null);
     entityGraph.remove(null, RDF.TYPE, RdfModelUtils.createIri("https://purl.org/hmas/Workspace"));
     this.rdfStoreMessagebox.sendMessage(new RdfStoreMessage.GetEntityIri(requestUri, name)).compose(
-        actualEntityName -> {
-          var workspaceRepresentation =
-              this.representationFactory.createWorkspaceRepresentation(actualEntityName.body(),
-                 new HashSet<>(), false);
-          try {
-            final var baseModel =
-                RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE);
-            entityGraph.addAll(
-                RdfModelUtils.stringToModel(workspaceRepresentation, entityIri, RDFFormat.TURTLE));
-            baseModel.getNamespaces().forEach(entityGraph::setNamespace);
-            workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE,
-                this.httpConfig.getBaseUri());
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-          return this.rdfStoreMessagebox
-            .sendMessage(new RdfStoreMessage.CreateWorkspace(
-              requestUri,
-              actualEntityName.body(),
-              entityGraph.stream()
-                .filter(t ->
-                  t.getSubject().toString().contains(entityIri.stringValue())
-                    && t.getPredicate().equals(RdfModelUtils.createIri(
-                    "https://purl.org/hmas/isContainedIn"
-                  ))
-                )
-                .map(Statement::getObject)
-                .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
-                .flatMap(Optional::stream)
-                .map(IRI::toString)
-                .findFirst(),
-              workspaceRepresentation
-            ));
-        }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED)
+            actualEntityName -> {
+              var workspaceRepresentation =
+                  this.representationFactory.createWorkspaceRepresentation(actualEntityName.body(),
+                      new HashSet<>(), false);
+              try {
+                final var baseModel =
+                    RdfModelUtils.stringToModel(
+                        workspaceRepresentation, entityIri, RDFFormat.TURTLE);
+                entityGraph.addAll(
+                    RdfModelUtils.stringToModel(
+                        workspaceRepresentation, entityIri, RDFFormat.TURTLE));
+                baseModel.getNamespaces().forEach(entityGraph::setNamespace);
+                workspaceRepresentation = RdfModelUtils.modelToString(entityGraph, RDFFormat.TURTLE,
+                    this.httpConfig.getBaseUriTrailingSlash());
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              return this.rdfStoreMessagebox
+                  .sendMessage(new RdfStoreMessage.CreateWorkspace(
+                      requestUri,
+                      actualEntityName.body(),
+                      entityGraph.stream()
+                          .filter(t ->
+                              t.getSubject().toString().contains(entityIri.stringValue())
+                                  && t.getPredicate().equals(RdfModelUtils.createIri(
+                                  "https://purl.org/hmas/isContainedIn"
+                              ))
+                          )
+                          .map(Statement::getObject)
+                          .map(t -> t instanceof IRI i ? Optional.of(i) : Optional.<IRI>empty())
+                          .flatMap(Optional::stream)
+                          .map(IRI::toString)
+                          .findFirst(),
+                      workspaceRepresentation
+                  ));
+            }).onSuccess(r -> context.response().setStatusCode(HttpStatus.SC_CREATED)
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle").end(r.body()))
         .onFailure(t -> context.response().setStatusCode(HttpStatus.SC_CREATED)
             .putHeader(HttpHeaders.CONTENT_TYPE, "text/turtle").end());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreSucceededReply(
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(
       final RoutingContext routingContext
   ) {
-    return this.handleStoreSucceededReply(routingContext, HttpStatus.SC_OK, new HashMap<>());
+    return this.handleStoreReply(routingContext, HttpStatus.SC_OK, new HashMap<>());
   }
 
-  private Handler<AsyncResult<Message<String>>> handleStoreSucceededReply(
+
+  private Handler<AsyncResult<Message<String>>> handleStoreReply(
       final RoutingContext routingContext,
-      final int succeededStatusCode,
+      final int successCode,
       final Map<String, List<String>> headers
   ) {
     return reply -> {
       if (reply.succeeded()) {
         final var httpResponse = routingContext.response();
-        httpResponse.setStatusCode(succeededStatusCode);
+        httpResponse.setStatusCode(successCode);
         httpResponse.putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE);
 
         headers.forEach((headerName, headerValue) -> {
@@ -811,7 +866,7 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         });
 
         Optional.ofNullable(reply.result().body())
-          .filter(r -> !r.isEmpty())
+            .filter(r -> !r.isEmpty())
             .ifPresentOrElse(httpResponse::end, httpResponse::end);
       } else {
         final var exception = ((ReplyException) reply.cause());

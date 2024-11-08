@@ -96,6 +96,22 @@ public class RdfStoreMessageMarshaller
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), entityRepresentation);
       }
 
+      case RdfStoreMessage.GetWorkspaces(String containerWorkspace) -> {
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.GET_WORKSPACES.getName()
+        );
+        json.addProperty(MessageFields.REQUEST_URI.getName(), containerWorkspace);
+      }
+
+      case RdfStoreMessage.GetArtifacts(String workspaceName) -> {
+        json.addProperty(
+            MessageFields.REQUEST_METHOD.getName(),
+            MessageRequestMethods.GET_ARTIFACTS.getName()
+        );
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), workspaceName);
+      }
+
       case RdfStoreMessage.QueryKnowledgeGraph(
           String query,
           List<String> defaultGraphUris,
@@ -180,6 +196,12 @@ public class RdfStoreMessageMarshaller
       );
       case DELETE_ENTITY -> new RdfStoreMessage.DeleteEntity(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+      );
+      case GET_WORKSPACES -> new RdfStoreMessage.GetWorkspaces(
+        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+      );
+      case GET_ARTIFACTS -> new RdfStoreMessage.GetArtifacts(
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString()
       );
       case QUERY -> new RdfStoreMessage.QueryKnowledgeGraph(
         jsonObject.get(MessageFields.QUERY.getName()).getAsString(),

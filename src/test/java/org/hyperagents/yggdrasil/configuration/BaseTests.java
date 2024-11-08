@@ -51,6 +51,7 @@ public class BaseTests {
   @AfterEach
   public void tearDown(final Vertx vertx, final VertxTestContext ctx) {
     vertx.close().onComplete(ctx.succeedingThenComplete());
+    this.client.close();
   }
 
   @Test
@@ -220,11 +221,11 @@ public class BaseTests {
                 ClassLoader.getSystemResource("ConfigurationTests/c1_withMetadata.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    setUp(vertx, config).onComplete(x -> this.client.get(TEST_PORT, TEST_HOST, "").send()
+    setUp(vertx, config).onComplete(x -> this.client.get(TEST_PORT, TEST_HOST, "/").send()
         .onSuccess(
             r -> {
               assertEqualsThingDescriptions(platformRepresentation, r.bodyAsString());
-              this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1").send().onSuccess(
+              this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1/").send().onSuccess(
                   rs -> {
                     assertEqualsThingDescriptions(workspaceRepresentation, rs.bodyAsString());
                     this.client.get(TEST_PORT, TEST_HOST, "/workspaces/w1/artifacts/c1").send()
@@ -239,7 +240,9 @@ public class BaseTests {
               ).onFailure(ctx::failNow);
             }
         )
-        .onFailure(ctx::failNow)
+        .onFailure(r ->
+            ctx.failNow(r.getCause()
+            ))
     );
 
   }

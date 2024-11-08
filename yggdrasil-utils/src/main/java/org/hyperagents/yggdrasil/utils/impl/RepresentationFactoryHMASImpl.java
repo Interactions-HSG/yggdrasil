@@ -131,7 +131,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
 
   @Override
   public String createPlatformRepresentation() {
-    final String baseUri = this.httpConfig.getBaseUri();
+    final String baseUri = this.httpConfig.getBaseUriTrailingSlash();
     final String workspaces = this.httpConfig.getWorkspacesUri();
     final HypermediaMASPlatform hypermediaMASPlatform = new HypermediaMASPlatform.Builder()
         .setIRIAsString(baseUri + "#platform")
@@ -199,7 +199,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final boolean isCartagoWorkspace
   ) {
     // TODO: Add artifactTemplates to makeArtifact signifier
-    final String baseUri = this.httpConfig.getWorkspaceUri(workspaceName);
+    final String baseUri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
     final Workspace workspace = new Workspace.Builder()
         .setIRIAsString(baseUri + "#workspace")
         .addSemanticType(HMAS + "Workspace")
@@ -391,7 +391,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final ListMultimap<String, Object> signifiers,
       final boolean isCartagoArtifact
   ) {
-    final String baseUri = this.httpConfig.getArtifactUri(workspaceName, artifactName);
+    final String baseUri = this.httpConfig.getArtifactUriTrailingSlash(workspaceName, artifactName);
 
     final Artifact artifact = new Artifact.Builder()
         .addSemanticType(semanticType)
@@ -425,7 +425,8 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
         .build();
 
     // focus this artifact
-    final Form focusArtifactForm = new Form.Builder(baseUri + "focus/")
+    final Form focusArtifactForm =
+        new Form.Builder(this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName) + "focus")
         .setMethodName(HttpMethod.POST.name())
         .setIRIAsString(baseUri + "#focusArtifactForm")
         .build();
@@ -495,7 +496,7 @@ public final class RepresentationFactoryHMASImpl implements RepresentationFactor
       final String agentName,
       final Model metadata
   ) {
-    final String baseUri = this.httpConfig.getAgentBodyUri(workspaceName, agentName);
+    final String baseUri = this.httpConfig.getAgentBodyUriTrailingSlash(workspaceName, agentName);
 
     final Artifact agent = new Artifact.Builder()
         .setIRIAsString(baseUri + "#artifact")

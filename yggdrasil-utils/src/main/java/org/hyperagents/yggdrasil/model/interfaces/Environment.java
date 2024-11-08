@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
 import io.vertx.core.shareddata.Shareable;
 import java.util.List;
@@ -15,6 +15,8 @@ import java.util.Set;
  * present for all artifacts.
  */
 public interface Environment extends Shareable {
+  List<YggdrasilAgent> getAgents();
+
   List<Workspace> getWorkspaces();
 
   Set<KnownArtifact> getKnownArtifacts();

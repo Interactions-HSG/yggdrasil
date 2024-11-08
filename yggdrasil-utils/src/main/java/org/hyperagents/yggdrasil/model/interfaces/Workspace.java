@@ -1,4 +1,4 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
 import java.nio.file.Path;
 import java.util.Optional;

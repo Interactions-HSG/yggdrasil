@@ -1,6 +1,5 @@
-package org.hyperagents.yggdrasil.model;
+package org.hyperagents.yggdrasil.model.interfaces;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,10 +12,7 @@ public interface YggdrasilAgent {
 
   String getAgentUri();
 
-  String getAgentCallbackUri();
+  Optional<String> getAgentCallbackUri();
 
-  List<String> getFocusedArtifactNames();
-
-  Optional<Path> getMetaData();
-
+  List<AgentBody> getBodyConfig();
 }

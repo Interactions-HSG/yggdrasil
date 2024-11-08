@@ -1,0 +1,54 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "agents" :  [
+    {
+      "name" : "test_name",
+      "agent-uri" : "http://localhost:8081",
+      "callback-uri" : "http://localhost:8081/callback",
+      "body-config" : [
+        {
+          "metadata" : "src/test/resources/a1_test_metadata.ttl",
+          "join" : [ "w1"]
+        },
+        {
+          "metadata" : "src/test/resources/a1_test_metadata.ttl"
+        }
+      ]
+    }
+  ],
+  "environment-config" : {
+    "enabled" : true,
+    "known-artifacts" : [
+      {
+        "class" : "http://example.org/Counter",
+        "template" : "org.hyperagents.yggdrasil.cartago.artifacts.CounterTD"
+      }
+    ],
+    "workspaces" : [
+      {
+        "name" : "w1",
+        "metadata" : "src/test/resources/w1_test_metadata.ttl",
+        "artifacts" : [
+          {
+            "name" : "c1",
+            "class" : "http://example.org/Counter",
+            "metadata" : "src/test/resources/c1_test_metadata.ttl",
+            "focused-by" : [
+              "test_name"
+            ]
+          }
+        ],
+        "joined-by" : [
+          "test_name"
+        ]
+      }
+    ]
+  }
+}
