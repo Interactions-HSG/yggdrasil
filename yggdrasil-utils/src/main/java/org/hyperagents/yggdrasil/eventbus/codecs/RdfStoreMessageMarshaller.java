@@ -56,8 +56,9 @@ public class RdfStoreMessageMarshaller
             m.workspaceRepresentation()
         );
       }
-      case RdfStoreMessage.DeleteEntity(String requestUri) -> {
-        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
+      case RdfStoreMessage.DeleteEntity(String workspaceName, String artifactName) -> {
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), workspaceName);
+        json.addProperty(MessageFields.ARTIFACT_NAME.getName(), artifactName);
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.DELETE_ENTITY.getName()
@@ -197,7 +198,8 @@ public class RdfStoreMessageMarshaller
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
       case DELETE_ENTITY -> new RdfStoreMessage.DeleteEntity(
-        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+          jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+          jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString()
       );
       case GET_WORKSPACES -> new RdfStoreMessage.GetWorkspaces(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()

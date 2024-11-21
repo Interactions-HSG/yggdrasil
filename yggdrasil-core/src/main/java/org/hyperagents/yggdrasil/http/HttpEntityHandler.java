@@ -57,6 +57,7 @@ import org.hyperagents.yggdrasil.utils.impl.RepresentationFactoryFactory;
 public class HttpEntityHandler implements HttpEntityHandlerInterface {
   private static final Logger LOGGER = LogManager.getLogger(HttpEntityHandler.class);
   private static final String WORKSPACE_ID_PARAM = "wkspid";
+  private static final String ARTIFACT_ID_PARAM = "artid";
   private static final String AGENT_WEBID_HEADER = "X-Agent-WebID";
   private static final String AGENT_LOCALNAME_HEADER = "X-Agent-LocalName";
   private static final String SLUG_HEADER = "Slug";
@@ -359,25 +360,16 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       routingContext.response().setStatusCode(HttpStatus.SC_UNAUTHORIZED).end();
       return;
     }
-
-    // remove trailing slash
-    final var temp = routingContext.request().absoluteURI().endsWith("/")
-        ?
-        routingContext.request().absoluteURI().substring(0,
-            routingContext.request().absoluteURI().length() - 1) :
-        routingContext.request().absoluteURI();
-
-    final var parts = temp.split("/");
-    final var artifactName = parts[parts.length - 1];
+    final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
+    final var artifactName = routingContext.pathParam(ARTIFACT_ID_PARAM);
 
     if (environment) {
-      final var workspaceName = routingContext.pathParam(WORKSPACE_ID_PARAM);
       this.cartagoMessagebox.sendMessage(
           new CartagoMessage.DeleteEntity(workspaceName, artifactName)
       );
     }
     this.rdfStoreMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity(routingContext.request().absoluteURI()))
+        .sendMessage(new RdfStoreMessage.DeleteEntity(workspaceName, artifactName))
         .onComplete(this.handleStoreReply(routingContext));
   }
 
@@ -497,10 +489,8 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
         ))
         .compose(r -> this.rdfStoreMessagebox
             .sendMessage(new RdfStoreMessage.DeleteEntity(
-                this.httpConfig.getAgentBodyUri(
-                    workspaceName,
-                    hint
-                )
+                workspaceName,
+                "body_" + hint
             )))
         .onComplete(this.handleStoreReply(routingContext));
   }

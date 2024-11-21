@@ -11,82 +11,50 @@
 @prefix hmas: <https://purl.org/hmas/> .
 
 <workspaces/test/artifacts/c0> a hmas:ResourceProfile;
-  hmas:exposesSignifier <workspaces/test/artifacts/c0/#getArtifactRepresentation>, <workspaces/test/artifacts/c0/#deleteArtifact>,
-    <workspaces/test/artifacts/c0/#updateArtifact>, <workspaces/test/artifacts/c0/#unsubscribeFromArtifact>,
-    <workspaces/test/artifacts/c0/#focusArtifact>, <workspaces/test/artifacts/c0/#inc-Signifier>,
-    <workspaces/test/artifacts/c0/#subscribeToArtifact>;
-  hmas:isProfileOf <workspaces/test/artifacts/c0/#artifact> .
+  hmas:exposesSignifier <workspaces/test/artifacts/c0/#inc-Signifier>, <workspaces/test/artifacts/c0#unsubscribeFromArtifact>,
+    <workspaces/test/artifacts/c0#deleteArtifact>, <workspaces/test/artifacts/c0#updateArtifact>,
+    <workspaces/test/artifacts/c0#subscribeToArtifact>, <workspaces/test/artifacts/c0#focusArtifact>,
+    <workspaces/test/artifacts/c0#getArtifactRepresentation>;
+  hmas:isProfileOf <workspaces/test/artifacts/c0#artifact> .
 
-<workspaces/test/artifacts/c0/#getArtifactRepresentation> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:PerceiveArtifact;
+<workspaces/test/artifacts/c0/#inc-Signifier> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape, <http://example.org/Increment>;
+      sh:class hmas:ActionExecution, <http://example.org/Increment>;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#getArtifactRepresentationForm>
+          sh:hasValue <workspaces/test/artifacts/c0/#inc>
         ]
     ] .
 
-<workspaces/test/artifacts/c0/#getArtifactRepresentationForm> a hctl:Form;
-  hctl:hasTarget <workspaces/test/artifacts/c0>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
-
-<workspaces/test/artifacts/c0/#deleteArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:DeleteArtifact;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#deleteArtifactForm>
-        ]
-    ] .
-
-<workspaces/test/artifacts/c0/#deleteArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/test/artifacts/c0>;
-  htv:methodName "DELETE";
+<workspaces/test/artifacts/c0/#inc> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0/increment>;
+  htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<workspaces/test/artifacts/c0/#updateArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:UpdateArtifact;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#updateArtifactForm>
-        ]
-    ] .
-
-<workspaces/test/artifacts/c0/#updateArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/test/artifacts/c0>;
-  htv:methodName "PUT";
-  hctl:forContentType "text/turtle" .
-
-<workspaces/test/artifacts/c0/#unsubscribeFromArtifact> a hmas:Signifier;
+<workspaces/test/artifacts/c0#unsubscribeFromArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:UnobserveArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#webSubForm>
+          sh:hasValue <workspaces/test/artifacts/c0#webSubForm>
         ], [
-          sh:qualifiedValueShape <workspaces/test/artifacts/c0/#webSubUnsubscribeInput>;
+          sh:qualifiedValueShape <workspaces/test/artifacts/c0#webSubUnsubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<workspaces/test/artifacts/c0/#webSubForm> a hctl:Form;
+<workspaces/test/artifacts/c0#webSubForm> a hctl:Form;
   hctl:hasTarget <hub/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<workspaces/test/artifacts/c0/#webSubUnsubscribeInput> a sh:Shape;
+<workspaces/test/artifacts/c0#webSubUnsubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
       sh:datatype xs:string;
@@ -113,55 +81,55 @@
       sh:path websub:mode
     ] .
 
-<workspaces/test/artifacts/c0/#focusArtifact> a hmas:Signifier;
+<workspaces/test/artifacts/c0#deleteArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:Focus;
+      sh:class hmas:ActionExecution, jacamo:DeleteArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#focusArtifactForm>
+          sh:hasValue <workspaces/test/artifacts/c0#deleteArtifactForm>
         ]
     ] .
 
-<workspaces/test/artifacts/c0/#focusArtifactForm> a hctl:Form;
-  hctl:hasTarget <workspaces/test/focus>;
-  htv:methodName "POST";
+<workspaces/test/artifacts/c0#deleteArtifactForm> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0>;
+  htv:methodName "DELETE";
   hctl:forContentType "application/json" .
 
-<workspaces/test/artifacts/c0/#inc-Signifier> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape, <http://example.org/Increment>;
-      sh:class hmas:ActionExecution, <http://example.org/Increment>;
+<workspaces/test/artifacts/c0#updateArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:UpdateArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#inc>
+          sh:hasValue <workspaces/test/artifacts/c0#updateArtifactForm>
         ]
     ] .
 
-<workspaces/test/artifacts/c0/#inc> a hctl:Form;
-  hctl:hasTarget <workspaces/test/artifacts/c0/increment>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
+<workspaces/test/artifacts/c0#updateArtifactForm> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0>;
+  htv:methodName "PUT";
+  hctl:forContentType "text/turtle" .
 
-<workspaces/test/artifacts/c0/#subscribeToArtifact> a hmas:Signifier;
+<workspaces/test/artifacts/c0#subscribeToArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:ObserveArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/c0/#webSubForm>
+          sh:hasValue <workspaces/test/artifacts/c0#webSubForm>
         ], [
-          sh:qualifiedValueShape <workspaces/test/artifacts/c0/#webSubSubscribeInput>;
+          sh:qualifiedValueShape <workspaces/test/artifacts/c0#webSubSubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<workspaces/test/artifacts/c0/#webSubSubscribeInput> a sh:Shape;
+<workspaces/test/artifacts/c0#webSubSubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
       sh:datatype xs:string;
@@ -188,7 +156,39 @@
       sh:path websub:mode
     ] .
 
-<workspaces/test/artifacts/c0/#artifact> a hmas:Artifact, <http://example.org/Counter>;
-  hmas:isContainedIn <workspaces/test/#workspace> .
+<workspaces/test/artifacts/c0#focusArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:Focus;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/test/artifacts/c0#focusArtifactForm>
+        ]
+    ] .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test/artifacts/c0#focusArtifactForm> a hctl:Form;
+  hctl:hasTarget <workspaces/test/focus>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
+
+<workspaces/test/artifacts/c0#getArtifactRepresentation> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:PerceiveArtifact;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <workspaces/test/artifacts/c0#getArtifactRepresentationForm>
+        ]
+    ] .
+
+<workspaces/test/artifacts/c0#getArtifactRepresentationForm> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/c0>;
+  htv:methodName "GET";
+  hctl:forContentType "text/turtle" .
+
+<workspaces/test/artifacts/c0#artifact> a hmas:Artifact, <http://example.org/Counter>;
+  hmas:isContainedIn <workspaces/test#workspace> .
+
+<workspaces/test#workspace> a hmas:Workspace .

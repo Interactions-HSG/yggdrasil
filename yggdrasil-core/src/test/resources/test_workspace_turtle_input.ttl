@@ -6,6 +6,6 @@
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 
-<http://localhost:8080/workspaces/test/#workspace> a td:Thing, hmas:Workspace;
+<http://localhost:8080/workspaces/test#workspace> a td:Thing, hmas:Workspace;
   td:title "test".
 

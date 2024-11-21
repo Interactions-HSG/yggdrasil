@@ -8,7 +8,7 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/sub#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -72,9 +72,9 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <workspaces/test/#workspace>;
-  hmas:contains <workspaces/sub/artifacts/c0/#artifact> .
+  hmas:isContainedIn <workspaces/test#workspace>;
+  hmas:contains <workspaces/sub/artifacts/c0#artifact> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
 
-<workspaces/sub/artifacts/c0/#artifact> a hmas:Artifact .
+<workspaces/sub/artifacts/c0#artifact> a hmas:Artifact .

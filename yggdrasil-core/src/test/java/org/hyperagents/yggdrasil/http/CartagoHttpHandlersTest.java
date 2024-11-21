@@ -701,8 +701,8 @@ public class CartagoHttpHandlersTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var deleteBodyMessage = (RdfStoreMessage.DeleteEntity) storeMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_WORKSPACE_PATH + "/artifacts/body_test_agent/"),
-        deleteBodyMessage.requestUri(),
+        "body_test_agent",
+        deleteBodyMessage.artifactName(),
         NAMES_EQUAL_MESSAGE
     );
     storeMessage.reply(String.valueOf(HttpStatus.SC_OK));

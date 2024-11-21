@@ -121,8 +121,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
               content,
               message
           );
-          case RdfStoreMessage.DeleteEntity(String requestUri) ->
-              this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
+          case RdfStoreMessage.DeleteEntity(String workspaceName, String artifactName) ->
+              this.handleDeleteEntity(workspaceName, artifactName, message);
           case RdfStoreMessage.GetWorkspaces(String containerWorkspace) ->
               this.handleGetWorkspaces(containerWorkspace, message);
           case RdfStoreMessage.GetArtifacts(String workspaceName) ->
@@ -192,7 +192,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
                       httpConfig.getWorkspacesUriTrailingSlash(),
                       w.getName(),
-                      w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
+                      w.getParentName().map(httpConfig::getWorkspaceUri),
                       Files.readString(r, StandardCharsets.UTF_8)
                   ));
                   w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
@@ -240,7 +240,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final Message<RdfStoreMessage> message
   ) throws IOException {
     // either parentWorkspace or the Platform
-    final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
+    final var result = this.store.getEntityModel(iri(containerWorkspaceUri));
     if (result.isPresent()) {
       final var containerFragment =
           containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())
@@ -296,8 +296,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleGetArtifacts(final String workspaceName,
                                   final Message<RdfStoreMessage> message) throws IOException {
-    final var workspaceIri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
-    final var result = this.store.getEntityModel(RdfModelUtils.createIri(workspaceIri));
+    final var workspaceIri = this.httpConfig.getWorkspaceUri(workspaceName);
+    final var result = this.store.getEntityModel(iri(workspaceIri));
     if (result.isPresent()) {
       final Model m = handleGetContainedThings(
           result.get(),
@@ -729,8 +729,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
     );
   }
 
-  private void handleDeleteEntity(final IRI requestIri, final Message<RdfStoreMessage> message)
+  private void handleDeleteEntity(final String workspaceName, final String artifactName,
+                                  final Message<RdfStoreMessage> message)
       throws IllegalArgumentException, IOException {
+
+    final var workspaceIri = iri(this.httpConfig.getWorkspaceUri(workspaceName));
+    final var requestIri = artifactName == null ? workspaceIri :
+        iri(this.httpConfig.getArtifactUri(workspaceName, artifactName));
+
     this.store
         .getEntityModel(requestIri)
         .ifPresentOrElse(
@@ -743,19 +749,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                   RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
               )) {
-                final var artifactIri = requestIri.toString();
-                final var workspaceIri =
-                    RdfModelUtils.createIri(
-                        Pattern
-                            .compile(
-                                "^(https?://.*?:[0-9]+/workspaces/.*?/)(?:artifacts|agents)/.*?$"
-                            )
-                            .matcher(artifactIri)
-                            .results()
-                            .map(r -> r.group(1))
-                            .findFirst()
-                            .orElseThrow()
-                    );
                 this.store
                     .getEntityModel(workspaceIri)
                     .ifPresent(Failable.asConsumer(workspaceModel -> {
@@ -803,14 +796,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                   RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
               )) {
-                final var workspaceIri = requestIri.toString();
                 final var workspaceIriResource = RdfModelUtils.createIri(
                     requestIri + WORKSPACE_FRAGMENT
                 );
-                final var platformIri = RdfModelUtils.createIri(
-                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-                );
-                final var platformIriResource = RdfModelUtils.createIri(
+                final var platformIri = iri(this.httpConfig.getBaseUriTrailingSlash());
+                final var platformIriResource = iri(
                     this.httpConfig.getBaseUriTrailingSlash() + PLATFORM_FRAGMENT
                 );
                 if (entityModel.contains(
@@ -956,11 +946,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var irisToDelete = new ArrayList<>(stack);
     while (!stack.isEmpty()) {
       final var iri = stack.removeLast();
+
       this.store.getEntityModel(iri)
           .ifPresent(Failable.asConsumer(model -> {
-            final var iriResource = RdfModelUtils.createIri(
-                iri.toString().endsWith("/") ? iri + WORKSPACE_FRAGMENT :
-                    iri + "/" + WORKSPACE_FRAGMENT);
+            final var iriResource = iri(iri + WORKSPACE_FRAGMENT);
             model
                 .filter(
                     iriResource,

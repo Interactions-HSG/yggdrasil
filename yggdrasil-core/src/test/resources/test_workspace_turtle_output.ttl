@@ -10,7 +10,7 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix websub: <https://purl.org/hmas/websub/> .
 
-<workspaces/test/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/test#workspace> a td:Thing, hmas:Workspace;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -110,4 +110,4 @@
     ] .
 
 <workspaces/test> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/test/#workspace> .
+  hmas:isProfileOf <workspaces/test#workspace> .

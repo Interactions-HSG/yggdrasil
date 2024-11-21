@@ -225,9 +225,9 @@ public class RdfStoreVerticleCreateTest {
 
             final var expected = "@base<http://localhost:8080/>."
                 + "@prefixhmas:<https://purl.org/hmas/>."
-                + "<workspaces/test/#workspace>ahmas:Workspace;"
-                + "hmas:contains<workspaces/sub/#workspace>."
-                + "<workspaces/sub/#workspace>ahmas:Workspace.";
+                + "<workspaces/test#workspace>ahmas:Workspace;"
+                + "hmas:contains<workspaces/sub#workspace>."
+                + "<workspaces/sub#workspace>ahmas:Workspace.";
 
             Assertions.assertEquals(
                 expected,
@@ -320,9 +320,9 @@ public class RdfStoreVerticleCreateTest {
 
             final var expected = "@base<http://localhost:8080/>."
                 + "@prefixhmas:<https://purl.org/hmas/>."
-                + "<workspaces/test/#workspace>ahmas:Workspace;"
-                + "hmas:contains<workspaces/test/artifacts/c0/#artifact>."
-                + "<workspaces/test/artifacts/c0/#artifact>ahmas:Artifact.";
+                + "<workspaces/test#workspace>ahmas:Workspace;"
+                + "hmas:contains<workspaces/test/artifacts/c0#artifact>."
+                + "<workspaces/test/artifacts/c0#artifact>ahmas:Artifact.";
 
             Assertions.assertEquals(
                 expected,
@@ -415,9 +415,9 @@ public class RdfStoreVerticleCreateTest {
 
             final var expected = "@base<http://localhost:8080/>."
                 + "@prefixhmas:<https://purl.org/hmas/>."
-                + "<workspaces/test/#workspace>ahmas:Workspace;"
-                + "hmas:contains<workspaces/test/artifacts/body_kai/#artifact>."
-                + "<workspaces/test/artifacts/body_kai/#artifact>ahmas:Artifact.";
+                + "<workspaces/test#workspace>ahmas:Workspace;"
+                + "hmas:contains<workspaces/test/artifacts/body_kai#artifact>."
+                + "<workspaces/test/artifacts/body_kai#artifact>ahmas:Artifact.";
 
             Assertions.assertEquals(
                 expected,
@@ -492,8 +492,8 @@ public class RdfStoreVerticleCreateTest {
             final var expectedContent =
                 "@base<http://localhost:8080/>.@prefixhmas:<https://purl.org/hmas/>."
                     +
-                    "<#platform>ahmas:HypermediaMASPlatform;hmas:hosts<workspaces/test/#workspace>."
-                    + "<workspaces/test/#workspace>ahmas:Workspace.";
+                    "<#platform>ahmas:HypermediaMASPlatform;hmas:hosts<workspaces/test#workspace>."
+                    + "<workspaces/test#workspace>ahmas:Workspace.";
 
             Assertions.assertEquals(expectedContent,
                 removeWhitespace(entityChangedMessage.content()),

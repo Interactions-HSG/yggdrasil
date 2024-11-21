@@ -139,6 +139,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -164,6 +166,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        MAIN_WORKSPACE_NAME,
+        NONEXISTENT_NAME,
         this.client.get(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -286,6 +290,7 @@ public class DefaultHttpHandlersTest {
         createResourceMessage.parentWorkspaceUri(),
         URIS_EQUAL_MESSAGE
     );
+
     Assertions.assertEquals(
         output,
         createResourceMessage.workspaceRepresentation(),
@@ -437,6 +442,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -500,6 +507,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -563,6 +572,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.delete(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .send()
@@ -589,7 +600,7 @@ public class DefaultHttpHandlersTest {
   @Test
   public void testDeleteTurtleArtifactSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    this.helper.testDeleteTurtleResourceSucceeds(
+    this.helper.testDeleteTurtleArtifactSucceeds(
         ctx,
         COUNTER_ARTIFACT_PATH,
         COUNTER_ARTIFACT_FILE
@@ -602,6 +613,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        MAIN_WORKSPACE_NAME,
+        NONEXISTENT_NAME,
         this.client.delete(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .send()

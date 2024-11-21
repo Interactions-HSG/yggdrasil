@@ -101,16 +101,8 @@ public class RdfStoreVerticleDeleteTest {
   @Test
   public void testDeleteMissingEntity(final VertxTestContext ctx) {
     this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/"))
+        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/",null))
         .onFailure(RdfStoreVerticleTestHelpers::assertNotFound)
-        .onComplete(ctx.failingThenComplete());
-  }
-
-  @Test
-  public void testMalformedUri(final VertxTestContext ctx) {
-    this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity("nonexistent"))
-        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 
@@ -129,7 +121,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            TEST_WORKSPACE_URI + "/"
+            "test",
+            null
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -176,7 +169,7 @@ public class RdfStoreVerticleDeleteTest {
             );
 
             Assertions.assertEquals(
-                TEST_WORKSPACE_URI + "/",
+                TEST_WORKSPACE_URI,
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -192,7 +185,7 @@ public class RdfStoreVerticleDeleteTest {
                 bodyDeletionMessage.content()
             );
             Assertions.assertEquals(
-                TEST_AGENT_BODY_URI + "/",
+                TEST_AGENT_BODY_URI,
                 bodyDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -206,7 +199,7 @@ public class RdfStoreVerticleDeleteTest {
                 subWorkspaceDeletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI + "/",
+                SUB_WORKSPACE_URI,
                 subWorkspaceDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -220,7 +213,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI + "/",
+                COUNTER_ARTIFACT_URI,
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -270,7 +263,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            SUB_WORKSPACE_URI + "/"
+            "sub",
+            null
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -285,7 +279,7 @@ public class RdfStoreVerticleDeleteTest {
                 parentWorkspaceUpdateMessage.content()
             );
             Assertions.assertEquals(
-                TEST_WORKSPACE_URI + "/",
+                TEST_WORKSPACE_URI,
                 parentWorkspaceUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -301,7 +295,7 @@ public class RdfStoreVerticleDeleteTest {
 
             final var expected = "@base<http://localhost:8080/>."
                 + "@prefixhmas:<https://purl.org/hmas/>."
-                + "<workspaces/test/#workspace>ahmas:Workspace.";
+                + "<workspaces/test#workspace>ahmas:Workspace.";
 
             Assertions.assertEquals(
                 expected,
@@ -317,7 +311,7 @@ public class RdfStoreVerticleDeleteTest {
                 deletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI + "/",
+                SUB_WORKSPACE_URI,
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -331,7 +325,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI + "/",
+                COUNTER_ARTIFACT_URI,
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -389,7 +383,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            COUNTER_ARTIFACT_URI + "/"
+            "sub",
+            "c0"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -477,7 +472,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            TEST_AGENT_BODY_URI + "/"
+            "test",
+            "body_kai"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(

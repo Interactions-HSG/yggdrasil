@@ -9,7 +9,7 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix websub: <https://purl.org/hmas/websub/> .
 
-<http://localhost:8080/workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
+<http://localhost:8080/workspaces/sub#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -144,4 +144,4 @@
     ] .
 
 <http://localhost:8080/workspaces/sub> a hmas:ResourceProfile;
-  hmas:isProfileOf <http://localhost:8080/workspaces/sub/#workspace> .
+  hmas:isProfileOf <http://localhost:8080/workspaces/sub#workspace> .

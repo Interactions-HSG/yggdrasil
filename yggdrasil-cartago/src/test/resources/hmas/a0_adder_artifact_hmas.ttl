@@ -10,50 +10,34 @@
 @prefix hmas: <https://purl.org/hmas/> .
 
 <http://localhost:8080/workspaces/test/artifacts/a0> a hmas:ResourceProfile;
-  hmas:exposesSignifier <http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifact>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#subscribeToArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier>,
-    <http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#unsubscribeFromArtifact>;
-  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/a0/#artifact> .
+  hmas:exposesSignifier <http://localhost:8080/workspaces/test/artifacts/a0#subscribeToArtifact>,
+    <http://localhost:8080/workspaces/test/artifacts/a0#unsubscribeFromArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier>,
+    <http://localhost:8080/workspaces/test/artifacts/a0#getArtifactRepresentation>, <http://localhost:8080/workspaces/test/artifacts/a0#updateArtifact>,
+    <http://localhost:8080/workspaces/test/artifacts/a0#focusArtifact>, <http://localhost:8080/workspaces/test/artifacts/a0#deleteArtifact>;
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/a0#artifact> .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:DeleteArtifact;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifactForm>
-        ]
-    ] .
-
-<http://localhost:8080/workspaces/test/artifacts/a0/#deleteArtifactForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
-  htv:methodName "DELETE";
-  hctl:forContentType "application/json" .
-
-<http://localhost:8080/workspaces/test/artifacts/a0/#subscribeToArtifact> a hmas:Signifier;
+<http://localhost:8080/workspaces/test/artifacts/a0#subscribeToArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:ObserveArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#webSubForm>
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#webSubForm>
         ], [
-          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/a0/#webSubSubscribeInput>;
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/a0#webSubSubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#webSubForm> a hctl:Form;
+<http://localhost:8080/workspaces/test/artifacts/a0#webSubForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/hub/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#webSubSubscribeInput> a sh:Shape;
+<http://localhost:8080/workspaces/test/artifacts/a0#webSubSubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
       sh:datatype xs:string;
@@ -80,39 +64,48 @@
       sh:path websub:mode
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentation> a
-    hmas:Signifier;
+<http://localhost:8080/workspaces/test/artifacts/a0#unsubscribeFromArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:PerceiveArtifact;
+      sh:class hmas:ActionExecution, jacamo:UnobserveArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#webSubForm>
+        ], [
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/a0#webSubUnsubscribeInput>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#getArtifactRepresentationForm>
-  a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
-
-<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifact> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:UpdateArtifact;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm>
-        ]
+<http://localhost:8080/workspaces/test/artifacts/a0#webSubUnsubscribeInput> a sh:Shape;
+  sh:class websub:websubsubscription;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "hub.callback";
+      sh:description "The callback URL of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:callback
+    ], [ a sh:Shape;
+      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/a0";
+      sh:datatype xs:string;
+      sh:name "hub.topic";
+      sh:description "The topic of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:topic
+    ], [ a sh:Shape;
+      sh:hasValue "unsubscribe";
+      sh:datatype xs:string;
+      sh:name "hub.mode";
+      sh:description "The mode of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:mode
     ] .
-
-<http://localhost:8080/workspaces/test/artifacts/a0/#updateArtifactForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
-  htv:methodName "PUT";
-  hctl:forContentType "text/turtle" .
 
 <http://localhost:8080/workspaces/test/artifacts/a0/#add-Signifier> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape, <http://example.org/Add>;
@@ -185,63 +178,69 @@
       sh:path rdf:first
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifact> a hmas:Signifier;
+<http://localhost:8080/workspaces/test/artifacts/a0#getArtifactRepresentation> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:PerceiveArtifact;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#getArtifactRepresentationForm>
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#getArtifactRepresentationForm>
+  a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
+  htv:methodName "GET";
+  hctl:forContentType "text/turtle" .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#updateArtifact> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:UpdateArtifact;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#updateArtifactForm>
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#updateArtifactForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
+  htv:methodName "PUT";
+  hctl:forContentType "text/turtle" .
+
+<http://localhost:8080/workspaces/test/artifacts/a0#focusArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:Focus;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifactForm>
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#focusArtifactForm>
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#focusArtifactForm> a hctl:Form;
+<http://localhost:8080/workspaces/test/artifacts/a0#focusArtifactForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/workspaces/test/focus>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#unsubscribeFromArtifact> a hmas:Signifier;
+<http://localhost:8080/workspaces/test/artifacts/a0#deleteArtifact> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:UnobserveArtifact;
+      sh:class hmas:ActionExecution, jacamo:DeleteArtifact;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0/#webSubForm>
-        ], [
-          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/a0/#webSubUnsubscribeInput>;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/a0#deleteArtifactForm>
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#webSubUnsubscribeInput> a sh:Shape;
-  sh:class websub:websubsubscription;
-  sh:property [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "hub.callback";
-      sh:description "The callback URL of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:callback
-    ], [ a sh:Shape;
-      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/a0";
-      sh:datatype xs:string;
-      sh:name "hub.topic";
-      sh:description "The topic of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:topic
-    ], [ a sh:Shape;
-      sh:hasValue "unsubscribe";
-      sh:datatype xs:string;
-      sh:name "hub.mode";
-      sh:description "The mode of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:mode
-    ] .
+<http://localhost:8080/workspaces/test/artifacts/a0#deleteArtifactForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/a0>;
+  htv:methodName "DELETE";
+  hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/a0/#artifact> a hmas:Artifact, <http://example.org/Adder> .
+<http://localhost:8080/workspaces/test/artifacts/a0#artifact> a hmas:Artifact, <http://example.org/Adder> .

@@ -10,54 +10,108 @@
 @prefix hmas: <https://purl.org/hmas/> .
 
 <http://localhost:8080/workspaces/test/artifacts/body_test> a hmas:ResourceProfile;
-  hmas:exposesSignifier <http://localhost:8080/workspaces/test/artifacts/body_test/#unsubscribeFromAgent>,
-    [ a hmas:Signifier;
+  hmas:exposesSignifier [ a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;
           sh:property [
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test/#updateBodyForm>
+              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test#updateBodyForm>
             ]
         ]
-    ], <http://localhost:8080/workspaces/test/artifacts/body_test/#subscribeToAgent>,
-    [ a hmas:Signifier;
+    ], <http://localhost:8080/workspaces/test/artifacts/body_test#subscribeToAgent>, [
+      a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;
           sh:property [
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test/#getBodyRepresentationForm>
+              sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test#getBodyRepresentationForm>
             ]
         ]
-    ];
-  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/body_test/#artifact> .
+    ], <http://localhost:8080/workspaces/test/artifacts/body_test#unsubscribeFromAgent>;
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/body_test#artifact> .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test/#unsubscribeFromAgent>
-  a hmas:Signifier;
+<http://localhost:8080/workspaces/test/artifacts/body_test#updateBodyForm> a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/body_test>;
+  htv:methodName "PUT";
+  hctl:forContentType "text/turtle" .
+
+<http://localhost:8080/workspaces/test/artifacts/body_test#subscribeToAgent> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:UnobserveAgent;
+      sh:class hmas:ActionExecution, jacamo:ObserveAgent;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test/#webSubForm>
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test#webSubForm>
         ], [
-          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/body_test/#webSubUnsubscribeInput>;
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/body_test#webSubSubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test/#webSubForm> a hctl:Form;
+<http://localhost:8080/workspaces/test/artifacts/body_test#webSubForm> a hctl:Form;
   hctl:hasTarget <http://localhost:8080/hub/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test/#webSubUnsubscribeInput>
+<http://localhost:8080/workspaces/test/artifacts/body_test#webSubSubscribeInput> a
+    sh:Shape;
+  sh:class websub:websubsubscription;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "hub.callback";
+      sh:description "The callback URL of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:callback
+    ], [ a sh:Shape;
+      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/body_test";
+      sh:datatype xs:string;
+      sh:name "hub.topic";
+      sh:description "The topic of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:topic
+    ], [ a sh:Shape;
+      sh:hasValue "subscribe";
+      sh:datatype xs:string;
+      sh:name "hub.mode";
+      sh:description "The mode of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:mode
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/body_test#getBodyRepresentationForm>
+  a hctl:Form;
+  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/body_test>;
+  htv:methodName "GET";
+  hctl:forContentType "text/turtle" .
+
+<http://localhost:8080/workspaces/test/artifacts/body_test#unsubscribeFromAgent> a
+    hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:UnobserveAgent;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test#webSubForm>
+        ], [
+          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/body_test#webSubUnsubscribeInput>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ] .
+
+<http://localhost:8080/workspaces/test/artifacts/body_test#webSubUnsubscribeInput>
   a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
@@ -85,60 +139,5 @@
       sh:path websub:mode
     ] .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test/#updateBodyForm> a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/body_test>;
-  htv:methodName "PUT";
-  hctl:forContentType "text/turtle" .
-
-<http://localhost:8080/workspaces/test/artifacts/body_test/#subscribeToAgent> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:ObserveAgent;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <http://localhost:8080/workspaces/test/artifacts/body_test/#webSubForm>
-        ], [
-          sh:qualifiedValueShape <http://localhost:8080/workspaces/test/artifacts/body_test/#webSubSubscribeInput>;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
-        ]
-    ] .
-
-<http://localhost:8080/workspaces/test/artifacts/body_test/#webSubSubscribeInput>
-  a sh:Shape;
-  sh:class websub:websubsubscription;
-  sh:property [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "hub.callback";
-      sh:description "The callback URL of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:callback
-    ], [ a sh:Shape;
-      sh:hasValue "http://localhost:8080/workspaces/test/artifacts/body_test";
-      sh:datatype xs:string;
-      sh:name "hub.topic";
-      sh:description "The topic of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:topic
-    ], [ a sh:Shape;
-      sh:hasValue "subscribe";
-      sh:datatype xs:string;
-      sh:name "hub.mode";
-      sh:description "The mode of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:mode
-    ] .
-
-<http://localhost:8080/workspaces/test/artifacts/body_test/#getBodyRepresentationForm>
-  a hctl:Form;
-  hctl:hasTarget <http://localhost:8080/workspaces/test/artifacts/body_test>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
-
-<http://localhost:8080/workspaces/test/artifacts/body_test/#artifact> a hmas:Artifact,
+<http://localhost:8080/workspaces/test/artifacts/body_test#artifact> a hmas:Artifact,
     jacamo:Body .
