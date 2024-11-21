@@ -36,6 +36,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
+  private static final String MAIN_WORKSPACE_NAME = "test";
+  private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
   private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/artifacts/body_kai";
   private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
@@ -101,7 +103,7 @@ public class RdfStoreVerticleDeleteTest {
   @Test
   public void testDeleteMissingEntity(final VertxTestContext ctx) {
     this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/",null))
+        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/", null))
         .onFailure(RdfStoreVerticleTestHelpers::assertNotFound)
         .onComplete(ctx.failingThenComplete());
   }
@@ -121,7 +123,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            "test",
+            MAIN_WORKSPACE_NAME,
             null
         )))
         .onSuccess(r -> {
@@ -263,7 +265,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            "sub",
+            SUB_WORKSPACE_NAME,
             null
         )))
         .onSuccess(r -> {
@@ -383,7 +385,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            "sub",
+            SUB_WORKSPACE_NAME,
             "c0"
         )))
         .onSuccess(r -> {
@@ -472,7 +474,7 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            "test",
+            MAIN_WORKSPACE_NAME,
             "body_kai"
         )))
         .onSuccess(r -> {
@@ -553,7 +555,7 @@ public class RdfStoreVerticleDeleteTest {
     return this.storeMessagebox
         .sendMessage(new RdfStoreMessage.CreateWorkspace(
             "http://localhost:8080/workspaces/",
-            "test",
+            MAIN_WORKSPACE_NAME,
             Optional.empty(),
             inputWorkspaceRepresentation
         )).onSuccess(r -> {
@@ -591,7 +593,7 @@ public class RdfStoreVerticleDeleteTest {
           }
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
-            "test",
+            MAIN_WORKSPACE_NAME,
             "http://localhost:8080/agent/kai",
             "kai",
             inputBodyRepresentation

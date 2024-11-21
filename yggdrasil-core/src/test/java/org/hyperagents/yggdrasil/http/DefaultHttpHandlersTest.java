@@ -357,6 +357,8 @@ public class DefaultHttpHandlersTest {
         .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
         .sendBuffer(Buffer.buffer(input));
+    final var checkIfWorkspaceExists = this.storeMessageQueue.take();
+    checkIfWorkspaceExists.reply("success");
     final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(COUNTER_ARTIFACT_NAME);
     final var message = this.storeMessageQueue.take();

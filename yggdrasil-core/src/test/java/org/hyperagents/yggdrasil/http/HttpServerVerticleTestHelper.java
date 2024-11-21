@@ -97,10 +97,10 @@ public final class HttpServerVerticleTestHelper {
       final Future<HttpResponse<Buffer>> request
   ) throws InterruptedException {
     final var message = this.storeMessageQueue.take();
-    if (message.body() instanceof RdfStoreMessage.GetEntity m) {
+    if (message.body() instanceof RdfStoreMessage.GetEntity(String requestUri)) {
       Assertions.assertEquals(
           this.getUri(resourceUri),
-          m.requestUri(),
+          requestUri,
           URIS_EQUAL_MESSAGE
       );
     } else if (message.body() instanceof RdfStoreMessage.ReplaceEntity m) {
@@ -266,11 +266,7 @@ public final class HttpServerVerticleTestHelper {
         deleteResourceMessage.workspaceName(),
         URIS_EQUAL_MESSAGE
     );
-    Assertions.assertEquals(
-        null,
-        deleteResourceMessage.artifactName(),
-        URIS_EQUAL_MESSAGE
-    );
+    Assertions.assertNull(deleteResourceMessage.artifactName(), URIS_EQUAL_MESSAGE);
     message.reply(expectedRepresentation);
     request
         .onSuccess(r -> {

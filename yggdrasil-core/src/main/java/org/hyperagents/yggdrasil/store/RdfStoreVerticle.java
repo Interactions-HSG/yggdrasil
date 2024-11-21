@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import org.apache.commons.lang3.function.Failable;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -102,12 +101,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
               message
           );
           case RdfStoreMessage.CreateArtifact content -> this.handleCreateArtifact(
-              RdfModelUtils.createIri(content.requestUri()),
               content,
               message
           );
           case RdfStoreMessage.CreateWorkspace content -> this.handleCreateWorkspace(
-              RdfModelUtils.createIri(content.requestUri()),
               content,
               message
           );
@@ -383,7 +380,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * Creates an artifact and adds it to the store.
    */
   private void handleCreateArtifact(
-      final IRI requestIri,
       final RdfStoreMessage.CreateArtifact content,
       final Message<RdfStoreMessage> message
   ) throws IOException {
@@ -393,27 +389,32 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
     final var entityIri = RdfModelUtils.createIri(artifactIri);
 
-    Optional
-        .ofNullable(content.artifactRepresentation())
-        .filter(s -> !s.isEmpty())
-        // Replace all null relative IRIs with the IRI generated for this entity
-        .map(s -> s.replaceAll("<>", "<" + artifactIri + ">"))
-        .ifPresentOrElse(
-            Failable.asConsumer(s -> {
-              final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+    final var workspaceIri = RdfModelUtils.createIri(
+        artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
+    );
 
-              final var workspaceIri = RdfModelUtils.createIri(
-                  artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
-              );
-              this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
-              this.store.addEntityModel(entityIri, entityModel);
-              final var stringGraphResult =
-                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                      this.httpConfig.getBaseUriTrailingSlash());
-              this.replyWithPayload(message, stringGraphResult);
-            }),
-            () -> this.replyFailed(message)
-        );
+    final var t = this.store.containsEntityModel(workspaceIri);
+    if (!t) {
+      this.replyFailed(message);
+    } else {
+      Optional
+          .ofNullable(content.artifactRepresentation())
+          .filter(s -> !s.isEmpty())
+          // Replace all null relative IRIs with the IRI generated for this entity
+          .map(s -> s.replaceAll("<>", "<" + artifactIri + ">"))
+          .ifPresentOrElse(
+              Failable.asConsumer(s -> {
+                final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+                this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
+                this.store.addEntityModel(entityIri, entityModel);
+                final var stringGraphResult =
+                    RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                        this.httpConfig.getBaseUriTrailingSlash());
+                this.replyWithPayload(message, stringGraphResult);
+              }),
+              () -> this.replyFailed(message)
+          );
+    }
   }
 
   private void enrichArtifactGraphWithWorkspace(
@@ -503,11 +504,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
   /**
    * Creates an entity and adds it to the store.
    *
-   * @param requestIri IRI where the request originated from
    * @param message    Request
    */
   private void handleCreateWorkspace(
-      final IRI requestIri,
       final RdfStoreMessage.CreateWorkspace content,
       final Message<RdfStoreMessage> message
   ) throws IllegalArgumentException, IOException {

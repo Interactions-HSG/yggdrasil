@@ -403,6 +403,7 @@ public class CartagoHttpHandlersTest {
             ContentType.APPLICATION_JSON.getMimeType()
         )
         .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply("success");
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createArtifactMessage =
@@ -486,6 +487,8 @@ public class CartagoHttpHandlersTest {
             ContentType.APPLICATION_JSON.getMimeType()
         )
         .sendBuffer(artifactInitialization.toBuffer());
+    final var message = this.storeMessageQueue.take();
+    /*
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
@@ -509,7 +512,8 @@ public class CartagoHttpHandlersTest {
         Json.decodeValue(createArtifactMessage.representation()),
         "The initialization parameters should be the same"
     );
-    message.fail(HttpStatus.SC_BAD_REQUEST, "The workspace was not found");
+    */
+    message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The workspace was not found");
     request
         .onSuccess(r -> {
           Assertions.assertEquals(

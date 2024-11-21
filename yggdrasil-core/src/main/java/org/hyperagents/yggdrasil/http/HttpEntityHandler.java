@@ -216,11 +216,22 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
       return;
     }
 
-    switch (contentType) {
-      case "application/json" -> handleCreateArtifactJson(context, agentId);
-      case TURTLE_CONTENT_TYPE -> handleCreateArtifactTurtle(context);
-      default -> context.response().setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).end();
-    }
+    this.rdfStoreMessagebox.sendMessage(
+            new RdfStoreMessage.GetEntity(this.httpConfig
+                .getWorkspaceUri(context.pathParam(WORKSPACE_ID_PARAM)))
+        ).onSuccess(
+            r -> {
+              switch (contentType) {
+                case "application/json" -> handleCreateArtifactJson(context, agentId);
+                case TURTLE_CONTENT_TYPE -> handleCreateArtifactTurtle(context);
+                default ->
+                    context.response().setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).end();
+              }
+            }
+        )
+        .onFailure(
+            r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()
+        );
   }
 
   /**
