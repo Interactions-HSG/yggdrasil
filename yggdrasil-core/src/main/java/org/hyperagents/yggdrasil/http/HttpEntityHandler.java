@@ -228,10 +228,9 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
                     context.response().setStatusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).end();
               }
             }
-        )
-        .onFailure(
+        ).onFailure(
             r -> context.response().setStatusCode(HttpStatus.SC_BAD_REQUEST).end()
-        );
+    );
   }
 
   /**

@@ -17,7 +17,7 @@
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/sub>;
-          hctl:forContentType "application/json";
+          hctl:forContentType "text/turtle";
           hctl:hasOperationType td:invokeAction
         ]
     ], [ a td:ActionAffordance, jacamo:MakeArtifact;
