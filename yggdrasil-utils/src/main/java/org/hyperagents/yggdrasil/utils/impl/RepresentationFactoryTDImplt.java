@@ -184,8 +184,7 @@ public class RepresentationFactoryTDImplt implements RepresentationFactory {
             .addThingURI(thingUri + "#workspace")
             .addSemanticType(HMAS + "Workspace");
 
-    addAction(td, "createSubWorkspaceJson", thingUri, POST, "makeSubWorkspace");
-    addAction(td, "createSubWorkspaceTurtle", thingUri,
+    addAction(td, "createSubWorkspace", thingUri,
         "text/turtle", POST, "createSubWorkspace");
 
     addHttpSignifiers(td, thingUri, "Workspace");
