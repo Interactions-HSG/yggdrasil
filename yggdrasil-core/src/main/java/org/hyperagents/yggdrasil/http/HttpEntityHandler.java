@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.http.HttpHeaders;
@@ -672,12 +673,16 @@ public class HttpEntityHandler implements HttpEntityHandlerInterface {
     final var entityIri = iri(this.httpConfig.getWorkspaceUri(workspaceName));
 
     final Model additionalMetadataModel;
-    try {
-      additionalMetadataModel = ctx.body().isEmpty()
-          ? null
-          : RdfModelUtils.stringToModel(ctx.body().asString(), entityIri, RDFFormat.TURTLE);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    if (Objects.equals(ctx.request().getHeader(HttpHeaders.CONTENT_TYPE), "text/turtle")) {
+      try {
+        additionalMetadataModel = ctx.body().isEmpty()
+            ? null
+            : RdfModelUtils.stringToModel(ctx.body().asString(), entityIri, RDFFormat.TURTLE);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      additionalMetadataModel = null;
     }
 
     final Future<WorkspaceResult> baseModelFuture = environment
