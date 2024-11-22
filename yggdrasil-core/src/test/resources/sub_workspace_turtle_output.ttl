@@ -10,21 +10,13 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix websub: <https://purl.org/hmas/websub/> .
 
-<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/sub#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
-  hmas:isContainedIn <workspaces/test/#workspace>;
+  hmas:isContainedIn <workspaces/test#workspace>;
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeSubWorkspace;
-      td:name "createSubWorkspaceJson";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/sub>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance, jacamo:createSubWorkspace;
-      td:name "createSubWorkspaceTurtle";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createSubWorkspace;
+      td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/sub>;
@@ -111,4 +103,4 @@
     ] .
 
 <workspaces/sub> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/sub/#workspace> .
+  hmas:isProfileOf <workspaces/sub#workspace> .

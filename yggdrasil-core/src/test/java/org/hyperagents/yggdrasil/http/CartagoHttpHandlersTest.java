@@ -60,6 +60,7 @@ public class CartagoHttpHandlersTest {
   private static final String MAIN_ARTIFACTS_PATH = MAIN_WORKSPACE_PATH + ARTIFACTS_PATH;
   private static final String COUNTER_ARTIFACT_NAME = "c0";
   private static final String CALLBACK_IRI = "http://localhost:8080/callback";
+  private static final String TEXT_TURTLE = "text/turtle";
   private static final String NAMES_EQUAL_MESSAGE = "The names should be equal";
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String TDS_EQUAL_MESSAGE = "The thing descriptions should be equal";
@@ -156,6 +157,7 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
@@ -212,6 +214,7 @@ public class CartagoHttpHandlersTest {
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
             .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
             .send()
     );
   }
@@ -227,8 +230,9 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
+    this.storeMessageQueue.take().reply(SUB_WORKSPACE_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) cartagoMessage.body();
@@ -256,7 +260,7 @@ public class CartagoHttpHandlersTest {
         URIS_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH + "/")),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
         createEntityMessage.parentWorkspaceUri(),
         "The parent workspace URI should be present"
     );
@@ -288,6 +292,7 @@ public class CartagoHttpHandlersTest {
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
 
     this.storeMessageQueue.take().reply(MAIN_WORKSPACE_NAME);
@@ -305,6 +310,7 @@ public class CartagoHttpHandlersTest {
     this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, MAIN_WORKSPACE_NAME)
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "text/turtle")
         .send();
 
     this.storeMessageQueue.take().reply("UUID");
@@ -327,8 +333,9 @@ public class CartagoHttpHandlersTest {
     final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+        .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
         .send();
+    this.storeMessageQueue.take().reply(SUB_WORKSPACE_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createSubWorkspaceMessage =
         (CartagoMessage.CreateSubWorkspace) message.body();
@@ -358,7 +365,7 @@ public class CartagoHttpHandlersTest {
         ctx,
         this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
             .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
-            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), "application/json")
+            .putHeader(HttpHeaders.CONTENT_TYPE.toString(), TEXT_TURTLE)
             .send()
     );
   }
@@ -396,6 +403,7 @@ public class CartagoHttpHandlersTest {
             ContentType.APPLICATION_JSON.getMimeType()
         )
         .sendBuffer(artifactInitialization.toBuffer());
+    this.storeMessageQueue.take().reply("success");
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var createArtifactMessage =
@@ -479,6 +487,8 @@ public class CartagoHttpHandlersTest {
             ContentType.APPLICATION_JSON.getMimeType()
         )
         .sendBuffer(artifactInitialization.toBuffer());
+    final var message = this.storeMessageQueue.take();
+    /*
     this.storeMessageQueue.take().reply(COUNTER_ARTIFACT_NAME);
     final var message = this.cartagoMessageQueue.take();
     final var createArtifactMessage = (CartagoMessage.CreateArtifact) message.body();
@@ -502,7 +512,8 @@ public class CartagoHttpHandlersTest {
         Json.decodeValue(createArtifactMessage.representation()),
         "The initialization parameters should be the same"
     );
-    message.fail(HttpStatus.SC_BAD_REQUEST, "The workspace was not found");
+    */
+    message.fail(HttpStatus.SC_INTERNAL_SERVER_ERROR, "The workspace was not found");
     request
         .onSuccess(r -> {
           Assertions.assertEquals(
@@ -676,6 +687,7 @@ public class CartagoHttpHandlersTest {
       throws InterruptedException {
     final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH + "/leave")
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(AGENT_LOCALNAME, AGENT_NAME)
         .send();
     final var cartagoMessage = this.cartagoMessageQueue.take();
     final var leaveWorkspaceMessage = (CartagoMessage.LeaveWorkspace) cartagoMessage.body();
@@ -693,8 +705,8 @@ public class CartagoHttpHandlersTest {
     final var storeMessage = this.storeMessageQueue.take();
     final var deleteBodyMessage = (RdfStoreMessage.DeleteEntity) storeMessage.body();
     Assertions.assertEquals(
-        this.helper.getUri(MAIN_WORKSPACE_PATH + "/artifacts/body_test_agent/"),
-        deleteBodyMessage.requestUri(),
+        "body_test_agent",
+        deleteBodyMessage.artifactName(),
         NAMES_EQUAL_MESSAGE
     );
     storeMessage.reply(String.valueOf(HttpStatus.SC_OK));

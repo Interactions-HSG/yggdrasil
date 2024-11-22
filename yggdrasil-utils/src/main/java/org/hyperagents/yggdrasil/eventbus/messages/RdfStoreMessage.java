@@ -51,9 +51,8 @@ public sealed interface RdfStoreMessage {
   /**
    * A record representing a request to delete an entity from the RDF store.
    *
-   * @param requestUri The URI of the request to delete the entity.
    */
-  record DeleteEntity(String requestUri) implements RdfStoreMessage {
+  record DeleteEntity(String workspaceName, String artifactName) implements RdfStoreMessage {
   }
 
   /**
@@ -81,6 +80,7 @@ public sealed interface RdfStoreMessage {
    */
   record CreateArtifact(
       String requestUri,
+      String workspaceName,
       String artifactName,
       String artifactRepresentation
   ) implements RdfStoreMessage {

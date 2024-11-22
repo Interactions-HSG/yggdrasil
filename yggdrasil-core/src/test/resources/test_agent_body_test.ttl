@@ -3,7 +3,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<http://localhost:8080/workspaces/test/artifacts/body_kai/#artifact> a td:Thing, jacamo:Body,
+<http://localhost:8080/workspaces/test/artifacts/body_kai#artifact> a td:Thing, jacamo:Body,
     hmas:Artifact;
   td:title "kai";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme

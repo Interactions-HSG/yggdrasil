@@ -7,7 +7,7 @@
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/artifacts/c0/#artifact> a td:Thing, ex:Counter, hmas:Artifact;
+<workspaces/sub/artifacts/c0#artifact> a td:Thing, ex:Counter, hmas:Artifact;
   td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -21,11 +21,11 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <workspaces/sub/#workspace> .
+  hmas:isContainedIn <workspaces/sub#workspace> .
 
 <workspaces/sub/artifacts/c0> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/sub/artifacts/c0/#artifact>.
+  hmas:isProfileOf <workspaces/sub/artifacts/c0#artifact>.
 
-<workspaces/sub/#workspace> a hmas:Workspace .
+<workspaces/sub#workspace> a hmas:Workspace .
 
 test:testSubject test:testPredicate test:testObject .

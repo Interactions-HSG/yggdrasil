@@ -139,6 +139,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.get(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -164,6 +166,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        MAIN_WORKSPACE_NAME,
+        NONEXISTENT_NAME,
         this.client.get(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -261,7 +265,7 @@ public class DefaultHttpHandlersTest {
             Path.of(ClassLoader.getSystemResource("sub_workspace_turtle_output.ttl").toURI()),
             StandardCharsets.UTF_8
         );
-    final var request = this.client.post(TEST_PORT, TEST_HOST, WORKSPACES_PATH)
+    final var request = this.client.post(TEST_PORT, TEST_HOST, MAIN_WORKSPACE_PATH)
         .putHeader(AGENT_WEBID, TEST_AGENT_ID)
         .putHeader(SLUG_HEADER, SUB_WORKSPACE_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -282,10 +286,11 @@ public class DefaultHttpHandlersTest {
         NAMES_EQUAL_MESSAGE
     );
     Assertions.assertEquals(
-        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH) + "/#workspace"),
+        Optional.of(this.helper.getUri(MAIN_WORKSPACE_PATH)),
         createResourceMessage.parentWorkspaceUri(),
         URIS_EQUAL_MESSAGE
     );
+
     Assertions.assertEquals(
         output,
         createResourceMessage.workspaceRepresentation(),
@@ -352,6 +357,8 @@ public class DefaultHttpHandlersTest {
         .putHeader(SLUG_HEADER, COUNTER_ARTIFACT_NAME)
         .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
         .sendBuffer(Buffer.buffer(input));
+    final var checkIfWorkspaceExists = this.storeMessageQueue.take();
+    checkIfWorkspaceExists.reply("success");
     final var firstMessage = this.storeMessageQueue.take();
     firstMessage.reply(COUNTER_ARTIFACT_NAME);
     final var message = this.storeMessageQueue.take();
@@ -437,6 +444,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -500,6 +509,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -563,6 +574,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         WORKSPACES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.delete(TEST_PORT, TEST_HOST, WORKSPACES_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .send()
@@ -589,7 +602,7 @@ public class DefaultHttpHandlersTest {
   @Test
   public void testDeleteTurtleArtifactSucceeds(final VertxTestContext ctx)
       throws URISyntaxException, IOException, InterruptedException {
-    this.helper.testDeleteTurtleResourceSucceeds(
+    this.helper.testDeleteTurtleArtifactSucceeds(
         ctx,
         COUNTER_ARTIFACT_PATH,
         COUNTER_ARTIFACT_FILE
@@ -602,6 +615,8 @@ public class DefaultHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         ARTIFACTS_PATH + NONEXISTENT_NAME,
+        MAIN_WORKSPACE_NAME,
+        NONEXISTENT_NAME,
         this.client.delete(TEST_PORT, TEST_HOST, ARTIFACTS_PATH + NONEXISTENT_NAME)
             .putHeader(AGENT_WEBID, TEST_AGENT_ID)
             .send()

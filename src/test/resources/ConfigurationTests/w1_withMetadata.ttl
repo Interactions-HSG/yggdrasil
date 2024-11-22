@@ -10,20 +10,12 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/w1/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/w1#workspace> a td:Thing, hmas:Workspace;
   td:title "w1";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeSubWorkspace;
-      td:name "createSubWorkspaceJson";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/w1>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance, jacamo:createSubWorkspace;
-      td:name "createSubWorkspaceTurtle";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createSubWorkspace;
+      td:name "createSubWorkspace";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/w1>;
@@ -144,12 +136,12 @@
         ]
     ];
   hmas:isHostedOn <#platform>;
-  hmas:contains <workspaces/w1/artifacts/c1/#artifact> .
+  hmas:contains <workspaces/w1/artifacts/c1#artifact> .
 
 <workspaces/w1> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/w1/#workspace>;
+  hmas:isProfileOf <workspaces/w1#workspace>;
   test:testPredicate test:testObject .
 
 <#platform> a hmas:HypermediaMASPlatform .
 
-<workspaces/w1/artifacts/c1/#artifact> a hmas:Artifact .
+<workspaces/w1/artifacts/c1#artifact> a hmas:Artifact .

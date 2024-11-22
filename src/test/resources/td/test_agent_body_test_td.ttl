@@ -8,12 +8,13 @@
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 
-<workspaces/test/artifacts/body_test_agent/#artifact> a td:Thing, hmas:Artifact, jacamo:Body;
+<workspaces/test/artifacts/body_test_agent#artifact> a td:Thing, hmas:Artifact, jacamo:Body;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, <https://purl.org/hmas/websub/subscribeToAgent>;
+  td:hasActionAffordance [ a td:ActionAffordance, websub:subscribeToAgent;
       td:name "subscribeToAgent";
       td:hasForm [
           htv:methodName "POST";
@@ -31,7 +32,7 @@
               js:propertyName "callbackIri"
             ]
         ]
-    ], [ a td:ActionAffordance, <https://purl.org/hmas/websub/unsubscribeFromAgent>;
+    ], [ a td:ActionAffordance, websub:unsubscribeFromAgent;
       td:name "unsubscribeFromAgent";
       td:hasForm [
           htv:methodName "POST";
@@ -50,12 +51,12 @@
             ]
         ]
     ];
-  hmas:isContainedIn <workspaces/test/#workspace>;
+  hmas:isContainedIn <workspaces/test#workspace>;
   jacamo:isBodyOf <agents/test_agent> .
 
 <workspaces/test/artifacts/body_test_agent> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/test/artifacts/body_test_agent/#artifact> .
+  hmas:isProfileOf <workspaces/test/artifacts/body_test_agent#artifact> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
 
 <agents/test_agent> a hmas:Agent .

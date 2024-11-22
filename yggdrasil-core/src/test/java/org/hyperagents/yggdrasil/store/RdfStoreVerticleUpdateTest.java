@@ -140,7 +140,7 @@ public class RdfStoreVerticleUpdateTest {
 
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.UpdateEntity(
-            "http://localhost:8080/workspaces/test/",
+            "http://localhost:8080/workspaces/test",
             ADDITIONAL_METADATA
         )))
         .onSuccess(r -> {
@@ -156,7 +156,7 @@ public class RdfStoreVerticleUpdateTest {
                 updateMessage.content()
             );
             Assertions.assertEquals(
-                "http://localhost:8080/workspaces/test/",
+                "http://localhost:8080/workspaces/test",
                 updateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -348,7 +348,7 @@ public class RdfStoreVerticleUpdateTest {
           return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
               "http://localhost:8080/workspaces/",
               "sub",
-              Optional.of("http://localhost:8080/workspaces/test/"),
+              Optional.of("http://localhost:8080/workspaces/test"),
               inputSubWorkspaceRepresentation
           ));
         })
@@ -360,6 +360,7 @@ public class RdfStoreVerticleUpdateTest {
           }
           return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
               "http://localhost:8080/workspaces/sub/artifacts/",
+              "sub",
               "c0",
               inputArtifactRepresentation
           ));

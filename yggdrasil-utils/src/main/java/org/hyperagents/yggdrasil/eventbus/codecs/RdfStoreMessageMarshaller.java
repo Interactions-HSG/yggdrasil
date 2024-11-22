@@ -36,6 +36,7 @@ public class RdfStoreMessageMarshaller
             MessageRequestMethods.CREATE_ARTIFACT.getName()
         );
         json.addProperty(MessageFields.REQUEST_URI.getName(), m.requestUri());
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), m.workspaceName());
         json.addProperty(MessageFields.ENTITY_URI_HINT.getName(), m.artifactName());
         json.addProperty(MessageFields.ENTITY_REPRESENTATION.getName(), m.artifactRepresentation());
       }
@@ -55,8 +56,9 @@ public class RdfStoreMessageMarshaller
             m.workspaceRepresentation()
         );
       }
-      case RdfStoreMessage.DeleteEntity(String requestUri) -> {
-        json.addProperty(MessageFields.REQUEST_URI.getName(), requestUri);
+      case RdfStoreMessage.DeleteEntity(String workspaceName, String artifactName) -> {
+        json.addProperty(MessageFields.WORKSPACE_NAME.getName(), workspaceName);
+        json.addProperty(MessageFields.ARTIFACT_NAME.getName(), artifactName);
         json.addProperty(
             MessageFields.REQUEST_METHOD.getName(),
             MessageRequestMethods.DELETE_ENTITY.getName()
@@ -169,6 +171,7 @@ public class RdfStoreMessageMarshaller
       );
       case CREATE_ARTIFACT -> new RdfStoreMessage.CreateArtifact(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString(),
+        jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_URI_HINT.getName()).getAsString(),
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
@@ -195,7 +198,8 @@ public class RdfStoreMessageMarshaller
         jsonObject.get(MessageFields.ENTITY_REPRESENTATION.getName()).getAsString()
       );
       case DELETE_ENTITY -> new RdfStoreMessage.DeleteEntity(
-        jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()
+          jsonObject.get(MessageFields.WORKSPACE_NAME.getName()).getAsString(),
+          jsonObject.get(MessageFields.ARTIFACT_NAME.getName()).getAsString()
       );
       case GET_WORKSPACES -> new RdfStoreMessage.GetWorkspaces(
         jsonObject.get(MessageFields.REQUEST_URI.getName()).getAsString()

@@ -9,7 +9,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/sub/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/sub#workspace> a td:Thing, hmas:Workspace;
   td:title "sub";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -73,6 +73,6 @@
           hctl:hasOperationType td:invokeAction
         ]
     ];
-  hmas:isContainedIn <workspaces/test/#workspace> .
+  hmas:isContainedIn <workspaces/test#workspace> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .

@@ -1,16 +1,15 @@
 @base <http://localhost:8080/> .
-@prefix td: <https://www.w3.org/2019/wot/td#> .
-@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix websub: <https://purl.org/hmas/websub/> .
 @prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
-@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
-@prefix dct: <http://purl.org/dc/terms/> .
 @prefix js: <https://www.w3.org/2019/wot/json-schema#> .
 @prefix hmas: <https://purl.org/hmas/> .
 @prefix ex: <http://example.org/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
-@prefix websub: <https://purl.org/hmas/websub/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/sub/artifacts/c0/#artifact> a td:Thing, hmas:Artifact, ex:Counter;
+<workspaces/sub/artifacts/c0#artifact> a td:Thing, hmas:Artifact, ex:Counter;
   td:title "c0";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
@@ -101,9 +100,9 @@
             ]
         ]
     ];
-  hmas:isContainedIn <workspaces/sub/#workspace> .
+  hmas:isContainedIn <workspaces/sub#workspace> .
 
 <workspaces/sub/artifacts/c0> a hmas:ResourceProfile;
-  hmas:isProfileOf <workspaces/sub/artifacts/c0/#artifact> .
+  hmas:isProfileOf <workspaces/sub/artifacts/c0#artifact> .
 
-<workspaces/sub/#workspace> a hmas:Workspace .
+<workspaces/sub#workspace> a hmas:Workspace .

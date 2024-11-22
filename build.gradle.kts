@@ -1,5 +1,12 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+gradle.startParameter.apply {
+  systemPropertiesArgs = mapOf(
+    "org.gradle.internal.http.socketTimeout" to "30000",
+    "org.gradle.internal.http.connectionTimeout" to "30000"
+  )
+}
+
 plugins {
   application
   java
