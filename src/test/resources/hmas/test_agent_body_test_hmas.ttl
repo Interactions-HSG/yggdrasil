@@ -11,7 +11,7 @@
 @prefix hmas: <https://purl.org/hmas/> .
 
 <workspaces/test/artifacts/body_test_agent> a hmas:ResourceProfile;
-  hmas:exposesSignifier <workspaces/test/artifacts/body_test_agent/#unsubscribeFromAgent>,
+  hmas:exposesSignifier <workspaces/test/artifacts/body_test_agent#unsubscribeFromAgent>,
     [ a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;
@@ -19,44 +19,44 @@
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <workspaces/test/artifacts/body_test_agent/#updateBodyForm>
+              sh:hasValue <workspaces/test/artifacts/body_test_agent#updateBodyForm>
             ]
         ]
-    ], <workspaces/test/artifacts/body_test_agent/#subscribeToAgent>, [ a hmas:Signifier;
+    ], [ a hmas:Signifier;
       hmas:signifies [ a sh:NodeShape;
           sh:class hmas:ActionExecution;
           sh:property [
               sh:path prov:used;
               sh:minCount "1"^^xs:int;
               sh:maxCount "1"^^xs:int;
-              sh:hasValue <workspaces/test/artifacts/body_test_agent/#getBodyRepresentationForm>
+              sh:hasValue <workspaces/test/artifacts/body_test_agent#getBodyRepresentationForm>
             ]
         ]
-    ];
-  hmas:isProfileOf <workspaces/test/artifacts/body_test_agent/#artifact> .
+    ], <workspaces/test/artifacts/body_test_agent#subscribeToAgent>;
+  hmas:isProfileOf <workspaces/test/artifacts/body_test_agent#artifact> .
 
-<workspaces/test/artifacts/body_test_agent/#unsubscribeFromAgent> a hmas:Signifier;
+<workspaces/test/artifacts/body_test_agent#unsubscribeFromAgent> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:UnobserveAgent;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/body_test_agent/#webSubForm>
+          sh:hasValue <workspaces/test/artifacts/body_test_agent#webSubForm>
         ], [
-          sh:qualifiedValueShape <workspaces/test/artifacts/body_test_agent/#webSubUnsubscribeInput>;
+          sh:qualifiedValueShape <workspaces/test/artifacts/body_test_agent#webSubUnsubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<workspaces/test/artifacts/body_test_agent/#webSubForm> a hctl:Form;
+<workspaces/test/artifacts/body_test_agent#webSubForm> a hctl:Form;
   hctl:hasTarget <hub/>;
   htv:methodName "POST";
   hctl:forContentType "application/json" .
 
-<workspaces/test/artifacts/body_test_agent/#webSubUnsubscribeInput> a sh:Shape;
+<workspaces/test/artifacts/body_test_agent#webSubUnsubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
       sh:datatype xs:string;
@@ -83,28 +83,33 @@
       sh:path websub:mode
     ] .
 
-<workspaces/test/artifacts/body_test_agent/#updateBodyForm> a hctl:Form;
+<workspaces/test/artifacts/body_test_agent#updateBodyForm> a hctl:Form;
   hctl:hasTarget <workspaces/test/artifacts/body_test_agent>;
   htv:methodName "PUT";
   hctl:forContentType "text/turtle" .
 
-<workspaces/test/artifacts/body_test_agent/#subscribeToAgent> a hmas:Signifier;
+<workspaces/test/artifacts/body_test_agent#getBodyRepresentationForm> a hctl:Form;
+  hctl:hasTarget <workspaces/test/artifacts/body_test_agent>;
+  htv:methodName "GET";
+  hctl:forContentType "text/turtle" .
+
+<workspaces/test/artifacts/body_test_agent#subscribeToAgent> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
       sh:class hmas:ActionExecution, jacamo:ObserveAgent;
       sh:property [
           sh:path prov:used;
           sh:minCount "1"^^xs:int;
           sh:maxCount "1"^^xs:int;
-          sh:hasValue <workspaces/test/artifacts/body_test_agent/#webSubForm>
+          sh:hasValue <workspaces/test/artifacts/body_test_agent#webSubForm>
         ], [
-          sh:qualifiedValueShape <workspaces/test/artifacts/body_test_agent/#webSubSubscribeInput>;
+          sh:qualifiedValueShape <workspaces/test/artifacts/body_test_agent#webSubSubscribeInput>;
           sh:qualifiedMinCount "1"^^xs:int;
           sh:qualifiedMaxCount "1"^^xs:int;
           sh:path hmas:hasInput
         ]
     ] .
 
-<workspaces/test/artifacts/body_test_agent/#webSubSubscribeInput> a sh:Shape;
+<workspaces/test/artifacts/body_test_agent#webSubSubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
   sh:property [ a sh:Shape;
       sh:datatype xs:string;
@@ -131,15 +136,10 @@
       sh:path websub:mode
     ] .
 
-<workspaces/test/artifacts/body_test_agent/#getBodyRepresentationForm> a hctl:Form;
-  hctl:hasTarget <workspaces/test/artifacts/body_test_agent>;
-  htv:methodName "GET";
-  hctl:forContentType "text/turtle" .
-
-<workspaces/test/artifacts/body_test_agent/#artifact> a hmas:Artifact, jacamo:Body;
-  hmas:isContainedIn <workspaces/test/#workspace>;
+<workspaces/test/artifacts/body_test_agent#artifact> a hmas:Artifact, jacamo:Body;
+  hmas:isContainedIn <workspaces/test#workspace>;
   jacamo:isBodyOf <agents/test_agent> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
 
 <agents/test_agent> a hmas:Agent .

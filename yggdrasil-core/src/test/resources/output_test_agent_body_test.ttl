@@ -4,13 +4,13 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix td: <https://www.w3.org/2019/wot/td#> .
 
-<workspaces/test/artifacts/body_kai/#artifact> a td:Thing, jacamo:Body, hmas:Artifact;
+<workspaces/test/artifacts/body_kai#artifact> a td:Thing, jacamo:Body, hmas:Artifact;
   td:title "kai";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  hmas:isContainedIn <workspaces/test/#workspace>;
+  hmas:isContainedIn <workspaces/test#workspace>;
   jacamo:isBodyOf <agent/kai> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
 
 <agent/kai> a hmas:Agent .

@@ -36,6 +36,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public class RdfStoreVerticleDeleteTest {
   private static final String URIS_EQUAL_MESSAGE = "The URIs should be equal";
   private static final String PLATFORM_URI = "http://localhost:8080/";
+  private static final String MAIN_WORKSPACE_NAME = "test";
+  private static final String SUB_WORKSPACE_NAME = "sub";
   private static final String TEST_WORKSPACE_URI = PLATFORM_URI + "workspaces/test";
   private static final String TEST_AGENT_BODY_URI = TEST_WORKSPACE_URI + "/artifacts/body_kai";
   private static final String SUB_WORKSPACE_URI = PLATFORM_URI + "workspaces/sub";
@@ -101,16 +103,8 @@ public class RdfStoreVerticleDeleteTest {
   @Test
   public void testDeleteMissingEntity(final VertxTestContext ctx) {
     this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/"))
+        .sendMessage(new RdfStoreMessage.DeleteEntity("http://yggdrasil:8080/", null))
         .onFailure(RdfStoreVerticleTestHelpers::assertNotFound)
-        .onComplete(ctx.failingThenComplete());
-  }
-
-  @Test
-  public void testMalformedUri(final VertxTestContext ctx) {
-    this.storeMessagebox
-        .sendMessage(new RdfStoreMessage.DeleteEntity("nonexistent"))
-        .onFailure(RdfStoreVerticleTestHelpers::assertBadRequest)
         .onComplete(ctx.failingThenComplete());
   }
 
@@ -129,7 +123,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            TEST_WORKSPACE_URI + "/"
+            MAIN_WORKSPACE_NAME,
+            null
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -158,14 +153,14 @@ public class RdfStoreVerticleDeleteTest {
                 URIS_EQUAL_MESSAGE
             );
 
+            final var expected = "@base<http://localhost:8080/>."
+                + "@prefixhmas:<https://purl.org/hmas/>."
+                + "<#platform>ahmas:HypermediaMASPlatform.";
+
             Assertions.assertEquals(
-                """
-                @base <http://localhost:8080/> .
-                @prefix hmas: <https://purl.org/hmas/> .
-                
-                <#platform> a hmas:HypermediaMASPlatform .
-                """,
-                changedMessage.content()
+                expected,
+                removeWhitespace(changedMessage.content()),
+                URIS_EQUAL_MESSAGE
             );
 
             final var deletionMessage =
@@ -176,7 +171,7 @@ public class RdfStoreVerticleDeleteTest {
             );
 
             Assertions.assertEquals(
-                TEST_WORKSPACE_URI + "/",
+                TEST_WORKSPACE_URI,
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -192,7 +187,7 @@ public class RdfStoreVerticleDeleteTest {
                 bodyDeletionMessage.content()
             );
             Assertions.assertEquals(
-                TEST_AGENT_BODY_URI + "/",
+                TEST_AGENT_BODY_URI,
                 bodyDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -206,7 +201,7 @@ public class RdfStoreVerticleDeleteTest {
                 subWorkspaceDeletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI + "/",
+                SUB_WORKSPACE_URI,
                 subWorkspaceDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -220,7 +215,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI + "/",
+                COUNTER_ARTIFACT_URI,
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -270,7 +265,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            SUB_WORKSPACE_URI + "/"
+            SUB_WORKSPACE_NAME,
+            null
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -285,7 +281,7 @@ public class RdfStoreVerticleDeleteTest {
                 parentWorkspaceUpdateMessage.content()
             );
             Assertions.assertEquals(
-                TEST_WORKSPACE_URI + "/",
+                TEST_WORKSPACE_URI,
                 parentWorkspaceUpdateMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -299,14 +295,14 @@ public class RdfStoreVerticleDeleteTest {
                 URIS_EQUAL_MESSAGE
             );
 
+            final var expected = "@base<http://localhost:8080/>."
+                + "@prefixhmas:<https://purl.org/hmas/>."
+                + "<workspaces/test#workspace>ahmas:Workspace.";
+
             Assertions.assertEquals(
-                """
-                @base <http://localhost:8080/> .
-                @prefix hmas: <https://purl.org/hmas/> .
-                
-                <workspaces/test/#workspace> a hmas:Workspace .
-                """,
-                changedMessage.content()
+                expected,
+                removeWhitespace(changedMessage.content()),
+                URIS_EQUAL_MESSAGE
             );
 
 
@@ -317,7 +313,7 @@ public class RdfStoreVerticleDeleteTest {
                 deletionMessage.content()
             );
             Assertions.assertEquals(
-                SUB_WORKSPACE_URI + "/",
+                SUB_WORKSPACE_URI,
                 deletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -331,7 +327,7 @@ public class RdfStoreVerticleDeleteTest {
                 artifactDeletionMessage.content()
             );
             Assertions.assertEquals(
-                COUNTER_ARTIFACT_URI + "/",
+                COUNTER_ARTIFACT_URI,
                 artifactDeletionMessage.requestIri(),
                 URIS_EQUAL_MESSAGE
             );
@@ -389,7 +385,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            COUNTER_ARTIFACT_URI + "/"
+            SUB_WORKSPACE_NAME,
+            "c0"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -477,7 +474,8 @@ public class RdfStoreVerticleDeleteTest {
         );
     this.assertWorkspaceTreeCreated(ctx)
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.DeleteEntity(
-            TEST_AGENT_BODY_URI + "/"
+            MAIN_WORKSPACE_NAME,
+            "body_kai"
         )))
         .onSuccess(r -> {
           RdfStoreVerticleTestHelpers.assertEqualsThingDescriptions(
@@ -557,7 +555,7 @@ public class RdfStoreVerticleDeleteTest {
     return this.storeMessagebox
         .sendMessage(new RdfStoreMessage.CreateWorkspace(
             "http://localhost:8080/workspaces/",
-            "test",
+            MAIN_WORKSPACE_NAME,
             Optional.empty(),
             inputWorkspaceRepresentation
         )).onSuccess(r -> {
@@ -583,6 +581,7 @@ public class RdfStoreVerticleDeleteTest {
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
             "http://localhost:8080/workspaces/sub/artifacts/",
+            "sub",
             "c0",
             inputArtifactRepresentation
         ))).onSuccess(r -> {
@@ -594,7 +593,7 @@ public class RdfStoreVerticleDeleteTest {
           }
         })
         .compose(r -> this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateBody(
-            "test",
+            MAIN_WORKSPACE_NAME,
             "http://localhost:8080/agent/kai",
             "kai",
             inputBodyRepresentation
@@ -608,5 +607,9 @@ public class RdfStoreVerticleDeleteTest {
             ctx.failNow(e);
           }
         });
+  }
+
+  private String removeWhitespace(final String input) {
+    return input.replaceAll("\\s+", "");
   }
 }

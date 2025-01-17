@@ -9,7 +9,7 @@
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 @prefix websub: <http://example.org/websub#> .
 
-<http://localhost:8080/workspaces/test/artifacts/body_test_agent/#artifact> a td:Thing,
+<http://localhost:8080/workspaces/test/artifacts/body_test_agent#artifact> a td:Thing,
     hmas:Artifact, jacamo:Body;
   td:title "test_agent";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
@@ -53,4 +53,4 @@
     ] .
 
 <http://localhost:8080/workspaces/test/artifacts/body_test_agent> a hmas:ResourceProfile;
-  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/body_test_agent/#artifact> .
+  hmas:isProfileOf <http://localhost:8080/workspaces/test/artifacts/body_test_agent#artifact> .

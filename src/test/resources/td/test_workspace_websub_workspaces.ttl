@@ -1,7 +1,7 @@
 @base<http://localhost:8080/>.
 @prefixhmas:<https://purl.org/hmas/>.
 
-<workspaces/test/#workspace>ahmas:Workspace;
-hmas:contains<workspaces/sub/#workspace>.
+<workspaces/test#workspace>ahmas:Workspace;
+hmas:contains<workspaces/sub#workspace>.
 
-<workspaces/sub/#workspace>ahmas:Workspace.
+<workspaces/sub#workspace>ahmas:Workspace.

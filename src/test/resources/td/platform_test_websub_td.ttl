@@ -2,6 +2,6 @@
 @prefixhmas:<https://purl.org/hmas/>.
 
 <#platform>ahmas:HypermediaMASPlatform;
-hmas:hosts<workspaces/test/#workspace>.
+hmas:hosts<workspaces/test#workspace>.
 
-<workspaces/test/#workspace>ahmas:Workspace.
+<workspaces/test#workspace>ahmas:Workspace.

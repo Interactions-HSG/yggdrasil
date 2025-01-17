@@ -10,121 +10,9 @@
 @prefix xs: <http://www.w3.org/2001/XMLSchema#> .
 
 <> a hmas:ResourceProfile;
-  hmas:exposesSignifier <#sparqlPostQuery>, <#sparglGetQuery>, <#createWorkspaceJson>,
-    <#unsubscribeFromWorkspaces>, <#createWorkspaceTurtle>, <#subscribeToWorkspaces>;
+  hmas:exposesSignifier <#subscribeToWorkspaces>, <#unsubscribeFromWorkspaces>, <#sparqlPostQuery>,
+    <#createWorkspace>, <#sparglGetQuery>;
   hmas:isProfileOf <#platform> .
-
-<#sparqlPostQuery> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#sparqlPostQueryForm>
-        ]
-    ] .
-
-<#sparqlPostQueryForm> a hctl:Form;
-  hctl:hasTarget <query/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/sparql-query" .
-
-<#sparglGetQuery> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#sparqlGetQueryForm>
-        ]
-    ] .
-
-<#sparqlGetQueryForm> a hctl:Form;
-  hctl:hasTarget <query/>;
-  htv:methodName "GET";
-  hctl:forContentType "application/sparql-query" .
-
-<#createWorkspaceJson> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#createWorkspaceFormJson>
-        ]
-    ] .
-
-<#createWorkspaceFormJson> a hctl:Form;
-  hctl:hasTarget <workspaces>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-<#unsubscribeFromWorkspaces> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:UnobserveWorkspaces;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#webSubForm>
-        ], [
-          sh:qualifiedValueShape <#webSubUnsubscribeInput>;
-          sh:qualifiedMinCount "1"^^xs:int;
-          sh:qualifiedMaxCount "1"^^xs:int;
-          sh:path hmas:hasInput
-        ]
-    ] .
-
-<#webSubForm> a hctl:Form;
-  hctl:hasTarget <hub/>;
-  htv:methodName "POST";
-  hctl:forContentType "application/json" .
-
-<#webSubUnsubscribeInput> a sh:Shape;
-  sh:class websub:websubsubscription;
-  sh:property [ a sh:Shape;
-      sh:datatype xs:string;
-      sh:name "hub.callback";
-      sh:description "The callback URL of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:callback
-    ], [ a sh:Shape;
-      sh:hasValue "http://localhost:8080/workspaces/";
-      sh:datatype xs:string;
-      sh:name "hub.topic";
-      sh:description "The topic of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:topic
-    ], [ a sh:Shape;
-      sh:hasValue "unsubscribe";
-      sh:datatype xs:string;
-      sh:name "hub.mode";
-      sh:description "The mode of the WebSub hub";
-      sh:minCount "1"^^xs:int;
-      sh:maxCount "1"^^xs:int;
-      sh:path websub:mode
-    ] .
-
-<#createWorkspaceTurtle> a hmas:Signifier;
-  hmas:signifies [ a sh:NodeShape;
-      sh:class hmas:ActionExecution, jacamo:MakeWorkspace;
-      sh:property [
-          sh:path prov:used;
-          sh:minCount "1"^^xs:int;
-          sh:maxCount "1"^^xs:int;
-          sh:hasValue <#createWorkspaceFormTextTurtle>
-        ]
-    ] .
-
-<#createWorkspaceFormTextTurtle> a hctl:Form;
-  hctl:hasTarget <workspaces>;
-  htv:methodName "POST";
-  hctl:forContentType "text/turtle" .
 
 <#subscribeToWorkspaces> a hmas:Signifier;
   hmas:signifies [ a sh:NodeShape;
@@ -141,6 +29,11 @@
           sh:path hmas:hasInput
         ]
     ] .
+
+<#webSubForm> a hctl:Form;
+  hctl:hasTarget <hub/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/json" .
 
 <#webSubSubscribeInput> a sh:Shape;
   sh:class websub:websubsubscription;
@@ -169,7 +62,98 @@
       sh:path websub:mode
     ] .
 
-<#platform> a hmas:HypermediaMASPlatform;
-  hmas:hosts <workspaces/test/#workspace> .
+<#unsubscribeFromWorkspaces> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:UnobserveWorkspaces;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#webSubForm>
+        ], [
+          sh:qualifiedValueShape <#webSubUnsubscribeInput>;
+          sh:qualifiedMinCount "1"^^xs:int;
+          sh:qualifiedMaxCount "1"^^xs:int;
+          sh:path hmas:hasInput
+        ]
+    ] .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<#webSubUnsubscribeInput> a sh:Shape;
+  sh:class websub:websubsubscription;
+  sh:property [ a sh:Shape;
+      sh:datatype xs:string;
+      sh:name "hub.callback";
+      sh:description "The callback URL of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:callback
+    ], [ a sh:Shape;
+      sh:hasValue "http://localhost:8080/workspaces/";
+      sh:datatype xs:string;
+      sh:name "hub.topic";
+      sh:description "The topic of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:topic
+    ], [ a sh:Shape;
+      sh:hasValue "unsubscribe";
+      sh:datatype xs:string;
+      sh:name "hub.mode";
+      sh:description "The mode of the WebSub hub";
+      sh:minCount "1"^^xs:int;
+      sh:maxCount "1"^^xs:int;
+      sh:path websub:mode
+    ] .
+
+<#sparqlPostQuery> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#sparqlPostQueryForm>
+        ]
+    ] .
+
+<#sparqlPostQueryForm> a hctl:Form;
+  hctl:hasTarget <query/>;
+  htv:methodName "POST";
+  hctl:forContentType "application/sparql-query" .
+
+<#createWorkspace> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution, jacamo:CreateWorkspace;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#createWorkspaceForm>
+        ]
+    ] .
+
+<#createWorkspaceForm> a hctl:Form;
+  hctl:hasTarget <workspaces/>;
+  htv:methodName "POST";
+  hctl:forContentType "text/turtle" .
+
+<#sparglGetQuery> a hmas:Signifier;
+  hmas:signifies [ a sh:NodeShape;
+      sh:class hmas:ActionExecution;
+      sh:property [
+          sh:path prov:used;
+          sh:minCount "1"^^xs:int;
+          sh:maxCount "1"^^xs:int;
+          sh:hasValue <#sparqlGetQueryForm>
+        ]
+    ] .
+
+<#sparqlGetQueryForm> a hctl:Form;
+  hctl:hasTarget <query/>;
+  htv:methodName "GET";
+  hctl:forContentType "application/sparql-query" .
+
+<#platform> a hmas:HypermediaMASPlatform;
+  hmas:hosts <workspaces/test#workspace> .
+
+<workspaces/test#workspace> a hmas:Workspace .

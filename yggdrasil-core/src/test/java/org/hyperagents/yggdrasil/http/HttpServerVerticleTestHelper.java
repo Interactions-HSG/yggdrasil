@@ -92,13 +92,15 @@ public final class HttpServerVerticleTestHelper {
   void testResourceRequestFailsWithNotFound(
       final VertxTestContext ctx,
       final String resourceUri,
+      final String workspaceName,
+      final String artifactName,
       final Future<HttpResponse<Buffer>> request
   ) throws InterruptedException {
     final var message = this.storeMessageQueue.take();
-    if (message.body() instanceof RdfStoreMessage.GetEntity m) {
+    if (message.body() instanceof RdfStoreMessage.GetEntity(String requestUri)) {
       Assertions.assertEquals(
           this.getUri(resourceUri),
-          m.requestUri(),
+          requestUri,
           URIS_EQUAL_MESSAGE
       );
     } else if (message.body() instanceof RdfStoreMessage.ReplaceEntity m) {
@@ -109,8 +111,8 @@ public final class HttpServerVerticleTestHelper {
       );
     } else if (message.body() instanceof RdfStoreMessage.DeleteEntity m) {
       Assertions.assertEquals(
-          this.getUri(resourceUri),
-          m.requestUri(),
+          artifactName,
+          m.artifactName(),
           URIS_EQUAL_MESSAGE
       );
     } else {
@@ -258,10 +260,54 @@ public final class HttpServerVerticleTestHelper {
         .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
         .send();
     final var message = this.storeMessageQueue.take();
-    final var updateResourceMessage = (RdfStoreMessage.DeleteEntity) message.body();
+    final var deleteResourceMessage = (RdfStoreMessage.DeleteEntity) message.body();
     Assertions.assertEquals(
-        this.getUri(resourceUri),
-        updateResourceMessage.requestUri(),
+        "test",
+        deleteResourceMessage.workspaceName(),
+        URIS_EQUAL_MESSAGE
+    );
+    Assertions.assertNull(deleteResourceMessage.artifactName(), URIS_EQUAL_MESSAGE);
+    message.reply(expectedRepresentation);
+    request
+        .onSuccess(r -> {
+          Assertions.assertEquals(
+              HttpStatus.SC_OK,
+              r.statusCode(),
+              OK_STATUS_MESSAGE
+          );
+          Assertions.assertEquals(
+              expectedRepresentation,
+              r.bodyAsString(),
+              TDS_EQUAL_MESSAGE
+          );
+        })
+        .onComplete(ctx.succeedingThenComplete());
+  }
+
+  void testDeleteTurtleArtifactSucceeds(
+      final VertxTestContext ctx,
+      final String resourceUri,
+      final String entityRepresentationFileName
+  ) throws InterruptedException, URISyntaxException, IOException {
+    final var expectedRepresentation =
+        Files.readString(
+            Path.of(ClassLoader.getSystemResource(entityRepresentationFileName).toURI()),
+            StandardCharsets.UTF_8
+        );
+    final var request = this.client.delete(TEST_PORT, TEST_HOST, resourceUri)
+        .putHeader(AGENT_WEBID, TEST_AGENT_ID)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
+        .send();
+    final var message = this.storeMessageQueue.take();
+    final var deleteResourceMessage = (RdfStoreMessage.DeleteEntity) message.body();
+    Assertions.assertEquals(
+        "test",
+        deleteResourceMessage.workspaceName(),
+        URIS_EQUAL_MESSAGE
+    );
+    Assertions.assertEquals(
+        "c0",
+        deleteResourceMessage.artifactName(),
         URIS_EQUAL_MESSAGE
     );
     message.reply(expectedRepresentation);
@@ -280,6 +326,7 @@ public final class HttpServerVerticleTestHelper {
         })
         .onComplete(ctx.succeedingThenComplete());
   }
+
 
   public String getUri(final String path) {
     return "http://" + TEST_HOST + ":" + TEST_PORT + path;

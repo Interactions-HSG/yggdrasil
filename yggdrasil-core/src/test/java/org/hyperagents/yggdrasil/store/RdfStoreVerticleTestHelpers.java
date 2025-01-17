@@ -65,6 +65,16 @@ public final class RdfStoreVerticleTestHelpers {
     );
   }
 
+  static void assertInternalError(final Throwable t) {
+    if (t instanceof ReplyException r) {
+      Assertions.assertEquals(
+          HttpStatus.SC_INTERNAL_SERVER_ERROR,
+          r.failureCode(),
+          "should be equal"
+      );
+    }
+  }
+
   static void assertBadRequest(final Throwable t) {
     if (t instanceof ReplyException r) {
       Assertions.assertEquals(

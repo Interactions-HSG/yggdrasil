@@ -145,6 +145,8 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         BODIES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.get(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -155,6 +157,8 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         BODIES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.get(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME).send()
     );
   }
@@ -185,6 +189,8 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         BODIES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
             .putHeader("X-Agent-WebID", TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)
@@ -201,6 +207,8 @@ public class AgentBodyHttpHandlersTest {
     this.helper.testResourceRequestFailsWithNotFound(
         ctx,
         BODIES_PATH + NONEXISTENT_NAME,
+        NONEXISTENT_NAME,
+        null,
         this.client.put(TEST_PORT, TEST_HOST, BODIES_PATH + NONEXISTENT_NAME)
             .putHeader("X-Agent-WebID", TEST_AGENT_ID)
             .putHeader(HttpHeaders.CONTENT_TYPE, TURTLE_CONTENT_TYPE)

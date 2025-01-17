@@ -166,6 +166,7 @@ public class CartagoVerticle extends AbstractVerticle {
                   Failable.asConsumer(ar ->
                       this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                           httpConfig.getArtifactsUriTrailingSlash(w.getName()),
+                          w.getName(),
                           a.getName(),
                           Files.readString(ar, StandardCharsets.UTF_8)
                       ))
@@ -180,7 +181,7 @@ public class CartagoVerticle extends AbstractVerticle {
                       new RdfStoreMessage.CreateWorkspace(
                           this.httpConfig.getWorkspacesUriTrailingSlash(),
                           w.getName(),
-                          Optional.of(this.httpConfig.getWorkspaceUriTrailingSlash(p)),
+                          Optional.of(this.httpConfig.getWorkspaceUri(p)),
                           this.instantiateSubWorkspace(p, w.getName())
                       )
                   )),
@@ -244,6 +245,7 @@ public class CartagoVerticle extends AbstractVerticle {
               w.getArtifacts().forEach(a -> a.getClazz().ifPresentOrElse(Failable.asConsumer(c -> {
                 this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                     this.httpConfig.getArtifactsUriTrailingSlash(w.getName()),
+                    w.getName(),
                     a.getName(),
                     this.instantiateArtifact(
                         a.getCreatedBy().isPresent()
@@ -287,6 +289,7 @@ public class CartagoVerticle extends AbstractVerticle {
                   () -> a.getRepresentation().ifPresent(Failable.asConsumer(ar ->
                   this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                     httpConfig.getArtifactsUriTrailingSlash(w.getName()),
+                    w.getName(),
                     a.getName(),
                     Files.readString(ar, StandardCharsets.UTF_8)
                   )))
@@ -586,12 +589,12 @@ public class CartagoVerticle extends AbstractVerticle {
         });
   }
 
-  private void deleteEntity(final String workspaceName, final String requestUri)
+  private void deleteEntity(final String workspaceName, final String artifactName)
       throws CartagoException {
     final var credentials = getAgentCredential(this.httpConfig.getAgentUri(YGGDRASIL), "root");
 
 
-    if (workspaceName.equals(requestUri)) {
+    if (workspaceName.equals(artifactName)) {
       final var workspaceDescriptor = this.workspaceRegistry.getWorkspaceDescriptor(workspaceName);
       if (workspaceDescriptor.isEmpty()) {
         return;
@@ -604,7 +607,7 @@ public class CartagoVerticle extends AbstractVerticle {
     } else {
       final var workspace = this.workspaceRegistry.getWorkspace(workspaceName).orElseThrow();
       final var agentId = getAgentId(credentials.orElseThrow(), workspace.getId());
-      final var artifact = workspace.getArtifact(requestUri);
+      final var artifact = workspace.getArtifact(artifactName);
       workspace.disposeArtifact(agentId, artifact);
     }
   }

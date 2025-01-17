@@ -234,7 +234,7 @@ public class RdfStoreVerticleGetTest {
 
     this.storeMessagebox
         .sendMessage(new RdfStoreMessage
-            .GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME + "/"))
+            .GetWorkspaces(WORKSPACES_URI + WORKSPACE_NAME))
         .onSuccess(r -> Assertions.assertEquals(
             twoContainedWorkspaces, r.body().replaceAll(" ", ""),
             REPRESENTATION_EQUAL))
@@ -312,6 +312,7 @@ public class RdfStoreVerticleGetTest {
     this.storeMessagebox.sendMessage(
         new RdfStoreMessage.CreateArtifact(
             WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            WORKSPACE_NAME,
             "c1",
             artifactRepresentation
         )
@@ -319,6 +320,7 @@ public class RdfStoreVerticleGetTest {
     this.storeMessagebox.sendMessage(
         new RdfStoreMessage.CreateArtifact(
             WORKSPACES_URI + WORKSPACE_NAME + "/artifacts/",
+            WORKSPACE_NAME,
             "c2",
             artifactRepresentation
         )

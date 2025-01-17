@@ -9,7 +9,7 @@
 @prefix ex: <http://example.org/> .
 @prefix jacamo: <https://purl.org/hmas/jacamo/> .
 
-<workspaces/test/#workspace> a td:Thing, hmas:Workspace;
+<workspaces/test#workspace> a td:Thing, hmas:Workspace;
   td:title "test";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];

@@ -320,6 +320,7 @@ public class RdfStoreVerticleReplaceTest {
           }
           return this.storeMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
               "http://localhost:8080/workspaces/sub/artifacts/",
+              "sub",
               "c0",
               inputArtifactRepresentation
           ));

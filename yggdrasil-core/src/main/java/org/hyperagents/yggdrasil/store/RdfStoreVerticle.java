@@ -14,9 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import org.apache.commons.lang3.function.Failable;
 import org.apache.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
@@ -48,9 +45,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
   private static final Logger LOGGER = LogManager.getLogger(RdfStoreVerticle.class);
   private static final String WORKSPACE_HMAS_IRI = "https://purl.org/hmas/Workspace";
   private static final String CONTAINS_HMAS_IRI = "https://purl.org/hmas/contains";
+  private static final String CONTAINED_IN_HMAS_IRI = "https://purl.org/hmas/isContainedIn";
   private static final String PLATFORM_HMAS_IRI = "https://purl.org/hmas/HypermediaMASPlatform";
   private static final String ARTIFACT_HMAS_IRI = "https://purl.org/hmas/Artifact";
   private static final String HOSTS_HMAS_IRI = "https://purl.org/hmas/hosts";
+  private static final String HOSTED_ON_HMAS_IRI = "https://purl.org/hmas/isHostedOn";
   private static final String HMAS_IRI = "https://purl.org/hmas/";
   private static final String HMAS = "hmas";
   private static final String ARTIFACT_FRAGMENT = "#artifact";
@@ -102,12 +101,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
               message
           );
           case RdfStoreMessage.CreateArtifact content -> this.handleCreateArtifact(
-              RdfModelUtils.createIri(content.requestUri()),
               content,
               message
           );
           case RdfStoreMessage.CreateWorkspace content -> this.handleCreateWorkspace(
-              RdfModelUtils.createIri(content.requestUri()),
               content,
               message
           );
@@ -121,8 +118,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
               content,
               message
           );
-          case RdfStoreMessage.DeleteEntity(String requestUri) ->
-              this.handleDeleteEntity(RdfModelUtils.createIri(requestUri), message);
+          case RdfStoreMessage.DeleteEntity(String workspaceName, String artifactName) ->
+              this.handleDeleteEntity(workspaceName, artifactName, message);
           case RdfStoreMessage.GetWorkspaces(String containerWorkspace) ->
               this.handleGetWorkspaces(containerWorkspace, message);
           case RdfStoreMessage.GetArtifacts(String workspaceName) ->
@@ -192,13 +189,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   ownMessagebox.sendMessage(new RdfStoreMessage.CreateWorkspace(
                       httpConfig.getWorkspacesUriTrailingSlash(),
                       w.getName(),
-                      w.getParentName().map(httpConfig::getWorkspaceUriTrailingSlash),
+                      w.getParentName().map(httpConfig::getWorkspaceUri),
                       Files.readString(r, StandardCharsets.UTF_8)
                   ));
                   w.getArtifacts().forEach(a -> a.getRepresentation().ifPresent(
                       Failable.asConsumer(ar ->
                           ownMessagebox.sendMessage(new RdfStoreMessage.CreateArtifact(
                               httpConfig.getArtifactsUriTrailingSlash(w.getName()),
+                              w.getName(),
                               a.getName(),
                               Files.readString(ar, StandardCharsets.UTF_8)
                           ))
@@ -239,7 +237,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final Message<RdfStoreMessage> message
   ) throws IOException {
     // either parentWorkspace or the Platform
-    final var result = this.store.getEntityModel(RdfModelUtils.createIri(containerWorkspaceUri));
+    final var result = this.store.getEntityModel(iri(containerWorkspaceUri));
     if (result.isPresent()) {
       final var containerFragment =
           containerWorkspaceUri.equals(this.httpConfig.getBaseUriTrailingSlash())
@@ -295,8 +293,8 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
   private void handleGetArtifacts(final String workspaceName,
                                   final Message<RdfStoreMessage> message) throws IOException {
-    final var workspaceIri = this.httpConfig.getWorkspaceUriTrailingSlash(workspaceName);
-    final var result = this.store.getEntityModel(RdfModelUtils.createIri(workspaceIri));
+    final var workspaceIri = this.httpConfig.getWorkspaceUri(workspaceName);
+    final var result = this.store.getEntityModel(iri(workspaceIri));
     if (result.isPresent()) {
       final Model m = handleGetContainedThings(
           result.get(),
@@ -320,7 +318,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final RdfStoreMessage.CreateBody content,
       final Message<RdfStoreMessage> message
   ) throws IOException {
-    final var bodyIri = this.httpConfig.getAgentBodyUriTrailingSlash(
+    final var bodyIri = this.httpConfig.getAgentBodyUri(
         content.workspaceName(),
         content.agentName()
     );
@@ -345,13 +343,9 @@ public class RdfStoreVerticle extends AbstractVerticle {
         .ifPresentOrElse(
             Failable.asConsumer(s -> {
               final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
-              final var workspaceIri = this.httpConfig
-                  .getWorkspaceUriTrailingSlash(content.workspaceName());
-              // TODO: This could be removed should always have trailing slash
-              final var workspaceActualIri = workspaceIri.endsWith("/")
-                  ?
-                  RdfModelUtils.createIri(workspaceIri.substring(0, workspaceIri.length() - 1)) :
-                  RdfModelUtils.createIri(workspaceIri);
+              final var workspaceActualIri = RdfModelUtils.createIri(
+                  this.httpConfig.getWorkspaceUri(content.workspaceName())
+              );
               this.enrichArtifactGraphWithWorkspace(
                   entityIri, entityModel, workspaceActualIri, true);
               final var agentIri =
@@ -386,35 +380,41 @@ public class RdfStoreVerticle extends AbstractVerticle {
    * Creates an artifact and adds it to the store.
    */
   private void handleCreateArtifact(
-      final IRI requestIri,
       final RdfStoreMessage.CreateArtifact content,
       final Message<RdfStoreMessage> message
   ) throws IOException {
     // Create IRI for new entity
-    final var artifactIri =
-        this.generateEntityIri(requestIri.toString(), content.artifactName());
-    final var entityIri = RdfModelUtils.createIri(artifactIri);
-    Optional
-        .ofNullable(content.artifactRepresentation())
-        .filter(s -> !s.isEmpty())
-        // Replace all null relative IRIs with the IRI generated for this entity
-        .map(s -> s.replaceAll("<>", "<" + artifactIri + ">"))
-        .ifPresentOrElse(
-            Failable.asConsumer(s -> {
-              final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+    final var artifactIri = this.httpConfig
+        .getArtifactUri(content.workspaceName(), content.artifactName());
 
-              final var workspaceIri = RdfModelUtils.createIri(
-                  artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
-              );
-              this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
-              this.store.addEntityModel(entityIri, entityModel);
-              final var stringGraphResult =
-                  RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
-                      this.httpConfig.getBaseUriTrailingSlash());
-              this.replyWithPayload(message, stringGraphResult);
-            }),
-            () -> this.replyFailed(message)
-        );
+    final var entityIri = RdfModelUtils.createIri(artifactIri);
+
+    final var workspaceIri = RdfModelUtils.createIri(
+        artifactIri.substring(0, artifactIri.indexOf("/artifacts/"))
+    );
+
+    final var t = this.store.containsEntityModel(workspaceIri);
+    if (!t) {
+      this.replyFailed(message);
+    } else {
+      Optional
+          .ofNullable(content.artifactRepresentation())
+          .filter(s -> !s.isEmpty())
+          // Replace all null relative IRIs with the IRI generated for this entity
+          .map(s -> s.replaceAll("<>", "<" + artifactIri + ">"))
+          .ifPresentOrElse(
+              Failable.asConsumer(s -> {
+                final var entityModel = RdfModelUtils.stringToModel(s, entityIri, RDFFormat.TURTLE);
+                this.enrichArtifactGraphWithWorkspace(entityIri, entityModel, workspaceIri, false);
+                this.store.addEntityModel(entityIri, entityModel);
+                final var stringGraphResult =
+                    RdfModelUtils.modelToString(entityModel, RDFFormat.TURTLE,
+                        this.httpConfig.getBaseUriTrailingSlash());
+                this.replyWithPayload(message, stringGraphResult);
+              }),
+              () -> this.replyFailed(message)
+          );
+    }
   }
 
   private void enrichArtifactGraphWithWorkspace(
@@ -423,14 +423,12 @@ public class RdfStoreVerticle extends AbstractVerticle {
       final IRI workspaceIri,
       final boolean isBody
   ) throws IOException {
-    final var artifactIRI = entityIri.stringValue().endsWith("/")
-        ?
-        RdfModelUtils.createIri(entityIri + ARTIFACT_FRAGMENT) :
-        RdfModelUtils.createIri(entityIri + "/" + ARTIFACT_FRAGMENT);
-    final var workspaceActualIRI = workspaceIri.stringValue().endsWith("/")
-        ?
-        RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT) :
-        RdfModelUtils.createIri(workspaceIri + "/" + WORKSPACE_FRAGMENT);
+    final var artifactIRI =
+        RdfModelUtils.createIri(entityIri + ARTIFACT_FRAGMENT);
+
+    final var workspaceActualIRI =
+        RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT);
+
     entityModel.add(
         artifactIRI,
         RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
@@ -506,26 +504,17 @@ public class RdfStoreVerticle extends AbstractVerticle {
   /**
    * Creates an entity and adds it to the store.
    *
-   * @param requestIri IRI where the request originated from
    * @param message    Request
    */
   private void handleCreateWorkspace(
-      final IRI requestIri,
       final RdfStoreMessage.CreateWorkspace content,
       final Message<RdfStoreMessage> message
   ) throws IllegalArgumentException, IOException {
     // Create IRI for new entity
-    final var workspaceIri =
-        this.generateEntityIri(requestIri.toString(), content.workspaceName());
-    final var resourceIRI =
-        RdfModelUtils.createIri(workspaceIri.endsWith("/") ? workspaceIri : workspaceIri + "/");
+    final var workspaceIri = this.httpConfig.getWorkspaceUri(content.workspaceName());
+    final var resourceIRI = RdfModelUtils.createIri(workspaceIri);
 
-    final IRI workspaceIRI;
-    if (workspaceIri.endsWith("/")) {
-      workspaceIRI = RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT);
-    } else {
-      workspaceIRI = RdfModelUtils.createIri(workspaceIri + "/" + WORKSPACE_FRAGMENT);
-    }
+    final var workspaceIRI = RdfModelUtils.createIri(workspaceIri + WORKSPACE_FRAGMENT);
     Optional
         .ofNullable(content.workspaceRepresentation())
         .filter(s -> !s.isEmpty())
@@ -536,29 +525,23 @@ public class RdfStoreVerticle extends AbstractVerticle {
               final var entityModel = RdfModelUtils.stringToModel(s, resourceIRI, RDFFormat.TURTLE);
 
               if (content.parentWorkspaceUri().isPresent()) {
-                final var parentIriTrailingSlash = RdfModelUtils.createIri(
-                    content.parentWorkspaceUri().get().endsWith("/")
-                        ?
-                        content.parentWorkspaceUri().get() :
-                        content.parentWorkspaceUri().get() + "/");
-                final var parentIri = RdfModelUtils.createIri(
-                    parentIriTrailingSlash.toString()
-                        .substring(0, parentIriTrailingSlash.toString().length() - 1));
+                final var parentIri = RdfModelUtils.createIri(content.parentWorkspaceUri().get());
+
                 entityModel.add(
                     workspaceIRI,
-                    RdfModelUtils.createIri("https://purl.org/hmas/isContainedIn"),
-                    RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT)
+                    RdfModelUtils.createIri(CONTAINED_IN_HMAS_IRI),
+                    RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT)
                 );
                 entityModel.add(
-                    RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                    RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT),
                     RDF.TYPE,
                     RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                 );
                 this.store
-                    .getEntityModel(parentIriTrailingSlash)
+                    .getEntityModel(parentIri)
                     .ifPresent(Failable.asConsumer(parentModel -> {
                       parentModel.add(
-                          RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                          RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT),
                           RdfModelUtils.createIri(CONTAINS_HMAS_IRI),
                           workspaceIRI
                       );
@@ -567,7 +550,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           RDF.TYPE,
                           RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
                       );
-                      this.store.replaceEntityModel(parentIriTrailingSlash, parentModel);
+                      this.store.replaceEntityModel(parentIri, parentModel);
                       this.dispatcherMessagebox.sendMessage(
                           new HttpNotificationDispatcherMessage.EntityChanged(
                               parentIri.toString(),
@@ -583,19 +566,19 @@ public class RdfStoreVerticle extends AbstractVerticle {
 
                       final var workspaceDefTriple = parentModel
                           .filter(
-                              RdfModelUtils.createIri(parentIriTrailingSlash + WORKSPACE_FRAGMENT),
+                              RdfModelUtils.createIri(parentIri + WORKSPACE_FRAGMENT),
                               RDF.TYPE, iri(WORKSPACE_HMAS_IRI));
 
                       final Model containedThings = parentModel
-                          .filter(null, iri("https://purl.org/hmas/contains"), null);
+                          .filter(null, iri(CONTAINS_HMAS_IRI), null);
 
 
                       containedThings.removeIf(
-                          triple -> !triple.getObject().stringValue().contains("#workspace")
+                          triple -> !triple.getObject().stringValue().contains(WORKSPACE_FRAGMENT)
                       );
 
                       final Model containedDefinitions = parentModel
-                          .filter(null, null, iri("https://purl.org/hmas/Workspace"));
+                          .filter(null, null, iri(WORKSPACE_HMAS_IRI));
 
                       m.addAll(containedThings);
                       m.addAll(workspaceDefTriple);
@@ -621,7 +604,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                     RdfModelUtils.createIri(platformResourceProfileIri + PLATFORM_FRAGMENT);
                 entityModel.add(
                     workspaceIRI,
-                    RdfModelUtils.createIri("https://purl.org/hmas/isHostedOn"),
+                    RdfModelUtils.createIri(HOSTED_ON_HMAS_IRI),
                     platformIRI
                 );
                 entityModel.add(
@@ -662,7 +645,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
                           .filter(null, iri(HOSTS_HMAS_IRI), null);
 
                       final Model workspaceDef = platformModel
-                          .filter(null, null, iri("https://purl.org/hmas/Workspace"));
+                          .filter(null, null, iri(WORKSPACE_HMAS_IRI));
 
                       m.addAll(workspaceDefTriple);
                       m.addAll(containedThings);
@@ -716,27 +699,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
     );
   }
 
-  private String fillEmptyURIs(final String representation, final String uri) {
-    final Pattern pattern = Pattern.compile("<(#?[^>]*)>");
-    final Matcher matcher = pattern.matcher(representation);
-    final StringBuilder sb = new StringBuilder();
-
-    while (matcher.find()) {
-      final String matched = matcher.group(1);
-      final String replacement;
-
-      if (matched.isEmpty()) {
-        replacement = "<" + uri + ">";
-      } else if (matched.startsWith("#")) {
-        replacement = "<" + uri + "/" + matched + ">";
-      } else {
-        replacement = "<" + matched + ">";
-      }
-      matcher.appendReplacement(sb, replacement);
-    }
-    return matcher.appendTail(sb).toString();
-  }
-
   private void handleUpdateEntity(
       final IRI requestIri,
       final RdfStoreMessage.UpdateEntity content,
@@ -745,7 +707,7 @@ public class RdfStoreVerticle extends AbstractVerticle {
     this.store.getEntityModel(requestIri).ifPresentOrElse(
         Failable.asConsumer(m -> {
           final var additionalTriples = RdfModelUtils.stringToModel(
-              fillEmptyURIs(content.entityRepresentation(), requestIri.toString()),
+              content.entityRepresentation(),
               requestIri,
               RDFFormat.TURTLE
           );
@@ -766,8 +728,14 @@ public class RdfStoreVerticle extends AbstractVerticle {
     );
   }
 
-  private void handleDeleteEntity(final IRI requestIri, final Message<RdfStoreMessage> message)
+  private void handleDeleteEntity(final String workspaceName, final String artifactName,
+                                  final Message<RdfStoreMessage> message)
       throws IllegalArgumentException, IOException {
+
+    final var workspaceIri = iri(this.httpConfig.getWorkspaceUri(workspaceName));
+    final var requestIri = artifactName == null ? workspaceIri :
+        iri(this.httpConfig.getArtifactUri(workspaceName, artifactName));
+
     this.store
         .getEntityModel(requestIri)
         .ifPresentOrElse(
@@ -780,19 +748,6 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                   RdfModelUtils.createIri("https://purl.org/hmas/Artifact")
               )) {
-                final var artifactIri = requestIri.toString();
-                final var workspaceIri =
-                    RdfModelUtils.createIri(
-                        Pattern
-                            .compile(
-                                "^(https?://.*?:[0-9]+/workspaces/.*?/)(?:artifacts|agents)/.*?$"
-                            )
-                            .matcher(artifactIri)
-                            .results()
-                            .map(r -> r.group(1))
-                            .findFirst()
-                            .orElseThrow()
-                    );
                 this.store
                     .getEntityModel(workspaceIri)
                     .ifPresent(Failable.asConsumer(workspaceModel -> {
@@ -840,14 +795,11 @@ public class RdfStoreVerticle extends AbstractVerticle {
                   RdfModelUtils.createIri(RDF.TYPE.stringValue()),
                   RdfModelUtils.createIri(WORKSPACE_HMAS_IRI)
               )) {
-                final var workspaceIri = requestIri.toString();
                 final var workspaceIriResource = RdfModelUtils.createIri(
                     requestIri + WORKSPACE_FRAGMENT
                 );
-                final var platformIri = RdfModelUtils.createIri(
-                    workspaceIri.substring(0, workspaceIri.indexOf("workspaces"))
-                );
-                final var platformIriResource = RdfModelUtils.createIri(
+                final var platformIri = iri(this.httpConfig.getBaseUriTrailingSlash());
+                final var platformIriResource = iri(
                     this.httpConfig.getBaseUriTrailingSlash() + PLATFORM_FRAGMENT
                 );
                 if (entityModel.contains(
@@ -993,11 +945,10 @@ public class RdfStoreVerticle extends AbstractVerticle {
     final var irisToDelete = new ArrayList<>(stack);
     while (!stack.isEmpty()) {
       final var iri = stack.removeLast();
+
       this.store.getEntityModel(iri)
           .ifPresent(Failable.asConsumer(model -> {
-            final var iriResource = RdfModelUtils.createIri(
-                iri.toString().endsWith("/") ? iri + WORKSPACE_FRAGMENT :
-                    iri + "/" + WORKSPACE_FRAGMENT);
+            final var iriResource = iri(iri + WORKSPACE_FRAGMENT);
             model
                 .filter(
                     iriResource,
@@ -1069,30 +1020,4 @@ public class RdfStoreVerticle extends AbstractVerticle {
     }
     return UUID.randomUUID().toString();
   }
-
-  private String generateEntityIri(final String requestIri, final String hint) throws IOException {
-    final var fullRequestIri = !requestIri.endsWith("/") ? requestIri.concat("/") : requestIri;
-    final var optHint = Optional.ofNullable(hint).filter(s -> !s.isEmpty());
-    final String regexPattern = "(?<!:)//";
-
-    // Try to generate an IRI using the hint provided in the initial request
-    if (optHint.isPresent()) {
-      final var candidateIri = fullRequestIri.concat(optHint.get()).replaceAll(regexPattern, "/");
-
-      if (!this.store.containsEntityModel(RdfModelUtils.createIri(candidateIri))) {
-        return candidateIri;
-      }
-    }
-    // Generate a new IRI
-    final var IRI = Stream.generate(() -> UUID.randomUUID().toString()).map(fullRequestIri::concat)
-        .dropWhile(Failable.asPredicate(
-            i -> this.store.containsEntityModel(RdfModelUtils.createIri(i))
-        )).findFirst();
-    if (IRI.isPresent()) {
-      return IRI.get().replaceAll(regexPattern, "/");
-    }
-    throw new IOException("Failed to generate a new IRI");
-
-  }
-
 }

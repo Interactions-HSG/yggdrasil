@@ -69,6 +69,8 @@ public final class TConstants {
   public static final String CALLBACK_URL = "http://" + TEST_HOST + ":" + 8081 + "/";
   public static final String SUBSCRIBE_WORKSPACE_PATH = "/workspaces?parent=";
 
+  public static final String CONTENT_TYPE_HEADER = "Content-Type";
+  public static final String TEXT_TURTLE = "text/turtle";
 
   public static final String SUB_WORKSPACE_NAME = "sub";
   public static final String COUNTER_ARTIFACT_URI =

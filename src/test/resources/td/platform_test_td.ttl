@@ -12,16 +12,8 @@
   td:title "Yggdrasil Node";
   td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
     ];
-  td:hasActionAffordance [ a td:ActionAffordance, jacamo:makeWorkspace;
-      td:name "createWorkspaceJson";
-      td:hasForm [
-          htv:methodName "POST";
-          hctl:hasTarget <workspaces/>;
-          hctl:forContentType "application/json";
-          hctl:hasOperationType td:invokeAction
-        ]
-    ], [ a td:ActionAffordance, jacamo:createWorkspace;
-      td:name "createWorkspaceTurtle";
+  td:hasActionAffordance [ a td:ActionAffordance, jacamo:createWorkspace;
+      td:name "createWorkspace";
       td:hasForm [
           htv:methodName "POST";
           hctl:hasTarget <workspaces/>;
@@ -90,9 +82,9 @@
             ]
         ]
     ];
-  hmas:hosts <workspaces/test/#workspace> .
+  hmas:hosts <workspaces/test#workspace> .
 
 <> a hmas:ResourceProfile;
   hmas:isProfileOf <#platform> .
 
-<workspaces/test/#workspace> a hmas:Workspace .
+<workspaces/test#workspace> a hmas:Workspace .
