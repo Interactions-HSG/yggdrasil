@@ -1,0 +1,19 @@
+@base <http://localhost:8080/> .
+@prefix websub: <https://purl.org/hmas/websub/> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix hmas: <https://purl.org/hmas/> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix jacamo: <https://purl.org/hmas/jacamo/> .
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix gr: <http://purl.org/goodrelations/v1#> .
+
+<workspaces/bazaar/artifacts/rug#artifact> a td:Thing, hmas:Artifact, gr:ActualProductOrServiceInstance;
+  td:title "rug";
+  td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme
+    ].
+
+<workspaces/bazaar/artifacts/rug> a hmas:ResourceProfile;
+  hmas:isProfileOf <workspaces/bazaar/artifacts/rug#artifact> .
+

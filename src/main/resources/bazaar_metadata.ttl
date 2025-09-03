@@ -1,0 +1,45 @@
+@prefix td: <https://www.w3.org/2019/wot/td#>.
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix htv: <http://www.w3.org/2011/http#> .
+@prefix gr: <http://purl.org/goodrelations/v1#> .
+@prefix bspl:   <https://purl.org/bspl#> .
+@prefix schema: <http://schema.org/> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+
+<#workspace> a gr:BusinessEntity;
+ rdfs:seeAlso <http://www.bazaar.com> ;
+ gr:legalName "bazaar.com Ltd."^^xsd:string ;
+ gr:offers <#RugOffer> ;
+ td:hasActionAffordance [ a td:ActionAffordance;
+    td:name "getProtocol";
+    td:hasForm [
+        htv:methodName "GET";
+        hctl:hasTarget <http://localhost:8005/protocol>;
+        hctl:forContentType "text/plain";
+        hctl:hasOperationType td:invokeAction;
+    ]
+].
+
+<#RugOffer> a gr:Offering ;
+      gr:hasBusinessFunction gr:Sell ;
+      gr:hasPriceSpecification <#UnitPriceSpecification_1> ;
+      gr:includesObject <#TypeAndQuantityNode_1> ;
+      schema:potentialAction <#BuyAction> .
+
+<#TypeAndQuantityNode_1> a gr:TypeAndQuantityNode ;
+        gr:amountOfThisGood "1.0"^^xsd:float ;
+        gr:hasUnitOfMeasurement "C62"^^xsd:string ;
+        gr:typeOfGood </artifacts/rug#artifact> .
+
+<#UnitPriceSpecification_1> a gr:UnitPriceSpecification ;
+        gr:hasCurrency "EUR"^^xsd:string ;
+        gr:hasCurrencyValue "200.0"^^xsd:float ;
+        gr:hasUnitOfMeasurement "C62"^^xsd:string .
+
+<#BuyAction> a schema:BuyAction ;
+    schema:target <#Buy> .
+
+<#Buy> a bspl:Protocol .

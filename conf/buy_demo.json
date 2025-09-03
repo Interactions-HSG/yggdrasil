@@ -1,0 +1,49 @@
+{
+  "http-config" : {
+    "host" : "localhost",
+    "port" : 8080,
+    "base-uri" : "http://localhost:8080/"
+  },
+  "notification-config" : {
+    "enabled" : true
+  },
+  "agents" :  [
+    {
+      "name" : "bazaar_agent",
+      "agent-uri" : "http://localhost:8081",
+      "callback-uri" : "http://localhost:8081/callback",
+      "body-config" : [
+        {
+          "metadata" : "src/main/resources/bazaar_agent_metadata.ttl",
+          "join" : [ "bazaar"]
+        },
+        {
+          "metadata" : "src/main/resources/bazaar_agent_metadata.ttl"
+        }
+      ]
+    }
+  ],
+  "environment-config" : {
+    "enabled" : true,
+    "ontology" : "td",
+
+
+    "known-artifacts" : [],
+    "workspaces" : [
+      {
+        "name" : "bazaar",
+        "metadata" : "src/main/resources/bazaar_metadata.ttl",
+        "artifacts" : [
+          {
+            "name" : "rug",
+            "representation" : "src/main/resources/rug.ttl",
+            "created-by" : "bazaar_agent"
+          }
+        ],
+        "joined-by" : [
+          "bazaar_agent"
+        ]
+      }
+    ]
+  }
+}
